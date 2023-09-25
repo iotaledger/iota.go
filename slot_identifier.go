@@ -8,19 +8,18 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
-	SlotIdentifierLength = IdentifierLength + serializer.UInt64ByteSize
+	SlotIdentifierLength = IdentifierLength + SlotIndexLength
 )
 
 var (
 	emptySlotIdentifier = SlotIdentifier{}
 )
 
-// SlotIdentifier is a 32 byte hash value that can be used to uniquely identify some blob of data together with an 8 byte slot index.
+// SlotIdentifier is a 32 byte hash value that can be used to uniquely identify some blob of data together with an 4 byte slot index.
 type SlotIdentifier [SlotIdentifierLength]byte
 
 // SlotIdentifierRepresentingData returns a new SlotIdentifier for the given data by hashing it with blake2b and associating it with the given slot index.
@@ -31,7 +30,7 @@ func SlotIdentifierRepresentingData(index SlotIndex, data []byte) SlotIdentifier
 func NewSlotIdentifier(index SlotIndex, idBytes Identifier) SlotIdentifier {
 	id := SlotIdentifier{}
 	copy(id[:], idBytes[:])
-	binary.LittleEndian.PutUint64(id[IdentifierLength:], uint64(index))
+	binary.LittleEndian.PutUint32(id[IdentifierLength:], uint32(index))
 
 	return id
 }
@@ -99,7 +98,7 @@ func (id SlotIdentifier) String() string {
 }
 
 func (id SlotIdentifier) Index() SlotIndex {
-	return SlotIndex(binary.LittleEndian.Uint64(id[IdentifierLength:]))
+	return SlotIndex(binary.LittleEndian.Uint32(id[IdentifierLength:]))
 }
 
 func (id SlotIdentifier) Identifier() Identifier {

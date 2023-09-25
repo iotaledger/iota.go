@@ -86,7 +86,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand32ByteArray()
+	txID := tpkg.Rand36ByteArray()
 	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
 
 	originRoutes := &apimodels.RoutesResponse{

@@ -217,7 +217,7 @@ func (builder *AccountOutputBuilder) Governor(governor iotago.Address) *AccountO
 
 // Staking sets/modifies an iotago.StakingFeature as a mutable feature on the output.
 func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost iotago.Mana, startEpoch iotago.EpochIndex, optEndEpoch ...iotago.EpochIndex) *AccountOutputBuilder {
-	endEpoch := iotago.EpochIndex(math.MaxUint64)
+	endEpoch := iotago.EpochIndex(math.MaxUint32)
 	if len(optEndEpoch) > 0 {
 		endEpoch = optEndEpoch[0]
 	}
@@ -780,14 +780,14 @@ func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 }
 
 // NewDelegationOutputBuilder creates a new DelegationOutputBuilder with the account address, serial number, token scheme and base token amount.
-func NewDelegationOutputBuilder(validatorID iotago.AccountID, addr iotago.Address, amount iotago.BaseToken) *DelegationOutputBuilder {
+func NewDelegationOutputBuilder(validatorAddress *iotago.AccountAddress, addr iotago.Address, amount iotago.BaseToken) *DelegationOutputBuilder {
 	return &DelegationOutputBuilder{output: &iotago.DelegationOutput{
-		Amount:          amount,
-		DelegatedAmount: 0,
-		DelegationID:    iotago.DelegationID{},
-		ValidatorID:     validatorID,
-		StartEpoch:      0,
-		EndEpoch:        0,
+		Amount:           amount,
+		DelegatedAmount:  0,
+		DelegationID:     iotago.DelegationID{},
+		ValidatorAddress: validatorAddress,
+		StartEpoch:       0,
+		EndEpoch:         0,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},

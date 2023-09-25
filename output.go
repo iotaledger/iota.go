@@ -95,8 +95,10 @@ var outputNames = [OutputDelegation + 1]string{
 }
 
 const (
+	// OutputIndexLength defines the length of an OutputIndex.
+	OutputIndexLength = serializer.UInt16ByteSize
 	// OutputIDLength defines the length of an OutputID.
-	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
+	OutputIDLength = SlotIdentifierLength + OutputIndexLength
 )
 
 var (
@@ -132,26 +134,30 @@ func (outputID OutputID) String() string {
 	return fmt.Sprintf("OutputID(%s:%d)", outputID.TransactionID().String(), outputID.Index())
 }
 
-// Index returns the index of the Output this OutputID references.
-func (outputID OutputID) Index() uint16 {
-	return binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
-}
-
 // TransactionID returns the TransactionID of the Output this OutputID references.
 func (outputID OutputID) TransactionID() TransactionID {
 	var txID TransactionID
-	copy(txID[:], outputID[:TransactionIDLength])
+	copy(txID[:], outputID[:SlotIdentifierLength])
 
 	return txID
 }
 
+// Index returns the index of the Output this OutputID references.
+func (outputID OutputID) Index() uint16 {
+	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
+}
+
+// CreationSlotIndex returns the SlotIndex the Output was created in.
+func (outputID OutputID) CreationSlotIndex() SlotIndex {
+	return outputID.TransactionID().Index()
+}
+
 // UTXOInput creates a UTXOInput from this OutputID.
 func (outputID OutputID) UTXOInput() *UTXOInput {
-	utxoInput := &UTXOInput{}
-	copy(utxoInput.TransactionID[:], outputID[:TransactionIDLength])
-	utxoInput.TransactionOutputIndex = binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
-
-	return utxoInput
+	return &UTXOInput{
+		TransactionID:          outputID.TransactionID(),
+		TransactionOutputIndex: outputID.Index(),
+	}
 }
 
 func (outputID OutputID) Bytes() ([]byte, error) {
@@ -185,10 +191,12 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	return vals, nil
 }
 
-// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and index.
+// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and output index.
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
-	utxo := UTXOInput{TransactionOutputIndex: index}
-	copy(utxo.TransactionID[:], (txID)[:])
+	utxo := &UTXOInput{
+		TransactionID:          txID,
+		TransactionOutputIndex: index,
+	}
 
 	return utxo.OutputID()
 }
@@ -694,8 +702,8 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 		return nil, 0, err
 	}
 	var txID TransactionID
-	copy(txID[:], outputIDBytes[:TransactionIDLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
+	copy(txID[:], outputIDBytes[:SlotIdentifierLength])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[SlotIdentifierLength : SlotIdentifierLength+serializer.UInt16ByteSize])
 
 	return &txID, outputIndex, nil
 }
@@ -898,8 +906,8 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if delegationOutput.ValidatorID.Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorIDZeroed, "output %d", index)
+		if delegationOutput.ValidatorAddress.AccountID().Empty() {
+			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
 		}
 
 		return nil

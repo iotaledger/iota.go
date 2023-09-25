@@ -941,7 +941,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -994,7 +994,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
 								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -5587,12 +5587,12 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.DelegationOutput{
-				Amount:          OneMi * 10,
-				DelegatedAmount: OneMi * 10,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     iotago.EmptyAccountID(),
-				StartEpoch:      currentEpoch,
-				EndEpoch:        currentEpoch + 5,
+				Amount:           OneMi * 10,
+				DelegatedAmount:  OneMi * 10,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: &iotago.AccountAddress{},
+				StartEpoch:       currentEpoch,
+				EndEpoch:         currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},
@@ -5872,6 +5872,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 					},
+					ValidatorAddress: &iotago.AccountAddress{},
 				}
 			},
 			createTestParameters: []func() testParameters{
@@ -5954,23 +5955,23 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 	for _, tt := range tests {
 		for _, makeTestInput := range tt.createTestParameters {
 			testInput := makeTestInput()
-			testOutput := tt.createTestOutput(testInput.address)
-
-			inputs, sig, transactionEssence := makeTransaction(testOutput)
-
-			vmParams := &vm.Params{
-				API: testAPI,
-			}
-
-			resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-			tx := &iotago.Transaction{
-				Essence: transactionEssence,
-				Unlocks: iotago.Unlocks{
-					&iotago.SignatureUnlock{Signature: sig},
-				},
-			}
-
 			t.Run(testInput.name, func(t *testing.T) {
+				testOutput := tt.createTestOutput(testInput.address)
+
+				inputs, sig, transactionEssence := makeTransaction(testOutput)
+
+				vmParams := &vm.Params{
+					API: testAPI,
+				}
+
+				resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+				tx := &iotago.Transaction{
+					Essence: transactionEssence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sig},
+					},
+				}
+
 				err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncAddressRestrictions())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)

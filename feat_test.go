@@ -23,7 +23,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 			name: "ok - BlockIssuerFeature",
 			source: &iotago.BlockIssuerFeature{
 				BlockIssuerKeys: iotago.BlockIssuerKeys{
-					iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray()),
+					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 				},
 				ExpirySlot: 10,
 			},
