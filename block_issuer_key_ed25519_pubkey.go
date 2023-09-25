@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/lo"
@@ -23,9 +24,9 @@ func (key *Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() ed25519.PublicKe
 	return key.PublicKey
 }
 
-// BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the public key bytes.
-func (key *Ed25519PublicKeyBlockIssuerKey) BlockIssuerKeyBytes(api API) []byte {
-	return lo.PanicOnErr(api.Encode(key))
+// Bytes returns a byte slice consisting of the type prefix and the public key bytes.
+func (key *Ed25519PublicKeyBlockIssuerKey) Bytes() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), key))
 }
 
 // Type returns the BlockIssuerKeyType.
