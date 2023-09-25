@@ -7,6 +7,11 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+const (
+	// TransactionIDLength defines the length of a Transaction ID.
+	TransactionIDLength = SlotIdentifierLength
+)
+
 var (
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = ierrors.New("missing utxo")
