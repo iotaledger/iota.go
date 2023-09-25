@@ -7,6 +7,11 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+const (
+	// TransactionIDLength defines the length of a Transaction ID.
+	TransactionIDLength = SlotIndexLength + IdentifierLength
+)
+
 var (
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = ierrors.New("missing utxo")
@@ -33,6 +38,22 @@ var (
 	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
 	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
 )
+
+var (
+	EmptyTransactionID = TransactionID{}
+
+	ErrInvalidTransactionIDLength = ierrors.New("Invalid transactionID length")
+)
+
+type TransactionID = SlotIdentifier
+
+// TransactionIDs are IDs of transactions.
+type TransactionIDs []TransactionID
+
+// TransactionIDFromData returns a new TransactionID for the given data by hashing it with blake2b and appending the creation slot index.
+func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
+	return SlotIdentifierRepresentingData(creationSlot, data)
+}
 
 type TransactionContextInputs ContextInputs[Input]
 

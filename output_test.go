@@ -221,6 +221,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
 	)
 
+	var minAmount iotago.BaseToken = 47800
+
 	tests := []struct {
 		name        string
 		protoParams iotago.ProtocolParameters
@@ -244,7 +246,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     47800, // min amount
+					Amount:     minAmount, // min amount
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()}},
 				},
 			},
@@ -260,7 +262,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        47800, // min amount
+							Amount:        minAmount, // min amount
 						},
 					},
 					Mana: 500,
@@ -278,7 +280,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        47800 - 1, // off by 1
+							Amount:        minAmount - 1, // off by 1
 						},
 					},
 				},
@@ -309,7 +311,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: 47800 - 1,
+					Amount: minAmount - 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},

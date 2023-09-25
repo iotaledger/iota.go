@@ -54,9 +54,6 @@ func TestMerkleHasher(t *testing.T) {
 		pathFromJSON := new(merklehasher.Proof[iotago.BlockID])
 		err = json.Unmarshal(jsonPath, pathFromJSON)
 		require.NoError(t, err)
-
-		hashFromJSON := pathFromJSON.Hash(hasher)
-		println(string(hashFromJSON))
-		require.True(t, bytes.Equal(hash, hashFromJSON))
+		require.True(t, bytes.Equal(hash, pathFromJSON.Hash(hasher)))
 	}
 }
