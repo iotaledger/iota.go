@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"slices"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -67,11 +68,10 @@ func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByt
 type BlockIssuerKey interface {
 	Sizer
 	NonEphemeralObject
+	constraints.Equalable[BlockIssuerKey]
 
 	// Bytes returns a byte slice consisting of the type prefix and the unique identifier of the key.
 	Bytes() []byte
 	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType
-	// Equal checks whether other is equal to this BlockIssuerKey.
-	Equal(other BlockIssuerKey) bool
 }
