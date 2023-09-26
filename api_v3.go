@@ -200,10 +200,11 @@ type v3api struct {
 	computedFinalReward       uint64
 }
 
-const ContextAPIKey = "iotago.API"
+type contextAPIKey = struct{}
 
 func APIFromContext(ctx context.Context) API {
-	return ctx.Value(ContextAPIKey).(API)
+	//nolint:forcetypeassert // we can safely assume that this is an API
+	return ctx.Value(contextAPIKey{}).(API)
 }
 
 func (v *v3api) Equals(other API) bool {
@@ -211,7 +212,7 @@ func (v *v3api) Equals(other API) bool {
 }
 
 func (v *v3api) context() context.Context {
-	return context.WithValue(context.Background(), ContextAPIKey, v)
+	return context.WithValue(context.Background(), contextAPIKey{}, v)
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
