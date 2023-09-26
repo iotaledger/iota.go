@@ -114,6 +114,7 @@ type Address interface {
 	NonEphemeralObject
 	fmt.Stringer
 	constraints.Cloneable[Address]
+	constraints.Equalable[Address]
 
 	// Type returns the type of the address.
 	Type() AddressType
@@ -124,9 +125,6 @@ type Address interface {
 
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
-
-	// Equal checks whether other is equal to this Address.
-	Equal(other Address) bool
 
 	// Key returns a string which can be used to index the Address in a map.
 	Key() string

@@ -19,6 +19,12 @@ func Ed25519PublicKeyBlockIssuerKeyFromPublicKey(publicKey ed25519.PublicKey) *E
 	return &Ed25519PublicKeyBlockIssuerKey{PublicKey: publicKey}
 }
 
+func (key *Ed25519PublicKeyBlockIssuerKey) Clone() BlockIssuerKey {
+	return &Ed25519PublicKeyBlockIssuerKey{
+		PublicKey: key.PublicKey,
+	}
+}
+
 // ToEd25519PublicKey returns the underlying Ed25519 Public Key.
 func (key *Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() ed25519.PublicKey {
 	return key.PublicKey
