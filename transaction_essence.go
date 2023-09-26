@@ -130,14 +130,16 @@ func (u *TransactionEssence) Clone() *TransactionEssence {
 	}
 
 	return &TransactionEssence{
-		NetworkID:        u.NetworkID,
-		CreationSlot:     u.CreationSlot,
-		ContextInputs:    u.ContextInputs.Clone(),
-		Inputs:           u.Inputs.Clone(),
-		InputsCommitment: u.InputsCommitment,
-		Outputs:          u.Outputs.Clone(),
-		Allotments:       u.Allotments.Clone(),
-		Payload:          payload,
+		TransactionInputEssence: &TransactionInputEssence{
+			NetworkID:        u.NetworkID,
+			CreationSlot:     u.CreationSlot,
+			ContextInputs:    u.ContextInputs.Clone(),
+			Inputs:           u.Inputs.Clone(),
+			InputsCommitment: u.InputsCommitment,
+			Allotments:       u.Allotments.Clone(),
+			Payload:          payload,
+		},
+		Outputs: u.Outputs.Clone(),
 	}
 }
 

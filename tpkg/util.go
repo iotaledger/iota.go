@@ -500,11 +500,13 @@ func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.Transa
 // RandTransactionEssenceWithOptions returns a random transaction essence with options applied.
 func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.TransactionEssence]) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
-		NetworkID:     TestNetworkID,
-		ContextInputs: iotago.TxEssenceContextInputs{},
-		Inputs:        iotago.TxEssenceInputs{},
-		Outputs:       iotago.TxEssenceOutputs{},
-		Allotments:    iotago.Allotments{},
+		TransactionInputEssence: &iotago.TransactionInputEssence{
+			NetworkID:     TestNetworkID,
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs:        iotago.TxEssenceInputs{},
+			Allotments:    iotago.Allotments{},
+		},
+		Outputs: iotago.TxEssenceOutputs{},
 	}
 
 	inputCount := 1
@@ -809,18 +811,22 @@ func RandSortAllotment(count int) iotago.Allotments {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			NetworkID:     14147312347886322761,
-			ContextInputs: iotago.TxEssenceContextInputs{},
-			Inputs: iotago.TxEssenceInputs{
-				&iotago.UTXOInput{
-					TransactionID: func() [iotago.SlotIdentifierLength]byte {
-						var b [iotago.SlotIdentifierLength]byte
-						copy(b[:], RandBytes(iotago.SlotIdentifierLength))
+			TransactionInputEssence: &iotago.TransactionInputEssence{
+				NetworkID:     14147312347886322761,
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs: iotago.TxEssenceInputs{
+					&iotago.UTXOInput{
+						TransactionID: func() [iotago.SlotIdentifierLength]byte {
+							var b [iotago.SlotIdentifierLength]byte
+							copy(b[:], RandBytes(iotago.SlotIdentifierLength))
 
-						return b
-					}(),
-					TransactionOutputIndex: 0,
+							return b
+						}(),
+						TransactionOutputIndex: 0,
+					},
 				},
+				Allotments: iotago.Allotments{},
+				Payload:    nil,
 			},
 			Outputs: iotago.TxEssenceOutputs{
 				&iotago.BasicOutput{
@@ -830,8 +836,6 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					},
 				},
 			},
-			Allotments: iotago.Allotments{},
-			Payload:    nil,
 		},
 		Unlocks: iotago.Unlocks{
 			&iotago.SignatureUnlock{
