@@ -302,7 +302,9 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 	}
 }
 
-func (b *ProtocolBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
+	workScoreStructure := b.API.ProtocolParameters().WorkScoreStructure()
+
 	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
