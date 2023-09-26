@@ -45,7 +45,7 @@ var (
 
 type TransactionID = SlotIdentifier
 
-// TraansactionEssenceID is the ID of a TransactionEssence.
+// TransactionEssenceID is the ID of a TransactionEssence.
 type TransactionEssenceID = Identifier
 
 // TransactionIDs are IDs of transactions.
