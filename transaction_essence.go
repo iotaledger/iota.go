@@ -98,6 +98,14 @@ type (
 
 // TransactionEssence is the essence part of a Transaction.
 type TransactionEssence struct {
+	// TransactionInputEssence is the input part of a TransactionEssence.
+	*TransactionInputEssence `serix:"0"`
+
+	// The outputs of this transaction.
+	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
+}
+
+type TransactionInputEssence struct {
 	// The network ID for which this essence is valid for.
 	NetworkID NetworkID `serix:"0,mapKey=networkId"`
 	// The slot index in which the transaction was created by the client.
@@ -108,12 +116,10 @@ type TransactionEssence struct {
 	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
 	// The commitment to the referenced inputs.
 	InputsCommitment InputsCommitment `serix:"4,mapKey=inputsCommitment"`
-	// The outputs of this transaction.
-	Outputs TxEssenceOutputs `serix:"5,mapKey=outputs"`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"6,mapKey=allotments"`
+	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"7,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
 }
 
 // SigningMessage returns the to be signed message.

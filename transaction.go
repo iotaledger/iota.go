@@ -42,6 +42,9 @@ var (
 // TransactionID is the ID of a Transaction.
 type TransactionID = Identifier
 
+// TraansactionEssenceID is the ID of a TransactionEssence.
+type TransactionEssenceID = Identifier
+
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
 
@@ -78,6 +81,16 @@ func (t *Transaction) ID(api API) (TransactionID, error) {
 	data, err := api.Encode(t)
 	if err != nil {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
+	}
+
+	return IdentifierFromData(data), nil
+}
+
+// EssenceID computes the essence ID of the Transaction.
+func (t *Transaction) EssenceID(api API) (TransactionEssenceID, error) {
+	data, err := api.Encode(t.Essence)
+	if err != nil {
+		return TransactionEssenceID{}, ierrors.Errorf("can't compute transaction essence ID: %w", err)
 	}
 
 	return IdentifierFromData(data), nil
