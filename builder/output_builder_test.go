@@ -76,8 +76,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Build()
 	require.NoError(t, err)
 
-	expectedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}
-	expectedBlockIssuerKeys.Sort()
+	expectedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3)
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
@@ -131,8 +130,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Builder().Build()
 	require.NoError(t, err)
 
-	expectedUpdatedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2}
-	expectedUpdatedBlockIssuerKeys.Sort()
+	expectedUpdatedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2)
 
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
