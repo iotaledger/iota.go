@@ -812,6 +812,7 @@ func RandSortAllotment(count int) iotago.Allotments {
 // OneInputOutputTransaction generates a random transaction with one input and output.
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
+		API: TestAPI,
 		Essence: &iotago.TransactionEssence{
 			NetworkID:     14147312347886322761,
 			ContextInputs: iotago.TxEssenceContextInputs{},
