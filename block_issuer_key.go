@@ -99,6 +99,20 @@ func (keys BlockIssuerKeys) Sort() {
 	})
 }
 
+func (keys BlockIssuerKeys) Equal(other BlockIssuerKeys) bool {
+	if len(keys) != len(other) {
+		return false
+	}
+
+	for idx, key := range keys {
+		if !key.Equal(other[idx]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Size returns the size of the block issuer key when serialized.
 func (keys BlockIssuerKeys) Size() int {
 	// keys length prefix + size of each key
