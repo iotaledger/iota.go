@@ -30,7 +30,7 @@ const (
 	BlockTypeValidationMaxParents = BlockMaxParents + 42
 
 	// block type + strong parents count + weak parents count + shallow like parents count + payload type + mana.
-	BasicBlockSizeEmptyParentsAndEmptyPayload = serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.UInt32ByteSize + ManaSize
+	BasicBlockSizeEmptyParentsAndEmptyPayload = serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.TypeDenotationByteSize + ManaSize
 )
 
 var (

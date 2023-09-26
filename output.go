@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"sort"
 	"strings"
@@ -25,11 +26,15 @@ type BaseToken uint64
 // BaseTokenSize is the size in bytes that is used by BaseToken.
 const BaseTokenSize = 8
 
+const MaxBaseToken = BaseToken(math.MaxUint64)
+
 // Mana defines the type of the consumable resource e.g. used in congestion control.
 type Mana uint64
 
 // ManaSize is the size in bytes that is used by Mana.
 const ManaSize = 8
+
+const MaxMana = Mana(math.MaxUint64)
 
 // Output defines a unit of output of a transaction.
 type Output interface {
@@ -37,6 +42,7 @@ type Output interface {
 	NonEphemeralObject
 	ProcessableObject
 	constraints.Cloneable[Output]
+	constraints.Equalable[Output]
 
 	// BaseTokenAmount returns the amount of base tokens held by this Output.
 	BaseTokenAmount() BaseToken
@@ -113,8 +119,8 @@ var (
 // defines the default offset virtual byte costs for an output.
 func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
 	return rentStruct.VBFactorKey.Multiply(OutputIDLength) +
-		// included block id, conf ms index, conf ms ts
-		rentStruct.VBFactorData.Multiply(BlockIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
+		// included block id, slot booked
+		rentStruct.VBFactorData.Multiply(BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists

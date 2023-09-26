@@ -35,6 +35,7 @@ type TokenScheme interface {
 	NonEphemeralObject
 	ProcessableObject
 	constraints.Cloneable[TokenScheme]
+	constraints.Equalable[TokenScheme]
 
 	// Type returns the type of the TokenScheme.
 	Type() TokenSchemeType

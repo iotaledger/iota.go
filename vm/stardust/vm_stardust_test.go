@@ -4,7 +4,6 @@ package stardust_test
 import (
 	"bytes"
 	"crypto/ed25519"
-	"math"
 	"math/big"
 	"slices"
 	"testing"
@@ -836,7 +835,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -863,7 +862,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
@@ -918,7 +917,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -945,8 +944,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+								ExpirySlot:      iotago.MaxSlotIndex,
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -999,8 +998,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+								ExpirySlot:      iotago.MaxSlotIndex,
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -1072,7 +1071,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1144,7 +1143,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1207,7 +1206,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1229,7 +1228,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
@@ -5197,7 +5196,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5220,7 +5219,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -5259,7 +5258,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5282,7 +5281,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -5423,7 +5422,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5504,7 +5503,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 					&iotago.BasicOutput{
 						Amount: 5,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},

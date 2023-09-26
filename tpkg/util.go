@@ -85,12 +85,12 @@ func RandUTCTime() time.Time {
 }
 
 // RandBaseToken returns a random amount of base token.
-func RandBaseToken(max uint64) iotago.BaseToken {
+func RandBaseToken(max iotago.BaseToken) iotago.BaseToken {
 	return iotago.BaseToken(rand.Int63n(int64(uint32(max))))
 }
 
 // RandMana returns a random amount of mana.
-func RandMana(max uint64) iotago.Mana {
+func RandMana(max iotago.Mana) iotago.Mana {
 	return iotago.Mana(rand.Int63n(int64(uint32(max))))
 }
 
@@ -617,7 +617,7 @@ func RandDelegationID() iotago.DelegationID {
 }
 
 func RandSlotIndex() iotago.SlotIndex {
-	return iotago.SlotIndex(RandUint64(math.MaxUint64))
+	return iotago.SlotIndex(RandUint32(uint32(iotago.MaxSlotIndex)))
 }
 
 // RandBlockID produces a random block ID.
@@ -859,6 +859,7 @@ func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 	for i := 0; i < count; i++ {
 		blockIssuerKeys = append(blockIssuerKeys, iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(Rand32ByteArray()))
 	}
+	blockIssuerKeys.Sort()
 
 	return blockIssuerKeys
 }
@@ -951,7 +952,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			iotago.NetworkPrefix(RandString(255)),
 		),
 		iotago.WithSupplyOptions(
-			RandBaseToken(math.MaxUint64),
+			RandBaseToken(iotago.MaxBaseToken),
 			RandUint32(math.MaxUint32),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
@@ -976,13 +977,13 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
 		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
 		iotago.WithCongestionControlOptions(
-			RandMana(math.MaxUint64),
-			RandMana(math.MaxUint64),
-			RandMana(math.MaxUint64),
+			RandMana(iotago.MaxMana),
+			RandMana(iotago.MaxMana),
+			RandMana(iotago.MaxMana),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
-			RandMana(math.MaxUint64),
+			RandMana(iotago.MaxMana),
 			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),

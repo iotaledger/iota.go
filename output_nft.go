@@ -112,6 +112,43 @@ func (n *NFTOutput) Clone() Output {
 	}
 }
 
+func (n *NFTOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*NFTOutput)
+	if !isSameType {
+		return false
+	}
+
+	if n.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if n.Mana != otherOutput.Mana {
+		return false
+	}
+
+	if !n.NativeTokens.Equal(otherOutput.NativeTokens) {
+		return false
+	}
+
+	if n.NFTID != otherOutput.NFTID {
+		return false
+	}
+
+	if !n.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	if !n.Features.Equal(otherOutput.Features) {
+		return false
+	}
+
+	if !n.ImmutableFeatures.Equal(otherOutput.ImmutableFeatures) {
+		return false
+	}
+
+	return true
+}
+
 func (n *NFTOutput) Ident() Address {
 	return n.Conditions.MustSet().Address().Address
 }
