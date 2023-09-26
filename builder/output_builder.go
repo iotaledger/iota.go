@@ -1,8 +1,6 @@
 package builder
 
 import (
-	"math"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
@@ -216,7 +214,7 @@ func (builder *AccountOutputBuilder) Governor(governor iotago.Address) *AccountO
 
 // Staking sets/modifies an iotago.StakingFeature as a mutable feature on the output.
 func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost iotago.Mana, startEpoch iotago.EpochIndex, optEndEpoch ...iotago.EpochIndex) *AccountOutputBuilder {
-	endEpoch := iotago.EpochIndex(math.MaxUint32)
+	endEpoch := iotago.MaxEpochIndex
 	if len(optEndEpoch) > 0 {
 		endEpoch = optEndEpoch[0]
 	}

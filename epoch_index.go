@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
@@ -15,6 +16,8 @@ var (
 )
 
 const EpochIndexLength = serializer.UInt32ByteSize
+
+const MaxEpochIndex = EpochIndex(math.MaxUint32)
 
 // EpochIndex is the index of an epoch.
 type EpochIndex uint32

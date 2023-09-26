@@ -2,7 +2,6 @@
 package iotago_test
 
 import (
-	"math"
 	"os"
 	"testing"
 
@@ -55,12 +54,12 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkManaWithDecay_Single(b *testing.B) {
-	endIndex := iotago.SlotIndex(300 << slotsPerEpochExponent)
+	endSlot := iotago.SlotIndex(300 << slotsPerEpochExponent)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaWithDecay(math.MaxUint64, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.ManaWithDecay(iotago.MaxMana, 0, endSlot)
 	}
 }
 
@@ -68,9 +67,9 @@ func BenchmarkManaWithDecay_Range(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var value iotago.Mana = math.MaxUint64
-		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
-			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+		var value iotago.Mana = iotago.MaxMana
+		for slot := 1; slot <= 5*len(testManaDecayFactors); slot++ {
+			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(slot)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -82,7 +81,7 @@ func BenchmarkManaGenerationWithDecay_Single(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaGenerationWithDecay(math.MaxUint64, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, endIndex)
 	}
 }
 
@@ -92,7 +91,7 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var value iotago.Mana
 		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
-			value, _ = testManaDecayProvider.ManaGenerationWithDecay(math.MaxUint64, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -144,10 +143,10 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for 0 slot index diffs",
-			storedMana:       math.MaxInt64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           math.MaxInt64,
+			result:           iotago.MaxMana,
 			wantErr:          nil,
 		},
 		{
@@ -160,7 +159,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
 			result:           13228672242897911807,
@@ -168,7 +167,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
 			result:           6803138682699798504,
@@ -176,7 +175,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "even with the highest possible uint64 number, the calculation should not overflow",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
 			result:           13046663022640287317,
@@ -218,7 +217,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for 0 slot index diffs",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(1),
 			result:           0,
@@ -234,7 +233,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
 			result:           183827294847826527,
@@ -242,7 +241,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
 			result:           410192222442040018,
@@ -250,7 +249,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for 0 epoch index diffs",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(1),
 			result:           562881233944575,
@@ -258,7 +257,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for 1 epoch index diffs",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(2),
 			result:           1125343946211326,
@@ -266,7 +265,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana generation works for >=2 epoch index diffs",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochEnd(3),
 			result:           1687319975062367,
@@ -274,7 +273,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		},
 		{
 			name:             "even with the highest possible int64 number, the calculation should not overflow",
-			amount:           math.MaxInt64,
+			amount:           iotago.MaxBaseToken,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
 			result:           190239292158065300,
@@ -316,10 +315,10 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for 0 slot index diffs",
-			rewards:           math.MaxInt64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: 1,
-			result:            math.MaxInt64,
+			result:            iotago.MaxMana,
 			wantErr:           nil,
 		},
 		{
@@ -332,7 +331,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: iotago.EpochIndex(len(testManaDecayFactors) + 1),
 			result:            13228672242897911807,
@@ -340,7 +339,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
 			result:            6803138682699798504,
@@ -348,7 +347,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "even with the highest possible uint64 number, the calculation should not overflow",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: 401,
 			result:            13046663022640287317,
