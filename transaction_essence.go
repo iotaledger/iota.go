@@ -227,6 +227,10 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	)
 }
 
+// Calculates the Work Score of the TransactionEssence.
+//
+// Does not specifically include the work score of the optional payload because that is already
+// included in the Work Score of the Transaction.
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
 	if err != nil {
