@@ -36,5 +36,5 @@ func (i SlotIndex) MustBytes() []byte {
 }
 
 func (i SlotIndex) String() string {
-	return fmt.Sprintf("SlotIndex(%d)", i)
+	return fmt.Sprintf("Slot(%d)", i)
 }

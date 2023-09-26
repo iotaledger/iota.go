@@ -83,9 +83,9 @@ func (a *Attestation) BlockID() (BlockID, error) {
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
-	slotIndex := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
+	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slotIndex, id), nil
+	return NewSlotIdentifier(slot, id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {

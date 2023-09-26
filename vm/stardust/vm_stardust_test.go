@@ -5211,15 +5211,15 @@ func TestTxSemanticMana(t *testing.T) {
 					&iotago.BasicOutput{
 						Amount: OneMi,
 						Mana: func() iotago.Mana {
-							var slotIndexCreated iotago.SlotIndex = 10
-							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
+							var creationSlot iotago.SlotIndex = 10
+							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -5273,15 +5273,15 @@ func TestTxSemanticMana(t *testing.T) {
 					&iotago.BasicOutput{
 						Amount: OneMi,
 						Mana: func() iotago.Mana {
-							var slotIndexCreated iotago.SlotIndex = 10
-							slotIndexTarget := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
+							var createdSlot iotago.SlotIndex = 10
+							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
 							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, createdSlot, targetSlot)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment

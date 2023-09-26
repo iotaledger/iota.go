@@ -23,14 +23,14 @@ var (
 type SlotIdentifier [SlotIdentifierLength]byte
 
 // SlotIdentifierRepresentingData returns a new SlotIdentifier for the given data by hashing it with blake2b and associating it with the given slot index.
-func SlotIdentifierRepresentingData(index SlotIndex, data []byte) SlotIdentifier {
-	return NewSlotIdentifier(index, blake2b.Sum256(data))
+func SlotIdentifierRepresentingData(slot SlotIndex, data []byte) SlotIdentifier {
+	return NewSlotIdentifier(slot, blake2b.Sum256(data))
 }
 
-func NewSlotIdentifier(index SlotIndex, idBytes Identifier) SlotIdentifier {
+func NewSlotIdentifier(slot SlotIndex, idBytes Identifier) SlotIdentifier {
 	id := SlotIdentifier{}
 	copy(id[:], idBytes[:])
-	binary.LittleEndian.PutUint32(id[IdentifierLength:], uint32(index))
+	binary.LittleEndian.PutUint32(id[IdentifierLength:], uint32(slot))
 
 	return id
 }
@@ -97,6 +97,7 @@ func (id SlotIdentifier) String() string {
 	return fmt.Sprintf("%s:%d", id.Alias(), id.Index())
 }
 
+// TODO: rename to Slot?
 func (id SlotIdentifier) Index() SlotIndex {
 	return SlotIndex(binary.LittleEndian.Uint32(id[IdentifierLength:]))
 }

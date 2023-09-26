@@ -125,68 +125,68 @@ func TestManaDecay_NoEpochIndexDiff(t *testing.T) {
 
 func TestManaDecay_StoredMana(t *testing.T) {
 	type test struct {
-		name             string
-		storedMana       iotago.Mana
-		slotIndexCreated iotago.SlotIndex
-		slotIndexTarget  iotago.SlotIndex
-		result           iotago.Mana
-		wantErr          error
+		name        string
+		storedMana  iotago.Mana
+		createdSlot iotago.SlotIndex
+		targetSlot  iotago.SlotIndex
+		result      iotago.Mana
+		wantErr     error
 	}
 
 	tests := []test{
 		{
-			name:             "check if mana decay works for 0 mana values",
-			storedMana:       0,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(400),
-			result:           0,
-			wantErr:          nil,
+			name:        "check if mana decay works for 0 mana values",
+			storedMana:  0,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(400),
+			result:      0,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana decay works for 0 slot index diffs",
-			storedMana:       iotago.MaxMana,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           iotago.MaxMana,
-			wantErr:          nil,
+			name:        "check if mana decay works for 0 slot index diffs",
+			storedMana:  iotago.MaxMana,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(1),
+			result:      iotago.MaxMana,
+			wantErr:     nil,
 		},
 		{
-			name:             "check for error if target index is lower than created index",
-			storedMana:       0,
-			slotIndexCreated: testTimeProvider.EpochStart(2),
-			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           0,
-			wantErr:          iotago.ErrWrongEpochIndex,
+			name:        "check for error if target index is lower than created index",
+			storedMana:  0,
+			createdSlot: testTimeProvider.EpochStart(2),
+			targetSlot:  testTimeProvider.EpochStart(1),
+			result:      0,
+			wantErr:     iotago.ErrWrongEpochIndex,
 		},
 		{
-			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			storedMana:       iotago.MaxMana,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
-			result:           13228672242897911807,
-			wantErr:          nil,
+			name:        "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
+			storedMana:  iotago.MaxMana,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
+			result:      13228672242897911807,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			storedMana:       iotago.MaxMana,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
-			result:           6803138682699798504,
-			wantErr:          nil,
+			name:        "check if mana decay works for multiples of the available epoch indexes in the lookup table",
+			storedMana:  iotago.MaxMana,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
+			result:      6803138682699798504,
+			wantErr:     nil,
 		},
 		{
-			name:             "even with the highest possible uint64 number, the calculation should not overflow",
-			storedMana:       iotago.MaxMana,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(401),
-			result:           13046663022640287317,
-			wantErr:          nil,
+			name:        "even with the highest possible uint64 number, the calculation should not overflow",
+			storedMana:  iotago.MaxMana,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(401),
+			result:      13046663022640287317,
+			wantErr:     nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.ManaWithDecay(tt.storedMana, tt.slotIndexCreated, tt.slotIndexTarget)
+			result, err := testManaDecayProvider.ManaWithDecay(tt.storedMana, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 
@@ -199,92 +199,92 @@ func TestManaDecay_StoredMana(t *testing.T) {
 
 func TestManaDecay_PotentialMana(t *testing.T) {
 	type test struct {
-		name             string
-		amount           iotago.BaseToken
-		slotIndexCreated iotago.SlotIndex
-		slotIndexTarget  iotago.SlotIndex
-		result           iotago.Mana
-		wantErr          error
+		name        string
+		amount      iotago.BaseToken
+		createdSlot iotago.SlotIndex
+		targetSlot  iotago.SlotIndex
+		result      iotago.Mana
+		wantErr     error
 	}
 
 	tests := []test{
 		{
-			name:             "check if mana decay works for 0 base token values",
-			amount:           0,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(400),
-			result:           0,
-			wantErr:          nil,
+			name:        "check if mana decay works for 0 base token values",
+			amount:      0,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(400),
+			result:      0,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana decay works for 0 slot index diffs",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           0,
-			wantErr:          nil,
+			name:        "check if mana decay works for 0 slot index diffs",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(1),
+			result:      0,
+			wantErr:     nil,
 		},
 		{
-			name:             "check for error if target index is lower than created index",
-			amount:           0,
-			slotIndexCreated: testTimeProvider.EpochStart(2),
-			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           0,
-			wantErr:          iotago.ErrWrongEpochIndex,
+			name:        "check for error if target index is lower than created index",
+			amount:      0,
+			createdSlot: testTimeProvider.EpochStart(2),
+			targetSlot:  testTimeProvider.EpochStart(1),
+			result:      0,
+			wantErr:     iotago.ErrWrongEpochIndex,
 		},
 		{
-			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
-			result:           183827294847826527,
-			wantErr:          nil,
+			name:        "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
+			result:      183827294847826527,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
-			result:           410192222442040018,
-			wantErr:          nil,
+			name:        "check if mana decay works for multiples of the available epoch indexes in the lookup table",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
+			result:      410192222442040018,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana generation works for 0 epoch index diffs",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochEnd(1),
-			result:           562881233944575,
-			wantErr:          nil,
+			name:        "check if mana generation works for 0 epoch index diffs",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochEnd(1),
+			result:      562881233944575,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana generation works for 1 epoch index diffs",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochEnd(2),
-			result:           1125343946211326,
-			wantErr:          nil,
+			name:        "check if mana generation works for 1 epoch index diffs",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochEnd(2),
+			result:      1125343946211326,
+			wantErr:     nil,
 		},
 		{
-			name:             "check if mana generation works for >=2 epoch index diffs",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochEnd(3),
-			result:           1687319975062367,
-			wantErr:          nil,
+			name:        "check if mana generation works for >=2 epoch index diffs",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochEnd(3),
+			result:      1687319975062367,
+			wantErr:     nil,
 		},
 		{
-			name:             "even with the highest possible int64 number, the calculation should not overflow",
-			amount:           math.MaxInt64,
-			slotIndexCreated: testTimeProvider.EpochStart(1),
-			slotIndexTarget:  testTimeProvider.EpochStart(401),
-			result:           190239292158065300,
-			wantErr:          nil,
+			name:        "even with the highest possible int64 number, the calculation should not overflow",
+			amount:      math.MaxInt64,
+			createdSlot: testTimeProvider.EpochStart(1),
+			targetSlot:  testTimeProvider.EpochStart(401),
+			result:      190239292158065300,
+			wantErr:     nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.slotIndexCreated, tt.slotIndexTarget)
+			result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 
@@ -297,68 +297,68 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 
 func TestManaDecay_Rewards(t *testing.T) {
 	type test struct {
-		name              string
-		rewards           iotago.Mana
-		epochIndexReward  iotago.EpochIndex
-		epochIndexClaimed iotago.EpochIndex
-		result            iotago.Mana
-		wantErr           error
+		name         string
+		rewards      iotago.Mana
+		epochReward  iotago.EpochIndex
+		epochClaimed iotago.EpochIndex
+		result       iotago.Mana
+		wantErr      error
 	}
 
 	tests := []test{
 		{
-			name:              "check if mana decay works for 0 mana values",
-			rewards:           0,
-			epochIndexReward:  1,
-			epochIndexClaimed: 400,
-			result:            0,
-			wantErr:           nil,
+			name:         "check if mana decay works for 0 mana values",
+			rewards:      0,
+			epochReward:  1,
+			epochClaimed: 400,
+			result:       0,
+			wantErr:      nil,
 		},
 		{
-			name:              "check if mana decay works for 0 slot index diffs",
-			rewards:           iotago.MaxMana,
-			epochIndexReward:  1,
-			epochIndexClaimed: 1,
-			result:            iotago.MaxMana,
-			wantErr:           nil,
+			name:         "check if mana decay works for 0 slot index diffs",
+			rewards:      iotago.MaxMana,
+			epochReward:  1,
+			epochClaimed: 1,
+			result:       iotago.MaxMana,
+			wantErr:      nil,
 		},
 		{
-			name:              "check for error if target index is lower than created index",
-			rewards:           0,
-			epochIndexReward:  2,
-			epochIndexClaimed: 1,
-			result:            0,
-			wantErr:           iotago.ErrWrongEpochIndex,
+			name:         "check for error if target index is lower than created index",
+			rewards:      0,
+			epochReward:  2,
+			epochClaimed: 1,
+			result:       0,
+			wantErr:      iotago.ErrWrongEpochIndex,
 		},
 		{
-			name:              "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			rewards:           iotago.MaxMana,
-			epochIndexReward:  1,
-			epochIndexClaimed: iotago.EpochIndex(len(testManaDecayFactors) + 1),
-			result:            13228672242897911807,
-			wantErr:           nil,
+			name:         "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
+			rewards:      iotago.MaxMana,
+			epochReward:  1,
+			epochClaimed: iotago.EpochIndex(len(testManaDecayFactors) + 1),
+			result:       13228672242897911807,
+			wantErr:      nil,
 		},
 		{
-			name:              "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			rewards:           iotago.MaxMana,
-			epochIndexReward:  1,
-			epochIndexClaimed: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
-			result:            6803138682699798504,
-			wantErr:           nil,
+			name:         "check if mana decay works for multiples of the available epoch indexes in the lookup table",
+			rewards:      iotago.MaxMana,
+			epochReward:  1,
+			epochClaimed: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
+			result:       6803138682699798504,
+			wantErr:      nil,
 		},
 		{
-			name:              "even with the highest possible uint64 number, the calculation should not overflow",
-			rewards:           iotago.MaxMana,
-			epochIndexReward:  1,
-			epochIndexClaimed: 401,
-			result:            13046663022640287317,
-			wantErr:           nil,
+			name:         "even with the highest possible uint64 number, the calculation should not overflow",
+			rewards:      iotago.MaxMana,
+			epochReward:  1,
+			epochClaimed: 401,
+			result:       13046663022640287317,
+			wantErr:      nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.epochIndexReward, tt.epochIndexClaimed)
+			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.epochReward, tt.epochClaimed)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 

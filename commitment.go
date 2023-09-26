@@ -18,7 +18,8 @@ type CommitmentID = SlotIdentifier
 var EmptyCommitmentID = CommitmentID{}
 
 type Commitment struct {
-	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
+	ProtocolVersion Version `serix:"0,mapKey=protocolVersion"`
+	// TODO: rename to Slot?
 	Index                SlotIndex    `serix:"1,mapKey=index"`
 	PreviousCommitmentID CommitmentID `serix:"2,mapKey=previousCommitmentId"`
 	RootsID              Identifier   `serix:"3,mapKey=rootsId"`
@@ -26,10 +27,10 @@ type Commitment struct {
 	ReferenceManaCost    Mana         `serix:"5,mapKey=referenceManaCost"`
 }
 
-func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
+func NewCommitment(version Version, slot SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
 	return &Commitment{
 		ProtocolVersion:      version,
-		Index:                index,
+		Index:                slot,
 		PreviousCommitmentID: prevID,
 		RootsID:              rootsID,
 		CumulativeWeight:     cumulativeWeight,

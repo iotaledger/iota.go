@@ -295,23 +295,23 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 	}
 
-	commitmentInputIndex := vmParams.WorkingSet.Commitment.Index
-	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitmentInputIndex)
+	commitmentInputSlot := vmParams.WorkingSet.Commitment.Index
+	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitmentInputSlot)
 
-	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputIndex {
+	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputSlot {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires")
 		}
-		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
+		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
 		}
 	} else if nextBlockIssuerFeat != nil {
 		// The block issuer feature was newly added,
 		// or the current feature has expired but it was not removed.
 		// In both cases the expiry slot must be set sufficiently far in the future.
-		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlotIndex {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon (is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlotIndex)
+		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
+			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon (is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	}
 
@@ -364,13 +364,13 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
-	minManalockedSlotIndex := pastBoundedSlotIndex + vmParams.API.ProtocolParameters().MaxCommittableAge()
+	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
 	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
 		basicOutput, is := output.(*iotago.BasicOutput)
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlot) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -379,7 +379,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlotIndex) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlot) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
@@ -404,13 +404,13 @@ func accountStakingSTVF(chainID iotago.ChainID, current *iotago.AccountOutput, n
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
-		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
-		pastBoundedEpochIndex := timeProvider.EpochFromSlot(pastBoundedSlotIndex)
-		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
-		futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
+		pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Index)
+		pastBoundedEpoch := timeProvider.EpochFromSlot(pastBoundedSlot)
+		futureBoundedSlot := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		futureBoundedEpoch := timeProvider.EpochFromSlot(futureBoundedSlot)
 
-		if futureBoundedEpochIndex <= currentStakingFeat.EndEpoch {
-			earliestUnbondingEpoch := pastBoundedEpochIndex + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
+		if futureBoundedEpoch <= currentStakingFeat.EndEpoch {
+			earliestUnbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 
 			return accountStakingNonExpiredValidation(
 				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, isClaiming,
@@ -441,15 +441,15 @@ func accountStakingGenesisValidation(acc *iotago.AccountOutput, stakingFeat *iot
 		return iotago.ErrInvalidStakingCommitmentInput
 	}
 
-	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Index)
 	timeProvider := vmParams.API.TimeProvider()
-	pastBoundedEpochIndex := timeProvider.EpochFromSlot(pastBoundedSlotIndex)
+	pastBoundedEpoch := timeProvider.EpochFromSlot(pastBoundedSlot)
 
-	if stakingFeat.StartEpoch != pastBoundedEpochIndex {
+	if stakingFeat.StartEpoch != pastBoundedEpoch {
 		return iotago.ErrInvalidStakingStartEpoch
 	}
 
-	unbondingEpoch := pastBoundedEpochIndex + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
+	unbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 	if stakingFeat.EndEpoch < unbondingEpoch {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
@@ -555,10 +555,10 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
-		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
-		futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
+		futureBoundedSlot := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		futureBoundedEpoch := timeProvider.EpochFromSlot(futureBoundedSlot)
 
-		if futureBoundedEpochIndex <= stakingFeat.EndEpoch {
+		if futureBoundedEpoch <= stakingFeat.EndEpoch {
 			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidStakingBondedRemoval)
 		}
 
@@ -765,15 +765,15 @@ func delegationGenesisValid(current *iotago.DelegationOutput, vmParams *vm.Param
 	if commitment == nil {
 		return iotago.ErrDelegationCommitmentInputRequired
 	}
-	pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
-	pastBoundedEpochIndex := timeProvider.EpochFromSlot(pastBoundedSlotIndex)
-	votingPowerSlot := votingPowerSlot(pastBoundedEpochIndex, vmParams)
+	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Index)
+	pastBoundedEpoch := timeProvider.EpochFromSlot(pastBoundedSlot)
+	votingPowerSlot := votingPowerSlot(pastBoundedEpoch, vmParams)
 
 	var expectedStartEpoch iotago.EpochIndex
-	if pastBoundedSlotIndex <= votingPowerSlot {
-		expectedStartEpoch = pastBoundedEpochIndex + 1
+	if pastBoundedSlot <= votingPowerSlot {
+		expectedStartEpoch = pastBoundedEpoch + 1
 	} else {
-		expectedStartEpoch = pastBoundedEpochIndex + 2
+		expectedStartEpoch = pastBoundedEpoch + 2
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
@@ -809,15 +809,15 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 	if commitment == nil {
 		return iotago.ErrDelegationCommitmentInputRequired
 	}
-	futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
-	futureBoundedEpochIndex := timeProvider.EpochFromSlot(futureBoundedSlotIndex)
-	votingPowerSlot := votingPowerSlot(futureBoundedEpochIndex, vmParams)
+	futureBoundedSlot := vmParams.FutureBoundedSlotIndex(commitment.Index)
+	futureBoundedEpoch := timeProvider.EpochFromSlot(futureBoundedSlot)
+	votingPowerSlot := votingPowerSlot(futureBoundedEpoch, vmParams)
 
 	var expectedEndEpoch iotago.EpochIndex
-	if futureBoundedSlotIndex <= votingPowerSlot {
-		expectedEndEpoch = futureBoundedEpochIndex
+	if futureBoundedSlot <= votingPowerSlot {
+		expectedEndEpoch = futureBoundedEpoch
 	} else {
-		expectedEndEpoch = futureBoundedEpochIndex + 1
+		expectedEndEpoch = futureBoundedEpoch + 1
 	}
 
 	if next.EndEpoch != expectedEndEpoch {
@@ -829,7 +829,7 @@ func delegationStateChangeValid(current *iotago.DelegationOutput, next *iotago.D
 
 // votingPowerSlot returns the slot at the end of which the voting power
 // for the epoch with index epochIndex is calculated.
-func votingPowerSlot(epochIndex iotago.EpochIndex, vmParams *vm.Params) iotago.SlotIndex {
+func votingPowerSlot(epoch iotago.EpochIndex, vmParams *vm.Params) iotago.SlotIndex {
 	// TODO: Activity Window Duration missing.
-	return vmParams.API.TimeProvider().EpochEnd(epochIndex) - vmParams.API.ProtocolParameters().EpochNearingThreshold()
+	return vmParams.API.TimeProvider().EpochEnd(epoch) - vmParams.API.ProtocolParameters().EpochNearingThreshold()
 }
