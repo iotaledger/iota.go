@@ -10,6 +10,12 @@ type ReferenceUnlock struct {
 	Reference uint16 `serix:"0,mapKey=reference"`
 }
 
+func (r *ReferenceUnlock) Clone() Unlock {
+	return &ReferenceUnlock{
+		Reference: r.Reference,
+	}
+}
+
 func (r *ReferenceUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(ChainAddress)
 

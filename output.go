@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"sort"
 	"strings"
@@ -12,7 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
@@ -23,17 +26,23 @@ type BaseToken uint64
 // BaseTokenSize is the size in bytes that is used by BaseToken.
 const BaseTokenSize = 8
 
+const MaxBaseToken = BaseToken(math.MaxUint64)
+
 // Mana defines the type of the consumable resource e.g. used in congestion control.
 type Mana uint64
 
 // ManaSize is the size in bytes that is used by Mana.
 const ManaSize = 8
 
+const MaxMana = Mana(math.MaxUint64)
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[Output]
+	constraints.Equalable[Output]
 
 	// BaseTokenAmount returns the amount of base tokens held by this Output.
 	BaseTokenAmount() BaseToken
@@ -52,9 +61,6 @@ type Output interface {
 
 	// Type returns the type of the output.
 	Type() OutputType
-
-	// Clone clones the Output.
-	Clone() Output
 }
 
 // OutputType defines the type of outputs.
@@ -95,8 +101,10 @@ var outputNames = [OutputDelegation + 1]string{
 }
 
 const (
+	// OutputIndexLength defines the length of an OutputIndex.
+	OutputIndexLength = serializer.UInt16ByteSize
 	// OutputIDLength defines the length of an OutputID.
-	OutputIDLength = TransactionIDLength + serializer.UInt16ByteSize
+	OutputIDLength = SlotIdentifierLength + OutputIndexLength
 )
 
 var (
@@ -111,8 +119,8 @@ var (
 // defines the default offset virtual byte costs for an output.
 func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
 	return rentStruct.VBFactorKey.Multiply(OutputIDLength) +
-		// included block id, conf ms index, conf ms ts
-		rentStruct.VBFactorData.Multiply(BlockIDLength+serializer.UInt32ByteSize+serializer.UInt32ByteSize)
+		// included block id, slot booked
+		rentStruct.VBFactorData.Multiply(BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists
@@ -132,26 +140,30 @@ func (outputID OutputID) String() string {
 	return fmt.Sprintf("OutputID(%s:%d)", outputID.TransactionID().String(), outputID.Index())
 }
 
-// Index returns the index of the Output this OutputID references.
-func (outputID OutputID) Index() uint16 {
-	return binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
-}
-
 // TransactionID returns the TransactionID of the Output this OutputID references.
 func (outputID OutputID) TransactionID() TransactionID {
 	var txID TransactionID
-	copy(txID[:], outputID[:TransactionIDLength])
+	copy(txID[:], outputID[:SlotIdentifierLength])
 
 	return txID
 }
 
+// Index returns the index of the Output this OutputID references.
+func (outputID OutputID) Index() uint16 {
+	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
+}
+
+// CreationSlotIndex returns the SlotIndex the Output was created in.
+func (outputID OutputID) CreationSlotIndex() SlotIndex {
+	return outputID.TransactionID().Index()
+}
+
 // UTXOInput creates a UTXOInput from this OutputID.
 func (outputID OutputID) UTXOInput() *UTXOInput {
-	utxoInput := &UTXOInput{}
-	copy(utxoInput.TransactionID[:], outputID[:TransactionIDLength])
-	utxoInput.TransactionOutputIndex = binary.LittleEndian.Uint16(outputID[TransactionIDLength:])
-
-	return utxoInput
+	return &UTXOInput{
+		TransactionID:          outputID.TransactionID(),
+		TransactionOutputIndex: outputID.Index(),
+	}
 }
 
 func (outputID OutputID) Bytes() ([]byte, error) {
@@ -185,10 +197,12 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	return vals, nil
 }
 
-// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and index.
+// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and output index.
 func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
-	utxo := UTXOInput{TransactionOutputIndex: index}
-	copy(utxo.TransactionID[:], (txID)[:])
+	utxo := &UTXOInput{
+		TransactionID:          txID,
+		TransactionOutputIndex: index,
+	}
 
 	return utxo.OutputID()
 }
@@ -228,6 +242,11 @@ func MustOutputIDFromHex(hexStr string) OutputID {
 
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
+
+// Clone clones the OutputSet.
+func (outputSet OutputSet) Clone() OutputSet {
+	return lo.CloneMap(outputSet)
+}
 
 // Filter creates a new OutputSet with Outputs which pass the filter function f.
 func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool) OutputSet {
@@ -327,6 +346,16 @@ func (i *ChainTransitionError) Unwrap() error {
 
 // Outputs is a slice of Output.
 type Outputs[T Output] []T
+
+func (outputs Outputs[T]) Clone() Outputs[T] {
+	cpy := make(Outputs[T], len(outputs))
+	for idx, output := range outputs {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
+		cpy[idx] = output.Clone().(T)
+	}
+
+	return cpy
+}
 
 func (outputs Outputs[T]) Size() int {
 	sum := serializer.UInt16ByteSize
@@ -679,8 +708,8 @@ func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
 		return nil, 0, err
 	}
 	var txID TransactionID
-	copy(txID[:], outputIDBytes[:TransactionIDLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[TransactionIDLength : TransactionIDLength+serializer.UInt16ByteSize])
+	copy(txID[:], outputIDBytes[:SlotIdentifierLength])
+	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[SlotIdentifierLength : SlotIdentifierLength+serializer.UInt16ByteSize])
 
 	return &txID, outputIndex, nil
 }
@@ -883,8 +912,8 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if delegationOutput.ValidatorID.Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorIDZeroed, "output %d", index)
+		if delegationOutput.ValidatorAddress.AccountID().Empty() {
+			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
 		}
 
 		return nil

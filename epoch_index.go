@@ -3,6 +3,7 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
@@ -14,22 +15,24 @@ var (
 	ErrWrongEpochIndex = ierrors.New("wrong epoch index")
 )
 
-const EpochIndexLength = serializer.UInt64ByteSize
+const EpochIndexLength = serializer.UInt32ByteSize
+
+const MaxEpochIndex = EpochIndex(math.MaxUint32)
 
 // EpochIndex is the index of an epoch.
-type EpochIndex uint64
+type EpochIndex uint32
 
 func EpochIndexFromBytes(b []byte) (EpochIndex, int, error) {
 	if len(b) < EpochIndexLength {
 		return 0, 0, ierrors.New("invalid epoch index size")
 	}
 
-	return EpochIndex(binary.LittleEndian.Uint64(b)), EpochIndexLength, nil
+	return EpochIndex(binary.LittleEndian.Uint32(b)), EpochIndexLength, nil
 }
 
 func (i EpochIndex) Bytes() ([]byte, error) {
-	bytes := make([]byte, serializer.UInt64ByteSize)
-	binary.LittleEndian.PutUint64(bytes, uint64(i))
+	bytes := make([]byte, EpochIndexLength)
+	binary.LittleEndian.PutUint32(bytes, uint32(i))
 
 	return bytes, nil
 }

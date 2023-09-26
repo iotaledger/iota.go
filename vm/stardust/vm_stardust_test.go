@@ -4,7 +4,6 @@ package stardust_test
 import (
 	"bytes"
 	"crypto/ed25519"
-	"math"
 	"math/big"
 	"slices"
 	"testing"
@@ -832,7 +831,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -859,7 +858,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
@@ -913,7 +912,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -940,8 +939,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+								ExpirySlot:      iotago.MaxSlotIndex,
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -993,8 +992,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
-								ExpirySlot:      iotago.SlotIndex(math.MaxUint64),
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+								ExpirySlot:      iotago.MaxSlotIndex,
 							},
 						},
 						Conditions: iotago.AccountOutputUnlockConditions{
@@ -1065,7 +1064,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1136,7 +1135,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1198,7 +1197,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1220,7 +1219,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
@@ -5145,7 +5144,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5168,7 +5167,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -5206,7 +5205,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: OneMi,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5229,7 +5228,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(math.MaxUint64, slotIndexCreated, slotIndexTarget)
+							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, slotIndexCreated, slotIndexTarget)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -5367,7 +5366,7 @@ func TestTxSemanticMana(t *testing.T) {
 				inputIDs[0]: vm.OutputWithCreationSlot{
 					Output: &iotago.BasicOutput{
 						Amount: 5,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
@@ -5447,7 +5446,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 					&iotago.BasicOutput{
 						Amount: 5,
-						Mana:   math.MaxUint64,
+						Mana:   iotago.MaxMana,
 						Conditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
@@ -5585,12 +5584,12 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	inputs := vm.InputSet{
 		inputIDs[0]: vm.OutputWithCreationSlot{
 			Output: &iotago.DelegationOutput{
-				Amount:          OneMi * 10,
-				DelegatedAmount: OneMi * 10,
-				DelegationID:    iotago.EmptyDelegationID(),
-				ValidatorID:     iotago.EmptyAccountID(),
-				StartEpoch:      currentEpoch,
-				EndEpoch:        currentEpoch + 5,
+				Amount:           OneMi * 10,
+				DelegatedAmount:  OneMi * 10,
+				DelegationID:     iotago.EmptyDelegationID(),
+				ValidatorAddress: &iotago.AccountAddress{},
+				StartEpoch:       currentEpoch,
+				EndEpoch:         currentEpoch + 5,
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: ident},
 				},
@@ -5870,6 +5869,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 					},
+					ValidatorAddress: &iotago.AccountAddress{},
 				}
 			},
 			createTestParameters: []func() testParameters{
@@ -5952,23 +5952,23 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 	for _, tt := range tests {
 		for _, makeTestInput := range tt.createTestParameters {
 			testInput := makeTestInput()
-			testOutput := tt.createTestOutput(testInput.address)
-
-			inputs, sig, transactionEssence := makeTransaction(testOutput)
-
-			vmParams := &vm.Params{
-				API: testAPI,
-			}
-
-			resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-			tx := &iotago.Transaction{
-				Essence: transactionEssence,
-				Unlocks: iotago.Unlocks{
-					&iotago.SignatureUnlock{Signature: sig},
-				},
-			}
-
 			t.Run(testInput.name, func(t *testing.T) {
+				testOutput := tt.createTestOutput(testInput.address)
+
+				inputs, sig, transactionEssence := makeTransaction(testOutput)
+
+				vmParams := &vm.Params{
+					API: testAPI,
+				}
+
+				resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+				tx := &iotago.Transaction{
+					Essence: transactionEssence,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sig},
+					},
+				}
+
 				err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncAddressRestrictions())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)

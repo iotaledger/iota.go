@@ -10,6 +10,12 @@ type AccountUnlock struct {
 	Reference uint16 `serix:"0,mapKey=reference"`
 }
 
+func (r *AccountUnlock) Clone() Unlock {
+	return &AccountUnlock{
+		Reference: r.Reference,
+	}
+}
+
 func (r *AccountUnlock) SourceAllowed(address Address) bool {
 	_, ok := address.(*AccountAddress)
 

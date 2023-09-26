@@ -67,7 +67,7 @@ func TestOutputIDString(t *testing.T) {
 		outputID         iotago.OutputID
 		outputTypeString string
 	}{
-		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.IdentifierFromHexString("0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416")), 1), outputTypeString: "OutputID(0xc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafcea639416:1)"},
+		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.SlotIdentifierFromHexString("0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc")), 1), outputTypeString: "OutputID(0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc:4242168339:1)"},
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.outputID.String(), tt.outputTypeString)
@@ -181,12 +181,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - DelegationOutput",
 			source: &iotago.DelegationOutput{
-				Amount:          1337,
-				DelegatedAmount: 1337,
-				DelegationID:    tpkg.Rand32ByteArray(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      iotago.EpochIndex(32),
-				EndEpoch:        iotago.EpochIndex(37),
+				Amount:           1337,
+				DelegatedAmount:  1337,
+				DelegationID:     tpkg.Rand32ByteArray(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       iotago.EpochIndex(32),
+				EndEpoch:         iotago.EpochIndex(37),
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -196,12 +196,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "fail - Delegation Output contains Implicit Account Creation Address",
 			source: &iotago.DelegationOutput{
-				Amount:          1337,
-				DelegatedAmount: 1337,
-				DelegationID:    tpkg.Rand32ByteArray(),
-				ValidatorID:     tpkg.RandAccountID(),
-				StartEpoch:      iotago.EpochIndex(32),
-				EndEpoch:        iotago.EpochIndex(37),
+				Amount:           1337,
+				DelegatedAmount:  1337,
+				DelegationID:     tpkg.Rand32ByteArray(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       iotago.EpochIndex(32),
+				EndEpoch:         iotago.EpochIndex(37),
 				Conditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
 				},
@@ -220,6 +220,8 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParams := iotago.NewV3ProtocolParameters(
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
 	)
+
+	var minAmount iotago.BaseToken = 47400
 
 	tests := []struct {
 		name        string
@@ -244,7 +246,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:     44200, // min amount
+					Amount:     minAmount, // min amount
 					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()}},
 				},
 			},
@@ -254,14 +256,13 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			name:        "ok - storage deposit return",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
-				// min 43400
 				&iotago.BasicOutput{
 					Amount: 100000,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        44200,
+							Amount:        minAmount, // min amount
 						},
 					},
 					Mana: 500,
@@ -279,7 +280,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 						&iotago.StorageDepositReturnUnlockCondition{
 							ReturnAddress: tpkg.RandAccountAddress(),
-							Amount:        43400 - 1, // off by 1
+							Amount:        minAmount - 1, // off by 1
 						},
 					},
 				},
@@ -310,7 +311,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: 43400 - 1,
+					Amount: minAmount - 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
@@ -839,6 +840,8 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 }
 
 func TestOutputsSyntacticaDelegation(t *testing.T) {
+	emptyAccountAddress := iotago.AccountAddress{}
+
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs[iotago.Output]
@@ -848,10 +851,10 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			name: "ok",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
-					Amount:          OneMi,
-					DelegatedAmount: OneMi,
-					DelegationID:    iotago.EmptyDelegationID(),
-					ValidatorID:     tpkg.RandAccountID(),
+					Amount:           OneMi,
+					DelegatedAmount:  OneMi,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: tpkg.RandAccountAddress(),
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -862,15 +865,15 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			name: "fail - validator id zeroed",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
-					Amount:       OneMi,
-					DelegationID: iotago.EmptyDelegationID(),
-					ValidatorID:  iotago.EmptyAccountID(),
+					Amount:           OneMi,
+					DelegationID:     iotago.EmptyDelegationID(),
+					ValidatorAddress: &emptyAccountAddress,
 					Conditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationValidatorIDZeroed,
+			wantErr: iotago.ErrDelegationValidatorAddressZeroed,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalDelegation()

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -20,15 +22,11 @@ type Feature interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[Feature]
+	constraints.Equalable[Feature]
 
 	// Type returns the type of the Feature.
 	Type() FeatureType
-
-	// Equal tells whether this Feature is equal to other.
-	Equal(other Feature) bool
-
-	// Clone clones the Feature.
-	Clone() Feature
 }
 
 // FeatureType defines the type of features.
@@ -66,12 +64,7 @@ type Features[T Feature] []Feature
 
 // Clone clones the Features.
 func (f Features[T]) Clone() Features[T] {
-	cpy := make(Features[T], len(f))
-	for i, v := range f {
-		cpy[i] = v.Clone()
-	}
-
-	return cpy
+	return lo.CloneSlice(f)
 }
 
 func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
@@ -141,8 +134,9 @@ func (f Features[T]) Equal(other Features[T]) bool {
 	if len(f) != len(other) {
 		return false
 	}
-	for i, feat := range f {
-		if !feat.Equal(other[i]) {
+
+	for idx, feat := range f {
+		if !feat.Equal(other[idx]) {
 			return false
 		}
 	}
@@ -172,12 +166,7 @@ type FeatureSet map[FeatureType]Feature
 
 // Clone clones the FeatureSet.
 func (f FeatureSet) Clone() FeatureSet {
-	cpy := make(FeatureSet, len(f))
-	for k, v := range f {
-		cpy[k] = v.Clone()
-	}
-
-	return cpy
+	return lo.CloneMap(f)
 }
 
 // SenderFeature returns the SenderFeature in the set or nil.

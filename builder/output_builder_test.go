@@ -1,7 +1,6 @@
 package builder_test
 
 import (
-	"math"
 	"math/big"
 	"testing"
 	"time"
@@ -57,11 +56,11 @@ func TestAccountOutputBuilder(t *testing.T) {
 		immMetadata                  = []byte("654321")
 		immSender                    = tpkg.RandEd25519Address()
 
-		blockIssuerKey1    = iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
-		blockIssuerKey2    = iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
-		blockIssuerKey3    = iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
-		newBlockIssuerKey1 = iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
-		newBlockIssuerKey2 = iotago.BlockIssuerKeyEd25519FromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey1    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey2    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey3    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		newBlockIssuerKey1 = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		newBlockIssuerKey2 = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, amount).
@@ -69,15 +68,14 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Metadata(metadata).
 		StateMetadata(metadata).
 		Staking(amount, 1, 1000).
-		BlockIssuer(iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}, 100000).
+		BlockIssuer(iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3), 100000).
 		ImmutableMetadata(immMetadata).
 		ImmutableSender(immSender).
 		FoundriesToGenerate(5).
 		Build()
 	require.NoError(t, err)
 
-	expectedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}
-	expectedBlockIssuerKeys.Sort()
+	expectedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3)
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
@@ -99,7 +97,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
-				EndEpoch:     math.MaxUint64,
+				EndEpoch:     iotago.MaxEpochIndex,
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -107,7 +105,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expected, accountOutput)
+	require.True(t, expected.Equal(accountOutput), "account output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
@@ -131,8 +129,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Builder().Build()
 	require.NoError(t, err)
 
-	expectedUpdatedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2}
-	expectedUpdatedBlockIssuerKeys.Sort()
+	expectedUpdatedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2)
 
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
@@ -162,32 +159,32 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expectedFeatures, updatedFeatures)
+	require.True(t, expectedFeatures.Equal(updatedFeatures), "features should be equal")
 }
 
 func TestDelegationOutputBuilder(t *testing.T) {
 	var (
-		address                         = tpkg.RandEd25519Address()
-		updatedAddress                  = tpkg.RandEd25519Address()
-		amount         iotago.BaseToken = 1337
-		updatedAmount  iotago.BaseToken = 127
-		validatorID                     = tpkg.RandAccountID()
-		delegationID                    = tpkg.RandDelegationID()
+		address                           = tpkg.RandEd25519Address()
+		updatedAddress                    = tpkg.RandEd25519Address()
+		amount           iotago.BaseToken = 1337
+		updatedAmount    iotago.BaseToken = 127
+		validatorAddress                  = tpkg.RandAccountAddress()
+		delegationID                      = tpkg.RandDelegationID()
 	)
 
-	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorID, address, amount).
+	delegationOutput, err := builder.NewDelegationOutputBuilder(validatorAddress, address, amount).
 		DelegatedAmount(amount).
 		StartEpoch(1000).
 		Build()
 	require.NoError(t, err)
 
 	expected := &iotago.DelegationOutput{
-		Amount:          1337,
-		DelegatedAmount: 1337,
-		DelegationID:    iotago.EmptyDelegationID(),
-		ValidatorID:     validatorID,
-		StartEpoch:      1000,
-		EndEpoch:        0,
+		Amount:           1337,
+		DelegatedAmount:  1337,
+		DelegationID:     iotago.EmptyDelegationID(),
+		ValidatorAddress: validatorAddress,
+		StartEpoch:       1000,
+		EndEpoch:         0,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: address},
 		},
@@ -204,12 +201,12 @@ func TestDelegationOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedOutput := &iotago.DelegationOutput{
-		Amount:          127,
-		DelegatedAmount: 127,
-		ValidatorID:     validatorID,
-		DelegationID:    delegationID,
-		StartEpoch:      1000,
-		EndEpoch:        1500,
+		Amount:           127,
+		DelegatedAmount:  127,
+		ValidatorAddress: validatorAddress,
+		DelegationID:     delegationID,
+		StartEpoch:       1000,
+		EndEpoch:         1500,
 		Conditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: updatedAddress},
 		},

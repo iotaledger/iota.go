@@ -3,28 +3,30 @@ package iotago
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const SlotIndexLength = serializer.UInt64ByteSize
+const SlotIndexLength = serializer.UInt32ByteSize
+const MaxSlotIndex = SlotIndex(math.MaxUint32)
 
 // SlotIndex is the ID of a slot.
-type SlotIndex uint64
+type SlotIndex uint32
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
 	if len(b) < SlotIndexLength {
 		return 0, 0, ierrors.New("invalid slot index size")
 	}
 
-	return SlotIndex(binary.LittleEndian.Uint64(b)), SlotIndexLength, nil
+	return SlotIndex(binary.LittleEndian.Uint32(b)), SlotIndexLength, nil
 }
 
 func (i SlotIndex) Bytes() ([]byte, error) {
-	bytes := make([]byte, serializer.UInt64ByteSize)
-	binary.LittleEndian.PutUint64(bytes, uint64(i))
+	bytes := make([]byte, SlotIndexLength)
+	binary.LittleEndian.PutUint32(bytes, uint32(i))
 
 	return bytes, nil
 }

@@ -30,6 +30,13 @@ type Ed25519Signature struct {
 	Signature [ed25519.SignatureSize]byte `serix:"1,mapKey=signature"`
 }
 
+func (e *Ed25519Signature) Clone() Signature {
+	return &Ed25519Signature{
+		PublicKey: e.PublicKey,
+		Signature: e.Signature,
+	}
+}
+
 func (e *Ed25519Signature) Decode(b []byte) (int, error) {
 	copy(e.PublicKey[:], b[:ed25519.PublicKeySize])
 	copy(e.Signature[:], b[ed25519.PublicKeySize:])

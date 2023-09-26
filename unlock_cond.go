@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -72,19 +73,29 @@ type UnlockCondition interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[UnlockCondition]
+	constraints.Equalable[UnlockCondition]
 
 	// Type returns the type of the UnlockCondition.
 	Type() UnlockConditionType
-
-	// Equal tells whether this UnlockCondition is equal to other.
-	Equal(other UnlockCondition) bool
-
-	// Clone clones the UnlockCondition.
-	Clone() UnlockCondition
 }
 
 // UnlockConditions is a slice of UnlockCondition(s).
 type UnlockConditions[T UnlockCondition] []T
+
+func (f UnlockConditions[T]) Equal(other UnlockConditions[T]) bool {
+	if len(f) != len(other) {
+		return false
+	}
+
+	for idx, unlockCondition := range f {
+		if !unlockCondition.Equal(other[idx]) {
+			return false
+		}
+	}
+
+	return true
+}
 
 func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	var sumCost VBytes

@@ -45,6 +45,21 @@ type TxInput struct {
 	Input iotago.Output `json:"input"`
 }
 
+func (b *TransactionBuilder) Clone() *TransactionBuilder {
+	cpyInputOwner := make(map[iotago.OutputID]iotago.Address, len(b.inputOwner))
+	for outputID, address := range b.inputOwner {
+		cpyInputOwner[outputID] = address.Clone()
+	}
+
+	return &TransactionBuilder{
+		api:              b.api,
+		occurredBuildErr: b.occurredBuildErr,
+		essence:          b.essence.Clone(),
+		inputs:           b.inputs.Clone(),
+		inputOwner:       cpyInputOwner,
+	}
+}
+
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget

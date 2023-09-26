@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -12,13 +13,20 @@ type TaggedData struct {
 	Data []byte `serix:"1,lengthPrefixType=uint32,mapKey=data,maxLen=8192"`
 }
 
+func (u *TaggedData) Clone() Payload {
+	return &TaggedData{
+		Tag:  lo.CopySlice(u.Tag),
+		Data: lo.CopySlice(u.Data),
+	}
+}
+
 func (u *TaggedData) PayloadType() PayloadType {
 	return PayloadTaggedData
 }
 
 func (u *TaggedData) Size() int {
 	// PayloadType
-	return serializer.UInt32ByteSize +
+	return serializer.TypeDenotationByteSize +
 		serializer.OneByte + len(u.Tag) +
 		serializer.UInt32ByteSize + len(u.Data)
 }

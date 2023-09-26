@@ -9,7 +9,7 @@ import (
 
 const (
 	// TransactionIDLength defines the length of a Transaction ID.
-	TransactionIDLength = IdentifierLength
+	TransactionIDLength = SlotIdentifierLength
 )
 
 var (
@@ -39,14 +39,22 @@ var (
 	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
 )
 
-// TransactionID is the ID of a Transaction.
-type TransactionID = Identifier
+var (
+	EmptyTransactionID = TransactionID{}
+)
+
+type TransactionID = SlotIdentifier
 
 // TraansactionEssenceID is the ID of a TransactionEssence.
 type TransactionEssenceID = Identifier
 
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
+
+// TransactionIDFromData returns a new TransactionID for the given data by hashing it with blake2b and appending the creation slot index.
+func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
+	return SlotIdentifierRepresentingData(creationSlot, data)
+}
 
 type TransactionContextInputs ContextInputs[Input]
 
@@ -56,6 +64,13 @@ type Transaction struct {
 	Essence *TransactionEssence `serix:"0,mapKey=essence"`
 	// The unlocks defining the unlocking data for the inputs within the Essence.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
+}
+
+func (t *Transaction) Clone() Payload {
+	return &Transaction{
+		Essence: t.Essence.Clone(),
+		Unlocks: t.Unlocks.Clone(),
+	}
 }
 
 func (t *Transaction) PayloadType() PayloadType {
@@ -83,7 +98,7 @@ func (t *Transaction) ID(api API) (TransactionID, error) {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
 
-	return IdentifierFromData(data), nil
+	return TransactionIDFromData(t.Essence.CreationSlot, data), nil
 }
 
 // EssenceID computes the essence ID of the Transaction.
@@ -174,7 +189,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 
 func (t *Transaction) Size() int {
 	// PayloadType
-	return serializer.UInt32ByteSize +
+	return serializer.TypeDenotationByteSize +
 		t.Essence.Size() +
 		t.Unlocks.Size()
 }

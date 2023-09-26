@@ -3,6 +3,8 @@ package iotago
 import (
 	"fmt"
 	"math/big"
+
+	"github.com/iotaledger/hive.go/constraints"
 )
 
 // TokenSchemeType defines the type of token schemes.
@@ -32,12 +34,11 @@ type TokenScheme interface {
 	Sizer
 	NonEphemeralObject
 	ProcessableObject
+	constraints.Cloneable[TokenScheme]
+	constraints.Equalable[TokenScheme]
 
 	// Type returns the type of the TokenScheme.
 	Type() TokenSchemeType
-
-	// Clone clones the TokenScheme.
-	Clone() TokenScheme
 
 	// StateTransition validates the transition of the token scheme against its new state.
 	StateTransition(transType ChainTransitionType, nextState TokenScheme, in *big.Int, out *big.Int) error

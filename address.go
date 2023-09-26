@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/bech32"
@@ -12,6 +13,8 @@ import (
 var (
 	// ErrUnknownAddrType gets returned for unknown address types.
 	ErrUnknownAddrType = ierrors.New("unknown address type")
+	// ErrInvalidAddressType gets returned when an address type is invalid.
+	ErrInvalidAddressType = ierrors.New("invalid address type")
 	// ErrInvalidNestedAddressType gets returned when a nested address inside a MultiAddress or RestrictedAddress is invalid.
 	ErrInvalidNestedAddressType = ierrors.New("invalid nested address type")
 	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address
@@ -92,7 +95,6 @@ type NetworkPrefix string
 // Network prefixes.
 const (
 	PrefixMainnet NetworkPrefix = "iota"
-	PrefixDevnet  NetworkPrefix = "atoi"
 	PrefixShimmer NetworkPrefix = "smr"
 	PrefixTestnet NetworkPrefix = "rms"
 )
@@ -102,6 +104,8 @@ type Address interface {
 	Sizer
 	NonEphemeralObject
 	fmt.Stringer
+	constraints.Cloneable[Address]
+	constraints.Equalable[Address]
 
 	// Type returns the type of the address.
 	Type() AddressType
@@ -113,14 +117,8 @@ type Address interface {
 	// Bech32 encodes the address as a bech32 string.
 	Bech32(hrp NetworkPrefix) string
 
-	// Equal checks whether other is equal to this Address.
-	Equal(other Address) bool
-
 	// Key returns a string which can be used to index the Address in a map.
 	Key() string
-
-	// Clone clones the Address.
-	Clone() Address
 }
 
 type AddressCapabilities interface {
@@ -214,16 +212,34 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	//nolint:exhaustive
 	switch addrType {
 	case AddressMulti:
-		// return the HRP so we can at least check for correct network
-		return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
+		multiAddrRef, _, err := MultiAddressReferenceFromBytes(addrData)
+		if err != nil {
+			return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+		}
+
+		return NetworkPrefix(hrp), multiAddrRef, nil
+
 	case AddressRestricted:
 		if len(addrData) == 1 {
 			return "", nil, serializer.ErrDeserializationNotEnoughData
 		}
 		underlyingAddrType := AddressType(addrData[1])
 		if underlyingAddrType == AddressMulti {
-			// return the HRP so we can at least check for correct network
-			return NetworkPrefix(hrp), nil, ErrMultiAddrCannotBeReconstructedViaBech32
+			multiAddrRef, consumed, err := MultiAddressReferenceFromBytes(addrData[1:])
+			if err != nil {
+				return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+			}
+
+			// get the address capabilities from the remaining bytes
+			capabilities, _, err := AddressCapabilitiesBitMaskFromBytes(addrData[1+consumed:])
+			if err != nil {
+				return "", nil, ierrors.Errorf("invalid address capabilities: %w", err)
+			}
+
+			return NetworkPrefix(hrp), &RestrictedAddress{
+				Address:             multiAddrRef,
+				AllowedCapabilities: capabilities,
+			}, nil
 		}
 	}
 

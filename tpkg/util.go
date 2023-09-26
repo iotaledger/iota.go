@@ -85,12 +85,12 @@ func RandUTCTime() time.Time {
 }
 
 // RandBaseToken returns a random amount of base token.
-func RandBaseToken(max uint64) iotago.BaseToken {
+func RandBaseToken(max iotago.BaseToken) iotago.BaseToken {
 	return iotago.BaseToken(rand.Int63n(int64(uint32(max))))
 }
 
 // RandMana returns a random amount of mana.
-func RandMana(max uint64) iotago.Mana {
+func RandMana(max iotago.Mana) iotago.Mana {
 	return iotago.Mana(rand.Int63n(int64(uint32(max))))
 }
 
@@ -102,11 +102,11 @@ func RandFloat64(max float64) float64 {
 func RandOutputID(index uint16) iotago.OutputID {
 	var outputID iotago.OutputID
 	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(outputID[:iotago.TransactionIDLength])
+	_, err := rand.Read(outputID[:iotago.SlotIdentifierLength])
 	if err != nil {
 		panic(err)
 	}
-	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], index)
+	binary.LittleEndian.PutUint16(outputID[iotago.SlotIdentifierLength:], index)
 
 	return outputID
 }
@@ -123,7 +123,7 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 func RandTransactionID() iotago.TransactionID {
 	var transactionID iotago.TransactionID
 	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(transactionID[:iotago.TransactionIDLength])
+	_, err := rand.Read(transactionID[:iotago.SlotIdentifierLength])
 	if err != nil {
 		panic(err)
 	}
@@ -168,6 +168,15 @@ func Rand12ByteArray() [12]byte {
 func Rand32ByteArray() [32]byte {
 	var h [32]byte
 	b := RandBytes(32)
+	copy(h[:], b)
+
+	return h
+}
+
+// Rand36ByteArray returns an array with 36 random bytes.
+func Rand36ByteArray() [36]byte {
+	var h [36]byte
+	b := RandBytes(36)
 	copy(h[:], b)
 
 	return h
@@ -229,6 +238,17 @@ func SortedRand32ByteArray(count int) [][32]byte {
 	return hashes
 }
 
+// SortedRand36ByteArray returns a count length slice of sorted 36 byte arrays.
+func SortedRand36ByteArray(count int) [][36]byte {
+	hashes := make(serializer.LexicalOrdered36ByteArrays, count)
+	for i := 0; i < count; i++ {
+		hashes[i] = Rand36ByteArray()
+	}
+	sort.Sort(hashes)
+
+	return hashes
+}
+
 // SortedRand40ByteArray returns a count length slice of sorted 32 byte arrays.
 func SortedRand40ByteArray(count int) [][40]byte {
 	hashes := make(serializer.LexicalOrdered40ByteArrays, count)
@@ -243,7 +263,7 @@ func SortedRand40ByteArray(count int) [][40]byte {
 // SortedRandBlockIDs returned random block IDs.
 func SortedRandBlockIDs(count int) iotago.BlockIDs {
 	slice := make([]iotago.BlockID, count)
-	for i, ele := range SortedRand40ByteArray(count) {
+	for i, ele := range SortedRand36ByteArray(count) {
 		slice[i] = ele
 	}
 
@@ -480,13 +500,11 @@ func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.Transa
 // RandTransactionEssenceWithOptions returns a random transaction essence with options applied.
 func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.TransactionEssence]) *iotago.TransactionEssence {
 	tx := &iotago.TransactionEssence{
-		TransactionInputEssence: &iotago.TransactionInputEssence{
-			NetworkID:     TestNetworkID,
-			ContextInputs: iotago.TxEssenceContextInputs{},
-			Inputs:        iotago.TxEssenceInputs{},
-			Allotments:    iotago.Allotments{},
-		},
-		Outputs: iotago.TxEssenceOutputs{},
+		NetworkID:     TestNetworkID,
+		ContextInputs: iotago.TxEssenceContextInputs{},
+		Inputs:        iotago.TxEssenceInputs{},
+		Outputs:       iotago.TxEssenceOutputs{},
+		Allotments:    iotago.Allotments{},
 	}
 
 	inputCount := 1
@@ -599,12 +617,12 @@ func RandDelegationID() iotago.DelegationID {
 }
 
 func RandSlotIndex() iotago.SlotIndex {
-	return iotago.SlotIndex(RandUint64(math.MaxUint64))
+	return iotago.SlotIndex(RandUint32(uint32(iotago.MaxSlotIndex)))
 }
 
 // RandBlockID produces a random block ID.
 func RandBlockID() iotago.BlockID {
-	return Rand40ByteArray()
+	return Rand36ByteArray()
 }
 
 // RandProtocolBlock returns a random block with the given inner payload.
@@ -724,7 +742,7 @@ func RandUTXOInput() *iotago.UTXOInput {
 // RandCommitmentInput returns a random Commitment input.
 func RandCommitmentInput() *iotago.CommitmentInput {
 	return &iotago.CommitmentInput{
-		CommitmentID: Rand40ByteArray(),
+		CommitmentID: Rand36ByteArray(),
 	}
 }
 
@@ -738,7 +756,7 @@ func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
 // RandUTXOInputWithIndex returns a random UTXO input with a specific index.
 func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 	utxoInput := &iotago.UTXOInput{}
-	txID := RandBytes(iotago.TransactionIDLength)
+	txID := RandBytes(iotago.SlotIdentifierLength)
 	copy(utxoInput.TransactionID[:], txID)
 
 	utxoInput.TransactionOutputIndex = index
@@ -791,22 +809,18 @@ func RandSortAllotment(count int) iotago.Allotments {
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
 		Essence: &iotago.TransactionEssence{
-			TransactionInputEssence: &iotago.TransactionInputEssence{
-				NetworkID:     14147312347886322761,
-				ContextInputs: iotago.TxEssenceContextInputs{},
-				Inputs: iotago.TxEssenceInputs{
-					&iotago.UTXOInput{
-						TransactionID: func() [iotago.TransactionIDLength]byte {
-							var b [iotago.TransactionIDLength]byte
-							copy(b[:], RandBytes(iotago.TransactionIDLength))
+			NetworkID:     14147312347886322761,
+			ContextInputs: iotago.TxEssenceContextInputs{},
+			Inputs: iotago.TxEssenceInputs{
+				&iotago.UTXOInput{
+					TransactionID: func() [iotago.SlotIdentifierLength]byte {
+						var b [iotago.SlotIdentifierLength]byte
+						copy(b[:], RandBytes(iotago.SlotIdentifierLength))
 
-							return b
-						}(),
-						TransactionOutputIndex: 0,
-					},
+						return b
+					}(),
+					TransactionOutputIndex: 0,
 				},
-				Allotments: iotago.Allotments{},
-				Payload:    nil,
 			},
 			Outputs: iotago.TxEssenceOutputs{
 				&iotago.BasicOutput{
@@ -816,6 +830,8 @@ func OneInputOutputTransaction() *iotago.Transaction {
 					},
 				},
 			},
+			Allotments: iotago.Allotments{},
+			Payload:    nil,
 		},
 		Unlocks: iotago.Unlocks{
 			&iotago.SignatureUnlock{
@@ -836,8 +852,9 @@ func RandEd25519PrivateKey() ed25519.PrivateKey {
 func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 	blockIssuerKeys := make(iotago.BlockIssuerKeys, 0, count)
 	for i := 0; i < count; i++ {
-		blockIssuerKeys = append(blockIssuerKeys, iotago.BlockIssuerKeyEd25519FromPublicKey(Rand32ByteArray()))
+		blockIssuerKeys = append(blockIssuerKeys, iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(Rand32ByteArray()))
 	}
+	blockIssuerKeys.Sort()
 
 	return blockIssuerKeys
 }
@@ -930,7 +947,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			iotago.NetworkPrefix(RandString(255)),
 		),
 		iotago.WithSupplyOptions(
-			RandBaseToken(math.MaxUint64),
+			RandBaseToken(iotago.MaxBaseToken),
 			RandUint32(math.MaxUint32),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 			iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
@@ -955,13 +972,13 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
 		iotago.WithLivenessOptions(RandSlotIndex(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
 		iotago.WithCongestionControlOptions(
-			RandMana(math.MaxUint64),
-			RandMana(math.MaxUint64),
-			RandMana(math.MaxUint64),
+			RandMana(iotago.MaxMana),
+			RandMana(iotago.MaxMana),
+			RandMana(iotago.MaxMana),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
-			RandMana(math.MaxUint64),
+			RandMana(iotago.MaxMana),
 			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),
