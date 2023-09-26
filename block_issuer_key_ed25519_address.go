@@ -18,6 +18,13 @@ func Ed25519AddressBlockIssuerKeyFromAddress(address *Ed25519Address) *Ed25519Ad
 	return &Ed25519AddressBlockIssuerKey{Address: address}
 }
 
+func (key *Ed25519AddressBlockIssuerKey) Clone() BlockIssuerKey {
+	return &Ed25519AddressBlockIssuerKey{
+		//nolint:forcetypeassert // we can safely assume that this is an Ed25519Address
+		Address: key.Address.Clone().(*Ed25519Address),
+	}
+}
+
 // BlockIssuerKeyBytes returns a byte slice consisting of the type prefix and the raw address.
 func (key *Ed25519AddressBlockIssuerKey) Bytes() []byte {
 	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), key))

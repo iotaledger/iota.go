@@ -854,6 +854,7 @@ func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 	for i := 0; i < count; i++ {
 		blockIssuerKeys = append(blockIssuerKeys, iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(Rand32ByteArray()))
 	}
+	blockIssuerKeys.Sort()
 
 	return blockIssuerKeys
 }

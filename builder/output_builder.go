@@ -234,8 +234,6 @@ func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost 
 
 // BlockIssuer sets/modifies an iotago.BlockIssuerFeature as a mutable feature on the output.
 func (builder *AccountOutputBuilder) BlockIssuer(keys iotago.BlockIssuerKeys, expirySlot iotago.SlotIndex) *AccountOutputBuilder {
-	keys.Sort()
-
 	builder.output.Features.Upsert(&iotago.BlockIssuerFeature{
 		BlockIssuerKeys: keys,
 		ExpirySlot:      expirySlot,
@@ -384,7 +382,7 @@ func (trans *accountGovernanceTransition) BlockIssuerTransition() *blockIssuerTr
 	blockIssuerFeature := trans.builder.output.FeatureSet().BlockIssuer()
 	if blockIssuerFeature == nil {
 		blockIssuerFeature = &iotago.BlockIssuerFeature{
-			BlockIssuerKeys: make(iotago.BlockIssuerKeys, 0),
+			BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 			ExpirySlot:      0,
 		}
 	}
@@ -447,26 +445,17 @@ type blockIssuerTransition struct {
 
 // AddKeys adds the keys of the BlockIssuerFeature.
 func (trans *blockIssuerTransition) AddKeys(keys ...iotago.BlockIssuerKey) *blockIssuerTransition {
-	trans.feature.BlockIssuerKeys = append(trans.feature.BlockIssuerKeys, keys...)
-	trans.feature.BlockIssuerKeys.Sort()
+	for _, key := range keys {
+		blockIssuerKey := key
+		trans.feature.BlockIssuerKeys.Add(blockIssuerKey)
+	}
 
 	return trans
 }
 
 // RemoveKey deletes the key of the iotago.BlockIssuerFeature.
 func (trans *blockIssuerTransition) RemoveKey(keyToDelete iotago.BlockIssuerKey) *blockIssuerTransition {
-	for i, blockIssuerKey := range trans.feature.BlockIssuerKeys {
-		if blockIssuerKey.Equal(keyToDelete) {
-			// To remove the element at index i, we move the last element to this index.
-			trans.feature.BlockIssuerKeys[i] = trans.feature.BlockIssuerKeys[len(trans.feature.BlockIssuerKeys)-1]
-			// Then we reduce the slice length by one to effectively remove the last element.
-			trans.feature.BlockIssuerKeys = trans.feature.BlockIssuerKeys[:len(trans.feature.BlockIssuerKeys)-1]
-
-			break // No need to continue once the element is found and removed.
-		}
-	}
-
-	trans.feature.BlockIssuerKeys.Sort()
+	trans.feature.BlockIssuerKeys.Remove(keyToDelete)
 
 	return trans
 }
