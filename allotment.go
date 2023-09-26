@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"math"
 	"sort"
 
 	"github.com/iotaledger/hive.go/lo"
@@ -10,6 +11,8 @@ import (
 
 // BlockIssuanceCredits defines the type of block issuance credits.
 type BlockIssuanceCredits int64
+
+const MaxBlockIssuanceCredits = BlockIssuanceCredits(math.MaxInt64)
 
 // Allotment is a struct that represents a list of account IDs and an allotted value.
 type Allotment struct {
