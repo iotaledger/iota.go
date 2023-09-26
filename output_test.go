@@ -221,7 +221,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
 	)
 
-	var minAmount iotago.BaseToken = 47800
+	var minAmount iotago.BaseToken = 47400
 
 	tests := []struct {
 		name        string

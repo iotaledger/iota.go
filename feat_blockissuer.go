@@ -1,8 +1,6 @@
 package iotago
 
 import (
-	"bytes"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -27,7 +25,7 @@ func (s *BlockIssuerFeature) Clone() Feature {
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorData: type prefix + expiry slot
 	// + block issuer keys vbytes
-	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize) +
+	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+SlotIndexLength) +
 		s.BlockIssuerKeys.VBytes(rentStruct, nil)
 }
 
@@ -45,7 +43,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		return false
 	}
 	for i := range s.BlockIssuerKeys {
-		if !bytes.Equal(s.BlockIssuerKeys[i].BlockIssuerKeyBytes(), otherFeat.BlockIssuerKeys[i].BlockIssuerKeyBytes()) {
+		if !s.BlockIssuerKeys[i].Equal(otherFeat.BlockIssuerKeys[i]) {
 			return false
 		}
 	}
