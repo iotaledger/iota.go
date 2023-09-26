@@ -69,8 +69,8 @@ func BenchmarkManaWithDecay_Range(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		value := iotago.MaxMana
-		for slot := 1; slot <= 5*len(testManaDecayFactors); slot++ {
-			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(slot)<<slotsPerEpochExponent)
+		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -91,8 +91,8 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var value iotago.Mana
-		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
-			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
