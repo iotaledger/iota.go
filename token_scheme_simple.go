@@ -37,6 +37,27 @@ func (s *SimpleTokenScheme) Clone() TokenScheme {
 	}
 }
 
+func (s *SimpleTokenScheme) Equal(other TokenScheme) bool {
+	otherTokenScheme, isSameType := other.(*SimpleTokenScheme)
+	if !isSameType {
+		return false
+	}
+
+	if s.MintedTokens.Cmp(otherTokenScheme.MintedTokens) != 0 {
+		return false
+	}
+
+	if s.MeltedTokens.Cmp(otherTokenScheme.MeltedTokens) != 0 {
+		return false
+	}
+
+	if s.MaximumSupply.Cmp(otherTokenScheme.MaximumSupply) != 0 {
+		return false
+	}
+
+	return true
+}
+
 func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(serializer.OneByte) +
 		// minted/melted supply, max. supply

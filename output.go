@@ -37,6 +37,7 @@ type Output interface {
 	NonEphemeralObject
 	ProcessableObject
 	constraints.Cloneable[Output]
+	constraints.Equalable[Output]
 
 	// BaseTokenAmount returns the amount of base tokens held by this Output.
 	BaseTokenAmount() BaseToken
