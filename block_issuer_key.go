@@ -38,24 +38,30 @@ func (keys BlockIssuerKeys) Clone() BlockIssuerKeys {
 }
 
 // Add adds a new block issuer key if it doesn't exist yet.
-func (keys BlockIssuerKeys) Add(key BlockIssuerKey) {
-	for _, k := range keys {
+func (keys *BlockIssuerKeys) Add(key BlockIssuerKey) {
+	for _, k := range *keys {
 		if k.Equal(key) {
 			// key already exists, don't add it
 			return
 		}
 	}
 
-	keys = append(keys, key)
+	// we use the pointer, otherwise the outer slice header is not updated
+	*keys = append(*keys, key)
 	keys.Sort()
 }
 
 // Remove removes a block issuer key in case it exists.
-func (keys BlockIssuerKeys) Remove(key BlockIssuerKey) {
-	for idx, k := range keys {
+func (keys *BlockIssuerKeys) Remove(key BlockIssuerKey) {
+	keysDereferenced := *keys
+	for idx, k := range keysDereferenced {
 		if k.Equal(key) {
-			keys = append(keys[:idx], keys[idx+1:]...)
-			keys.Sort()
+			keysDereferenced = append(keysDereferenced[:idx], keysDereferenced[idx+1:]...)
+			keysDereferenced.Sort()
+
+			// we use the pointer, otherwise the outer slice header is not updated
+			*keys = keysDereferenced
+
 			return
 		}
 	}

@@ -69,7 +69,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Metadata(metadata).
 		StateMetadata(metadata).
 		Staking(amount, 1, 1000).
-		BlockIssuer(iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}, 100000).
+		BlockIssuer(iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3), 100000).
 		ImmutableMetadata(immMetadata).
 		ImmutableSender(immSender).
 		FoundriesToGenerate(5).
@@ -106,7 +106,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expected, accountOutput)
+	require.True(t, expected.Equal(accountOutput), "account output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
@@ -160,7 +160,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expectedFeatures, updatedFeatures)
+	require.True(t, expectedFeatures.Equal(updatedFeatures), "features should be equal")
 }
 
 func TestDelegationOutputBuilder(t *testing.T) {

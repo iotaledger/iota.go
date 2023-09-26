@@ -382,7 +382,7 @@ func (trans *accountGovernanceTransition) BlockIssuerTransition() *blockIssuerTr
 	blockIssuerFeature := trans.builder.output.FeatureSet().BlockIssuer()
 	if blockIssuerFeature == nil {
 		blockIssuerFeature = &iotago.BlockIssuerFeature{
-			BlockIssuerKeys: make(iotago.BlockIssuerKeys, 0),
+			BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 			ExpirySlot:      0,
 		}
 	}
@@ -446,7 +446,8 @@ type blockIssuerTransition struct {
 // AddKeys adds the keys of the BlockIssuerFeature.
 func (trans *blockIssuerTransition) AddKeys(keys ...iotago.BlockIssuerKey) *blockIssuerTransition {
 	for _, key := range keys {
-		trans.feature.BlockIssuerKeys.Add(key)
+		blockIssuerKey := key
+		trans.feature.BlockIssuerKeys.Add(blockIssuerKey)
 	}
 
 	return trans

@@ -832,7 +832,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -859,7 +859,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
@@ -913,7 +913,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -940,7 +940,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
@@ -993,7 +993,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      iotago.SlotIndex(math.MaxUint32),
 							},
 						},
@@ -1065,7 +1065,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1136,7 +1136,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1198,7 +1198,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      100,
 							},
 						},
@@ -1220,7 +1220,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 						AccountID:  accountAddr1.AccountID(),
 						Features: iotago.AccountOutputFeatures{
 							&iotago.BlockIssuerFeature{
-								BlockIssuerKeys: iotago.BlockIssuerKeys{},
+								BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 								ExpirySlot:      1000,
 							},
 						},
