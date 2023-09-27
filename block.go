@@ -490,8 +490,8 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		tx, _ := b.Payload.(*Transaction)
 
 		// check that transaction CreationSlot is smaller or equal than the block that contains it
-		if blockIndex < tx.Essence.CreationSlot {
-			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockIndex, tx.Essence.CreationSlot)
+		if blockSlot < tx.Essence.CreationSlot {
+			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Essence.CreationSlot)
 		}
 
 		if cInput := tx.CommitmentInput(); cInput != nil {
