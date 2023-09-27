@@ -166,6 +166,44 @@ func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParamete
 	return totalMana, nil
 }
 
+// MinRequiredAllotedMana returns the minimum alloted mana required to issue a ProtocolBlock
+// with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
+func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreStructure *iotago.WorkScoreStructure, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+	// clone the essence allotments to not modify the original transaction
+	allotmentsCpy := b.essence.Allotments.Clone()
+
+	// undo the changes to the allotments at the end
+	defer func() {
+		b.essence.Allotments = allotmentsCpy
+	}()
+
+	// add an empty allotment to account for the later added allotment for the block issuer in case it does not exist yet
+	b.IncreaseAllotment(blockIssuerAccountID, 0)
+
+	// create a signed transaction with a empty signer to get the correct workscore.
+	// later the transaction needs to be signed with the correct signer, after the alloted mana was set correctly.
+	dummyTxPayload, err := b.Build(&iotago.EmptyAddressSigner{})
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to build the transaction payload")
+	}
+
+	payloadWorkScore, err := dummyTxPayload.WorkScore(workScoreStructure)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate the transaction payload workscore")
+	}
+
+	workScore, err := workScoreStructure.Block.Add(payloadWorkScore)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to add the block workscore")
+	}
+
+	manaCost, err := iotago.ManaCost(rmc, workScore)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate the mana cost")
+	}
+
+	return manaCost, nil
+}
 
 // Build sings the inputs with the given signer and returns the built payload.
 func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
