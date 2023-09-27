@@ -205,7 +205,7 @@ func TestProtocolBlock_TransactionCreationTime(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
-			iotago.WithLivenessOptions(3, 11, 21, 4),
+			iotago.WithLivenessOptions(15*time.Second, 30*time.Second, 7, 21, 4),
 		), 0)
 
 	creationSlotTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
