@@ -42,11 +42,6 @@ var (
 	ErrAddressCannotReceiveNFTOutput = ierrors.New("address cannot receive nft outputs")
 	// ErrAddressCannotReceiveDelegationOutput gets returned if a DelegationOutput is sent to an address without that capability.
 	ErrAddressCannotReceiveDelegationOutput = ierrors.New("address cannot receive delegation outputs")
-	// ErrImplicitAccountMinManaNotReached gets returns if an implicit account does not have the minimum amount of mana.
-	ErrImplicitAccountMinManaNotReached = ierrors.New("implicit accounts need to have a minimum amount of mana")
-	// ErrImplicitAccountMinAmountNotReached gets returns if an implicit account does not have the minimum amount of base tokens
-	// so that it can be converted to a regular account with a block issuer feature.
-	ErrImplicitAccountMinAmountNotReached = ierrors.New("implicit accounts need to have a minimum amount of base tokens")
 	// ErrImplicitAccountDisallowedUnlockCondition gets returned if an implicit account contains more than one unlock condition.
 	ErrImplicitAccountDisallowedUnlockCondition = ierrors.New("implicit accounts cannot contain more than one unlock condition")
 	// ErrImplicitAccountContainsNativeTokens gets returned if an implicit account contains native tokens.

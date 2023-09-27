@@ -20,8 +20,6 @@ const (
 	MaxEpochIndex    = EpochIndex(math.MaxUint32)
 )
 
-const MaxEpochIndex = EpochIndex(math.MaxUint32)
-
 // EpochIndex is the index of an epoch.
 type EpochIndex uint32
 

@@ -20,8 +20,8 @@ func Ed25519AddressBlockIssuerKeyFromAddress(address *ImplicitAccountCreationAdd
 
 func (key *Ed25519AddressBlockIssuerKey) Clone() BlockIssuerKey {
 	return &Ed25519AddressBlockIssuerKey{
-		//nolint:forcetypeassert // we can safely assume that this is an Ed25519Address
-		Address: key.Address.Clone().(*Ed25519Address),
+		//nolint:forcetypeassert // we can safely assume that this is an ImplicitAccountCreationAddress
+		Address: key.Address.Clone().(*ImplicitAccountCreationAddress),
 	}
 }
 
