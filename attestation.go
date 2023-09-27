@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -23,7 +24,7 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
 		API:         api,
 		BlockHeader: block.BlockHeader,
-		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
+		BlockHash:   lo.PanicOnErr(block.Block.Hash()),
 		Signature:   block.Signature,
 	}
 }
@@ -45,6 +46,10 @@ func AttestationFromBytes(apiProvider APIProvider) func(bytes []byte) (attestati
 	}
 }
 
+func (a *Attestation) SetDeserializationContext(ctx context.Context) {
+	a.API = APIFromContext(ctx)
+}
+
 func (a *Attestation) Compare(other *Attestation) int {
 	switch {
 	case a == nil && other == nil:
@@ -53,9 +58,9 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return -1
 	case other == nil:
 		return 1
-	case a.SlotCommitmentID.Index() > other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() > other.SlotCommitmentID.Slot():
 		return 1
-	case a.SlotCommitmentID.Index() < other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() < other.SlotCommitmentID.Slot():
 		return -1
 	case a.IssuingTime.After(other.IssuingTime):
 		return 1
@@ -66,7 +71,7 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
-func (a Attestation) BlockID() (BlockID, error) {
+func (a *Attestation) BlockID() (BlockID, error) {
 	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
 		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
@@ -78,9 +83,9 @@ func (a Attestation) BlockID() (BlockID, error) {
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
-	slotIndex := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
+	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slotIndex, id), nil
+	return NewSlotIdentifier(slot, id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {

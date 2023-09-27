@@ -100,8 +100,8 @@ func NewManaDecayProvider(
 }
 
 // decay performs mana decay without mana generation.
-func (p *ManaDecayProvider) decay(value Mana, epochIndexDiff EpochIndex) Mana {
-	if value == 0 || epochIndexDiff == 0 || p.decayFactorsLength == 0 {
+func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) Mana {
+	if value == 0 || epochDiff == 0 || p.decayFactorsLength == 0 {
 		// no need to decay if the epoch index didn't change or no decay factors were given
 		return value
 	}
@@ -110,15 +110,15 @@ func (p *ManaDecayProvider) decay(value Mana, epochIndexDiff EpochIndex) Mana {
 	valueHi, valueLo := splitUint64(uint64(value))
 
 	// we keep applying the decay as long as epoch index diffs are left
-	remainingEpochIndexDiff := epochIndexDiff
-	for remainingEpochIndexDiff > 0 {
+	remainingEpochDiff := epochDiff
+	for remainingEpochDiff > 0 {
 		// we can't decay more than the available epoch index diffs
 		// in the lookup table in this iteration
-		diffsToDecay := remainingEpochIndexDiff
+		diffsToDecay := remainingEpochDiff
 		if diffsToDecay > EpochIndex(p.decayFactorsLength) {
 			diffsToDecay = EpochIndex(p.decayFactorsLength)
 		}
-		remainingEpochIndexDiff -= diffsToDecay
+		remainingEpochDiff -= diffsToDecay
 
 		// slice index 0 equals epoch index diff 1
 		decayFactor := p.decayFactors[diffsToDecay-1]
@@ -132,58 +132,58 @@ func (p *ManaDecayProvider) decay(value Mana, epochIndexDiff EpochIndex) Mana {
 }
 
 // generateMana calculates the generated mana.
-func (p *ManaDecayProvider) generateMana(value BaseToken, slotIndexDiff SlotIndex) Mana {
-	if slotIndexDiff == 0 || p.generationRate == 0 {
+func (p *ManaDecayProvider) generateMana(value BaseToken, slotDiff SlotIndex) Mana {
+	if slotDiff == 0 || p.generationRate == 0 {
 		return 0
 	}
 
-	return Mana(fixedPointMultiplication32(uint64(value), uint64(slotIndexDiff)*p.generationRate, p.generationRateExponent))
+	return Mana(fixedPointMultiplication32(uint64(value), uint64(slotDiff)*p.generationRate, p.generationRateExponent))
 }
 
-// StoredManaWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
-	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
-	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
+// ManaWithDecay applies the decay to the given mana.
+func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
+	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
+	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
-	if epochIndexCreated > epochIndexTarget {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
+	if creationEpoch > targetEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
 	}
 
-	return p.decay(storedMana, epochIndexTarget-epochIndexCreated), nil
+	return p.decay(storedMana, targetEpoch-creationEpoch), nil
 }
 
-// PotentialManaWithDecay calculates the generated potential mana and applies the decay to the result.
-func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, slotIndexCreated SlotIndex, slotIndexTarget SlotIndex) (Mana, error) {
-	epochIndexCreated := p.timeProvider.EpochFromSlot(slotIndexCreated)
-	epochIndexTarget := p.timeProvider.EpochFromSlot(slotIndexTarget)
+// ManaGenerationWithDecay calculates the generated mana and applies the decay to the result.
+func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
+	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
+	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
-	if epochIndexCreated > epochIndexTarget {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", epochIndexCreated, epochIndexTarget)
+	if creationEpoch > targetEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
 	}
 
-	epochIndexDiff := epochIndexTarget - epochIndexCreated
+	epochDiff := targetEpoch - creationEpoch
 
 	//nolint:exhaustive // false-positive, we have default case
-	switch epochIndexDiff {
+	switch epochDiff {
 	case 0:
-		return p.generateMana(amount, slotIndexTarget-slotIndexCreated), nil
+		return p.generateMana(amount, targetSlot-creationSlot), nil
 
 	case 1:
-		manaDecayed := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), 1)
-		manaGenerated := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget))
+		manaDecayed := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot)), 1)
+		manaGenerated := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot))
 		return safemath.SafeAdd(manaDecayed, manaGenerated)
 
 	default:
 		c := Mana(fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(slotIndexCreated)), epochIndexDiff)
+		potentialMana_n := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot)), epochDiff)
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n_1 := p.decay(c, epochIndexDiff-1)
+		potentialMana_n_1 := p.decay(c, epochDiff-1)
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(slotIndexTarget)))
+		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot)))
 		if err != nil {
 			return 0, err
 		}
@@ -201,10 +201,10 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, slotIndexC
 }
 
 // RewardsWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, epochIndexReward EpochIndex, epochIndexClaimed EpochIndex) (Mana, error) {
-	if epochIndexReward > epochIndexClaimed {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", epochIndexReward, epochIndexClaimed)
+func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochIndex, claimedEpoch EpochIndex) (Mana, error) {
+	if rewardEpoch > claimedEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", rewardEpoch, claimedEpoch)
 	}
 
-	return p.decay(rewards, epochIndexClaimed-epochIndexReward), nil
+	return p.decay(rewards, claimedEpoch-rewardEpoch), nil
 }

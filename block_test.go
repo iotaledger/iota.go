@@ -24,27 +24,27 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(1337), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, 1337), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTransaction), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTransaction), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - milestone",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadMilestone), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadMilestone), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTaggedData), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - validation block",
-			source: tpkg.RandProtocolBlock(tpkg.ValidationBlock(), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandValidationBlock(tpkg.TestAPI), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 	}
@@ -185,6 +185,85 @@ func TestProtocolBlock_Commitments1(t *testing.T) {
 
 	require.ErrorIs(t, createBlockAtSlot(t, 10, 4, apiProvider), iotago.ErrCommitmentTooRecent)
 
+}
+
+func TestProtocolBlock_TransactionCreationTime(t *testing.T) {
+	keyPair := hiveEd25519.GenerateKeyPair()
+	// We derive a dummy account from addr.
+	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
+	output := &iotago.BasicOutput{
+		Amount: 100000,
+		Conditions: iotago.BasicOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{
+				Address: addr,
+			},
+		},
+	}
+	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
+	// commitments between 90 and slot that the block commits to (100 at most)
+	apiProvider := api.NewEpochBasedProvider()
+	apiProvider.AddProtocolParametersAtEpoch(
+		iotago.NewV3ProtocolParameters(
+			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithLivenessOptions(3, 11, 21, 4),
+		), 0)
+
+	creationSlotTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(101).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(78, tpkg.Rand32ByteArray())}).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, creationSlotTooRecent, apiProvider), iotago.ErrTransactionCreationSlotTooRecent)
+
+	creationSlotCorrectEqual, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(100).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectEqual, apiProvider))
+
+	creationSlotCorrectSmallerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(1).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectSmallerThanCommitment, apiProvider))
+
+	creationSlotCorrectLargerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(99).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectLargerThanCommitment, apiProvider))
 }
 
 func TestProtocolBlock_WeakParents(t *testing.T) {
@@ -364,6 +443,7 @@ func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
 
 func TestBasicBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -371,6 +451,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -390,6 +471,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -397,6 +479,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -416,6 +499,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	protocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -427,6 +511,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	// Invalid HighestSupportedVersion.
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -443,6 +528,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	// Valid HighestSupportedVersion.
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -467,6 +553,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 	signature := tpkg.RandEd25519Signature()
 	strongParents := tpkg.SortedRandBlockIDs(1)
 	validationBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      issuingTime,
@@ -475,6 +562,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 			SlotCommitmentID: commitmentID,
 		},
 		Block: &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           strongParents,
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		},

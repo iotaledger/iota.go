@@ -13,6 +13,7 @@ import (
 
 var (
 	benchLargeTx = &iotago.Transaction{
+		API: tpkg.TestAPI,
 		Essence: &iotago.TransactionEssence{
 			NetworkID:     tpkg.TestNetworkID,
 			ContextInputs: iotago.TxEssenceContextInputs{},
@@ -160,10 +161,12 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
 	m := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion: tpkg.TestAPI.Version(),
 		},
 		Block: &iotago.BasicBlock{
+			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(2),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -171,6 +174,6 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 		},
 	}
 	for i := 0; i < b.N; i++ {
-		_, _ = m.ID(tpkg.TestAPI)
+		_, _ = m.ID()
 	}
 }

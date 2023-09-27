@@ -19,17 +19,17 @@ var EmptyCommitmentID = CommitmentID{}
 
 type Commitment struct {
 	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
-	Index                SlotIndex    `serix:"1,mapKey=index"`
+	Slot                 SlotIndex    `serix:"1,mapKey=slot"`
 	PreviousCommitmentID CommitmentID `serix:"2,mapKey=previousCommitmentId"`
 	RootsID              Identifier   `serix:"3,mapKey=rootsId"`
 	CumulativeWeight     uint64       `serix:"4,mapKey=cumulativeWeight"`
 	ReferenceManaCost    Mana         `serix:"5,mapKey=referenceManaCost"`
 }
 
-func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
+func NewCommitment(version Version, slot SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
 	return &Commitment{
 		ProtocolVersion:      version,
-		Index:                index,
+		Slot:                 slot,
 		PreviousCommitmentID: prevID,
 		RootsID:              rootsID,
 		CumulativeWeight:     cumulativeWeight,
@@ -49,7 +49,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
 
-	return SlotIdentifierRepresentingData(c.Index, data), nil
+	return SlotIdentifierRepresentingData(c.Slot, data), nil
 }
 
 func (c *Commitment) StateID() Identifier {
@@ -72,7 +72,7 @@ func (c *Commitment) MustID() CommitmentID {
 func (c *Commitment) Equals(other *Commitment) bool {
 	return c.MustID() == other.MustID() &&
 		c.ProtocolVersion == other.ProtocolVersion &&
-		c.Index == other.Index &&
+		c.Slot == other.Slot &&
 		c.PreviousCommitmentID == other.PreviousCommitmentID &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight &&
@@ -81,7 +81,7 @@ func (c *Commitment) Equals(other *Commitment) bool {
 
 func (c *Commitment) String() string {
 	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n\tRMC: %d\n}",
-		c.Index, c.PreviousCommitmentID, c.RootsID, c.CumulativeWeight, c.ReferenceManaCost)
+		c.Slot, c.PreviousCommitmentID, c.RootsID, c.CumulativeWeight, c.ReferenceManaCost)
 }
 
 func (c *Commitment) Size() int {
