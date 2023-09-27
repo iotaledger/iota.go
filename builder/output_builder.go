@@ -158,6 +158,13 @@ func (builder *AccountOutputBuilder) Amount(amount iotago.BaseToken) *AccountOut
 	return builder
 }
 
+// Mana sets the mana of the output.
+func (builder *AccountOutputBuilder) Mana(amount iotago.Mana) *AccountOutputBuilder {
+	builder.output.Mana = amount
+
+	return builder
+}
+
 // AccountID sets the iotago.AccountID of this output.
 // Do not call this function if the underlying iotago.AccountOutput is not new.
 func (builder *AccountOutputBuilder) AccountID(accountID iotago.AccountID) *AccountOutputBuilder {
