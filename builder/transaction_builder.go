@@ -140,6 +140,33 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 	return blockBuilder.Payload(tx)
 }
 
+func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParameters, inputSet iotago.OutputSet, slotIndexTarget iotago.SlotIndex) (iotago.Mana, error) {
+	var totalMana iotago.Mana
+
+	for inputID, input := range inputSet {
+		// calculate the potential mana of the input
+		// we need to ignore the storage deposit, because it doesn't generate mana
+		excessBaseTokens := input.BaseTokenAmount() - protoParams.RentStructure().MinDeposit(input)
+		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlotIndex(), slotIndexTarget)
+		if err != nil {
+			// todo add error message
+			return 0, err
+		}
+
+		// calculate the decayed stored mana of the input
+		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlotIndex(), slotIndexTarget)
+		if err != nil {
+			// todo add error message
+			return 0, err
+		}
+
+		totalMana += potentialMana + storedMana
+	}
+
+	return totalMana, nil
+}
+
+
 // Build sings the inputs with the given signer and returns the built payload.
 func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
