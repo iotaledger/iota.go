@@ -6124,6 +6124,7 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 
 		resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 		tx := &iotago.Transaction{
+			API:     testAPI,
 			Essence: transactionEssence,
 			Unlocks: iotago.Unlocks{
 				&iotago.SignatureUnlock{Signature: sig},
