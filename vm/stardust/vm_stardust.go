@@ -89,7 +89,7 @@ func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 			if addressUnlock := basicOutput.UnlockConditionSet().Address(); addressUnlock != nil {
 				if addressUnlock.Address.Type() == iotago.AddressImplicitAccountCreation {
 					utxoInputsSet[outputID] = vm.OutputWithCreationSlot{
-						Output:       vm.ImplicitAccountOutput{BasicOutput: basicOutput},
+						Output:       &vm.ImplicitAccountOutput{BasicOutput: basicOutput},
 						CreationSlot: outputWithCreationSlot.CreationSlot,
 					}
 
