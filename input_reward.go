@@ -28,7 +28,7 @@ func (r *RewardInput) Type() StateType {
 }
 
 func (r *RewardInput) Size() int {
-	// ContextInputType + Index
+	// ContextInputType + Slot
 	return serializer.OneByte + serializer.UInt16ByteSize
 }
 

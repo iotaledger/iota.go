@@ -58,9 +58,9 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return -1
 	case other == nil:
 		return 1
-	case a.SlotCommitmentID.Index() > other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() > other.SlotCommitmentID.Slot():
 		return 1
-	case a.SlotCommitmentID.Index() < other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() < other.SlotCommitmentID.Slot():
 		return -1
 	case a.IssuingTime.After(other.IssuingTime):
 		return 1

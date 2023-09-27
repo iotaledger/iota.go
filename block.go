@@ -351,22 +351,22 @@ func (b *ProtocolBlock) syntacticallyValidate() error {
 
 	minCommittableAge := b.API.ProtocolParameters().MinCommittableAge()
 	maxCommittableAge := b.API.ProtocolParameters().MaxCommittableAge()
-	commitmentSlot := b.SlotCommitmentID.Index()
+	commitmentSlot := b.SlotCommitmentID.Slot()
 	blockID, err := b.ID()
 	if err != nil {
 		return ierrors.Wrapf(err, "failed to syntactically validate block")
 	}
-	blockSlot := blockID.Index()
+	blockSlot := blockID.Slot()
 
 	// check that commitment is not too recent.
 	if commitmentSlot > 0 && // Don't filter commitments to genesis based on being too recent.
 		blockSlot < commitmentSlot+minCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.SlotCommitmentID.Index())
+		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.SlotCommitmentID.Slot())
 	}
 
 	// Check that commitment is not too old.
 	if blockSlot > commitmentSlot+maxCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.SlotCommitmentID.Index(), maxCommittableAge)
+		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.SlotCommitmentID.Slot(), maxCommittableAge)
 	}
 
 	return b.Block.syntacticallyValidate(b)
@@ -482,7 +482,7 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		if err != nil {
 			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
 		}
-		blockSlot := blockID.Index()
+		blockSlot := blockID.Slot()
 
 		minCommittableAge := protocolBlock.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := protocolBlock.API.ProtocolParameters().MaxCommittableAge()
@@ -495,19 +495,19 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		}
 
 		if cInput := tx.CommitmentInput(); cInput != nil {
-			cInputSlot := cInput.CommitmentID.Index()
+			cInputSlot := cInput.CommitmentID.Slot()
 			// check that commitment input is not too recent.
 			if cInputSlot > 0 && // Don't filter commitments to genesis based on being too recent.
 				blockSlot < cInputSlot+minCommittableAge { // filter commitments to future slots.
-				return ierrors.Wrapf(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, cInput.CommitmentID.Index())
+				return ierrors.Wrapf(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, cInput.CommitmentID.Slot())
 			}
 			// Check that commitment input is not too old.
 			if blockSlot > cInputSlot+maxCommittableAge {
-				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Index(), maxCommittableAge)
+				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Slot(), maxCommittableAge)
 			}
 
-			if cInputSlot > protocolBlock.SlotCommitmentID.Index() {
-				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Index(), protocolBlock.SlotCommitmentID.Index())
+			if cInputSlot > protocolBlock.SlotCommitmentID.Slot() {
+				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), protocolBlock.SlotCommitmentID.Slot())
 			}
 		}
 	}

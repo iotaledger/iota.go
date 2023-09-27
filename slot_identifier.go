@@ -94,11 +94,10 @@ func (id SlotIdentifier) ToHex() string {
 }
 
 func (id SlotIdentifier) String() string {
-	return fmt.Sprintf("%s:%d", id.Alias(), id.Index())
+	return fmt.Sprintf("%s:%d", id.Alias(), id.Slot())
 }
 
-// TODO: rename to Slot?
-func (id SlotIdentifier) Index() SlotIndex {
+func (id SlotIdentifier) Slot() SlotIndex {
 	return SlotIndex(binary.LittleEndian.Uint32(id[IdentifierLength:]))
 }
 

@@ -183,7 +183,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 
 	originRes.Commitment = &iotago.Commitment{
 		ProtocolVersion:      1,
-		Index:                iotago.SlotIndex(25),
+		Slot:                 iotago.SlotIndex(25),
 		PreviousCommitmentID: prevID,
 		RootsID:              rootsID,
 		CumulativeWeight:     100_000,
@@ -488,7 +488,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
-		Index:                commitment.Index,
+		Slot:                 commitment.Slot,
 		PreviousCommitmentID: commitment.PreviousCommitmentID,
 		RootsID:              commitment.RootsID,
 		CumulativeWeight:     commitment.CumulativeWeight,
@@ -536,7 +536,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
-		Index:                commitment.Index,
+		Slot:                 commitment.Slot,
 		PreviousCommitmentID: commitment.PreviousCommitmentID,
 		RootsID:              commitment.RootsID,
 		CumulativeWeight:     commitment.CumulativeWeight,

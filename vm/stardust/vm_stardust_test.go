@@ -706,7 +706,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet:        inputs,
-					CommitmentInput: &iotago.Commitment{Index: creationSlot},
+					CommitmentInput: &iotago.Commitment{Slot: creationSlot},
 				},
 				tx: &iotago.Transaction{
 					API:     testAPI,
@@ -879,7 +879,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			commitmentInput := &iotago.Commitment{
-				Index: 110,
+				Slot: 110,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
@@ -961,7 +961,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			commitmentInput := &iotago.Commitment{
-				Index: 110,
+				Slot: 110,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
@@ -1033,7 +1033,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			commitmentInput := &iotago.Commitment{
-				Index: 110,
+				Slot: 110,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
@@ -1106,7 +1106,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			commitment := &iotago.Commitment{
-				Index: 110,
+				Slot: 110,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
@@ -1169,7 +1169,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			}
 
 			commitment := &iotago.Commitment{
-				Index: 110,
+				Slot: 110,
 			}
 
 			sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
@@ -2647,7 +2647,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: iotago.SlotIndex(0),
+						Slot: iotago.SlotIndex(0),
 					},
 				},
 				tx: &iotago.Transaction{
@@ -2927,7 +2927,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: iotago.SlotIndex(0),
+						Slot: iotago.SlotIndex(0),
 					},
 				},
 				tx: &iotago.Transaction{
@@ -2974,7 +2974,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -3298,7 +3298,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -3519,7 +3519,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -5022,7 +5022,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -5066,7 +5066,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -5110,7 +5110,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				resolvedInputs: vm.ResolvedInputs{
 					InputSet: inputs,
 					CommitmentInput: &iotago.Commitment{
-						Index: creationSlot,
+						Slot: creationSlot,
 					},
 				},
 				tx: &iotago.Transaction{
@@ -5624,7 +5624,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 			accountIdent.AccountID(): manaRewardAmount,
 		},
 		CommitmentInput: &iotago.Commitment{
-			Index: currentSlot,
+			Slot: currentSlot,
 		},
 	}
 	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
