@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	benchLargeTx = &iotago.Transaction{
-		Essence: &iotago.TransactionEssence{
-			TransactionInputEssence: &iotago.TransactionInputEssence{
+	benchLargeTx = &iotago.SignedTransaction{
+		Transaction: &iotago.Transaction{
+			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     tpkg.TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs: func() iotago.TxEssenceInputs {
@@ -65,7 +65,7 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 	}
 
 	b.Run("reflection with validation", func(b *testing.B) {
-		target := &iotago.Transaction{}
+		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = tpkg.TestAPI.Decode(data, target, serix.WithValidation())
@@ -73,7 +73,7 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 	})
 
 	b.Run("reflection without validation", func(b *testing.B) {
-		target := &iotago.Transaction{}
+		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = tpkg.TestAPI.Decode(data, target)
@@ -88,7 +88,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 	}
 
 	b.Run("reflection with validation", func(b *testing.B) {
-		target := &iotago.Transaction{}
+		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = tpkg.TestAPI.Decode(data, target, serix.WithValidation())
@@ -96,7 +96,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 	})
 
 	b.Run("reflection without validation", func(b *testing.B) {
-		target := &iotago.Transaction{}
+		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = tpkg.TestAPI.Decode(data, target)
@@ -127,7 +127,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.SigningMessage(tpkg.TestAPI)
+	txEssenceData, err := txPayload.Transaction.SigningMessage(tpkg.TestAPI)
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()
@@ -143,7 +143,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Essence.SigningMessage(tpkg.TestAPI)
+	txEssenceData, err := txPayload.Transaction.SigningMessage(tpkg.TestAPI)
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()

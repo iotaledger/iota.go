@@ -26,7 +26,7 @@ const (
 	PayloadTreasuryTransaction PayloadType = 4
 	// PayloadTaggedData denotes a TaggedData payload.
 	PayloadTaggedData PayloadType = 5
-	// PayloadTransaction denotes a Transaction.
+	// PayloadTransaction denotes a SignedTransaction.
 	PayloadTransaction PayloadType = 6
 	// PayloadMilestone denotes a Milestone.
 	PayloadMilestone PayloadType = 7
@@ -48,7 +48,7 @@ var (
 		"Deprecated-ReceiptTIP17TIP8",
 		"TreasuryTransaction",
 		"TaggedData",
-		"Transaction",
+		"SignedTransaction",
 		"Milestone",
 	}
 )

@@ -12,8 +12,8 @@ var ErrTransactionBuilder = ierrors.New("transaction builder error")
 func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
-		essence: &iotago.TransactionEssence{
-			TransactionInputEssence: &iotago.TransactionInputEssence{
+		essence: &iotago.Transaction{
+			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     api.ProtocolParameters().NetworkID(),
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs:        iotago.TxEssenceInputs{},
@@ -30,7 +30,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 type TransactionBuilder struct {
 	api              iotago.API
 	occurredBuildErr error
-	essence          *iotago.TransactionEssence
+	essence          *iotago.Transaction
 	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
 }
@@ -109,7 +109,7 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 }
 
 // TransactionFunc is a function which receives a Transaction as its parameter.
-type TransactionFunc func(tx *iotago.Transaction)
+type TransactionFunc func(tx *iotago.SignedTransaction)
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
@@ -129,7 +129,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
@@ -188,7 +188,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
-	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
+	sigTxPayload := &iotago.SignedTransaction{Transaction: b.essence, Unlocks: unlocks}
 
 	return sigTxPayload, nil
 }

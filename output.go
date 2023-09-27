@@ -124,7 +124,7 @@ func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
 }
 
 // OutputID defines the identifier for an UTXO which consists
-// out of the referenced TransactionID and the output's index.
+// out of the referenced SignedTransactionID and the output's index.
 type OutputID [OutputIDLength]byte
 
 // EmptyOutputID is an empty OutputID.
@@ -140,9 +140,9 @@ func (outputID OutputID) String() string {
 	return fmt.Sprintf("OutputID(%s:%d)", outputID.TransactionID().String(), outputID.Index())
 }
 
-// TransactionID returns the TransactionID of the Output this OutputID references.
-func (outputID OutputID) TransactionID() TransactionID {
-	var txID TransactionID
+// SignedTransactionID returns the SignedTransactionID of the Output this OutputID references.
+func (outputID OutputID) TransactionID() SignedTransactionID {
+	var txID SignedTransactionID
 	copy(txID[:], outputID[:SlotIdentifierLength])
 
 	return txID
@@ -197,8 +197,8 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	return vals, nil
 }
 
-// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and output index.
-func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
+// OutputIDFromTransactionIDAndIndex creates a OutputID from the given SignedTransactionID and output index.
+func OutputIDFromTransactionIDAndIndex(txID SignedTransactionID, index uint16) OutputID {
 	utxo := &UTXOInput{
 		TransactionID:          txID,
 		TransactionOutputIndex: index,
@@ -415,7 +415,7 @@ func (outputs Outputs[T]) Commitment(api API) ([]byte, error) {
 }
 
 // ChainOutputSet returns a ChainOutputSet for all ChainOutputs in Outputs.
-func (outputs Outputs[T]) ChainOutputSet(txID TransactionID) ChainOutputSet {
+func (outputs Outputs[T]) ChainOutputSet(txID SignedTransactionID) ChainOutputSet {
 	set := make(ChainOutputSet)
 	for outputIndex, output := range outputs {
 		chainOutput, is := Output(output).(ChainOutput)
@@ -692,7 +692,7 @@ type OutputIDHex string
 
 // MustSplitParts returns the transaction ID and output index parts of the hex output ID.
 // It panics if the hex output ID is invalid.
-func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
+func (oih OutputIDHex) MustSplitParts() (*SignedTransactionID, uint16) {
 	txID, outputIndex, err := oih.SplitParts()
 	if err != nil {
 		panic(err)
@@ -702,12 +702,12 @@ func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
 }
 
 // SplitParts returns the transaction ID and output index parts of the hex output ID.
-func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
+func (oih OutputIDHex) SplitParts() (*SignedTransactionID, uint16, error) {
 	outputIDBytes, err := hexutil.DecodeHex(string(oih))
 	if err != nil {
 		return nil, 0, err
 	}
-	var txID TransactionID
+	var txID SignedTransactionID
 	copy(txID[:], outputIDBytes[:SlotIdentifierLength])
 	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[SlotIdentifierLength : SlotIdentifierLength+serializer.UInt16ByteSize])
 

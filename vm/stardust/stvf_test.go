@@ -134,9 +134,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
 						},
@@ -175,9 +175,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 10001,
 							},
 						},
@@ -216,9 +216,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 991,
 							},
 						},
@@ -257,9 +257,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -299,9 +299,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -341,9 +341,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -383,9 +383,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -424,9 +424,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -486,9 +486,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -633,9 +633,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -691,9 +691,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -753,9 +753,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -815,9 +815,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -880,9 +880,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -938,9 +938,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -990,9 +990,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -1047,9 +1047,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -1110,9 +1110,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -1174,9 +1174,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
 						},
@@ -1238,9 +1238,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
 							},
 						},
@@ -1279,9 +1279,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
 							},
 						},
@@ -1318,9 +1318,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 1000,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1000,
 							},
 						},
@@ -1359,9 +1359,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
 							},
@@ -1411,9 +1411,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 999,
 							},
@@ -1463,9 +1463,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
 							},
@@ -1517,9 +1517,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Index: 990,
 					},
 					BIC: exampleBIC,
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
 						},
@@ -1570,9 +1570,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							Output: exampleExistingFoundryOutput,
 						},
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs: nil,
 							},
 							Outputs: iotago.TxEssenceOutputs{
@@ -1647,9 +1647,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
 							},
@@ -1753,9 +1753,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
 							},
@@ -1813,9 +1813,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
 							},
@@ -1874,9 +1874,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: -1,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 900,
 							},
@@ -1932,9 +1932,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
 					},
 
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
 						},
@@ -1992,9 +1992,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
 						},
@@ -2059,9 +2059,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							TransactionInputEssence: &iotago.TransactionInputEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
 								Inputs: nil,
 							},
 							Outputs: iotago.TxEssenceOutputs{
@@ -2183,8 +2183,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					InChains:       vm.ChainInputSet{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{},
 					},
 				},
 			},
@@ -2294,8 +2294,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2323,8 +2323,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2352,8 +2352,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2379,8 +2379,8 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
 							Outputs: iotago.TxEssenceOutputs{
 								&iotago.FoundryOutput{
 									Amount: 100,

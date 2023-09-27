@@ -266,7 +266,7 @@ type (
 		// BlockID is the block ID that contains the output.
 		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
 		// TransactionID is the transaction ID that creates the output.
-		TransactionID iotago.TransactionID `serix:"1,mapKey=transactionId"`
+		TransactionID iotago.SignedTransactionID `serix:"1,mapKey=transactionId"`
 		// OutputIndex is the index of the output.
 		OutputIndex uint16 `serix:"2,mapKey=outputIndex"`
 		// IsSpent indicates whether the output is spent or not.
@@ -274,7 +274,7 @@ type (
 		// CommitmentIDSpent is the commitment ID that includes the spent output.
 		CommitmentIDSpent iotago.CommitmentID `serix:"4,mapKey=commitmentIdSpent,omitempty"`
 		// TransactionIDSpent is the transaction ID that spends the output.
-		TransactionIDSpent iotago.TransactionID `serix:"5,mapKey=transactionIdSpent,omitempty"`
+		TransactionIDSpent iotago.SignedTransactionID `serix:"5,mapKey=transactionIdSpent,omitempty"`
 		// IncludedCommitmentID is the commitment ID that includes the output.
 		IncludedCommitmentID iotago.CommitmentID `serix:"6,mapKey=includedCommitmentId,omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.

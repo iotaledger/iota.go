@@ -194,11 +194,11 @@ func Test_OutputMetadataResponse(t *testing.T) {
 	{
 		response := &apimodels.OutputMetadataResponse{
 			BlockID:              iotago.BlockID{0x8},
-			TransactionID:        iotago.TransactionID{0x9},
+			TransactionID:        iotago.SignedTransactionID{0x9},
 			OutputIndex:          3,
 			IsSpent:              true,
 			CommitmentIDSpent:    iotago.CommitmentID{0x6},
-			TransactionIDSpent:   iotago.TransactionID{0x1},
+			TransactionIDSpent:   iotago.SignedTransactionID{0x1},
 			IncludedCommitmentID: iotago.CommitmentID{0x3},
 			LatestCommitmentID:   iotago.CommitmentID{0x2},
 		}
@@ -218,7 +218,7 @@ func Test_OutputMetadataResponse(t *testing.T) {
 	{
 		response := &apimodels.OutputMetadataResponse{
 			BlockID:            iotago.BlockID{0x8},
-			TransactionID:      iotago.TransactionID{0x9},
+			TransactionID:      iotago.SignedTransactionID{0x9},
 			OutputIndex:        3,
 			IsSpent:            false,
 			LatestCommitmentID: iotago.CommitmentID{0x2},

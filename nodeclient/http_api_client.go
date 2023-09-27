@@ -498,7 +498,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 }
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.ProtocolBlock, error) {
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.SignedTransactionID) (*iotago.ProtocolBlock, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := new(RawDataEnvelope)
@@ -525,7 +525,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 }
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
-func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
+func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.SignedTransactionID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
 	res := new(apimodels.BlockMetadataResponse)

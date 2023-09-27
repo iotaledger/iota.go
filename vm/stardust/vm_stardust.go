@@ -29,7 +29,7 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.SignedTransaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	if vmParams.API == nil {
 		return ierrors.New("no API provided")
 	}
@@ -241,7 +241,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 	}
 
 	var seenNewFoundriesOfAccount uint32
-	for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+	for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 		foundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
@@ -321,7 +321,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		rentStructure,
-		vmParams.WorkingSet.Tx.Essence.CreationSlot,
+		vmParams.WorkingSet.Tx.Transaction.CreationSlot,
 		vmParams.WorkingSet.UTXOInputsWithCreationSlot,
 	)
 	if err != nil {
@@ -329,15 +329,15 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	}
 
 	manaOut, err := vm.TotalManaOut(
-		vmParams.WorkingSet.Tx.Essence.Outputs,
-		vmParams.WorkingSet.Tx.Essence.Allotments,
+		vmParams.WorkingSet.Tx.Transaction.Outputs,
+		vmParams.WorkingSet.Tx.Transaction.Allotments,
 	)
 	if err != nil {
 		return err
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
 	}
@@ -352,7 +352,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	} else {
 		excessBaseTokensAccount = current.Amount - minDeposit
 	}
-	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
 	}
@@ -361,7 +361,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	// AccountOutStored
 	manaOut -= next.Mana
 	// AccountOutAllotted
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+	manaOut -= vmParams.WorkingSet.Tx.Transaction.Allotments.Get(current.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	minManalockedSlotIndex := pastBoundedSlotIndex + vmParams.API.ProtocolParameters().MaxCommittableAge()
@@ -669,7 +669,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
 	// check order of serial number
-	for outputIndex, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+	for outputIndex, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 		otherFoundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue

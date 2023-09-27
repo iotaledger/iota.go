@@ -457,7 +457,7 @@ func (b *BasicBlock) syntacticallyValidate(api API, protocolBlock *ProtocolBlock
 		minCommittableAge := api.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := api.ProtocolParameters().MaxCommittableAge()
 
-		tx, _ := b.Payload.(*Transaction)
+		tx, _ := b.Payload.(*SignedTransaction)
 		if cInput := tx.CommitmentInput(); cInput != nil {
 			cInputIndex := cInput.CommitmentID.Index()
 			// check that commitment input is not too recent.

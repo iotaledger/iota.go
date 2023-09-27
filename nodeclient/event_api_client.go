@@ -354,7 +354,7 @@ func (eac *EventAPIClient) SpentOutputsByUnlockConditionAndAddress(addr iotago.A
 }
 
 // TransactionIncludedBlock returns a channel of the included block which carries the transaction with the given ID.
-func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.TransactionID) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) TransactionIncludedBlock(txID iotago.SignedTransactionID) (<-chan *iotago.ProtocolBlock, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPITransactionsIncludedBlock, "{transactionId}", txID.ToHex(), 1)
 
 	return eac.subscribeToBlocksTopic(topic)
