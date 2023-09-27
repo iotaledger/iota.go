@@ -109,7 +109,7 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 		LatestFinalizedSlot: 14,
 		Commitment: &iotago.Commitment{
 			ProtocolVersion:      api.Version(),
-			Index:                18,
+			Slot:                 18,
 			PreviousCommitmentID: iotago.CommitmentID{0x1},
 			RootsID:              iotago.Identifier{0x2},
 			CumulativeWeight:     89,
@@ -120,7 +120,7 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"strongParents\":[\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x070000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":14,\"commitment\":{\"protocolVersion\":3,\"index\":18,\"previousCommitmentId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"referenceManaCost\":\"123\"}}"
+	expected := "{\"strongParents\":[\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x070000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":14,\"commitment\":{\"protocolVersion\":3,\"slot\":18,\"previousCommitmentId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"referenceManaCost\":\"123\"}}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.IssuanceBlockHeaderResponse)
