@@ -489,8 +489,8 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 		return nil, err
 	}
 
-	block := new(iotago.ProtocolBlock)
-	if _, err := client.APIForSlot(blockID.Index()).Decode(res.Data, block, serix.WithValidation()); err != nil {
+	block, _, err := iotago.ProtocolBlockFromBytes(client)(res.Data)
+	if err != nil {
 		return nil, err
 	}
 
@@ -507,17 +507,8 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 		return nil, err
 	}
 
-	block := new(iotago.ProtocolBlock)
-	version, _, err := iotago.VersionFromBytes(res.Data)
+	block, _, err := iotago.ProtocolBlockFromBytes(client)(res.Data)
 	if err != nil {
-		return nil, err
-	}
-	apiForVersion, err := client.APIForVersion(version)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := apiForVersion.Decode(res.Data, block, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 

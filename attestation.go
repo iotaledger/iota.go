@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"context"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -23,7 +24,7 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
 		API:         api,
 		BlockHeader: block.BlockHeader,
-		BlockHash:   lo.PanicOnErr(block.Block.Hash(api)),
+		BlockHash:   lo.PanicOnErr(block.Block.Hash()),
 		Signature:   block.Signature,
 	}
 }
@@ -43,6 +44,10 @@ func AttestationFromBytes(apiProvider APIProvider) func(bytes []byte) (attestati
 
 		return attestation, consumedBytes, err
 	}
+}
+
+func (a *Attestation) SetDeserializationContext(ctx context.Context) {
+	a.API = APIFromContext(ctx)
 }
 
 func (a *Attestation) Compare(other *Attestation) int {
@@ -66,7 +71,7 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
-func (a Attestation) BlockID() (BlockID, error) {
+func (a *Attestation) BlockID() (BlockID, error) {
 	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
 		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)

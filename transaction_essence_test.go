@@ -46,32 +46,33 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Account twice
 			name: "transition the same Account twice",
-			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID:     tpkg.TestNetworkID,
-				ContextInputs: iotago.TxEssenceContextInputs{},
-				Inputs:        inputIDs.UTXOInputs(),
-				Outputs: iotago.TxEssenceOutputs{
-					&iotago.AccountOutput{
-						Amount:    OneMi,
-						AccountID: accountID,
-						Conditions: iotago.AccountOutputUnlockConditions{
-							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+				&iotago.TransactionEssence{
+					NetworkID:     tpkg.TestNetworkID,
+					ContextInputs: iotago.TxEssenceContextInputs{},
+					Inputs:        inputIDs.UTXOInputs(),
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
 						},
-						Features: nil,
-					},
-					&iotago.AccountOutput{
-						Amount:    OneMi,
-						AccountID: accountID,
-						Conditions: iotago.AccountOutputUnlockConditions{
-							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
 						},
-						Features: nil,
 					},
-				},
-				Allotments: iotago.Allotments{},
-			}),
+					Allotments: iotago.Allotments{},
+				}),
 			target:    &iotago.Transaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
 			deSeriErr: nil,
@@ -79,28 +80,29 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same NFT twice
 			name: "transition the same NFT twice",
-			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID: tpkg.TestNetworkID,
-				Inputs:    inputIDs.UTXOInputs(),
-				Outputs: iotago.TxEssenceOutputs{
-					&iotago.NFTOutput{
-						Amount: OneMi,
-						NFTID:  nftID,
-						Conditions: iotago.NFTOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+				&iotago.TransactionEssence{
+					NetworkID: tpkg.TestNetworkID,
+					Inputs:    inputIDs.UTXOInputs(),
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.NFTOutput{
+							Amount: OneMi,
+							NFTID:  nftID,
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
 						},
-						Features: nil,
-					},
-					&iotago.NFTOutput{
-						Amount: OneMi,
-						NFTID:  nftID,
-						Conditions: iotago.NFTOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+						&iotago.NFTOutput{
+							Amount: OneMi,
+							NFTID:  nftID,
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
 						},
-						Features: nil,
 					},
-				},
-			}),
+				}),
 			target:    &iotago.Transaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
 			deSeriErr: nil,
@@ -108,49 +110,50 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Foundry twice
 			name: "transition the same Foundry twice",
-			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID: tpkg.TestNetworkID,
-				Inputs:    inputIDs.UTXOInputs(),
-				Outputs: iotago.TxEssenceOutputs{
-					&iotago.AccountOutput{
-						Amount:    OneMi,
-						AccountID: accountID,
-						Conditions: iotago.AccountOutputUnlockConditions{
-							&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-							&iotago.GovernorAddressUnlockCondition{Address: ident1},
+			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+				&iotago.TransactionEssence{
+					NetworkID: tpkg.TestNetworkID,
+					Inputs:    inputIDs.UTXOInputs(),
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
 						},
-						Features: nil,
+						&iotago.FoundryOutput{
+							Amount:       OneMi,
+							NativeTokens: nil,
+							SerialNumber: 1,
+							TokenScheme: &iotago.SimpleTokenScheme{
+								MintedTokens:  big.NewInt(50),
+								MeltedTokens:  big.NewInt(0),
+								MaximumSupply: big.NewInt(50),
+							},
+							Conditions: iotago.FoundryOutputUnlockConditions{
+								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
+							},
+							Features: nil,
+						},
+						&iotago.FoundryOutput{
+							Amount:       OneMi,
+							NativeTokens: nil,
+							SerialNumber: 1,
+							TokenScheme: &iotago.SimpleTokenScheme{
+								MintedTokens:  big.NewInt(50),
+								MeltedTokens:  big.NewInt(0),
+								MaximumSupply: big.NewInt(50),
+							},
+							Conditions: iotago.FoundryOutputUnlockConditions{
+								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
+							},
+							Features: nil,
+						},
 					},
-					&iotago.FoundryOutput{
-						Amount:       OneMi,
-						NativeTokens: nil,
-						SerialNumber: 1,
-						TokenScheme: &iotago.SimpleTokenScheme{
-							MintedTokens:  big.NewInt(50),
-							MeltedTokens:  big.NewInt(0),
-							MaximumSupply: big.NewInt(50),
-						},
-						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
-						},
-						Features: nil,
-					},
-					&iotago.FoundryOutput{
-						Amount:       OneMi,
-						NativeTokens: nil,
-						SerialNumber: 1,
-						TokenScheme: &iotago.SimpleTokenScheme{
-							MintedTokens:  big.NewInt(50),
-							MeltedTokens:  big.NewInt(0),
-							MaximumSupply: big.NewInt(50),
-						},
-						Conditions: iotago.FoundryOutputUnlockConditions{
-							&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
-						},
-						Features: nil,
-					},
-				},
-			}),
+				}),
 			target:    &iotago.Transaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
 			deSeriErr: nil,
@@ -171,28 +174,29 @@ func TestAllotmentUniqueness(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "allot to the same account twice",
-			source: tpkg.RandTransactionWithEssence(&iotago.TransactionEssence{
-				NetworkID:     tpkg.TestNetworkID,
-				ContextInputs: iotago.TxEssenceContextInputs{},
-				Inputs:        inputIDs.UTXOInputs(),
-				Outputs: iotago.TxEssenceOutputs{
-					tpkg.RandBasicOutput(iotago.AddressEd25519),
-				},
-				Allotments: iotago.Allotments{
-					&iotago.Allotment{
-						AccountID: accountID,
-						Value:     0,
+			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+				&iotago.TransactionEssence{
+					NetworkID:     tpkg.TestNetworkID,
+					ContextInputs: iotago.TxEssenceContextInputs{},
+					Inputs:        inputIDs.UTXOInputs(),
+					Outputs: iotago.TxEssenceOutputs{
+						tpkg.RandBasicOutput(iotago.AddressEd25519),
 					},
-					&iotago.Allotment{
-						AccountID: tpkg.RandAccountID(),
-						Value:     12,
+					Allotments: iotago.Allotments{
+						&iotago.Allotment{
+							AccountID: accountID,
+							Value:     0,
+						},
+						&iotago.Allotment{
+							AccountID: tpkg.RandAccountID(),
+							Value:     12,
+						},
+						&iotago.Allotment{
+							AccountID: accountID,
+							Value:     12,
+						},
 					},
-					&iotago.Allotment{
-						AccountID: accountID,
-						Value:     12,
-					},
-				},
-			}),
+				}),
 			target:    &iotago.Transaction{},
 			seriErr:   serializer.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: nil,

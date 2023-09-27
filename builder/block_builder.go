@@ -12,12 +12,14 @@ import (
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	// TODO: burn the correct amount of Mana in all cases according to block work and RMC with issue #285
 	basicBlock := &iotago.BasicBlock{
+		API:                api,
 		StrongParents:      iotago.BlockIDs{},
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
 	}
 
 	protocolBlock := &iotago.ProtocolBlock{
+		API: api,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.EmptyCommitmentID,
@@ -27,7 +29,6 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	}
 
 	return &BasicBlockBuilder{
-		api:           api,
 		protocolBlock: protocolBlock,
 		basicBlock:    basicBlock,
 	}
@@ -35,8 +36,6 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 
 // BasicBlockBuilder is used to easily build up a Basic Block.
 type BasicBlockBuilder struct {
-	api iotago.API
-
 	basicBlock *iotago.BasicBlock
 
 	protocolBlock *iotago.ProtocolBlock
@@ -102,7 +101,7 @@ func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.Priv
 
 	b.protocolBlock.IssuerID = accountID
 
-	signature, err := b.protocolBlock.Sign(b.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
+	signature, err := b.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
 		b.err = ierrors.Errorf("error signing block: %w", err)
 
@@ -169,7 +168,7 @@ func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 		return b
 	}
 
-	burnedMana, err := b.basicBlock.ManaCost(rmc, b.api.ProtocolParameters().WorkScoreStructure())
+	burnedMana, err := b.basicBlock.ManaCost(rmc, b.protocolBlock.API.ProtocolParameters().WorkScoreStructure())
 	if err != nil {
 		b.err = ierrors.Errorf("error calculating mana cost: %w", err)
 		return b
@@ -183,12 +182,14 @@ func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 // NewValidationBlockBuilder creates a new ValidationBlockBuilder.
 func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 	validationBlock := &iotago.ValidationBlock{
+		API:                api,
 		StrongParents:      iotago.BlockIDs{},
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
 	}
 
 	protocolBlock := &iotago.ProtocolBlock{
+		API: api,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
@@ -199,7 +200,6 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 	}
 
 	return &ValidationBlockBuilder{
-		api:             api,
 		protocolBlock:   protocolBlock,
 		validationBlock: validationBlock,
 	}
@@ -207,8 +207,6 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 
 // ValidationBlockBuilder is used to easily build up a Validation Block.
 type ValidationBlockBuilder struct {
-	api iotago.API
-
 	validationBlock *iotago.ValidationBlock
 
 	protocolBlock *iotago.ProtocolBlock
@@ -274,7 +272,7 @@ func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519
 
 	v.protocolBlock.IssuerID = accountID
 
-	signature, err := v.protocolBlock.Sign(v.api, iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
+	signature, err := v.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
 		v.err = ierrors.Errorf("error signing block: %w", err)
 

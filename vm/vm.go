@@ -108,7 +108,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 		return slice.ToOutputsByType()
 	}()
 
-	txID, err := workingSet.Tx.ID(api)
+	txID, err := workingSet.Tx.ID()
 	if err != nil {
 		return nil, err
 	}

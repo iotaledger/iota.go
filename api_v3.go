@@ -200,12 +200,27 @@ type v3api struct {
 	computedFinalReward       uint64
 }
 
+type contextAPIKey = struct{}
+
+func APIFromContext(ctx context.Context) API {
+	//nolint:forcetypeassert // we can safely assume that this is an API
+	return ctx.Value(contextAPIKey{}).(API)
+}
+
+func (v *v3api) Equals(other API) bool {
+	return v.protocolParameters.Equals(other.ProtocolParameters())
+}
+
+func (v *v3api) context() context.Context {
+	return context.WithValue(context.Background(), contextAPIKey{}, v)
+}
+
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.JSONEncode(context.TODO(), obj, opts...)
+	return v.serixAPI.JSONEncode(v.context(), obj, opts...)
 }
 
 func (v *v3api) JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error {
-	return v.serixAPI.JSONDecode(context.TODO(), jsonData, obj, opts...)
+	return v.serixAPI.JSONDecode(v.context(), jsonData, obj, opts...)
 }
 
 func (v *v3api) Underlying() *serix.API {
@@ -245,11 +260,11 @@ func (v *v3api) ComputedFinalReward() uint64 {
 }
 
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.Encode(context.TODO(), obj, opts...)
+	return v.serixAPI.Encode(v.context(), obj, opts...)
 }
 
 func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, error) {
-	return v.serixAPI.Decode(context.TODO(), b, obj, opts...)
+	return v.serixAPI.Decode(v.context(), b, obj, opts...)
 }
 
 // V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
@@ -563,7 +578,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
 		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
-			return tx.syntacticallyValidate(v3)
+			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 	}
@@ -601,7 +616,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
-			return protocolBlock.syntacticallyValidate(v3)
+			return protocolBlock.syntacticallyValidate()
 		}))
 	}
 

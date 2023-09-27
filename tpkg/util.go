@@ -635,6 +635,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iot
 		basicBlock.BurnedMana = burnedMana
 
 		return &iotago.ProtocolBlock{
+			API: api,
 			BlockHeader: iotago.BlockHeader{
 				ProtocolVersion:  TestAPI.Version(),
 				IssuingTime:      RandUTCTime(),
@@ -647,6 +648,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iot
 	}
 
 	return &iotago.ProtocolBlock{
+		API: api,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
 			IssuingTime:      RandUTCTime(),
@@ -658,18 +660,19 @@ func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iot
 	}
 }
 
-func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
+func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	var payload iotago.Payload
 
 	//nolint:exhaustive
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
-		payload = RandTransaction()
+		payload = RandTransaction(api)
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
 	}
 
 	return &iotago.BasicBlock{
+		API:                api,
 		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
@@ -678,8 +681,9 @@ func RandBasicBlock(withPayloadType iotago.PayloadType) *iotago.BasicBlock {
 	}
 }
 
-func ValidationBlock() *iotago.ValidationBlock {
+func RandValidationBlock(api iotago.API) *iotago.ValidationBlock {
 	return &iotago.ValidationBlock{
+		API:                     api,
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
 		ShallowLikeParents:      iotago.BlockIDs{},
@@ -687,8 +691,8 @@ func ValidationBlock() *iotago.ValidationBlock {
 	}
 }
 
-func RandBasicBlockWithIssuerAndRMC(issuerID iotago.AccountID, rmc iotago.Mana) *iotago.ProtocolBlock {
-	basicBlock := RandBasicBlock(iotago.PayloadTransaction)
+func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.ProtocolBlock {
+	basicBlock := RandBasicBlock(api, iotago.PayloadTransaction)
 
 	block := RandProtocolBlock(basicBlock, TestAPI, rmc)
 	block.IssuerID = issuerID
@@ -697,8 +701,8 @@ func RandBasicBlockWithIssuerAndRMC(issuerID iotago.AccountID, rmc iotago.Mana) 
 }
 
 // RandTransactionWithEssence returns a random transaction with a specific essence.
-func RandTransactionWithEssence(essence *iotago.TransactionEssence) *iotago.Transaction {
-	sigTxPayload := &iotago.Transaction{}
+func RandTransactionWithEssence(api iotago.API, essence *iotago.TransactionEssence) *iotago.Transaction {
+	sigTxPayload := &iotago.Transaction{API: api}
 	sigTxPayload.Essence = essence
 
 	unlocksCount := len(essence.Inputs)
@@ -710,28 +714,28 @@ func RandTransactionWithEssence(essence *iotago.TransactionEssence) *iotago.Tran
 }
 
 // RandTransaction returns a random transaction.
-func RandTransaction() *iotago.Transaction {
-	return RandTransactionWithEssence(RandTransactionEssence())
+func RandTransaction(api iotago.API) *iotago.Transaction {
+	return RandTransactionWithEssence(api, RandTransactionEssence())
 }
 
 // RandTransactionWithUTXOInputCount returns a random transaction with a specific amount of inputs.
-func RandTransactionWithUTXOInputCount(inputCount int) *iotago.Transaction {
-	return RandTransactionWithEssence(RandTransactionEssenceWithInputCount(inputCount))
+func RandTransactionWithUTXOInputCount(api iotago.API, inputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(api, RandTransactionEssenceWithInputCount(inputCount))
 }
 
 // RandTransactionWithOutputCount returns a random transaction with a specific amount of outputs.
-func RandTransactionWithOutputCount(outputCount int) *iotago.Transaction {
-	return RandTransactionWithEssence(RandTransactionEssenceWithOutputCount(outputCount))
+func RandTransactionWithOutputCount(api iotago.API, outputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(api, RandTransactionEssenceWithOutputCount(outputCount))
 }
 
 // RandTransactionWithAllotmentCount returns a random transaction with a specific amount of allotments.
-func RandTransactionWithAllotmentCount(allotmentCount int) *iotago.Transaction {
-	return RandTransactionWithEssence(RandTransactionEssenceWithAllotmentCount(allotmentCount))
+func RandTransactionWithAllotmentCount(api iotago.API, allotmentCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(api, RandTransactionEssenceWithAllotmentCount(allotmentCount))
 }
 
 // RandTransactionWithInputOutputCount returns a random transaction with a specific amount of inputs and outputs.
-func RandTransactionWithInputOutputCount(inputCount int, outputCount int) *iotago.Transaction {
-	return RandTransactionWithEssence(RandTransactionEssenceWithOptions(WithUTXOInputCount(inputCount), WithOutputCount(outputCount)))
+func RandTransactionWithInputOutputCount(api iotago.API, inputCount int, outputCount int) *iotago.Transaction {
+	return RandTransactionWithEssence(api, RandTransactionEssenceWithOptions(WithUTXOInputCount(inputCount), WithOutputCount(outputCount)))
 }
 
 // RandUTXOInput returns a random UTXO input.
@@ -808,6 +812,7 @@ func RandSortAllotment(count int) iotago.Allotments {
 // OneInputOutputTransaction generates a random transaction with one input and output.
 func OneInputOutputTransaction() *iotago.Transaction {
 	return &iotago.Transaction{
+		API: TestAPI,
 		Essence: &iotago.TransactionEssence{
 			NetworkID:     14147312347886322761,
 			ContextInputs: iotago.TxEssenceContextInputs{},
