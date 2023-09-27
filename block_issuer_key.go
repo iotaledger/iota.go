@@ -16,7 +16,7 @@ type BlockIssuerKeyType byte
 const (
 	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
 	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
-	// BlockIssuerKeyEd25519Address denotes a Ed25519AddressBlockIssuerKey.
+	// BlockIssuerKeyEd25519Address denotes a Ed25519PublicKeyHashBlockIssuerKey.
 	BlockIssuerKeyEd25519Address
 )
 
@@ -83,9 +83,9 @@ func (keys BlockIssuerKeys) Sort() {
 	slices.SortFunc(keys, func(x BlockIssuerKey, y BlockIssuerKey) int {
 		if x.Type() == y.Type() {
 			switch o := x.(type) {
-			case *Ed25519AddressBlockIssuerKey:
+			case *Ed25519PublicKeyHashBlockIssuerKey:
 				//nolint:forcetypeassert
-				return o.Compare(y.(*Ed25519AddressBlockIssuerKey))
+				return o.Compare(y.(*Ed25519PublicKeyHashBlockIssuerKey))
 			case *Ed25519PublicKeyBlockIssuerKey:
 				//nolint:forcetypeassert
 				return o.Compare(y.(*Ed25519PublicKeyBlockIssuerKey))
