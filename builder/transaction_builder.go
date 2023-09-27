@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
@@ -123,6 +124,68 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
 
+func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(slotIndexTarget iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+	setBuildError := func(err error) *TransactionBuilder {
+		b.occurredBuildErr = err
+		return b
+	}
+
+	// calculate the available mana on input side
+	totalManaIn, err := b.TotalManaInputs(b.api.ProtocolParameters(), b.inputs, slotIndexTarget)
+	if err != nil {
+		return setBuildError(ierrors.Wrap(err, "failed to calculate the available mana on input side"))
+	}
+
+	// substract the already alloted mana
+	for _, allotment := range b.transaction.Allotments {
+		totalManaIn, err = safemath.SafeSub(totalManaIn, allotment.Value)
+		if err != nil {
+			return setBuildError(ierrors.Wrap(err, "failed to substract alloted mana"))
+		}
+	}
+
+	// substract the stored mana on the outputs side
+	for _, output := range b.transaction.Outputs {
+		totalManaIn, err = safemath.SafeSub(totalManaIn, output.StoredMana())
+		if err != nil {
+			return setBuildError(ierrors.Wrap(err, "failed to substract the stored mana on the outputs side"))
+		}
+	}
+
+	// calculate the minimum required mana to issue the block
+	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(ierrors.Wrap(err, "failed to substract the stored mana on the outputs side"))
+	}
+
+	// substract the minimum required mana to issue the block
+	totalManaIn, err = safemath.SafeSub(totalManaIn, minRequiredMana)
+	if err != nil {
+		return setBuildError(ierrors.Wrap(err, "failed to substract the minimum required mana to issue the block"))
+	}
+
+	// allot the mana to the block issuer account
+	b.IncreaseAllotment(blockIssuerAccountID, minRequiredMana)
+
+	if storedManaOutputIndex >= len(b.transaction.Outputs) {
+		return setBuildError(ierrors.Wrapf(err, "given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
+	}
+
+	// move the remaining mana to stored mana on the specified output index
+	switch output := b.transaction.Outputs[storedManaOutputIndex].(type) {
+	case *iotago.BasicOutput:
+		output.Mana += totalManaIn
+	case *iotago.AccountOutput:
+		output.Mana += totalManaIn
+	case *iotago.NFTOutput:
+		output.Mana += totalManaIn
+	default:
+		return setBuildError(ierrors.Wrapf(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output))
+	}
+
+	return b
+}
+
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
 func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSigner, txFunc TransactionFunc) *BasicBlockBuilder {
@@ -146,15 +209,16 @@ func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParamete
 	for inputID, input := range inputSet {
 		// calculate the potential mana of the input
 		// we need to ignore the storage deposit, because it doesn't generate mana
-		excessBaseTokens := input.BaseTokenAmount() - protoParams.RentStructure().MinDeposit(input)
-		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlotIndex(), slotIndexTarget)
+		rentStructure := iotago.NewRentStructure(protoParams.RentParameters())
+		excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
+		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), slotIndexTarget)
 		if err != nil {
 			// todo add error message
 			return 0, err
 		}
 
 		// calculate the decayed stored mana of the input
-		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlotIndex(), slotIndexTarget)
+		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), slotIndexTarget)
 		if err != nil {
 			// todo add error message
 			return 0, err
@@ -170,11 +234,11 @@ func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParamete
 // with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
 func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreStructure *iotago.WorkScoreStructure, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction
-	allotmentsCpy := b.essence.Allotments.Clone()
+	allotmentsCpy := b.transaction.Allotments.Clone()
 
 	// undo the changes to the allotments at the end
 	defer func() {
-		b.essence.Allotments = allotmentsCpy
+		b.transaction.Allotments = allotmentsCpy
 	}()
 
 	// add an empty allotment to account for the later added allotment for the block issuer in case it does not exist yet
