@@ -321,19 +321,21 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			ProtocolVersion:  mockAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
 		},
 	}
 
-	serializedIncompleteBlock, err := tpkg.TestAPI.Encode(incompleteBlock, serix.WithValidation())
+	serializedIncompleteBlock, err := mockAPI.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -375,13 +377,15 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -394,7 +398,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_TransactionIncludedBlock(t *testing.T) {
@@ -404,13 +408,15 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	queryHash := hexutil.EncodeHex(txID[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -423,7 +429,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_OutputByID(t *testing.T) {
@@ -479,7 +485,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 	var slotIndex iotago.SlotIndex = 5
 
 	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitment := iotago.NewCommitment(mockAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Index:                commitment.Index,
@@ -527,7 +533,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slotIndex iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitment := iotago.NewCommitment(mockAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Index:                commitment.Index,

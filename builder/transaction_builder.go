@@ -186,7 +186,11 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
-	sigTxPayload := &iotago.Transaction{Essence: b.essence, Unlocks: unlocks}
+	sigTxPayload := &iotago.Transaction{
+		API:     b.api,
+		Essence: b.essence,
+		Unlocks: unlocks,
+	}
 
 	return sigTxPayload, nil
 }

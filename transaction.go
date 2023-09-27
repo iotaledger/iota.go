@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -57,14 +58,20 @@ type TransactionContextInputs ContextInputs[Input]
 
 // Transaction is a transaction with its inputs, outputs and unlocks.
 type Transaction struct {
+	API API
 	// The transaction essence, respectively the transfer part of a Transaction.
 	Essence *TransactionEssence `serix:"0,mapKey=essence"`
 	// The unlocks defining the unlocking data for the inputs within the Essence.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
 
+func (t *Transaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
+}
+
 func (t *Transaction) Clone() Payload {
 	return &Transaction{
+		API:     t.API,
 		Essence: t.Essence.Clone(),
 		Unlocks: t.Unlocks.Clone(),
 	}
@@ -75,8 +82,8 @@ func (t *Transaction) PayloadType() PayloadType {
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
-func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
-	txID, err := t.ID(api)
+func (t *Transaction) OutputsSet() (OutputSet, error) {
+	txID, err := t.ID()
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +96,8 @@ func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
 }
 
 // ID computes the ID of the Transaction.
-func (t *Transaction) ID(api API) (TransactionID, error) {
-	data, err := api.Encode(t)
+func (t *Transaction) ID() (TransactionID, error) {
+	data, err := t.API.Encode(t)
 	if err != nil {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
@@ -187,18 +194,18 @@ func (t *Transaction) String() string {
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(api API) error {
+func (t *Transaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
 	if len(t.Unlocks) != len(t.Essence.Inputs) {
 		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
 	}
 
-	if err := t.Essence.syntacticallyValidate(api); err != nil {
+	if err := t.Essence.syntacticallyValidate(t.API); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(api),
+		UnlocksSigUniqueAndRefValidator(t.API),
 	); err != nil {
 		return ierrors.Errorf("invalid unlocks: %w", err)
 	}

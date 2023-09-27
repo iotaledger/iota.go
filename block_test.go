@@ -24,27 +24,27 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(1337), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, 1337), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTransaction), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTransaction), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - milestone",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadMilestone), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadMilestone), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(iotago.PayloadTaggedData), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTaggedData), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - validation block",
-			source: tpkg.RandProtocolBlock(tpkg.ValidationBlock(), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandValidationBlock(tpkg.TestAPI), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 	}
@@ -364,6 +364,7 @@ func TestProtocolBlock_DeserializationNotEnoughData(t *testing.T) {
 
 func TestBasicBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -371,6 +372,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -390,6 +392,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_MinSize(t *testing.T) {
 	minProtocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -397,6 +400,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -416,6 +420,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	protocolBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
@@ -427,6 +432,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	// Invalid HighestSupportedVersion.
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -443,6 +449,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	// Valid HighestSupportedVersion.
 	{
 		protocolBlock.Block = &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
@@ -467,6 +474,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 	signature := tpkg.RandEd25519Signature()
 	strongParents := tpkg.SortedRandBlockIDs(1)
 	validationBlock := &iotago.ProtocolBlock{
+		API: tpkg.TestAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      issuingTime,
@@ -475,6 +483,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 			SlotCommitmentID: commitmentID,
 		},
 		Block: &iotago.ValidationBlock{
+			API:                     tpkg.TestAPI,
 			StrongParents:           strongParents,
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
 		},

@@ -228,6 +228,10 @@ func (u *TransactionEssence) syntacticallyValidate(api API) error {
 	)
 }
 
+// Calculates the Work Score of the TransactionEssence.
+//
+// Does not specifically include the work score of the optional payload because that is already
+// included in the Work Score of the Transaction.
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
 	if err != nil {
@@ -249,13 +253,5 @@ func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (
 		return 0, err
 	}
 
-	var workScorePayload WorkScore
-	if u.Payload != nil {
-		workScorePayload, err = u.Payload.WorkScore(workScoreStructure)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
+	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments)
 }

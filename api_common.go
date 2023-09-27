@@ -90,6 +90,13 @@ var (
 
 		return nil
 	}
+
+	blockIssuerKeysArrRules = &serix.ArrayRules{
+		Min: MinBlockIssuerKeysCount,
+		Max: MaxBlockIssuerKeysCount,
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
+			serializer.ArrayValidationModeLexicalOrdering,
+	}
 )
 
 func CommonSerixAPI() *serix.API {
@@ -151,9 +158,8 @@ func CommonSerixAPI() *serix.API {
 			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519AddressBlockIssuerKey)(nil)))
 
 			must(api.RegisterTypeSettings(BlockIssuerKeys{},
-				serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
+				serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockIssuerKeysArrRules),
 			))
-
 		}
 	}
 
