@@ -101,6 +101,11 @@ func (id SlotIdentifier) Slot() SlotIndex {
 	return SlotIndex(binary.LittleEndian.Uint32(id[IdentifierLength:]))
 }
 
+// Index returns a slot index to conform with hive's IndexedID interface.
+func (id SlotIdentifier) Index() SlotIndex {
+	return id.Slot()
+}
+
 func (id SlotIdentifier) Identifier() Identifier {
 	return Identifier(id[:IdentifierLength])
 }
