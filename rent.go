@@ -136,13 +136,13 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 
 // MinDeposit returns the minimum deposit to cover a given object.
 func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
-	return BaseToken(r.RentParameters.VByteCost) * BaseToken(object.VBytes(r, nil))
+	return BaseToken(r.VByteCost()) * BaseToken(object.VBytes(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
-	return BaseToken(r.RentParameters.VByteCost) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+	return BaseToken(r.VByteCost()) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
 }
 
 func (r RentParameters) Equals(other RentParameters) bool {
