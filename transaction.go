@@ -76,7 +76,7 @@ func TransactionSelector(txType uint32) (*Transaction, error) {
 	case TransactionNormal:
 		seri = &Transaction{}
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownTransactionEssenceType, "type byte %d", txType)
+		return nil, ierrors.Wrapf(ErrUnknownTransactionType, "type byte %d", txType)
 	}
 
 	return seri, nil

@@ -14,7 +14,7 @@ import (
 
 func TestTransactionEssenceSelector(t *testing.T) {
 	_, err := iotago.TransactionSelector(100)
-	assert.True(t, ierrors.Is(err, iotago.ErrUnknownTransactionEssenceType))
+	assert.True(t, ierrors.Is(err, iotago.ErrUnknownTransactionType))
 }
 
 func TestTransactionEssence_DeSerialize(t *testing.T) {

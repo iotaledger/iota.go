@@ -35,12 +35,12 @@ var (
 	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
 	// ErrInputCreationAfterTxCreation gets returned if an input has creation slot after the transaction creation slot.
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
-	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
-	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
+	// ErrUnknownTransactionType gets returned for unknown transaction types.
+	ErrUnknownTransactionType = ierrors.New("unknown transaction type")
 )
 
 var (
-	EmptyTransactionID = SignedTransactionID{}
+	EmptySignedTransactionID = SignedTransactionID{}
 )
 
 type SignedTransactionID = SlotIdentifier
@@ -61,7 +61,7 @@ type TransactionContextInputs ContextInputs[Input]
 // SignedTransaction is a transaction with its inputs, outputs and unlocks.
 type SignedTransaction struct {
 	// The transaction essence, respectively the transfer part of a SignedTransaction.
-	Transaction *Transaction `serix:"0,mapKey=essence"`
+	Transaction *Transaction `serix:"0,mapKey=transaction"`
 	// The unlocks defining the unlocking data for the inputs within the Transaction.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
