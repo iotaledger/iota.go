@@ -108,7 +108,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			RelativeAcceptedTangleTime:  ts,
 			ConfirmedTangleTime:         ts,
 			RelativeConfirmedTangleTime: ts,
-			LatestCommitmentID:          tpkg.Rand40ByteArray(),
+			LatestCommitmentID:          tpkg.Rand36ByteArray(),
 			PruningEpoch:                iotago.EpochIndex(142800),
 		},
 		ProtocolParameters: []*apimodels.InfoResProtocolParameters{
@@ -182,11 +182,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.NoError(t, err)
 
 	originRes.Commitment = &iotago.Commitment{
-		Version:          1,
-		Index:            iotago.SlotIndex(25),
-		PrevID:           prevID,
-		RootsID:          rootsID,
-		CumulativeWeight: 100_000,
+		ProtocolVersion:      1,
+		Slot:                 iotago.SlotIndex(25),
+		PreviousCommitmentID: prevID,
+		RootsID:              rootsID,
+		CumulativeWeight:     100_000,
 	}
 
 	mockGetJSON(nodeclient.RouteBlockIssuance, 200, originRes)
@@ -317,23 +317,25 @@ func TestClient_Committee(t *testing.T) {
 func TestClient_SubmitBlock(t *testing.T) {
 	defer gock.Off()
 
-	blockHash := tpkg.Rand40ByteArray()
+	blockHash := tpkg.Rand36ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
 	incompleteBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			ProtocolVersion:  mockAPI.Version(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
 		},
 	}
 
-	serializedIncompleteBlock, err := tpkg.TestAPI.Encode(incompleteBlock, serix.WithValidation())
+	serializedIncompleteBlock, err := mockAPI.Encode(incompleteBlock, serix.WithValidation())
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
@@ -371,17 +373,19 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand40ByteArray()
+	identifier := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -394,23 +398,25 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand32ByteArray()
-	queryHash := hexutil.EncodeHex(identifier[:])
+	txID := tpkg.Rand36ByteArray()
+	queryHash := hexutil.EncodeHex(txID[:])
 
 	originBlock := &iotago.ProtocolBlock{
+		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Block: &iotago.BasicBlock{
+			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -421,9 +427,9 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	mockGetBinary(fmt.Sprintf(nodeclient.RouteTransactionsIncludedBlock, queryHash), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
-	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), identifier)
+	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
-	require.EqualValues(t, originBlock, responseBlock)
+	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
 
 func TestClient_OutputByID(t *testing.T) {
@@ -431,7 +437,7 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand32ByteArray()
+	txID := tpkg.Rand36ByteArray()
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
@@ -448,16 +454,16 @@ func TestClient_OutputByID(t *testing.T) {
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand32ByteArray()
+	txID := tpkg.Rand36ByteArray()
 	originRes := &apimodels.OutputMetadataResponse{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
 		IsSpent:              true,
-		CommitmentIDSpent:    tpkg.Rand40ByteArray(),
-		TransactionIDSpent:   tpkg.Rand32ByteArray(),
-		IncludedCommitmentID: tpkg.Rand40ByteArray(),
-		LatestCommitmentID:   tpkg.Rand40ByteArray(),
+		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
+		TransactionIDSpent:   tpkg.Rand36ByteArray(),
+		IncludedCommitmentID: tpkg.Rand36ByteArray(),
+		LatestCommitmentID:   tpkg.Rand36ByteArray(),
 	}
 
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
@@ -476,16 +482,16 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 func TestClient_CommitmentByID(t *testing.T) {
 	defer gock.Off()
 
-	var slotIndex iotago.SlotIndex = 5
+	var slot iotago.SlotIndex = 5
 
-	commitmentID := iotago.NewSlotIdentifier(slotIndex, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
+	commitmentID := iotago.NewSlotIdentifier(slot, tpkg.Rand32ByteArray())
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Slot:                 commitment.Slot,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
@@ -525,21 +531,21 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 func TestClient_CommitmentByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var slotIndex iotago.SlotIndex = 1337
+	var slot iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(tpkg.TestAPI.Version(), slotIndex, iotago.NewSlotIdentifier(slotIndex-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(math.MaxUint64))
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
-		Index:            commitment.Index,
-		PrevID:           commitment.PrevID,
-		RootsID:          commitment.RootsID,
-		CumulativeWeight: commitment.CumulativeWeight,
+		Slot:                 commitment.Slot,
+		PreviousCommitmentID: commitment.PreviousCommitmentID,
+		RootsID:              commitment.RootsID,
+		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slotIndex), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slot), 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slotIndex)
+	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slot)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }
@@ -547,13 +553,13 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
-	var slotIndex iotago.SlotIndex = 1337
+	var slot iotago.SlotIndex = 1337
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Index: slotIndex,
+		Index: slot,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},
@@ -562,10 +568,10 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndexUTXOChanges, slotIndex), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndexUTXOChanges, slot), 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slotIndex)
+	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slot)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }

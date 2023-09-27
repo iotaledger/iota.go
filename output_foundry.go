@@ -109,6 +109,43 @@ func (f *FoundryOutput) Clone() Output {
 	}
 }
 
+func (f *FoundryOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*FoundryOutput)
+	if !isSameType {
+		return false
+	}
+
+	if f.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if !f.NativeTokens.Equal(otherOutput.NativeTokens) {
+		return false
+	}
+
+	if f.SerialNumber != otherOutput.SerialNumber {
+		return false
+	}
+
+	if !f.TokenScheme.Equal(otherOutput.TokenScheme) {
+		return false
+	}
+
+	if !f.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	if !f.Features.Equal(otherOutput.Features) {
+		return false
+	}
+
+	if !f.ImmutableFeatures.Equal(otherOutput.ImmutableFeatures) {
+		return false
+	}
+
+	return true
+}
+
 func (f *FoundryOutput) Ident() Address {
 	return f.UnlockConditionSet().ImmutableAccount().Address
 }
@@ -120,8 +157,8 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 
 func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		// prefix + amount
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize) +
 		f.NativeTokens.VBytes(rentStruct, nil) +
 		// serial number
 		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize) +

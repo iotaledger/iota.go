@@ -1,9 +1,11 @@
+//nolint:dupl
 package iotago
 
 import (
 	"context"
 	"time"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -17,6 +19,14 @@ func must(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func disallowImplicitAccountCreationAddress(address Address) error {
+	if address.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressInInvalidUnlockCondition
+	}
+
+	return nil
 }
 
 var (
@@ -65,13 +75,6 @@ var (
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
-	}
-
-	accountOutputV3BlockIssuerKeysArrRules = &serix.ArrayRules{
-		Min: MinBlockIssuerKeysCount,
-		Max: MaxBlockIssuerKeysCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	accountOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
@@ -186,14 +189,31 @@ type v3api struct {
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
 	maxBlockWork              WorkScore
+	computedInitialReward     uint64
+	computedFinalReward       uint64
+}
+
+type contextAPIKey = struct{}
+
+func APIFromContext(ctx context.Context) API {
+	//nolint:forcetypeassert // we can safely assume that this is an API
+	return ctx.Value(contextAPIKey{}).(API)
+}
+
+func (v *v3api) Equals(other API) bool {
+	return v.protocolParameters.Equals(other.ProtocolParameters())
+}
+
+func (v *v3api) context() context.Context {
+	return context.WithValue(context.Background(), contextAPIKey{}, v)
 }
 
 func (v *v3api) JSONEncode(obj any, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.JSONEncode(context.TODO(), obj, opts...)
+	return v.serixAPI.JSONEncode(v.context(), obj, opts...)
 }
 
 func (v *v3api) JSONDecode(jsonData []byte, obj any, opts ...serix.Option) error {
-	return v.serixAPI.JSONDecode(context.TODO(), jsonData, obj, opts...)
+	return v.serixAPI.JSONDecode(v.context(), jsonData, obj, opts...)
 }
 
 func (v *v3api) Underlying() *serix.API {
@@ -224,12 +244,20 @@ func (v *v3api) MaxBlockWork() WorkScore {
 	return v.maxBlockWork
 }
 
+func (v *v3api) ComputedInitialReward() uint64 {
+	return v.computedInitialReward
+}
+
+func (v *v3api) ComputedFinalReward() uint64 {
+	return v.computedFinalReward
+}
+
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
-	return v.serixAPI.Encode(context.TODO(), obj, opts...)
+	return v.serixAPI.Encode(v.context(), obj, opts...)
 }
 
 func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, error) {
-	return v.serixAPI.Decode(context.TODO(), b, obj, opts...)
+	return v.serixAPI.Decode(v.context(), b, obj, opts...)
 }
 
 // V3API instantiates an API instance with types registered conforming to protocol version 3 (iota-core 1.0) of the IOTA protocol.
@@ -241,6 +269,9 @@ func V3API(protoParams ProtocolParameters) API {
 	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
 	must(err)
 
+	initialReward, finalReward, err := calculateRewards(protoParams)
+	must(err)
+
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:           api,
@@ -248,6 +279,8 @@ func V3API(protoParams ProtocolParameters) API {
 		timeProvider:       timeProvider,
 		manaDecayProvider:  protoParams.ManaDecayProvider(),
 		maxBlockWork:       maxBlockWork,
+		computedInitialReward:     initialReward,
+		computedFinalReward:       finalReward,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
@@ -295,18 +328,38 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
+		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
+			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(TimelockUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionTimelock))),
 		)
 		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
+		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
+			func(ctx context.Context, exp ExpirationUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
+			},
+		))
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
+		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
+			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(stateController.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
+		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
+			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
+				return disallowImplicitAccountCreationAddress(gov.Address)
+			},
+		))
 		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))),
 		)
@@ -324,10 +377,14 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ReferenceUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockReference))))
 		must(api.RegisterTypeSettings(AccountUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockAccount))))
 		must(api.RegisterTypeSettings(NFTUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockNFT))))
+		must(api.RegisterTypeSettings(MultiUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockMulti))))
+		must(api.RegisterTypeSettings(EmptyUnlock{}, serix.TypeSettings{}.WithObjectType(uint8(UnlockEmpty))))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*SignatureUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*ReferenceUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*AccountUnlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*NFTUnlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*MultiUnlock)(nil)))
+		must(api.RegisterInterfaceObjects((*Unlock)(nil), (*EmptyUnlock)(nil)))
 	}
 
 	{
@@ -360,6 +417,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
+		must(api.RegisterValidators(AccountOutput{}, nil, func(ctx context.Context, account AccountOutput) error {
+			return account.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
@@ -416,6 +476,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(NFTOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
 		)
+		must(api.RegisterValidators(NFTOutput{}, nil, func(ctx context.Context, nft NFTOutput) error {
+			return nft.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -444,6 +507,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
+		must(api.RegisterValidators(DelegationOutput{}, nil, func(ctx context.Context, delegation DelegationOutput) error {
+			return delegation.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
@@ -504,7 +570,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
 		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
-			return tx.syntacticallyValidate(v3)
+			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 	}
@@ -542,7 +608,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 			return nil
 		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
-			return protocolBlock.syntacticallyValidate(v3)
+			return protocolBlock.syntacticallyValidate()
 		}))
 	}
 
@@ -553,17 +619,37 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 	}
 
-	{
-		must(api.RegisterTypeSettings(BlockIssuerKeyEd25519{},
-			serix.TypeSettings{}.WithObjectType(byte(Ed25519BlockIssuerKey)),
-		))
-		must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), BlockIssuerKeyEd25519{}))
+	return v3
+}
 
-		must(api.RegisterTypeSettings(BlockIssuerKeys{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3BlockIssuerKeysArrRules),
-		))
+func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards uint64, err error) {
+	manaStructure := protoParams.ManaDecayProvider()
 
+	// final reward, after bootstrapping phase
+	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
+	if err != nil {
+		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
 	}
 
-	return v3
+	result, err = safemath.SafeMul(result, manaStructure.generationRate)
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
+	}
+
+	subExponent, err := safemath.SafeSub(manaStructure.generationRateExponent, uint64(protoParams.TimeProvider().SlotsPerEpochExponent()))
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
+	}
+
+	finalRewards = result >> subExponent
+
+	// initial reward for bootstrapping phase
+	initialReward, err := safemath.SafeMul(finalRewards, protoParams.RewardsParameters().DecayBalancingConstant)
+	if err != nil {
+		return 0, 0, ierrors.Wrapf(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
+	}
+
+	initialRewards = initialReward >> uint64(protoParams.RewardsParameters().DecayBalancingConstantExponent)
+
+	return
 }

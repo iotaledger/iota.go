@@ -18,28 +18,28 @@ type CommitmentID = SlotIdentifier
 var EmptyCommitmentID = CommitmentID{}
 
 type Commitment struct {
-	Version          Version      `serix:"0,mapKey=version"`
-	Index            SlotIndex    `serix:"1,mapKey=index"`
-	PrevID           CommitmentID `serix:"2,mapKey=prevId"`
-	RootsID          Identifier   `serix:"3,mapKey=rootsId"`
-	CumulativeWeight uint64       `serix:"4,mapKey=cumulativeWeight"`
-	RMC              Mana         `serix:"5,mapKey=rmc"`
+	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
+	Slot                 SlotIndex    `serix:"1,mapKey=slot"`
+	PreviousCommitmentID CommitmentID `serix:"2,mapKey=previousCommitmentId"`
+	RootsID              Identifier   `serix:"3,mapKey=rootsId"`
+	CumulativeWeight     uint64       `serix:"4,mapKey=cumulativeWeight"`
+	ReferenceManaCost    Mana         `serix:"5,mapKey=referenceManaCost"`
 }
 
-func NewCommitment(version Version, index SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
+func NewCommitment(version Version, slot SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
 	return &Commitment{
-		Version:          version,
-		Index:            index,
-		PrevID:           prevID,
-		RootsID:          rootsID,
-		CumulativeWeight: cumulativeWeight,
-		RMC:              rmc,
+		ProtocolVersion:      version,
+		Slot:                 slot,
+		PreviousCommitmentID: prevID,
+		RootsID:              rootsID,
+		CumulativeWeight:     cumulativeWeight,
+		ReferenceManaCost:    rmc,
 	}
 }
 
 func NewEmptyCommitment(version Version) *Commitment {
 	return &Commitment{
-		Version: version,
+		ProtocolVersion: version,
 	}
 }
 
@@ -49,7 +49,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
 	}
 
-	return SlotIdentifierRepresentingData(c.Index, data), nil
+	return SlotIdentifierRepresentingData(c.Slot, data), nil
 }
 
 func (c *Commitment) StateID() Identifier {
@@ -71,17 +71,17 @@ func (c *Commitment) MustID() CommitmentID {
 
 func (c *Commitment) Equals(other *Commitment) bool {
 	return c.MustID() == other.MustID() &&
-		c.Version == other.Version &&
-		c.Index == other.Index &&
-		c.PrevID == other.PrevID &&
+		c.ProtocolVersion == other.ProtocolVersion &&
+		c.Slot == other.Slot &&
+		c.PreviousCommitmentID == other.PreviousCommitmentID &&
 		c.RootsID == other.RootsID &&
 		c.CumulativeWeight == other.CumulativeWeight &&
-		c.RMC == other.RMC
+		c.ReferenceManaCost == other.ReferenceManaCost
 }
 
 func (c *Commitment) String() string {
 	return fmt.Sprintf("Commitment{\n\tIndex: %d\n\tPrevID: %s\n\tRootsID: %s\n\tCumulativeWeight: %d\n\tRMC: %d\n}",
-		c.Index, c.PrevID, c.RootsID, c.CumulativeWeight, c.RMC)
+		c.Slot, c.PreviousCommitmentID, c.RootsID, c.CumulativeWeight, c.ReferenceManaCost)
 }
 
 func (c *Commitment) Size() int {

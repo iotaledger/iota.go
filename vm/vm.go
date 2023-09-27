@@ -108,7 +108,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs Resolve
 		return slice.ToOutputsByType()
 	}()
 
-	txID, err := workingSet.Tx.ID(api)
+	txID, err := workingSet.Tx.ID()
 	if err != nil {
 		return nil, err
 	}
@@ -213,14 +213,19 @@ type UnlockedIdentities map[string]*UnlockedIdentity
 
 // SigUnlock performs a signature unlock check and adds the given ident to the set of unlocked identities if
 // the signature is valid, otherwise returns an error.
-func (unlockedIdents UnlockedIdentities) SigUnlock(ident iotago.DirectUnlockableAddress, essence []byte, sig iotago.Signature, inputIndex uint16) error {
+func (unlockedIdents UnlockedIdentities) SigUnlock(ident iotago.DirectUnlockableAddress, essence []byte, sig iotago.Signature, inputIndex uint16, checkUnlockOnly bool) error {
 	if err := ident.Unlock(essence, sig); err != nil {
 		return ierrors.Wrapf(err, "input %d's address is not unlocked through its signature unlock", inputIndex)
 	}
 
+	if checkUnlockOnly {
+		return nil
+	}
+
 	unlockedIdents[ident.Key()] = &UnlockedIdentity{
-		Ident:      ident,
-		UnlockedAt: inputIndex, ReferencedBy: map[uint16]struct{}{},
+		Ident:        ident,
+		UnlockedAt:   inputIndex,
+		ReferencedBy: map[uint16]struct{}{},
 	}
 
 	return nil
@@ -228,13 +233,59 @@ func (unlockedIdents UnlockedIdentities) SigUnlock(ident iotago.DirectUnlockable
 
 // RefUnlock performs a check whether the given ident is unlocked at ref and if so,
 // adds the index of the input to the set of unlocked inputs by this identity.
-func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, inputIndex uint16) error {
+func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, inputIndex uint16, checkUnlockOnly bool) error {
 	ident, has := unlockedIdents[identKey]
 	if !has || ident.UnlockedAt != ref {
 		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, ref)
 	}
 
+	if checkUnlockOnly {
+		return nil
+	}
+
 	ident.ReferencedBy[inputIndex] = struct{}{}
+
+	return nil
+}
+
+// MultiUnlock performs a check whether all given unlocks are valid and if so,
+// adds the index of the input to the set of unlocked inputs by this identity.
+func (unlockedIdents UnlockedIdentities) MultiUnlock(vmParams *Params, ident *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, inputIndex uint16) error {
+	if len(ident.Addresses) != len(multiUnlock.Unlocks) {
+		return ierrors.Wrapf(iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, ident, len(ident.Addresses), len(multiUnlock.Unlocks))
+	}
+
+	var cumulativeUnlockedWeight uint16
+	for subIndex, unlock := range multiUnlock.Unlocks {
+		switch unlock.(type) {
+		case *iotago.EmptyUnlock:
+			// EmptyUnlocks are simply skipped. They are used to maintain correct index relationship between
+			// addresses and signatures if the signer doesn't know the signature of another signer.
+			continue
+
+		case *iotago.MultiUnlock:
+			return ierrors.Wrapf(iotago.ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", inputIndex, subIndex)
+
+		default:
+			// ATTENTION: we perform the checks only, but we do not unlock the input yet.
+			if err := unlockIdent(vmParams, ident.Addresses[subIndex].Address, unlock, inputIndex, true); err != nil {
+				return err
+			}
+			// the unlock was successful, add the weight of the address
+			cumulativeUnlockedWeight += uint16(ident.Addresses[subIndex].Weight)
+		}
+	}
+
+	// check if the threshold for a successful unlock was reached
+	if cumulativeUnlockedWeight < ident.Threshold {
+		return ierrors.Wrapf(iotago.ErrMultiAddressUnlockThresholdNotReached, "input %d has a multi address (%T) but the threshold of valid unlocks was not reached %d < %d", inputIndex, ident, cumulativeUnlockedWeight, ident.Threshold)
+	}
+
+	unlockedIdents[ident.Key()] = &UnlockedIdentity{
+		Ident:        ident,
+		UnlockedAt:   inputIndex,
+		ReferencedBy: map[uint16]struct{}{},
+	}
 
 	return nil
 }
@@ -429,12 +480,12 @@ func checkExpiration(vmParams *Params, output iotago.Output) (iotago.Address, er
 			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
 		}
 
-		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
 			return returnIdent, nil
 		}
 
-		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Slot)
 		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
 			return nil, nil
 		}
@@ -443,6 +494,88 @@ func checkExpiration(vmParams *Params, output iotago.Output) (iotago.Address, er
 	}
 
 	return nil, nil
+}
+
+func unlockIdent(vmParams *Params, ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uint16, checkUnlockOnly bool) error {
+
+	switch owner := ownerIdent.(type) {
+	case iotago.ChainAddress:
+		refUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
+		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
+			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a chain address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+		}
+
+		if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
+			return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "chain address %s (%T)", owner, owner))
+		}
+
+	case iotago.DirectUnlockableAddress:
+		switch uBlock := unlock.(type) {
+		case iotago.ReferentialUnlock:
+			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner ident is not a ChainAddress.
+			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
+			}
+
+			if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
+				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "direct unlockable address %s (%T)", owner, owner))
+			}
+
+		case *iotago.SignatureUnlock:
+			// owner must not be unlocked already
+			if unlockedAtIndex, wasAlreadyUnlocked := vmParams.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
+			}
+
+			if err := vmParams.WorkingSet.UnlockedIdents.SigUnlock(owner, vmParams.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
+				return ierrors.Join(iotago.ErrUnlockBlockSignatureInvalid, err)
+			}
+
+		default:
+			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a direct unlockable address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+		}
+
+	case *iotago.MultiAddress:
+		switch uBlock := unlock.(type) {
+		case iotago.ReferentialUnlock:
+			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
+			}
+
+			if err := vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
+				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "multi address %s (%T)", owner, owner))
+			}
+
+		case *iotago.MultiUnlock:
+			// owner must not be unlocked already
+			if unlockedAtIndex, wasAlreadyUnlocked := vmParams.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
+				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
+			}
+
+			if err := vmParams.WorkingSet.UnlockedIdents.MultiUnlock(vmParams, owner, uBlock, inputIndex); err != nil {
+				return ierrors.Join(iotago.ErrInvalidInputUnlock, err)
+			}
+
+		default:
+			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+		}
+
+	default:
+		panic("unknown address in semantic unlocks")
+	}
+
+	return nil
+}
+
+// resolveUnderlyingIdent returns the underlying address in case of a restricted address.
+// this way we handle restricted addresses like normal addresses in the unlock logic.
+func resolveUnderlyingIdent(ident iotago.Address) iotago.Address {
+	switch addr := ident.(type) {
+	case *iotago.RestrictedAddress:
+		return addr.Address
+	default:
+		return addr
+	}
 }
 
 func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) error {
@@ -459,44 +592,7 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 
 	unlock := vmParams.WorkingSet.Tx.Unlocks[inputIndex]
 
-	switch owner := ownerIdent.(type) {
-	case iotago.ChainAddress:
-		refUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
-		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
-			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a chain address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
-		}
-
-		if err = vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex); err != nil {
-			return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "chain address %s (%T)", owner, owner))
-		}
-
-	case iotago.DirectUnlockableAddress:
-		switch uBlock := unlock.(type) {
-		case iotago.ReferentialUnlock:
-			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has none chain address of %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
-			}
-
-			if err = vmParams.WorkingSet.UnlockedIdents.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex); err != nil {
-				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "direct unlockable address %s (%T)", owner, owner))
-			}
-
-		case *iotago.SignatureUnlock:
-			// owner must not be unlocked already
-			if unlockedAtIndex, wasAlreadyUnlocked := vmParams.WorkingSet.UnlockedIdents[owner.Key()]; wasAlreadyUnlocked {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
-			}
-
-			if err = vmParams.WorkingSet.UnlockedIdents.SigUnlock(owner, vmParams.WorkingSet.EssenceMsgToSign, uBlock.Signature, inputIndex); err != nil {
-				return ierrors.Join(iotago.ErrUnlockBlockSignatureInvalid, err)
-			}
-
-		}
-	default:
-		panic("unknown address in semantic unlocks")
-	}
-
-	return nil
+	return unlockIdent(vmParams, resolveUnderlyingIdent(ownerIdent), unlock, inputIndex, false)
 }
 
 // ExecFuncSenderUnlocked validates that for SenderFeature occurring on the output side,
@@ -619,7 +715,7 @@ func ExecFuncTimelocks() ExecFunc {
 				if commitment == nil {
 					return iotago.ErrTimelockConditionCommitmentInputRequired
 				}
-				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.Output.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
 					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
 				}
@@ -721,6 +817,81 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		}
 
 		// from here the native tokens balancing is handled by each foundry's STVF
+
+		return nil
+	}
+}
+
+func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Address) error {
+	addrWithCapabilities, isAddrWithCapabilities := address.(iotago.AddressCapabilities)
+	if !isAddrWithCapabilities {
+		// no restrictions
+		return nil
+	}
+
+	if addrWithCapabilities.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
+		return iotago.ErrAddressCannotReceiveNativeTokens
+	}
+
+	if addrWithCapabilities.CannotReceiveMana() && output.StoredMana() != 0 {
+		return iotago.ErrAddressCannotReceiveMana
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
+		return iotago.ErrAddressCannotReceiveTimelockUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+		return iotago.ErrAddressCannotReceiveExpirationUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+		return iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
+		return iotago.ErrAddressCannotReceiveAccountOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
+		return iotago.ErrAddressCannotReceiveNFTOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
+		return iotago.ErrAddressCannotReceiveDelegationOutput
+	}
+
+	return nil
+}
+
+// Returns a func that validates that the restrictions on an address are adhered to.
+//
+// Does not validate the Return Address in StorageDepositReturnUnlockCondition because one cannot
+// restrict returning a Basic Output with base tokens.
+func ExecFuncAddressRestrictions() ExecFunc {
+	return func(vm VirtualMachine, vmParams *Params) error {
+		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+			if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
+					return err
+				}
+			}
+			if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
+				if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
+					return err
+				}
+			}
+		}
 
 		return nil
 	}

@@ -3,9 +3,10 @@ package merklehasher
 
 import (
 	"bytes"
-	"encoding/json"
+	"context"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -14,16 +15,21 @@ type hashable[V Value] interface {
 }
 
 type leafValue[V Value] struct {
-	Value []byte
+	Value []byte `serix:"0,mapKey=value,lengthPrefixType=uint8"`
 }
 
 type hashValue[V Value] struct {
-	Value []byte
+	Value []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
 }
 
+type Pair[V Value] struct {
+	Left  hashable[V] `serix:"0,mapKey=l"`
+	Right hashable[V] `serix:"1,mapKey=r"`
+}
+
+// nolint: tagliatelle // Does not understand generics
 type Proof[V Value] struct {
-	Left  hashable[V]
-	Right hashable[V]
+	*Pair[V] `serix:"0"`
 }
 
 // ComputeProof computes the audit path given the values and the value we want to create the inclusion proof for.
@@ -78,7 +84,7 @@ func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], erro
 	}
 
 	//nolint:forcetypeassert
-	return p.(*Proof[V]), nil
+	return &Proof[V]{Pair: p.(*Pair[V])}, nil
 }
 
 func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) {
@@ -92,13 +98,13 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		left := data[0]
 		right := data[1]
 		if index == 0 {
-			return &Proof[V]{
+			return &Pair[V]{
 				Left:  &leafValue[V]{left},
 				Right: &hashValue[V]{t.hashLeaf(right)},
 			}, nil
 		}
 
-		return &Proof[V]{
+		return &Pair[V]{
 			Left:  &hashValue[V]{t.hashLeaf(left)},
 			Right: &leafValue[V]{right},
 		}, nil
@@ -114,7 +120,7 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		}
 		right := t.Hash(data[k:])
 
-		return &Proof[V]{
+		return &Pair[V]{
 			Left:  left,
 			Right: &hashValue[V]{right},
 		}, nil
@@ -127,7 +133,7 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		return nil, err
 	}
 
-	return &Proof[V]{
+	return &Pair[V]{
 		Left:  &hashValue[V]{left},
 		Right: right,
 	}, nil
@@ -137,71 +143,16 @@ func (l *leafValue[V]) Hash(hasher *Hasher[V]) []byte {
 	return hasher.hashLeaf(l.Value)
 }
 
-type jsonValue struct {
-	Value string `json:"value"`
-}
-
-func (l *leafValue[V]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&jsonValue{
-		Value: hexutil.EncodeHex(l.Value),
-	})
-}
-
-func (l *leafValue[V]) UnmarshalJSON(bytes []byte) error {
-	j := &jsonValue{}
-	if err := json.Unmarshal(bytes, j); err != nil {
-		return err
-	}
-	if len(j.Value) == 0 {
-		return ierrors.New("missing value")
-	}
-	value, err := hexutil.DecodeHex(j.Value)
-	if err != nil {
-		return err
-	}
-	l.Value = value
-
-	return nil
-}
-
 func (h *hashValue[V]) Hash(_ *Hasher[V]) []byte {
 	return h.Value
 }
 
-type jsonHash struct {
-	Hash string `json:"h"`
-}
-
-func (h *hashValue[V]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&jsonHash{
-		Hash: hexutil.EncodeHex(h.Value),
-	})
-}
-
-func (h *hashValue[V]) UnmarshalJSON(bytes []byte) error {
-	j := &jsonHash{}
-	if err := json.Unmarshal(bytes, j); err != nil {
-		return err
-	}
-	if len(j.Hash) == 0 {
-		return ierrors.New("missing hash")
-	}
-	value, err := hexutil.DecodeHex(j.Hash)
-	if err != nil {
-		return err
-	}
-	h.Value = value
-
-	return nil
-}
-
-func (p *Proof[V]) Hash(hasher *Hasher[V]) []byte {
+func (p *Pair[V]) Hash(hasher *Hasher[V]) []byte {
 	return hasher.hashNode(p.Left.Hash(hasher), p.Right.Hash(hasher))
 }
 
-type jsonPath struct {
-	Left  *json.RawMessage `json:"l"`
-	Right *json.RawMessage `json:"r"`
+func (p *Proof[V]) Hash(hasher *Hasher[V]) []byte {
+	return p.Pair.Hash(hasher)
 }
 
 func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
@@ -210,7 +161,7 @@ func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
 		return false
 	case *leafValue[V]:
 		return bytes.Equal(value, t.Value)
-	case *Proof[V]:
+	case *Pair[V]:
 		return containsLeafValue[V](t.Right, value) || containsLeafValue[V](t.Left, value)
 	}
 
@@ -223,65 +174,60 @@ func (p *Proof[V]) ContainsValue(value V) (bool, error) {
 		return false, err
 	}
 
-	return containsLeafValue[V](p, valueBytes), nil
+	return containsLeafValue[V](p.Pair, valueBytes), nil
 }
 
-func (p *Proof[V]) MarshalJSON() ([]byte, error) {
-	jsonLeft, err := json.Marshal(p.Left)
-	if err != nil {
-		return nil, err
+func serixAPI[V Value]() *serix.API {
+	must := func(err error) {
+		if err != nil {
+			panic(err)
+		}
 	}
-	jsonRight, err := json.Marshal(p.Right)
-	if err != nil {
-		return nil, err
-	}
-	rawLeft := json.RawMessage(jsonLeft)
-	rawRight := json.RawMessage(jsonRight)
 
-	return json.Marshal(&jsonPath{
-		Left:  &rawLeft,
-		Right: &rawRight,
-	})
+	api := serix.NewAPI()
+
+	must(api.RegisterTypeSettings(leafValue[V]{},
+		serix.TypeSettings{}.WithObjectType(uint8(2)),
+	))
+
+	must(api.RegisterTypeSettings(hashValue[V]{},
+		serix.TypeSettings{}.WithObjectType(uint8(1)),
+	))
+
+	must(api.RegisterTypeSettings(Pair[V]{},
+		serix.TypeSettings{}.WithObjectType(uint8(0)),
+	))
+
+	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*leafValue[V])(nil)))
+	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*hashValue[V])(nil)))
+	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*Pair[V])(nil)))
+
+	return api
 }
 
-func unmarshalHashable[V Value](raw *json.RawMessage, hasheable *hashable[V]) error {
-	h := new(hashValue[V])
-	if err := json.Unmarshal(*raw, h); err == nil {
-		*hasheable = h
+func (p *Proof[V]) JSONEncode() ([]byte, error) {
+	return serixAPI[V]().JSONEncode(context.TODO(), p)
+}
 
-		return nil
-	}
-	l := new(leafValue[V])
-	if err := json.Unmarshal(*raw, l); err == nil {
-		*hasheable = l
-
-		return nil
-	}
-
+func ProofFromJSON[V Value](bytes []byte) (*Proof[V], error) {
 	p := new(Proof[V])
-	if err := json.Unmarshal(*raw, p); err != nil {
-		return err
+	if err := serixAPI[V]().JSONDecode(context.TODO(), bytes, p); err != nil {
+		return nil, err
 	}
-	*hasheable = p
 
-	return nil
+	return p, nil
 }
 
-func (p *Proof[V]) UnmarshalJSON(bytes []byte) error {
-	j := &jsonPath{}
-	if err := json.Unmarshal(bytes, j); err != nil {
-		return err
+func ProofFromBytes[V Value](bytes []byte) (*Proof[V], int, error) {
+	p := new(Proof[V])
+	count, err := serixAPI[V]().Decode(context.TODO(), bytes, p)
+	if err != nil {
+		return nil, 0, err
 	}
-	var left hashable[V]
-	if err := unmarshalHashable(j.Left, &left); err != nil {
-		return err
-	}
-	var right hashable[V]
-	if err := unmarshalHashable(j.Right, &right); err != nil {
-		return err
-	}
-	p.Left = left
-	p.Right = right
 
-	return nil
+	return p, count, nil
+}
+
+func (p *Proof[V]) Bytes() ([]byte, error) {
+	return serixAPI[V]().Encode(context.TODO(), p)
 }

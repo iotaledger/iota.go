@@ -104,7 +104,7 @@ type DelegationOutput struct {
 	// The identifier for this output.
 	DelegationID DelegationID `serix:"2,mapKey=delegationId"`
 	// The Account ID of the validator to which this output is delegating.
-	ValidatorID AccountID `serix:"3,mapKey=validatorId"`
+	ValidatorAddress *AccountAddress `serix:"3,mapKey=validatorAddress"`
 	// The index of the first epoch for which this output delegates.
 	StartEpoch EpochIndex `serix:"4,mapKey=startEpoch"`
 	// The index of the last epoch for which this output delegates.
@@ -115,32 +115,81 @@ type DelegationOutput struct {
 
 func (d *DelegationOutput) Clone() Output {
 	return &DelegationOutput{
-		Amount:          d.Amount,
-		DelegatedAmount: d.DelegatedAmount,
-		DelegationID:    d.DelegationID,
-		ValidatorID:     d.ValidatorID,
-		StartEpoch:      d.StartEpoch,
-		EndEpoch:        d.EndEpoch,
-		Conditions:      d.Conditions.Clone(),
+		Amount:           d.Amount,
+		DelegatedAmount:  d.DelegatedAmount,
+		DelegationID:     d.DelegationID,
+		ValidatorAddress: d.ValidatorAddress,
+		StartEpoch:       d.StartEpoch,
+		EndEpoch:         d.EndEpoch,
+		Conditions:       d.Conditions.Clone(),
 	}
+}
+
+func (d *DelegationOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*DelegationOutput)
+	if !isSameType {
+		return false
+	}
+
+	if d.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if d.DelegatedAmount != otherOutput.DelegatedAmount {
+		return false
+	}
+
+	if d.DelegationID != otherOutput.DelegationID {
+		return false
+	}
+
+	if !d.ValidatorAddress.Equal(otherOutput.ValidatorAddress) {
+		return false
+	}
+
+	if d.StartEpoch != otherOutput.StartEpoch {
+		return false
+	}
+
+	if d.EndEpoch != otherOutput.EndEpoch {
+		return false
+	}
+
+	if !d.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	return true
 }
 
 func (d *DelegationOutput) Ident() Address {
 	return d.Conditions.MustSet().Address().Address
 }
 
-func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
+	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlot, futureBoundedSlot)
 	return ok
 }
 
 func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
+		// TODO: Align vbyte factor weight of each field with TIP.
 		// type prefix + amount + delegated amount + start epoch + end epoch
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize*4) +
-		rentStruct.VBFactorData.Multiply(DelegationIDLength) +
-		rentStruct.VBFactorData.Multiply(AccountIDLength) +
+		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+BaseTokenSize+EpochIndexLength+EpochIndexLength) +
+		rentStruct.VBFactorDelegation.Multiply(DelegationIDLength) +
+		rentStruct.VBFactorDelegation.Multiply(AccountAddressSerializedBytesSize) +
 		d.Conditions.VBytes(rentStruct, nil)
+}
+
+func (d *DelegationOutput) syntacticallyValidate() error {
+	// Address should never be nil.
+	address := d.Conditions.MustSet().Address().Address
+
+	if address.Type() == AddressImplicitAccountCreation {
+		return ErrImplicitAccountCreationAddressInInvalidOutput
+	}
+
+	return nil
 }
 
 func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
@@ -181,7 +230,10 @@ func (d *DelegationOutput) Size() int {
 		BaseTokenSize +
 		BaseTokenSize +
 		DelegationIDLength +
-		AccountIDLength +
-		EpochIndexLength*2 +
+		// Account Address Type Byte
+		serializer.SmallTypeDenotationByteSize +
+		AccountAddressBytesLength +
+		EpochIndexLength +
+		EpochIndexLength +
 		d.Conditions.Size()
 }

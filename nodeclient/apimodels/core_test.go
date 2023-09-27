@@ -67,6 +67,8 @@ func Test_InfoResponse(t *testing.T) {
 
 		decoded := new(apimodels.InfoResponse)
 		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
+
+		// ignore computed values
 		require.EqualValues(t, response, decoded)
 	}
 
@@ -107,19 +109,19 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 		},
 		LatestFinalizedSlot: 14,
 		Commitment: &iotago.Commitment{
-			Version:          api.Version(),
-			Index:            18,
-			PrevID:           iotago.CommitmentID{0x1},
-			RootsID:          iotago.Identifier{0x2},
-			CumulativeWeight: 89,
-			RMC:              123,
+			ProtocolVersion:      api.Version(),
+			Slot:                 18,
+			PreviousCommitmentID: iotago.CommitmentID{0x1},
+			RootsID:              iotago.Identifier{0x2},
+			CumulativeWeight:     89,
+			ReferenceManaCost:    123,
 		},
 	}
 
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"strongParents\":[\"0x09000000000000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x08000000000000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x07000000000000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":\"14\",\"commitment\":{\"version\":3,\"index\":\"18\",\"prevId\":\"0x01000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"rmc\":\"123\"}}"
+	expected := "{\"strongParents\":[\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x070000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":14,\"commitment\":{\"protocolVersion\":3,\"slot\":18,\"previousCommitmentId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"referenceManaCost\":\"123\"}}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.IssuanceBlockHeaderResponse)
@@ -137,7 +139,7 @@ func Test_BlockCreatedResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"blockId\":\"0x01000000000000000000000000000000000000000000000000000000000000000000000000000000\"}"
+	expected := "{\"blockId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.BlockCreatedResponse)
@@ -160,7 +162,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x09000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":21}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":21}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.BlockMetadataResponse)
@@ -178,7 +180,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x09000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"confirmed\"}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"confirmed\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.BlockMetadataResponse)
@@ -205,7 +207,7 @@ func Test_OutputMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x08000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x0900000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":true,\"commitmentIdSpent\":\"0x06000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionIdSpent\":\"0x0100000000000000000000000000000000000000000000000000000000000000\",\"includedCommitmentId\":\"0x03000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"latestCommitmentId\":\"0x02000000000000000000000000000000000000000000000000000000000000000000000000000000\"}"
+		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":true,\"commitmentIdSpent\":\"0x060000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionIdSpent\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"includedCommitmentId\":\"0x030000000000000000000000000000000000000000000000000000000000000000000000\",\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.OutputMetadataResponse)
@@ -226,7 +228,7 @@ func Test_OutputMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x08000000000000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x0900000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":false,\"latestCommitmentId\":\"0x02000000000000000000000000000000000000000000000000000000000000000000000000000000\"}"
+		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":false,\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.OutputMetadataResponse)
@@ -251,7 +253,7 @@ func Test_UTXOChangesResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"index\":\"42\",\"createdOutputs\":[\"0x01000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x02000000000000000000000000000000000000000000000000000000000000000000\"]}"
+	expected := "{\"index\":42,\"createdOutputs\":[\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.UTXOChangesResponse)
@@ -272,7 +274,7 @@ func Test_CongestionResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"slotIndex\":\"12\",\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
+	expected := "{\"slotIndex\":12,\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.CongestionResponse)
@@ -301,7 +303,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
-	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":\"0\",\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9,\"latestSupportedProtocolHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}],\"pageSize\":50,\"cursor\":\"0,1\"}"
+	expected := "{\"stakers\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"stakingEpochEnd\":0,\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9,\"latestSupportedProtocolHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}],\"pageSize\":50,\"cursor\":\"0,1\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.ValidatorsResponse)
@@ -321,7 +323,7 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"epochIndexStart\":\"123\",\"epochIndexEnd\":\"133\",\"rewards\":\"456\"}"
+	expected := "{\"epochIndexStart\":123,\"epochIndexEnd\":133,\"rewards\":\"456\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.ManaRewardsResponse)
@@ -349,7 +351,7 @@ func Test_CommitteeResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"committee\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"poolStake\":\"456\",\"validatorStake\":\"123\",\"fixedCost\":\"789\"}],\"totalStake\":\"456\",\"totalValidatorStake\":\"123\",\"epochIndex\":\"872\"}"
+	expected := "{\"committee\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"poolStake\":\"456\",\"validatorStake\":\"123\",\"fixedCost\":\"789\"}],\"totalStake\":\"456\",\"totalValidatorStake\":\"123\",\"epochIndex\":872}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.CommitteeResponse)

@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"bytes"
+
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -194,6 +196,55 @@ func (a *AccountOutput) Clone() Output {
 	}
 }
 
+func (a *AccountOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*AccountOutput)
+	if !isSameType {
+		return false
+	}
+
+	if a.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if a.Mana != otherOutput.Mana {
+		return false
+	}
+
+	if !a.NativeTokens.Equal(otherOutput.NativeTokens) {
+		return false
+	}
+
+	if a.AccountID != otherOutput.AccountID {
+		return false
+	}
+
+	if a.StateIndex != otherOutput.StateIndex {
+		return false
+	}
+
+	if !bytes.Equal(a.StateMetadata, otherOutput.StateMetadata) {
+		return false
+	}
+
+	if a.FoundryCounter != otherOutput.FoundryCounter {
+		return false
+	}
+
+	if !a.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	if !a.Features.Equal(otherOutput.Features) {
+		return false
+	}
+
+	if !a.ImmutableFeatures.Equal(otherOutput.ImmutableFeatures) {
+		return false
+	}
+
+	return true
+}
+
 func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
 	return outputUnlockableBy(a, next, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 }
@@ -201,7 +252,7 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+serializer.UInt64ByteSize+serializer.UInt64ByteSize) +
+		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
 		rentStruct.VBFactorData.Multiply(AccountIDLength) +
 		// state index, state meta length, state meta, foundry counter
@@ -209,6 +260,18 @@ func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		a.Conditions.VBytes(rentStruct, nil) +
 		a.Features.VBytes(rentStruct, nil) +
 		a.ImmutableFeatures.VBytes(rentStruct, nil)
+}
+
+func (a *AccountOutput) syntacticallyValidate() error {
+	// Address should never be nil.
+	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
+	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
+
+	if (stateControllerAddress.Type() == AddressImplicitAccountCreation) || (governorAddress.Type() == AddressImplicitAccountCreation) {
+		return ErrImplicitAccountCreationAddressInInvalidOutput
+	}
+
+	return nil
 }
 
 func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

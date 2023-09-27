@@ -34,8 +34,12 @@ func (addr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByt
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *Ed25519Address) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *Ed25519Address) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *Ed25519Address) Unlock(msg []byte, sig Signature) error {
@@ -61,47 +65,15 @@ func (addr *Ed25519Address) Type() AddressType {
 }
 
 func (addr *Ed25519Address) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringBytes(hrp, addr.ID())
 }
 
 func (addr *Ed25519Address) String() string {
-	return hexutil.EncodeHex(addr[:])
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *Ed25519Address) Size() int {
 	return Ed25519AddressSerializedBytesSize
-}
-
-func (addr *Ed25519Address) CannotReceiveNativeTokens() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveMana() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveAccountOutputs() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveNFTOutputs() bool {
-	return false
-}
-
-func (addr *Ed25519Address) CannotReceiveDelegationOutputs() bool {
-	return false
 }
 
 // Ed25519AddressFromPubKey returns the address belonging to the given Ed25519 public key.

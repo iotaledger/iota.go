@@ -57,8 +57,12 @@ func (addr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ 
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *ImplicitAccountCreationAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *ImplicitAccountCreationAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {
@@ -84,11 +88,11 @@ func (addr *ImplicitAccountCreationAddress) Type() AddressType {
 }
 
 func (addr *ImplicitAccountCreationAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringBytes(hrp, addr.ID())
 }
 
 func (addr *ImplicitAccountCreationAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *ImplicitAccountCreationAddress) Size() int {

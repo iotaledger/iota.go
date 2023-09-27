@@ -4,7 +4,7 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-func SingleVersionProvider(api iotago.API) Provider {
+func SingleVersionProvider(api iotago.API) iotago.APIProvider {
 	return &singleVersionProvider{api: api}
 }
 

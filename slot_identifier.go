@@ -8,30 +8,29 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
-	SlotIdentifierLength = IdentifierLength + serializer.UInt64ByteSize
+	SlotIdentifierLength = IdentifierLength + SlotIndexLength
 )
 
 var (
 	emptySlotIdentifier = SlotIdentifier{}
 )
 
-// SlotIdentifier is a 32 byte hash value that can be used to uniquely identify some blob of data together with an 8 byte slot index.
+// SlotIdentifier is a 32 byte hash value that can be used to uniquely identify some blob of data together with an 4 byte slot index.
 type SlotIdentifier [SlotIdentifierLength]byte
 
 // SlotIdentifierRepresentingData returns a new SlotIdentifier for the given data by hashing it with blake2b and associating it with the given slot index.
-func SlotIdentifierRepresentingData(index SlotIndex, data []byte) SlotIdentifier {
-	return NewSlotIdentifier(index, blake2b.Sum256(data))
+func SlotIdentifierRepresentingData(slot SlotIndex, data []byte) SlotIdentifier {
+	return NewSlotIdentifier(slot, blake2b.Sum256(data))
 }
 
-func NewSlotIdentifier(index SlotIndex, idBytes Identifier) SlotIdentifier {
+func NewSlotIdentifier(slot SlotIndex, idBytes Identifier) SlotIdentifier {
 	id := SlotIdentifier{}
 	copy(id[:], idBytes[:])
-	binary.LittleEndian.PutUint64(id[IdentifierLength:], uint64(index))
+	binary.LittleEndian.PutUint32(id[IdentifierLength:], uint32(slot))
 
 	return id
 }
@@ -95,11 +94,16 @@ func (id SlotIdentifier) ToHex() string {
 }
 
 func (id SlotIdentifier) String() string {
-	return fmt.Sprintf("%s:%d", id.Alias(), id.Index())
+	return fmt.Sprintf("%s:%d", id.Alias(), id.Slot())
 }
 
+func (id SlotIdentifier) Slot() SlotIndex {
+	return SlotIndex(binary.LittleEndian.Uint32(id[IdentifierLength:]))
+}
+
+// Index returns a slot index to conform with hive's IndexedID interface.
 func (id SlotIdentifier) Index() SlotIndex {
-	return SlotIndex(binary.LittleEndian.Uint64(id[IdentifierLength:]))
+	return id.Slot()
 }
 
 func (id SlotIdentifier) Identifier() Identifier {

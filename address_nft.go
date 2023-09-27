@@ -33,8 +33,12 @@ func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
 }
 
+func (addr *NFTAddress) ID() []byte {
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+}
+
 func (addr *NFTAddress) Key() string {
-	return string(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return string(addr.ID())
 }
 
 func (addr *NFTAddress) Chain() ChainID {
@@ -59,47 +63,15 @@ func (addr *NFTAddress) Type() AddressType {
 }
 
 func (addr *NFTAddress) Bech32(hrp NetworkPrefix) string {
-	return bech32String(hrp, addr)
+	return bech32StringBytes(hrp, addr.ID())
 }
 
 func (addr *NFTAddress) String() string {
-	return hexutil.EncodeHex(lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr)))
+	return hexutil.EncodeHex(addr.ID())
 }
 
 func (addr *NFTAddress) Size() int {
 	return NFTAddressSerializedBytesSize
-}
-
-func (addr *NFTAddress) CannotReceiveNativeTokens() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveMana() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveAccountOutputs() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveNFTOutputs() bool {
-	return false
-}
-
-func (addr *NFTAddress) CannotReceiveDelegationOutputs() bool {
-	return false
 }
 
 // NFTAddressFromOutputID returns the NFT address computed from a given OutputID.

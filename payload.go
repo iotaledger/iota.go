@@ -2,6 +2,14 @@ package iotago
 
 import (
 	"fmt"
+
+	"github.com/iotaledger/hive.go/constraints"
+)
+
+const (
+	// MaxPayloadSize defines the maximum size of a basic block payload.
+	// MaxPayloadSize = MaxBlockSize - block header - empty basic block - one strong parent - block signature.
+	MaxPayloadSize = MaxBlockSize - BlockHeaderLength - BasicBlockSizeEmptyParentsAndEmptyPayload - SlotIdentifierLength - Ed25519SignatureSerializedBytesSize
 )
 
 // PayloadType denotes a type of payload.
@@ -49,6 +57,7 @@ var (
 type Payload interface {
 	Sizer
 	ProcessableObject
+	constraints.Cloneable[Payload]
 
 	// PayloadType returns the type of the payload.
 	PayloadType() PayloadType

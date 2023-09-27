@@ -55,8 +55,8 @@ var (
 	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
-	// ErrDelegationValidatorIDZeroed gets returned if a Delegation Output's Validator ID is zeroed out.
-	ErrDelegationValidatorIDZeroed = ierrors.New("delegation output's validator ID is zeroed")
+	// ErrDelegationValidatorAddressZeroed gets returned if a Delegation Output's Validator address is zeroed out.
+	ErrDelegationValidatorAddressZeroed = ierrors.New("delegation output's validator address is zeroed")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
 	// ErrOutputAmountMoreThanTotalSupply gets returned if an output base token amount is more than the total supply.
@@ -117,6 +117,25 @@ type TransactionEssence struct {
 }
 
 // SigningMessage returns the to be signed message.
+func (u *TransactionEssence) Clone() *TransactionEssence {
+	var payload TxEssencePayload
+	if u.Payload != nil {
+		payload = u.Payload.Clone()
+	}
+
+	return &TransactionEssence{
+		NetworkID:        u.NetworkID,
+		CreationSlot:     u.CreationSlot,
+		ContextInputs:    u.ContextInputs.Clone(),
+		Inputs:           u.Inputs.Clone(),
+		InputsCommitment: u.InputsCommitment,
+		Outputs:          u.Outputs.Clone(),
+		Allotments:       u.Allotments.Clone(),
+		Payload:          payload,
+	}
+}
+
+// SigningMessage returns the to be signed message.
 func (u *TransactionEssence) SigningMessage(api API) ([]byte, error) {
 	essenceBytes, err := api.Encode(u)
 	if err != nil {
@@ -155,7 +174,7 @@ func (u *TransactionEssence) Sign(api API, inputsCommitment []byte, addrKeys ...
 }
 
 func (u *TransactionEssence) Size() int {
-	payloadSize := serializer.UInt32ByteSize
+	payloadSize := serializer.PayloadLengthByteSize
 	if u.Payload != nil {
 		payloadSize = u.Payload.Size()
 	}
@@ -208,6 +227,10 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	)
 }
 
+// Calculates the Work Score of the TransactionEssence.
+//
+// Does not specifically include the work score of the optional payload because that is already
+// included in the Work Score of the Transaction.
 func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
 	if err != nil {
@@ -229,13 +252,5 @@ func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (
 		return 0, err
 	}
 
-	var workScorePayload WorkScore
-	if u.Payload != nil {
-		workScorePayload, err = u.Payload.WorkScore(workScoreStructure)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments, workScorePayload)
+	return workScoreContextInputs.Add(workScoreInputs, workScoreOutputs, workScoreAllotments)
 }

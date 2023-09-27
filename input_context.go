@@ -23,6 +23,16 @@ var contextInputNames = [InputReward + 1]string{"CommitmentInput", "BlockIssuanc
 // ContextInputs is a slice of ContextInput.
 type ContextInputs[T Input] []T
 
+func (in ContextInputs[T]) Clone() ContextInputs[T] {
+	cpy := make(ContextInputs[T], len(in))
+	for idx, input := range in {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
+		cpy[idx] = input.Clone().(T)
+	}
+
+	return cpy
+}
+
 func (in ContextInputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	var workScoreContextInputs WorkScore
 	for _, input := range in {

@@ -22,6 +22,13 @@ type UTXOInput struct {
 	TransactionOutputIndex uint16 `serix:"1,mapKey=transactionOutputIndex"`
 }
 
+func (u *UTXOInput) Clone() Input {
+	return &UTXOInput{
+		TransactionID:          u.TransactionID,
+		TransactionOutputIndex: u.TransactionOutputIndex,
+	}
+}
+
 func (u *UTXOInput) StateID() Identifier {
 	return IdentifierFromData(lo.PanicOnErr(u.OutputID().Bytes()))
 }
@@ -32,14 +39,19 @@ func (u *UTXOInput) Type() StateType {
 
 func (u *UTXOInput) OutputID() OutputID {
 	var id OutputID
-	copy(id[:TransactionIDLength], u.TransactionID[:])
-	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
+	copy(id[:SlotIdentifierLength], u.TransactionID[:])
+	binary.LittleEndian.PutUint16(id[SlotIdentifierLength:], u.TransactionOutputIndex)
 
 	return id
 }
 
 func (u *UTXOInput) Index() uint16 {
 	return u.TransactionOutputIndex
+}
+
+// CreationSlotIndex returns the SlotIndex the Output was created in.
+func (u *UTXOInput) CreationSlotIndex() SlotIndex {
+	return u.TransactionID.Slot()
 }
 
 func (u *UTXOInput) Equals(other *UTXOInput) bool {
@@ -58,7 +70,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 
 func (u *UTXOInput) Size() int {
 	// InputType + TransactionID + TransactionOutputIndex
-	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + serializer.UInt16ByteSize
+	return serializer.SmallTypeDenotationByteSize + SlotIdentifierLength + OutputIndexLength
 }
 
 func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

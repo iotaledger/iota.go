@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -9,7 +10,7 @@ import (
 
 const (
 	// TransactionIDLength defines the length of a Transaction ID.
-	TransactionIDLength = IdentifierLength
+	TransactionIDLength = SlotIdentifierLength
 )
 
 var (
@@ -19,6 +20,8 @@ var (
 	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
+	// ErrUnknownSignatureType gets returned for unknown signature types.
+	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
@@ -37,20 +40,41 @@ var (
 	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
 )
 
-// TransactionID is the ID of a Transaction.
-type TransactionID = Identifier
+var (
+	EmptyTransactionID = TransactionID{}
+)
+
+type TransactionID = SlotIdentifier
 
 // TransactionIDs are IDs of transactions.
 type TransactionIDs []TransactionID
+
+// TransactionIDFromData returns a new TransactionID for the given data by hashing it with blake2b and appending the creation slot index.
+func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
+	return SlotIdentifierRepresentingData(creationSlot, data)
+}
 
 type TransactionContextInputs ContextInputs[Input]
 
 // Transaction is a transaction with its inputs, outputs and unlocks.
 type Transaction struct {
+	API API
 	// The transaction essence, respectively the transfer part of a Transaction.
 	Essence *TransactionEssence `serix:"0,mapKey=essence"`
 	// The unlocks defining the unlocking data for the inputs within the Essence.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
+}
+
+func (t *Transaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
+}
+
+func (t *Transaction) Clone() Payload {
+	return &Transaction{
+		API:     t.API,
+		Essence: t.Essence.Clone(),
+		Unlocks: t.Unlocks.Clone(),
+	}
 }
 
 func (t *Transaction) PayloadType() PayloadType {
@@ -58,8 +82,8 @@ func (t *Transaction) PayloadType() PayloadType {
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
-func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
-	txID, err := t.ID(api)
+func (t *Transaction) OutputsSet() (OutputSet, error) {
+	txID, err := t.ID()
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +96,13 @@ func (t *Transaction) OutputsSet(api API) (OutputSet, error) {
 }
 
 // ID computes the ID of the Transaction.
-func (t *Transaction) ID(api API) (TransactionID, error) {
-	data, err := api.Encode(t)
+func (t *Transaction) ID() (TransactionID, error) {
+	data, err := t.API.Encode(t)
 	if err != nil {
 		return TransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
 
-	return IdentifierFromData(data), nil
+	return TransactionIDFromData(t.Essence.CreationSlot, data), nil
 }
 
 func (t *Transaction) Inputs() ([]*UTXOInput, error) {
@@ -159,7 +183,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 
 func (t *Transaction) Size() int {
 	// PayloadType
-	return serializer.UInt32ByteSize +
+	return serializer.TypeDenotationByteSize +
 		t.Essence.Size() +
 		t.Unlocks.Size()
 }
@@ -170,18 +194,18 @@ func (t *Transaction) String() string {
 }
 
 // syntacticallyValidate syntactically validates the Transaction.
-func (t *Transaction) syntacticallyValidate(api API) error {
+func (t *Transaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
 	if len(t.Unlocks) != len(t.Essence.Inputs) {
 		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
 	}
 
-	if err := t.Essence.syntacticallyValidate(api.ProtocolParameters()); err != nil {
+	if err := t.Essence.syntacticallyValidate(t.API.ProtocolParameters()); err != nil {
 		return ierrors.Errorf("transaction essence is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(api),
+		UnlocksSigUniqueAndRefValidator(t.API),
 	); err != nil {
 		return ierrors.Errorf("invalid unlocks: %w", err)
 	}
@@ -190,6 +214,12 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 }
 
 func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	// we account for the network traffic only on "Payload" level
+	workScoreEssenceData, err := workScoreStructure.DataByte.Multiply(t.Size())
+	if err != nil {
+		return 0, err
+	}
+
 	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -200,5 +230,5 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreEssence.Add(workScoreUnlocks)
+	return workScoreEssenceData.Add(workScoreEssence, workScoreUnlocks)
 }
