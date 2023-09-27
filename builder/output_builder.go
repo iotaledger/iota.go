@@ -587,11 +587,6 @@ func (builder *FoundryOutputBuilder) Amount(amount iotago.BaseToken) *FoundryOut
 	return builder
 }
 
-// Mana sets the mana of the output.
-func (builder *FoundryOutputBuilder) Mana(mana iotago.Mana) *FoundryOutputBuilder {
-	return builder.Mana(mana)
-}
-
 // NativeToken adds/modifies a native token to/on the output.
 func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeToken) *FoundryOutputBuilder {
 	builder.output.NativeTokens.Upsert(nt)
@@ -898,12 +893,4 @@ func (builder *DelegationOutputBuilder) MustBuild() *iotago.DelegationOutput {
 	}
 
 	return output
-}
-
-// Build builds the iotago.DelegationOutput.
-func (builder *DelegationOutputBuilder) Build() (*iotago.DelegationOutput, error) {
-
-	builder.output.Conditions.Sort()
-
-	return builder.output, nil
 }

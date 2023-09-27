@@ -112,7 +112,7 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 }
 
 // EmptyAddressSigner returns an empty signature for the given address.
-// This can be used to calculate the WorkScore of transactions without actual signing the transaction.
+// This can be used to calculate the WorkScore of transactions without actually signing the transaction.
 type EmptyAddressSigner struct{}
 
 func (s *EmptyAddressSigner) Sign(addr Address, _ []byte) (signature Signature, err error) {

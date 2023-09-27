@@ -86,7 +86,7 @@ func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *Transac
 func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value iotago.Mana) *TransactionBuilder {
 	// check if the allotment already exists and add the value on top
 	for _, allotment := range b.transaction.Allotments {
-		if allotment.AccountID.ToAddress().Equal(accountID.ToAddress()) {
+		if allotment.AccountID == accountID {
 			allotment.Value += value
 			return b
 		}
@@ -136,32 +136,32 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the available mana on input side"))
 	}
 
-	// substract the already alloted mana
+	// subtract the already alloted mana
 	for _, allotment := range b.transaction.Allotments {
 		totalManaIn, err = safemath.SafeSub(totalManaIn, allotment.Value)
 		if err != nil {
-			return setBuildError(ierrors.Wrap(err, "failed to substract alloted mana"))
+			return setBuildError(ierrors.Wrap(err, "failed to subtract alloted mana"))
 		}
 	}
 
-	// substract the stored mana on the outputs side
+	// subtract the stored mana on the outputs side
 	for _, output := range b.transaction.Outputs {
 		totalManaIn, err = safemath.SafeSub(totalManaIn, output.StoredMana())
 		if err != nil {
-			return setBuildError(ierrors.Wrap(err, "failed to substract the stored mana on the outputs side"))
+			return setBuildError(ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side"))
 		}
 	}
 
 	// calculate the minimum required mana to issue the block
 	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
 	if err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to substract the stored mana on the outputs side"))
+		return setBuildError(ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side"))
 	}
 
-	// substract the minimum required mana to issue the block
+	// subtract the minimum required mana to issue the block
 	totalManaIn, err = safemath.SafeSub(totalManaIn, minRequiredMana)
 	if err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to substract the minimum required mana to issue the block"))
+		return setBuildError(ierrors.Wrap(err, "failed to subtract the minimum required mana to issue the block"))
 	}
 
 	// allot the mana to the block issuer account
@@ -213,18 +213,24 @@ func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParamete
 		excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
 		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
 		if err != nil {
-			// todo add error message
-			return 0, err
+			return 0, ierrors.Wrap(err, "failed to calculate potential mana generation and decay")
+		}
+
+		totalMana, err = safemath.SafeAdd(totalMana, potentialMana)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to add potential mana")
 		}
 
 		// calculate the decayed stored mana of the input
 		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
-			// todo add error message
-			return 0, err
+			return 0, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}
 
-		totalMana += potentialMana + storedMana
+		totalMana, err = safemath.SafeAdd(totalMana, storedMana)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to add potential mana")
+		}
 	}
 
 	return totalMana, nil
