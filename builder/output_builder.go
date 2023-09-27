@@ -827,6 +827,13 @@ func (builder *DelegationOutputBuilder) DelegatedAmount(delegatedAmount iotago.B
 	return builder
 }
 
+// ValidatorAddress sets the validator address of the output.
+func (builder *DelegationOutputBuilder) ValidatorAddress(validatorAddress *iotago.AccountAddress) *DelegationOutputBuilder {
+	builder.output.ValidatorAddress = validatorAddress
+
+	return builder
+}
+
 // DelegationID sets the delegation ID of the output.
 func (builder *DelegationOutputBuilder) DelegationID(delegationID iotago.DelegationID) *DelegationOutputBuilder {
 	builder.output.DelegationID = delegationID
