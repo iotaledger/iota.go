@@ -556,9 +556,9 @@ func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
 
 func (b *ValidationBlock) Size() int {
 	return serializer.OneByte + // block type
-		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength +
-		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength +
-		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength +
+		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength + // StrongParents count
+		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength + // WeakParents count
+		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength + // ShallowLikeParents count
 		serializer.OneByte + // highest supported version
 		IdentifierLength // protocol parameters hash
 }

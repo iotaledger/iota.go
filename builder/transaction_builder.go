@@ -81,9 +81,21 @@ func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *Transac
 	return b
 }
 
-// AddAllotment adds the given allotment to the builder.
-func (b *TransactionBuilder) AddAllotment(allotment *iotago.Allotment) *TransactionBuilder {
-	b.transaction.Allotments = append(b.transaction.Allotments, allotment)
+// IncreaseAllotment adds or increases the given allotment to the builder.
+func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value iotago.Mana) *TransactionBuilder {
+	// check if the allotment already exists and add the value on top
+	for _, allotment := range b.transaction.Allotments {
+		if allotment.AccountID.ToAddress().Equal(accountID.ToAddress()) {
+			allotment.Value += value
+			return b
+		}
+	}
+
+	// allotment does not exist yet
+	b.transaction.Allotments = append(b.transaction.Allotments, &iotago.Allotment{
+		AccountID: accountID,
+		Value:     value,
+	})
 
 	return b
 }
