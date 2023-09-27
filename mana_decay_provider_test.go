@@ -55,12 +55,12 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkManaWithDecay_Single(b *testing.B) {
-	endIndex := iotago.SlotIndex(300 << slotsPerEpochExponent)
+	endSlot := iotago.SlotIndex(300 << slotsPerEpochExponent)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaWithDecay(math.MaxUint64, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.ManaWithDecay(iotago.MaxMana, 0, endSlot)
 	}
 }
 
@@ -68,9 +68,9 @@ func BenchmarkManaWithDecay_Range(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var value iotago.Mana = math.MaxUint64
-		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
-			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+		value := iotago.MaxMana
+		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -82,7 +82,7 @@ func BenchmarkManaGenerationWithDecay_Single(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaGenerationWithDecay(math.MaxUint64, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, endIndex)
 	}
 }
 
@@ -91,8 +91,8 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var value iotago.Mana
-		for epochIndex := 1; epochIndex <= 5*len(testManaDecayFactors); epochIndex++ {
-			value, _ = testManaDecayProvider.ManaGenerationWithDecay(math.MaxUint64, 0, iotago.SlotIndex(epochIndex)<<slotsPerEpochExponent)
+		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -144,10 +144,10 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for 0 slot index diffs",
-			storedMana:       math.MaxInt64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(1),
-			result:           math.MaxInt64,
+			result:           iotago.MaxMana,
 			wantErr:          nil,
 		},
 		{
@@ -160,7 +160,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
 			result:           13228672242897911807,
@@ -168,7 +168,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
 			result:           6803138682699798504,
@@ -176,7 +176,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		},
 		{
 			name:             "even with the highest possible uint64 number, the calculation should not overflow",
-			storedMana:       math.MaxUint64,
+			storedMana:       iotago.MaxMana,
 			slotIndexCreated: testTimeProvider.EpochStart(1),
 			slotIndexTarget:  testTimeProvider.EpochStart(401),
 			result:           13046663022640287317,
@@ -316,10 +316,10 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for 0 slot index diffs",
-			rewards:           math.MaxInt64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: 1,
-			result:            math.MaxInt64,
+			result:            iotago.MaxMana,
 			wantErr:           nil,
 		},
 		{
@@ -332,7 +332,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: iotago.EpochIndex(len(testManaDecayFactors) + 1),
 			result:            13228672242897911807,
@@ -340,7 +340,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "check if mana decay works for multiples of the available epoch indexes in the lookup table",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
 			result:            6803138682699798504,
@@ -348,7 +348,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		},
 		{
 			name:              "even with the highest possible uint64 number, the calculation should not overflow",
-			rewards:           math.MaxUint64,
+			rewards:           iotago.MaxMana,
 			epochIndexReward:  1,
 			epochIndexClaimed: 401,
 			result:            13046663022640287317,

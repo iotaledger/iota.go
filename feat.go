@@ -23,12 +23,10 @@ type Feature interface {
 	NonEphemeralObject
 	ProcessableObject
 	constraints.Cloneable[Feature]
+	constraints.Equalable[Feature]
 
 	// Type returns the type of the Feature.
 	Type() FeatureType
-
-	// Equal tells whether this Feature is equal to other.
-	Equal(other Feature) bool
 }
 
 // FeatureType defines the type of features.
@@ -136,8 +134,9 @@ func (f Features[T]) Equal(other Features[T]) bool {
 	if len(f) != len(other) {
 		return false
 	}
-	for i, feat := range f {
-		if !feat.Equal(other[i]) {
+
+	for idx, feat := range f {
+		if !feat.Equal(other[idx]) {
 			return false
 		}
 	}

@@ -3,7 +3,6 @@ package stardust_test
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 	"reflect"
 	"testing"
@@ -59,9 +58,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
 	currentSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
 
-	pubkey := iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+	blockIssuerPubKey := iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
-		BlockIssuerKeys: iotago.BlockIssuerKeys{pubkey},
+		BlockIssuerKeys: iotago.NewBlockIssuerKeys(blockIssuerPubKey),
 		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge(),
 	}
 
@@ -236,7 +235,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						StartEpoch:   currentEpoch,
-						EndEpoch:     math.MaxUint32,
+						EndEpoch:     iotago.MaxEpochIndex,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -276,7 +275,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						StartEpoch:   currentEpoch - 2,
-						EndEpoch:     math.MaxUint32,
+						EndEpoch:     iotago.MaxEpochIndex,
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -396,7 +395,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						StartEpoch:   currentEpoch,
-						EndEpoch:     math.MaxUint32,
+						EndEpoch:     iotago.MaxEpochIndex,
 					},
 				},
 			},
@@ -818,7 +817,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							StartEpoch:   currentEpoch,
-							EndEpoch:     math.MaxUint32,
+							EndEpoch:     iotago.MaxEpochIndex,
 						},
 						&iotago.BlockIssuerFeature{
 							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
@@ -841,7 +840,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						StakedAmount: 50,
 						FixedCost:    5,
 						StartEpoch:   currentEpoch,
-						EndEpoch:     math.MaxUint32,
+						EndEpoch:     iotago.MaxEpochIndex,
 					},
 				},
 			},
@@ -881,7 +880,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							StakedAmount: 50,
 							FixedCost:    5,
 							StartEpoch:   currentEpoch,
-							EndEpoch:     math.MaxUint32,
+							EndEpoch:     iotago.MaxEpochIndex,
 						},
 						&iotago.BlockIssuerFeature{
 							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),

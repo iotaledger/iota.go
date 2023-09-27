@@ -162,6 +162,8 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, slotIndexC
 	}
 
 	epochIndexDiff := epochIndexTarget - epochIndexCreated
+
+	//nolint:exhaustive // false-positive, we have default case
 	switch epochIndexDiff {
 	case 0:
 		return p.generateMana(amount, slotIndexTarget-slotIndexCreated), nil

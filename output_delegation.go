@@ -125,6 +125,43 @@ func (d *DelegationOutput) Clone() Output {
 	}
 }
 
+func (d *DelegationOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*DelegationOutput)
+	if !isSameType {
+		return false
+	}
+
+	if d.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if d.DelegatedAmount != otherOutput.DelegatedAmount {
+		return false
+	}
+
+	if d.DelegationID != otherOutput.DelegationID {
+		return false
+	}
+
+	if !d.ValidatorAddress.Equal(otherOutput.ValidatorAddress) {
+		return false
+	}
+
+	if d.StartEpoch != otherOutput.StartEpoch {
+		return false
+	}
+
+	if d.EndEpoch != otherOutput.EndEpoch {
+		return false
+	}
+
+	if !d.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	return true
+}
+
 func (d *DelegationOutput) Ident() Address {
 	return d.Conditions.MustSet().Address().Address
 }

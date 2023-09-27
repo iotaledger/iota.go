@@ -43,6 +43,35 @@ func (e *BasicOutput) Clone() Output {
 	}
 }
 
+func (e *BasicOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*BasicOutput)
+	if !isSameType {
+		return false
+	}
+
+	if e.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if e.Mana != otherOutput.Mana {
+		return false
+	}
+
+	if !e.NativeTokens.Equal(otherOutput.NativeTokens) {
+		return false
+	}
+
+	if !e.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	if !e.Features.Equal(otherOutput.Features) {
+		return false
+	}
+
+	return true
+}
+
 func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
 	ok, _ := outputUnlockableBy(e, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok

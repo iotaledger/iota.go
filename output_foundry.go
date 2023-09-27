@@ -109,6 +109,43 @@ func (f *FoundryOutput) Clone() Output {
 	}
 }
 
+func (f *FoundryOutput) Equal(other Output) bool {
+	otherOutput, isSameType := other.(*FoundryOutput)
+	if !isSameType {
+		return false
+	}
+
+	if f.Amount != otherOutput.Amount {
+		return false
+	}
+
+	if !f.NativeTokens.Equal(otherOutput.NativeTokens) {
+		return false
+	}
+
+	if f.SerialNumber != otherOutput.SerialNumber {
+		return false
+	}
+
+	if !f.TokenScheme.Equal(otherOutput.TokenScheme) {
+		return false
+	}
+
+	if !f.Conditions.Equal(otherOutput.Conditions) {
+		return false
+	}
+
+	if !f.Features.Equal(otherOutput.Features) {
+		return false
+	}
+
+	if !f.ImmutableFeatures.Equal(otherOutput.ImmutableFeatures) {
+		return false
+	}
+
+	return true
+}
+
 func (f *FoundryOutput) Ident() Address {
 	return f.UnlockConditionSet().ImmutableAccount().Address
 }

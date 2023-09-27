@@ -1,7 +1,6 @@
 package builder_test
 
 import (
-	"math"
 	"math/big"
 	"testing"
 	"time"
@@ -69,15 +68,14 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Metadata(metadata).
 		StateMetadata(metadata).
 		Staking(amount, 1, 1000).
-		BlockIssuer(iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}, 100000).
+		BlockIssuer(iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3), 100000).
 		ImmutableMetadata(immMetadata).
 		ImmutableSender(immSender).
 		FoundriesToGenerate(5).
 		Build()
 	require.NoError(t, err)
 
-	expectedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey1, blockIssuerKey2, blockIssuerKey3}
-	expectedBlockIssuerKeys.Sort()
+	expectedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3)
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
@@ -99,7 +97,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 				StakedAmount: amount,
 				FixedCost:    1,
 				StartEpoch:   1000,
-				EndEpoch:     math.MaxUint32,
+				EndEpoch:     iotago.MaxEpochIndex,
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -107,7 +105,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expected, accountOutput)
+	require.True(t, expected.Equal(accountOutput), "account output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
@@ -131,8 +129,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Builder().Build()
 	require.NoError(t, err)
 
-	expectedUpdatedBlockIssuerKeys := iotago.BlockIssuerKeys{blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2}
-	expectedUpdatedBlockIssuerKeys.Sort()
+	expectedUpdatedBlockIssuerKeys := iotago.NewBlockIssuerKeys(blockIssuerKey2, newBlockIssuerKey1, newBlockIssuerKey2)
 
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
@@ -162,7 +159,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.MetadataFeature{Data: immMetadata},
 		},
 	}
-	require.Equal(t, expectedFeatures, updatedFeatures)
+	require.True(t, expectedFeatures.Equal(updatedFeatures), "features should be equal")
 }
 
 func TestDelegationOutputBuilder(t *testing.T) {
