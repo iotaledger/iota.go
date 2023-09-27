@@ -128,7 +128,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 	}
 
 	var ok bool
-	switch transitionState.(type) {
+	switch castedInput := transitionState.(type) {
 	case *iotago.AccountOutput:
 		var nextAccount *iotago.AccountOutput
 		if next != nil {
@@ -146,7 +146,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 			}
 		}
 
-		return implicitAccountSTVF(input, transType, nextAccount, vmParams)
+		return implicitAccountSTVF(castedInput, input.CreationSlot, transType, nextAccount, vmParams)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -180,39 +180,41 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 }
 
 // For implicit account conversion, there must be a basic output as input, and an account output as output with an AccountID matching the input.
-// The block issuer feature on the output side must be present and valid.
-// The state index must be set to 1 on the output side.
-// If there is a staking feature on the output side, it must be valid as though it was a new account.
-// If there is an issuer feature, treat this as we would with a new account.
-func implicitAccountSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
-	switch transType {
-	case iotago.ChainTransitionTypeStateChange:
-		// check the block issuer feature of the new account output is valid as though the input side has a block issuer feature with max expiry slot.
-		inputBlockIssuerFeature := &iotago.BlockIssuerFeature{
-			ExpirySlot: iotago.MaxSlotIndex,
-		}
-		if err := accountBlockIssuerSTVF(input, inputBlockIssuerFeature, next, vmParams); err != nil {
-			return err
-		}
-		// state index must be set to 1 on the output side.
-		if next.StateIndex != 1 {
-			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "state index 0 on the input side but %d on the output side", next.StateIndex)
-		}
-		// treat the staking feature as we would with a new account output.
-		if stakingFeat := next.FeatureSet().Staking(); stakingFeat != nil {
-			if err := accountStakingGenesisValidation(next, stakingFeat, vmParams); err != nil {
-				return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
-			}
-		}
-		// treat issuer feature as we would with a new account output.
-		return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedIdents)
-	case iotago.ChainTransitionTypeDestroy:
-		return ierrors.Wrapf(iotago.ErrImplicitAccountDestruction, "implicit account %s can not be destroyed", input.Output.Chain())
-	case iotago.ChainTransitionTypeGenesis:
-		panic("implicit account genesis should not be handled as a chain output")
-	default:
-		panic("unknown chain transition type in ImplicitAccountOutput")
+func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot iotago.SlotIndex, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	// Create an account output that is essentially the implicit account, so we can call accountGovernanceSTVF.
+	account := &vm.ChainOutputWithCreationSlot{
+		Output: &iotago.AccountOutput{
+			Amount:       implicitAccount.Amount,
+			Mana:         implicitAccount.Mana,
+			NativeTokens: implicitAccount.NativeTokens,
+			// Does not need to be set to the actual value.
+			AccountID:      iotago.EmptyAccountID(),
+			StateIndex:     0,
+			StateMetadata:  []byte{},
+			FoundryCounter: 0,
+			Conditions: iotago.AccountOutputUnlockConditions{
+				&iotago.StateControllerAddressUnlockCondition{
+					Address: &iotago.Ed25519Address{},
+				},
+				&iotago.GovernorAddressUnlockCondition{
+					Address: &iotago.Ed25519Address{},
+				},
+			},
+			Features: iotago.AccountOutputFeatures{
+				&iotago.BlockIssuerFeature{
+					BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+					// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
+					// the expiry slot to a lower value, which is the behavior we want.
+					ExpirySlot: iotago.MaxSlotIndex,
+				},
+			},
+			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+		},
+		ChainID:      next.AccountID,
+		CreationSlot: creationSlot,
 	}
+
+	return accountGovernanceSTVF(account, next, vmParams)
 }
 
 // For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
@@ -388,7 +390,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
 // The block issuer credit must be non-negative.
-// The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableSlotAge greater than the TX slot index.
+// The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableAge greater than the Commitment Input.
 // Check that at least one Block Issuer Key is present.
 func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockIssuerFeat *iotago.BlockIssuerFeature, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	current := input.Output
