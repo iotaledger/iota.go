@@ -6115,8 +6115,8 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 		return inputs, sigs[0], essence
 	}
 
-	for _, tt := range tests {
-		inputs, sig, transactionEssence := makeTransaction(&tt.output)
+	for idx, tt := range tests {
+		inputs, sig, transactionEssence := makeTransaction(&tests[idx].output)
 
 		vmParams := &vm.Params{
 			API: testAPI,
