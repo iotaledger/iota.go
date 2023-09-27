@@ -155,7 +155,7 @@ func (outputID OutputID) Index() uint16 {
 
 // CreationSlotIndex returns the SlotIndex the Output was created in.
 func (outputID OutputID) CreationSlotIndex() SlotIndex {
-	return outputID.TransactionID().Index()
+	return outputID.TransactionID().Slot()
 }
 
 // UTXOInput creates a UTXOInput from this OutputID.

@@ -428,12 +428,12 @@ func checkExpiration(vmParams *Params, output iotago.Output) (iotago.Address, er
 			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
 		}
 
-		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+		futureBoundedSlotIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
 			return returnIdent, nil
 		}
 
-		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Index)
+		pastBoundedSlotIndex := vmParams.PastBoundedSlotIndex(commitment.Slot)
 		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
 			return nil, nil
 		}
@@ -663,7 +663,7 @@ func ExecFuncTimelocks() ExecFunc {
 				if commitment == nil {
 					return iotago.ErrTimelockConditionCommitmentInputRequired
 				}
-				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Index)
+				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.Output.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
 					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
 				}

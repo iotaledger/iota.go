@@ -4,7 +4,6 @@ package merklehasher_test
 import (
 	"bytes"
 	"crypto"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -47,11 +46,17 @@ func TestMerkleHasher(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, isProof)
 
-		jsonPath, err := json.Marshal(path)
+		pathBytes, err := path.Bytes()
 		require.NoError(t, err)
 
-		pathFromJSON := new(merklehasher.Proof[iotago.BlockID])
-		err = json.Unmarshal(jsonPath, pathFromJSON)
+		pathFromBytes, _, err := merklehasher.ProofFromBytes[iotago.BlockID](pathBytes)
+		require.NoError(t, err)
+		require.True(t, bytes.Equal(hash, pathFromBytes.Hash(hasher)))
+
+		jsonPath, err := path.JSONEncode()
+		require.NoError(t, err)
+
+		pathFromJSON, err := merklehasher.ProofFromJSON[iotago.BlockID](jsonPath)
 		require.NoError(t, err)
 		require.True(t, bytes.Equal(hash, pathFromJSON.Hash(hasher)))
 	}

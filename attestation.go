@@ -58,9 +58,9 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return -1
 	case other == nil:
 		return 1
-	case a.SlotCommitmentID.Index() > other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() > other.SlotCommitmentID.Slot():
 		return 1
-	case a.SlotCommitmentID.Index() < other.SlotCommitmentID.Index():
+	case a.SlotCommitmentID.Slot() < other.SlotCommitmentID.Slot():
 		return -1
 	case a.IssuingTime.After(other.IssuingTime):
 		return 1
@@ -83,9 +83,9 @@ func (a *Attestation) BlockID() (BlockID, error) {
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
-	slotIndex := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
+	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slotIndex, id), nil
+	return NewSlotIdentifier(slot, id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {

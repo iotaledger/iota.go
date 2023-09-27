@@ -129,7 +129,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 900,
+						Slot: 900,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -169,7 +169,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 10001,
+						Slot: 10001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -209,7 +209,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 991,
+						Slot: 991,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -249,7 +249,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -290,7 +290,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -331,7 +331,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -372,7 +372,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -412,7 +412,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -473,7 +473,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -527,7 +527,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -575,7 +575,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -619,7 +619,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -676,7 +676,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -737,7 +737,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -798,7 +798,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -862,7 +862,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -919,7 +919,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -970,7 +970,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1026,7 +1026,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1088,7 +1088,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1151,7 +1151,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: currentSlot,
+						Slot: currentSlot,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
@@ -1216,7 +1216,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 1001,
+						Slot: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -1256,7 +1256,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 1001,
+						Slot: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -1294,7 +1294,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 1000,
+						Slot: 1000,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Tx: &iotago.Transaction{
@@ -1331,7 +1331,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 1001,
+						Slot: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
@@ -1382,7 +1382,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 999,
+						Slot: 999,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
@@ -1433,7 +1433,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 1001,
+						Slot: 1001,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
@@ -1489,7 +1489,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						exampleGovCtrl.Key(): {UnlockedAt: 0},
 					},
 					Commitment: &iotago.Commitment{
-						Index: 990,
+						Slot: 990,
 					},
 					BIC: exampleBIC,
 					Tx: &iotago.Transaction{
@@ -1612,7 +1612,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 990,
+						Slot: 990,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -1717,7 +1717,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 990,
+						Slot: 990,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -1776,7 +1776,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 990,
+						Slot: 990,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -1836,7 +1836,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 900,
+						Slot: 900,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -1895,7 +1895,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 900,
+						Slot: 900,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -1952,7 +1952,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 900,
+						Slot: 900,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -2012,7 +2012,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					Commitment: &iotago.Commitment{
-						Index: 0,
+						Slot: 0,
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
@@ -2849,7 +2849,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2875,7 +2875,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2901,7 +2901,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2927,7 +2927,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2952,7 +2952,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -2980,7 +2980,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -3026,7 +3026,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -3064,7 +3064,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},
@@ -3102,7 +3102,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochEndCommitmentIndex,
+						Slot: epochEndCommitmentIndex,
 					},
 				},
 			},
@@ -3131,7 +3131,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 1,
@@ -3163,7 +3163,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
@@ -3195,7 +3195,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
-						Index: epochStartCommitmentIndex,
+						Slot: epochStartCommitmentIndex,
 					},
 				},
 			},

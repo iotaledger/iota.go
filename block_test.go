@@ -187,6 +187,85 @@ func TestProtocolBlock_Commitments1(t *testing.T) {
 
 }
 
+func TestProtocolBlock_TransactionCreationTime(t *testing.T) {
+	keyPair := hiveEd25519.GenerateKeyPair()
+	// We derive a dummy account from addr.
+	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
+	output := &iotago.BasicOutput{
+		Amount: 100000,
+		Conditions: iotago.BasicOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{
+				Address: addr,
+			},
+		},
+	}
+	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
+	// commitments between 90 and slot that the block commits to (100 at most)
+	apiProvider := api.NewEpochBasedProvider()
+	apiProvider.AddProtocolParametersAtEpoch(
+		iotago.NewV3ProtocolParameters(
+			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithLivenessOptions(3, 11, 21, 4),
+		), 0)
+
+	creationSlotTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(101).
+		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewSlotIdentifier(78, tpkg.Rand32ByteArray())}).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, creationSlotTooRecent, apiProvider), iotago.ErrTransactionCreationSlotTooRecent)
+
+	creationSlotCorrectEqual, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(100).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectEqual, apiProvider))
+
+	creationSlotCorrectSmallerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(1).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectSmallerThanCommitment, apiProvider))
+
+	creationSlotCorrectLargerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+		AddInput(&builder.TxInput{
+			UnlockTarget: addr,
+			InputID:      tpkg.RandOutputID(0),
+			Input:        output,
+		}).
+		AddOutput(output).
+		SetCreationSlot(99).
+		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+
+	require.NoError(t, err)
+
+	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectLargerThanCommitment, apiProvider))
+}
+
 func TestProtocolBlock_WeakParents(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := api.NewEpochBasedProvider()

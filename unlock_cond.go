@@ -207,8 +207,8 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 
 // HasManalockCondition tells whether the set has both an account address unlock
 // and a timelock that is still locked at slotIndex.
-func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex SlotIndex) bool {
-	if !f.HasTimelockUntil(slotIndex) {
+func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slot SlotIndex) bool {
+	if !f.HasTimelockUntil(slot) {
 		return false
 	}
 	unlockAddress := f.Address()
@@ -226,26 +226,26 @@ func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slotIndex 
 }
 
 // HasTimelockUntil tells us whether the set has a timelock that is still locked at slotIndex.
-func (f UnlockConditionSet) HasTimelockUntil(slotIndex SlotIndex) bool {
+func (f UnlockConditionSet) HasTimelockUntil(slot SlotIndex) bool {
 	// TODO: Test this.
 	timelock := f.Timelock()
-	return timelock != nil && slotIndex < timelock.SlotIndex
+	return timelock != nil && slot < timelock.SlotIndex
 }
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
 // returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	if err := f.TimelocksExpired(futureBoundedSlotIndex); err != nil {
+func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
+	if err := f.TimelocksExpired(futureBoundedSlot); err != nil {
 		return false
 	}
 
 	// if the return ident can unlock, then ident must be the return ident
-	if returnIdentCanUnlock, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlotIndex); returnIdentCanUnlock {
+	if returnIdentCanUnlock, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlot); returnIdentCanUnlock {
 		return ident.Equal(returnIdent)
 	}
 
 	// if the past bounded index is less than the expiration slot index, then owner can unlock
-	if f.OwnerIdentCanUnlock(pastBoundedSlotIndex) {
+	if f.OwnerIdentCanUnlock(pastBoundedSlot) {
 		return ident.Equal(owner)
 	}
 
@@ -255,7 +255,7 @@ func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBound
 // OwnerIdentCanUnlock tells whether the target address defined in an expiration unlock condition within this set is
 // allowed to unlock an Output containing this UnlockConditionSet given the past bounded slot index of the tx defined as
 // the slot index of the commitment input plus the max committable age.
-func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlotIndex SlotIndex) bool {
+func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlot SlotIndex) bool {
 	expUnlockCond := f.Expiration()
 
 	// if there is not expiration unlock, then the owner can unlock.
@@ -263,7 +263,7 @@ func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlotIndex SlotIndex) 
 		return true
 	}
 
-	if pastBoundedSlotIndex < expUnlockCond.SlotIndex {
+	if pastBoundedSlot < expUnlockCond.SlotIndex {
 		return true
 	}
 
@@ -290,15 +290,15 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(futureBoundedSlotIndex SlotInde
 // TimelocksExpired tells whether UnlockCondition(s) in this set which impose a timelock are expired
 // in relation to the given future bounded slot index. The provided slot index is the slot index of the commitment
 // input which is being spent by the transaction plus the min committable age.
-func (f UnlockConditionSet) TimelocksExpired(futureBoundedIndex SlotIndex) error {
+func (f UnlockConditionSet) TimelocksExpired(futureBoundedSlot SlotIndex) error {
 	timelock := f.Timelock()
 
 	if timelock == nil {
 		return nil
 	}
 
-	if futureBoundedIndex < timelock.SlotIndex {
-		return ierrors.Wrapf(ErrTimelockNotExpired, "slotIndex cond is %d, while tx creation slot could be up to %d", timelock.SlotIndex, futureBoundedIndex)
+	if futureBoundedSlot < timelock.SlotIndex {
+		return ierrors.Wrapf(ErrTimelockNotExpired, "slotIndex cond is %d, while tx creation slot could be up to %d", timelock.SlotIndex, futureBoundedSlot)
 	}
 
 	return nil

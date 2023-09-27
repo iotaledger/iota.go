@@ -342,7 +342,7 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 		return nil, err
 	}
 
-	client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Index())
+	client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Slot())
 
 	return res, nil
 }

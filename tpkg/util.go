@@ -1007,9 +1007,9 @@ func ManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds in
 
 	betaPerEpochIndex := betaPerYear / epochsPerYear
 
-	for epochIndex := 1; epochIndex <= int(epochsPerYear); epochIndex++ {
-		decayFactor := math.Exp(-betaPerEpochIndex*float64(epochIndex)) * (math.Pow(2, float64(decayFactorsExponent)))
-		decayFactors[epochIndex-1] = uint32(decayFactor)
+	for epoch := 1; epoch <= int(epochsPerYear); epoch++ {
+		decayFactor := math.Exp(-betaPerEpochIndex*float64(epoch)) * (math.Pow(2, float64(decayFactorsExponent)))
+		decayFactors[epoch-1] = uint32(decayFactor)
 	}
 
 	return decayFactors

@@ -166,8 +166,8 @@ func (d *DelegationOutput) Ident() Address {
 	return d.Conditions.MustSet().Address().Address
 }
 
-func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
+	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlot, futureBoundedSlot)
 	return ok
 }
 
