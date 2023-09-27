@@ -18,8 +18,7 @@ type CommitmentID = SlotIdentifier
 var EmptyCommitmentID = CommitmentID{}
 
 type Commitment struct {
-	ProtocolVersion Version `serix:"0,mapKey=protocolVersion"`
-	// TODO: rename to Slot?
+	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
 	Slot                 SlotIndex    `serix:"1,mapKey=slot"`
 	PreviousCommitmentID CommitmentID `serix:"2,mapKey=previousCommitmentId"`
 	RootsID              Identifier   `serix:"3,mapKey=rootsId"`

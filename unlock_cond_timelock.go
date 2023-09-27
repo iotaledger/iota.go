@@ -44,6 +44,6 @@ func (s *TimelockUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *TimelockUnlockCondition) Size() int {
-	// UnlockType + Slot
+	// UnlockType + SlotIndex
 	return serializer.SmallTypeDenotationByteSize + SlotIndexLength
 }

@@ -53,6 +53,6 @@ func (s *ExpirationUnlockCondition) Type() UnlockConditionType {
 }
 
 func (s *ExpirationUnlockCondition) Size() int {
-	// UnlockType + ReturnAddress + Slot
+	// UnlockType + ReturnAddress + SlotIndex
 	return serializer.SmallTypeDenotationByteSize + s.ReturnAddress.Size() + SlotIndexLength
 }

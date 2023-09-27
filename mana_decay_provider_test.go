@@ -299,8 +299,8 @@ func TestManaDecay_Rewards(t *testing.T) {
 	type test struct {
 		name         string
 		rewards      iotago.Mana
-		epochReward  iotago.EpochIndex
-		epochClaimed iotago.EpochIndex
+		rewardEpoch  iotago.EpochIndex
+		claimedEpoch iotago.EpochIndex
 		result       iotago.Mana
 		wantErr      error
 	}
@@ -309,48 +309,48 @@ func TestManaDecay_Rewards(t *testing.T) {
 		{
 			name:         "check if mana decay works for 0 mana values",
 			rewards:      0,
-			epochReward:  1,
-			epochClaimed: 400,
+			rewardEpoch:  1,
+			claimedEpoch: 400,
 			result:       0,
 			wantErr:      nil,
 		},
 		{
 			name:         "check if mana decay works for 0 slot index diffs",
 			rewards:      iotago.MaxMana,
-			epochReward:  1,
-			epochClaimed: 1,
+			rewardEpoch:  1,
+			claimedEpoch: 1,
 			result:       iotago.MaxMana,
 			wantErr:      nil,
 		},
 		{
 			name:         "check for error if target index is lower than created index",
 			rewards:      0,
-			epochReward:  2,
-			epochClaimed: 1,
+			rewardEpoch:  2,
+			claimedEpoch: 1,
 			result:       0,
 			wantErr:      iotago.ErrWrongEpochIndex,
 		},
 		{
 			name:         "check if mana decay works for exactly the amount of epoch indexes in the lookup table",
 			rewards:      iotago.MaxMana,
-			epochReward:  1,
-			epochClaimed: iotago.EpochIndex(len(testManaDecayFactors) + 1),
+			rewardEpoch:  1,
+			claimedEpoch: iotago.EpochIndex(len(testManaDecayFactors) + 1),
 			result:       13228672242897911807,
 			wantErr:      nil,
 		},
 		{
 			name:         "check if mana decay works for multiples of the available epoch indexes in the lookup table",
 			rewards:      iotago.MaxMana,
-			epochReward:  1,
-			epochClaimed: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
+			rewardEpoch:  1,
+			claimedEpoch: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
 			result:       6803138682699798504,
 			wantErr:      nil,
 		},
 		{
 			name:         "even with the highest possible uint64 number, the calculation should not overflow",
 			rewards:      iotago.MaxMana,
-			epochReward:  1,
-			epochClaimed: 401,
+			rewardEpoch:  1,
+			claimedEpoch: 401,
 			result:       13046663022640287317,
 			wantErr:      nil,
 		},
@@ -358,7 +358,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.epochReward, tt.epochClaimed)
+			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.rewardEpoch, tt.claimedEpoch)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 

@@ -140,19 +140,19 @@ func (p *ManaDecayProvider) generateMana(value BaseToken, slotDiff SlotIndex) Ma
 	return Mana(fixedPointMultiplication32(uint64(value), uint64(slotDiff)*p.generationRate, p.generationRateExponent))
 }
 
-// StoredManaWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotIndex, slotTarget SlotIndex) (Mana, error) {
+// ManaWithDecay applies the decay to the given mana.
+func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
-	epochTarget := p.timeProvider.EpochFromSlot(slotTarget)
+	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
-	if creationEpoch > epochTarget {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, epochTarget)
+	if creationEpoch > targetEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
 	}
 
-	return p.decay(storedMana, epochTarget-creationEpoch), nil
+	return p.decay(storedMana, targetEpoch-creationEpoch), nil
 }
 
-// PotentialManaWithDecay calculates the generated potential mana and applies the decay to the result.
+// ManaGenerationWithDecay calculates the generated mana and applies the decay to the result.
 func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
@@ -201,10 +201,10 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 }
 
 // RewardsWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, epochReward EpochIndex, epochClaimed EpochIndex) (Mana, error) {
-	if epochReward > epochClaimed {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", epochReward, epochClaimed)
+func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochIndex, claimedEpoch EpochIndex) (Mana, error) {
+	if rewardEpoch > claimedEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", rewardEpoch, claimedEpoch)
 	}
 
-	return p.decay(rewards, epochClaimed-epochReward), nil
+	return p.decay(rewards, claimedEpoch-rewardEpoch), nil
 }
