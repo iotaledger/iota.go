@@ -124,14 +124,14 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
 
-func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(slotIndexTarget iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targetSlot iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
 	}
 
 	// calculate the available mana on input side
-	totalManaIn, err := b.TotalManaInputs(b.api.ProtocolParameters(), b.inputs, slotIndexTarget)
+	totalManaIn, err := b.TotalManaInputs(b.api.ProtocolParameters(), b.inputs, targetSlot)
 	if err != nil {
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the available mana on input side"))
 	}
@@ -203,7 +203,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 	return blockBuilder.Payload(tx)
 }
 
-func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParameters, inputSet iotago.OutputSet, slotIndexTarget iotago.SlotIndex) (iotago.Mana, error) {
+func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParameters, inputSet iotago.OutputSet, targetSlot iotago.SlotIndex) (iotago.Mana, error) {
 	var totalMana iotago.Mana
 
 	for inputID, input := range inputSet {
@@ -211,14 +211,14 @@ func (b *TransactionBuilder) TotalManaInputs(protoParams iotago.ProtocolParamete
 		// we need to ignore the storage deposit, because it doesn't generate mana
 		rentStructure := iotago.NewRentStructure(protoParams.RentParameters())
 		excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
-		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), slotIndexTarget)
+		potentialMana, err := protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
 		if err != nil {
 			// todo add error message
 			return 0, err
 		}
 
 		// calculate the decayed stored mana of the input
-		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), slotIndexTarget)
+		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
 			// todo add error message
 			return 0, err

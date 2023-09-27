@@ -9,6 +9,7 @@ import (
 func NewBasicOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *BasicOutputBuilder {
 	return &BasicOutputBuilder{output: &iotago.BasicOutput{
 		Amount:       amount,
+		Mana:         0,
 		NativeTokens: iotago.NativeTokens{},
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
@@ -31,6 +32,13 @@ type BasicOutputBuilder struct {
 // Amount sets the base token amount of the output.
 func (builder *BasicOutputBuilder) Amount(amount iotago.BaseToken) *BasicOutputBuilder {
 	builder.output.Amount = amount
+
+	return builder
+}
+
+// Mana sets the mana of the output.
+func (builder *BasicOutputBuilder) Mana(mana iotago.Mana) *BasicOutputBuilder {
+	builder.output.Mana = mana
 
 	return builder
 }
@@ -64,15 +72,15 @@ func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Addres
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
-func (builder *BasicOutputBuilder) Timelock(untilSlotIndex iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlotIndex})
+func (builder *BasicOutputBuilder) Timelock(untilSlot iotago.SlotIndex) *BasicOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlot})
 
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
-func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlotIndex iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlotIndex})
+func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlot iotago.SlotIndex) *BasicOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlot})
 
 	return builder
 }
@@ -98,6 +106,15 @@ func (builder *BasicOutputBuilder) Tag(tag []byte) *BasicOutputBuilder {
 	return builder
 }
 
+// Build builds the iotago.BasicOutput.
+func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
+	builder.output.Conditions.Sort()
+	builder.output.Features.Sort()
+	builder.output.NativeTokens.Sort()
+
+	return builder.output, nil
+}
+
 // MustBuild works like Build() but panics if an error is encountered.
 func (builder *BasicOutputBuilder) MustBuild() *iotago.BasicOutput {
 	output, err := builder.Build()
@@ -108,20 +125,16 @@ func (builder *BasicOutputBuilder) MustBuild() *iotago.BasicOutput {
 	return output
 }
 
-// Build builds the iotago.BasicOutput.
-func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
-	builder.output.Conditions.Sort()
-	builder.output.Features.Sort()
-	builder.output.NativeTokens.Sort()
-
-	return builder.output, nil
-}
-
 // NewAccountOutputBuilder creates a new AccountOutputBuilder with the required state controller/governor addresses and base token amount.
 func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, amount iotago.BaseToken) *AccountOutputBuilder {
 	return &AccountOutputBuilder{output: &iotago.AccountOutput{
-		Amount:       amount,
-		NativeTokens: iotago.NativeTokens{},
+		Amount:         amount,
+		Mana:           0,
+		NativeTokens:   iotago.NativeTokens{},
+		AccountID:      iotago.EmptyAccountID(),
+		StateIndex:     0,
+		StateMetadata:  []byte{},
+		FoundryCounter: 0,
 		Conditions: iotago.AccountOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: govAddr},
@@ -157,8 +170,8 @@ func (builder *AccountOutputBuilder) Amount(amount iotago.BaseToken) *AccountOut
 }
 
 // Mana sets the mana of the output.
-func (builder *AccountOutputBuilder) Mana(amount iotago.Mana) *AccountOutputBuilder {
-	builder.output.Mana = amount
+func (builder *AccountOutputBuilder) Mana(mana iotago.Mana) *AccountOutputBuilder {
+	builder.output.Mana = mana
 
 	return builder
 }
@@ -280,16 +293,6 @@ func (builder *AccountOutputBuilder) ImmutableMetadata(data []byte) *AccountOutp
 	return builder
 }
 
-// MustBuild works like Build() but panics if an error is encountered.
-func (builder *AccountOutputBuilder) MustBuild() *iotago.AccountOutput {
-	output, err := builder.Build()
-	if err != nil {
-		panic(err)
-	}
-
-	return output
-}
-
 // Build builds the iotago.AccountOutput.
 func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 	if builder.prev != nil && builder.govCtrlReq && builder.stateCtrlReq {
@@ -314,6 +317,16 @@ func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 	return builder.output, nil
 }
 
+// MustBuild works like Build() but panics if an error is encountered.
+func (builder *AccountOutputBuilder) MustBuild() *iotago.AccountOutput {
+	output, err := builder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	return output
+}
+
 type accountStateTransition struct {
 	builder *AccountOutputBuilder
 }
@@ -328,6 +341,11 @@ func (builder *AccountOutputBuilder) StateTransition() *accountStateTransition {
 // Amount sets the base token amount of the output.
 func (trans *accountStateTransition) Amount(amount iotago.BaseToken) *accountStateTransition {
 	return trans.builder.Amount(amount).StateTransition()
+}
+
+// Mana sets the mana of the output.
+func (trans *accountStateTransition) Mana(mana iotago.Mana) *accountStateTransition {
+	return trans.builder.Mana(mana).StateTransition()
 }
 
 // StateMetadata sets the state metadata of the output.
@@ -473,8 +491,8 @@ func (trans *blockIssuerTransition) Keys(keys iotago.BlockIssuerKeys) *blockIssu
 }
 
 // ExpirySlot sets the ExpirySlot of iotago.BlockIssuerFeature.
-func (trans *blockIssuerTransition) ExpirySlot(index iotago.SlotIndex) *blockIssuerTransition {
-	trans.feature.ExpirySlot = index
+func (trans *blockIssuerTransition) ExpirySlot(slot iotago.SlotIndex) *blockIssuerTransition {
+	trans.feature.ExpirySlot = slot
 
 	return trans
 }
@@ -509,15 +527,15 @@ func (trans *stakingTransition) FixedCost(fixedCost iotago.Mana) *stakingTransit
 }
 
 // StartEpoch sets the StartEpoch of iotago.StakingFeature.
-func (trans *stakingTransition) StartEpoch(index iotago.EpochIndex) *stakingTransition {
-	trans.feature.StartEpoch = index
+func (trans *stakingTransition) StartEpoch(slot iotago.EpochIndex) *stakingTransition {
+	trans.feature.StartEpoch = slot
 
 	return trans
 }
 
 // EndEpoch sets the EndEpoch of iotago.StakingFeature.
-func (trans *stakingTransition) EndEpoch(index iotago.EpochIndex) *stakingTransition {
-	trans.feature.EndEpoch = index
+func (trans *stakingTransition) EndEpoch(slot iotago.EpochIndex) *stakingTransition {
+	trans.feature.EndEpoch = slot
 
 	return trans
 }
@@ -537,6 +555,7 @@ func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iot
 	return &FoundryOutputBuilder{output: &iotago.FoundryOutput{
 		Amount:       amount,
 		NativeTokens: iotago.NativeTokens{},
+		SerialNumber: 0,
 		TokenScheme:  tokenScheme,
 		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
@@ -568,6 +587,11 @@ func (builder *FoundryOutputBuilder) Amount(amount iotago.BaseToken) *FoundryOut
 	return builder
 }
 
+// Mana sets the mana of the output.
+func (builder *FoundryOutputBuilder) Mana(mana iotago.Mana) *FoundryOutputBuilder {
+	return builder.Mana(mana)
+}
+
 // NativeToken adds/modifies a native token to/on the output.
 func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeToken) *FoundryOutputBuilder {
 	builder.output.NativeTokens.Upsert(nt)
@@ -597,17 +621,6 @@ func (builder *FoundryOutputBuilder) ImmutableMetadata(data []byte) *FoundryOutp
 	return builder
 }
 
-// MustBuild works like Build() but panics if an error is encountered.
-func (builder *FoundryOutputBuilder) MustBuild() *iotago.FoundryOutput {
-	output, err := builder.Build()
-
-	if err != nil {
-		panic(err)
-	}
-
-	return output
-}
-
 // Build builds the iotago.FoundryOutput.
 func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 	if builder.prev != nil {
@@ -624,11 +637,24 @@ func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 	return builder.output, nil
 }
 
+// MustBuild works like Build() but panics if an error is encountered.
+func (builder *FoundryOutputBuilder) MustBuild() *iotago.FoundryOutput {
+	output, err := builder.Build()
+
+	if err != nil {
+		panic(err)
+	}
+
+	return output
+}
+
 // NewNFTOutputBuilder creates a new NFTOutputBuilder with the address and base token amount.
 func NewNFTOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *NFTOutputBuilder {
 	return &NFTOutputBuilder{output: &iotago.NFTOutput{
 		Amount:       amount,
+		Mana:         0,
 		NativeTokens: iotago.NativeTokens{},
+		NFTID:        iotago.EmptyNFTID(),
 		Conditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
@@ -655,6 +681,13 @@ type NFTOutputBuilder struct {
 // Amount sets the base token amount of the output.
 func (builder *NFTOutputBuilder) Amount(amount iotago.BaseToken) *NFTOutputBuilder {
 	builder.output.Amount = amount
+
+	return builder
+}
+
+// Amount sets the mana of the output.
+func (builder *NFTOutputBuilder) Mana(mana iotago.Mana) *NFTOutputBuilder {
+	builder.output.Mana = mana
 
 	return builder
 }
@@ -696,15 +729,15 @@ func (builder *NFTOutputBuilder) StorageDepositReturn(returnAddr iotago.Address,
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
-func (builder *NFTOutputBuilder) Timelock(untilSlotIndex iotago.SlotIndex) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlotIndex})
+func (builder *NFTOutputBuilder) Timelock(untilSlot iotago.SlotIndex) *NFTOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlot})
 
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
-func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlotIndex iotago.SlotIndex) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlotIndex})
+func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlot iotago.SlotIndex) *NFTOutputBuilder {
+	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlot})
 
 	return builder
 }
@@ -746,16 +779,6 @@ func (builder *NFTOutputBuilder) ImmutableIssuer(issuer iotago.Address) *NFTOutp
 	return builder
 }
 
-// MustBuild works like Build() but panics if an error is encountered.
-func (builder *NFTOutputBuilder) MustBuild() *iotago.NFTOutput {
-	output, err := builder.Build()
-	if err != nil {
-		panic(err)
-	}
-
-	return output
-}
-
 // Build builds the iotago.FoundryOutput.
 func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 	if builder.prev != nil {
@@ -770,6 +793,16 @@ func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 	builder.output.NativeTokens.Sort()
 
 	return builder.output, nil
+}
+
+// MustBuild works like Build() but panics if an error is encountered.
+func (builder *NFTOutputBuilder) MustBuild() *iotago.NFTOutput {
+	output, err := builder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	return output
 }
 
 // NewDelegationOutputBuilder creates a new DelegationOutputBuilder with the account address, serial number, token scheme and base token amount.
@@ -847,6 +880,14 @@ func (builder *DelegationOutputBuilder) Address(addr iotago.Address) *Delegation
 	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
+}
+
+// Build builds the iotago.DelegationOutput.
+func (builder *DelegationOutputBuilder) Build() (*iotago.DelegationOutput, error) {
+
+	builder.output.Conditions.Sort()
+
+	return builder.output, nil
 }
 
 // MustBuild works like Build() but panics if an error is encountered.
