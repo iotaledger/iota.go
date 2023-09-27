@@ -5217,7 +5217,7 @@ func TestTxSemanticMana(t *testing.T) {
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
 							excessBaseTokens := input.Output.BaseTokenAmount() - rentStructure.MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
@@ -5280,7 +5280,7 @@ func TestTxSemanticMana(t *testing.T) {
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
 							excessBaseTokens := input.Output.BaseTokenAmount() - rentStructure.MinDeposit(input.Output)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, slotIndexTarget)
+							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 
 							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, createdSlot, targetSlot)
