@@ -42,10 +42,6 @@ var (
 	ErrAddressCannotReceiveNFTOutput = ierrors.New("address cannot receive nft outputs")
 	// ErrAddressCannotReceiveDelegationOutput gets returned if a DelegationOutput is sent to an address without that capability.
 	ErrAddressCannotReceiveDelegationOutput = ierrors.New("address cannot receive delegation outputs")
-	// ErrImplicitAccountDisallowedUnlockCondition gets returned if an implicit account contains more than one unlock condition.
-	ErrImplicitAccountDisallowedUnlockCondition = ierrors.New("implicit accounts cannot contain more than one unlock condition")
-	// ErrImplicitAccountContainsNativeTokens gets returned if an implicit account contains native tokens.
-	ErrImplicitAccountContainsNativeTokens = ierrors.New("implicit accounts cannot contain native tokens")
 )
 
 // AddressType defines the type of addresses.
