@@ -6058,14 +6058,14 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 	exampleAmount := iotago.BaseToken(1_000_000)
 	exampleMana := iotago.Mana(10_000_000)
 	exampleNativeTokens := tpkg.RandSortNativeTokens(1)
-	outputId := tpkg.RandOutputID(0)
-	accountId := iotago.AccountIDFromOutputID(outputId)
+	outputID := tpkg.RandOutputID(0)
+	accountID := iotago.AccountIDFromOutputID(outputID)
 	currentSlot := iotago.SlotIndex(10)
 	commitmentSlot := currentSlot - tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
 
 	exampleInputSet := vm.ResolvedInputs{
 		InputSet: vm.InputSet{
-			outputId: {
+			outputID: {
 				Output: &iotago.BasicOutput{
 					Amount:       exampleAmount,
 					NativeTokens: exampleNativeTokens,
@@ -6122,7 +6122,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			name: "ok - implicit account transitioned to account with block issuer feature",
 			inputs: vm.ResolvedInputs{
 				InputSet: vm.InputSet{
-					outputId: {
+					outputID: {
 						Output: &iotago.BasicOutput{
 							Amount: exampleAmount,
 							Mana:   exampleMana,
@@ -6134,7 +6134,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					},
 				},
 				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
-					accountId: iotago.BlockIssuanceCredits(0),
+					accountID: iotago.BlockIssuanceCredits(0),
 				},
 				CommitmentInput: &iotago.Commitment{
 					Slot: commitmentSlot,
@@ -6143,7 +6143,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			output: &iotago.AccountOutput{
 				Amount:    exampleAmount,
 				Mana:      exampleMana,
-				AccountID: accountId,
+				AccountID: accountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{
 						Address: edIdent,
@@ -6170,7 +6170,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			name: "fail - implicit account transitioned to account without block issuer feature",
 			inputs: vm.ResolvedInputs{
 				InputSet: vm.InputSet{
-					outputId: {
+					outputID: {
 						Output: &iotago.BasicOutput{
 							Amount: exampleAmount,
 							Mana:   exampleMana,
@@ -6182,7 +6182,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					},
 				},
 				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
-					accountId: iotago.BlockIssuanceCredits(0),
+					accountID: iotago.BlockIssuanceCredits(0),
 				},
 				CommitmentInput: &iotago.Commitment{
 					Slot: commitmentSlot,
@@ -6191,7 +6191,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			output: &iotago.AccountOutput{
 				Amount:    exampleAmount,
 				Mana:      exampleMana,
-				AccountID: accountId,
+				AccountID: accountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{
 						Address: edIdent,
@@ -6209,7 +6209,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			name: "fail - implicit account transitioned to account without block issuer feature",
 			inputs: vm.ResolvedInputs{
 				InputSet: vm.InputSet{
-					outputId: {
+					outputID: {
 						Output: &iotago.BasicOutput{
 							Amount: exampleAmount,
 							Mana:   exampleMana,
@@ -6221,7 +6221,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					},
 				},
 				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
-					accountId: iotago.BlockIssuanceCredits(0),
+					accountID: iotago.BlockIssuanceCredits(0),
 				},
 				CommitmentInput: &iotago.Commitment{
 					Slot: commitmentSlot,
@@ -6241,8 +6241,8 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 
 	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKey iotago.AddressKeys) (iotago.Signature, iotago.TransactionEssence) {
 		inputIDs := iotago.OutputIDs{}
-		for outputId := range inputSet {
-			inputIDs = append(inputIDs, outputId)
+		for outputID := range inputSet {
+			inputIDs = append(inputIDs, outputID)
 		}
 		essence := iotago.TransactionEssence{
 			Inputs: inputIDs.UTXOInputs(),
