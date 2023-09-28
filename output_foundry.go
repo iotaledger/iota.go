@@ -197,7 +197,7 @@ func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 	return workScoreNativeTokens.Add(workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (f *FoundryOutput) Chain() ChainID {
+func (f *FoundryOutput) ChainID() ChainID {
 	foundryID, err := f.FoundryID()
 	if err != nil {
 		panic(err)

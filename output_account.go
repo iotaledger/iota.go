@@ -317,7 +317,7 @@ func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	}
 }
 
-func (a *AccountOutput) Chain() ChainID {
+func (a *AccountOutput) ChainID() ChainID {
 	return a.AccountID
 }
 

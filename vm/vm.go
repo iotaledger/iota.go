@@ -407,9 +407,9 @@ func ExecFuncInputUnlocks() ExecFunc {
 			}
 
 			// since this input is now unlocked, and it is a ChainOutput, the chain's address becomes automatically unlocked
-			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.Chain().Addressable() {
+			if chainConstrOutput, is := input.(iotago.ChainOutput); is && chainConstrOutput.ChainID().Addressable() {
 				// mark this ChainOutput's identity as unlocked by this input
-				chainID := chainConstrOutput.Chain()
+				chainID := chainConstrOutput.ChainID()
 				if chainID.Empty() {
 					//nolint:forcetypeassert // we can safely assume that this is an UTXOIDChainID
 					chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(vmParams.WorkingSet.UTXOInputAtIndex(uint16(inputIndex)).OutputID())
@@ -445,7 +445,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 		return in.Ident(), nil
 
 	case iotago.TransDepIdentOutput:
-		chainID := in.Chain()
+		chainID := in.ChainID()
 		if chainID.Empty() {
 			utxoChainID, is := chainID.(iotago.UTXOIDChainID)
 			if !is {

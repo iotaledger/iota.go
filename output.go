@@ -423,9 +423,9 @@ func (outputs Outputs[T]) ChainOutputSet(txID TransactionID) ChainOutputSet {
 			continue
 		}
 
-		chainID := chainOutput.Chain()
+		chainID := chainOutput.ChainID()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(UTXOIDChainID); is {
+			if utxoIDChainID, is := chainOutput.ChainID().(UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(OutputIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
 			}
 		}
@@ -593,13 +593,13 @@ func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
 	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
-			if !is || chainOutput.Chain().Empty() {
+			if !is || chainOutput.ChainID().Empty() {
 				continue
 			}
-			if _, has := chainOutputSet[chainOutput.Chain()]; has {
+			if _, has := chainOutputSet[chainOutput.ChainID()]; has {
 				return nil, ErrNonUniqueChainOutputs
 			}
-			chainOutputSet[chainOutput.Chain()] = chainOutput
+			chainOutputSet[chainOutput.ChainID()] = chainOutput
 		}
 	}
 
@@ -942,7 +942,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalVali
 			return nil
 		}
 
-		chainID := chainConstrainedOutput.Chain()
+		chainID := chainConstrainedOutput.ChainID()
 		if chainID.Empty() {
 			// we can ignore newly minted chainConstrainedOutputs
 			return nil

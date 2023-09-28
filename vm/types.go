@@ -33,9 +33,9 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			continue
 		}
 
-		chainID := chainOutput.Chain()
+		chainID := chainOutput.ChainID()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(iotago.UTXOIDChainID); is {
+			if utxoIDChainID, is := chainOutput.ChainID().(iotago.UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(utxoInputID)
 			}
 		}

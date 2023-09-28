@@ -38,7 +38,7 @@ func (nftID NFTID) Key() interface{} {
 func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
 
-	return addr.Chain()
+	return addr.ChainID()
 }
 
 func (nftID NFTID) Empty() bool {
@@ -204,7 +204,7 @@ func (n *NFTOutput) syntacticallyValidate() error {
 	return nil
 }
 
-func (n *NFTOutput) Chain() ChainID {
+func (n *NFTOutput) ChainID() ChainID {
 	return n.NFTID
 }
 

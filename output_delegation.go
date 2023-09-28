@@ -196,7 +196,7 @@ func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (Wo
 	return d.Conditions.WorkScore(workScoreStructure)
 }
 
-func (d *DelegationOutput) Chain() ChainID {
+func (d *DelegationOutput) ChainID() ChainID {
 	return d.DelegationID
 }
 

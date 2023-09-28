@@ -252,7 +252,7 @@ func accountStateSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParam
 		}
 
 		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).Chain()
+		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).ChainID()
 		if !foundryAccountID.Matches(next.AccountID) {
 			continue
 		}

@@ -5,8 +5,8 @@ import "github.com/iotaledger/hive.go/ierrors"
 // ChainOutput is a type of Output which represents a chain of state transitions.
 type ChainOutput interface {
 	Output
-	// Chain returns the ChainID to which this Output belongs to.
-	Chain() ChainID
+	// ChainID returns the ChainID to which this Output belongs to.
+	ChainID() ChainID
 }
 
 // ChainOutputImmutable is a type of Output which represents a chain of state transitions with immutable features.
