@@ -6061,7 +6061,10 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 	outputID := tpkg.RandOutputID(0)
 	accountID := iotago.AccountIDFromOutputID(outputID)
 	currentSlot := iotago.SlotIndex(10)
-	commitmentSlot := currentSlot - tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
+	commitmentSlot := currentSlot - testAPI.ProtocolParameters().MaxCommittableAge()
+
+	rentStructure := testAPI.RentStructure()
+	minAmountImplicitAccount := iotago.BaseToken(rentStructure.VByteCost()) * iotago.BaseToken(rentStructure.VBOffsetImplicitAccountCreationAddress)
 
 	exampleInputSet := vm.ResolvedInputs{
 		InputSet: vm.InputSet{
@@ -6206,7 +6209,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
 		},
 		{
-			name: "fail - implicit account transitioned to account without block issuer feature",
+			name: "fail - attempt to destroy implicit account",
 			inputs: vm.ResolvedInputs{
 				InputSet: vm.InputSet{
 					outputID: {
@@ -6236,6 +6239,52 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			},
 			keys:    implicitAccountIdentAddrKeys,
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
+		},
+		{
+			name: "ok - implicit account with VBOffsetImplicitAccountCreationAddress can be transitioned",
+			inputs: vm.ResolvedInputs{
+				InputSet: vm.InputSet{
+					outputID: {
+						Output: &iotago.BasicOutput{
+							Amount: minAmountImplicitAccount,
+							Mana:   0,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+				},
+				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
+					accountID: iotago.BlockIssuanceCredits(0),
+				},
+				CommitmentInput: &iotago.Commitment{
+					Slot: commitmentSlot,
+				},
+			},
+			output: &iotago.AccountOutput{
+				Amount:    minAmountImplicitAccount,
+				Mana:      0,
+				AccountID: accountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{
+						Address: edIdent,
+					},
+					&iotago.GovernorAddressUnlockCondition{
+						Address: edIdent,
+					},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.BlockIssuerFeature{
+						ExpirySlot: iotago.MaxSlotIndex,
+						BlockIssuerKeys: iotago.NewBlockIssuerKeys(
+							iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+						),
+					},
+				},
+			},
+			keys:    implicitAccountIdentAddrKeys,
+			wantErr: nil,
 		},
 	}
 

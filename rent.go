@@ -48,8 +48,11 @@ type RentParameters struct {
 
 // RentStructure includes the rent parameters and the additional factors computed from these parameters.
 type RentStructure struct {
-	RentParameters                         *RentParameters
-	VBFactorImplicitAccountCreationAddress VByteCostFactor
+	RentParameters *RentParameters
+	// The amount of VBytes a minimal block issuer account needs to have minus the wrapping Basic Output, such that
+	// this value plus the wrapping Basic Output the Implicit Account Creation Address is contained in results
+	// in the minimum amount of a block issuer account.
+	VBOffsetImplicitAccountCreationAddress VBytes
 }
 
 // VByteCost returns the cost of a single virtual byte denoted in IOTA tokens.
@@ -125,11 +128,11 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		RentParameters: rentParameters,
 	}
 
-	// set the vbyte cost factor for implicit account creation addresses as the vbyte cost of the dummy account.
-	vBFactorDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
-	vBFactorDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
-	vBFactorDummyAddress := dummyAddress.VBytes(rentStructure, nil)
-	rentStructure.VBFactorImplicitAccountCreationAddress = VByteCostFactor(vBFactorDummyAccountOutput - vBFactorDummyBasicOutput + vBFactorDummyAddress)
+	// Set the vbytes for implicit account creation addresses as the vByte cost of the dummy account.
+	vBytesDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
+	vBytesDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
+	vBytesDummyAddress := dummyAddress.VBytes(rentStructure, nil)
+	rentStructure.VBOffsetImplicitAccountCreationAddress = vBytesDummyAccountOutput - vBytesDummyBasicOutput + vBytesDummyAddress
 
 	return rentStructure
 }
