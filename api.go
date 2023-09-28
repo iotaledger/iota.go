@@ -62,8 +62,6 @@ type API interface {
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.
 	ManaDecayProvider() *ManaDecayProvider
-	// LivenessThresholdDuration returns the liveness threshold duration.
-	LivenessThresholdDuration() time.Duration
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
 	// ComputedInitialReward returns the initial reward calculated from the parameters.
@@ -127,7 +125,9 @@ type ProtocolParameters interface {
 
 	PunishmentEpochs() EpochIndex
 
-	LivenessThreshold() SlotIndex
+	LivenessThresholdLowerBound() time.Duration
+
+	LivenessThresholdUpperBound() time.Duration
 
 	MinCommittableAge() SlotIndex
 
