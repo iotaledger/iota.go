@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	// TransactionIDLength defines the length of a SignedTransaction ID.
+	// SignedTransactionIDLength defines the length of a SignedTransactionID.
+	SignedTransactionIDLength = SlotIdentifierLength
+
+	// TransactionIDLength defines the length of a TransactionID.
 	TransactionIDLength = SlotIdentifierLength
 )
 
