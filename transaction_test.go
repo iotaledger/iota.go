@@ -14,14 +14,14 @@ import (
 
 func TestTransactionEssenceSelector(t *testing.T) {
 	_, err := iotago.TransactionEssenceSelector(100)
-	assert.True(t, ierrors.Is(err, iotago.ErrUnknownTransactionEssenceType))
+	assert.True(t, ierrors.Is(err, iotago.ErrUnknownTransactionType))
 }
 
 func TestTransactionEssence_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandTransactionEssence(),
+			source: tpkg.RandTransaction(),
 			target: &iotago.Transaction{},
 		},
 	}
@@ -46,7 +46,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Account twice
 			name: "transition the same Account twice",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
@@ -82,7 +82,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same NFT twice
 			name: "transition the same NFT twice",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID: tpkg.TestNetworkID,
@@ -114,7 +114,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Foundry twice
 			name: "transition the same Foundry twice",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID: tpkg.TestNetworkID,
@@ -180,7 +180,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "allot to the same account twice",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,

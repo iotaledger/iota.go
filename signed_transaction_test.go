@@ -14,13 +14,13 @@ func TestTransactionDeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - UTXO",
-			source: tpkg.RandTransaction(tpkg.TestAPI),
+			source: tpkg.RandSignedTransaction(tpkg.TestAPI),
 			target: &iotago.SignedTransaction{},
 		},
 		{
 			name: "ok -  Commitment",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.CommitmentInput{
 							CommitmentID: iotago.CommitmentID{},
@@ -33,8 +33,8 @@ func TestTransactionDeSerialize(t *testing.T) {
 		},
 		{
 			name: "ok - BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.BlockIssuanceCreditInput{
 							AccountID: tpkg.RandAccountID(),
@@ -47,8 +47,8 @@ func TestTransactionDeSerialize(t *testing.T) {
 		},
 		{
 			name: "ok - Commitment + BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.CommitmentInput{
 							CommitmentID: iotago.CommitmentID{},
@@ -72,8 +72,8 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "ok",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
 					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
@@ -85,8 +85,8 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 		},
 		{
 			name: "too many inputs",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount+1),
 				)),
 			target:    &iotago.SignedTransaction{},
@@ -95,8 +95,8 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 		},
 		{
 			name: "too many context inputs",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(
 					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithCommitmentInput(),
@@ -115,14 +115,14 @@ func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:      "ok",
-			source:    tpkg.RandTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount),
+			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   nil,
 			deSeriErr: nil,
 		},
 		{
 			name:      "too many outputs",
-			source:    tpkg.RandTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount+1),
+			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount+1),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
 			deSeriErr: nil,
@@ -137,14 +137,14 @@ func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:      "ok",
-			source:    tpkg.RandTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount),
+			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   nil,
 			deSeriErr: nil,
 		},
 		{
 			name:      "too many outputs",
-			source:    tpkg.RandTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount+1),
+			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount+1),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
 			deSeriErr: nil,
@@ -159,8 +159,8 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "ok",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax,
@@ -172,8 +172,8 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 		},
 		{
 			name: "wrong ref index",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				tpkg.RandTransactionWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax + 1,
@@ -218,8 +218,8 @@ func TestTransaction_InputTypes(t *testing.T) {
 		Index: 2,
 	}
 
-	transaction := tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-		tpkg.RandTransactionEssenceWithOptions(
+	transaction := tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+		tpkg.RandTransactionWithOptions(
 			tpkg.WithInputs(iotago.TxEssenceInputs{
 				utxoInput1,
 				utxoInput2,
@@ -262,7 +262,7 @@ func TestTransaction_InputTypes(t *testing.T) {
 }
 
 func TestTransaction_Clone(t *testing.T) {
-	transaction := tpkg.RandTransaction(tpkg.TestAPI)
+	transaction := tpkg.RandSignedTransaction(tpkg.TestAPI)
 	txID, err := transaction.ID()
 	require.NoError(t, err)
 

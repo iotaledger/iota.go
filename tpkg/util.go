@@ -477,44 +477,44 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 	return &iotago.ReferenceUnlock{Reference: index}
 }
 
-// RandTransactionEssence returns a random transaction essence.
-func RandTransactionEssence() *iotago.Transaction {
-	return RandTransactionEssenceWithOptions(
+// RandTransaction returns a random transaction essence.
+func RandTransaction() *iotago.Transaction {
+	return RandTransactionWithOptions(
 		WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount)+1),
 		WithOutputCount(rand.Intn(iotago.MaxOutputsCount)+1),
 		WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount)+1),
 	)
 }
 
-// RandTransactionEssenceWithInputCount returns a random transaction essence with a specific amount of inputs..
-func RandTransactionEssenceWithInputCount(inputCount int) *iotago.Transaction {
-	return RandTransactionEssenceWithOptions(
+// RandTransactionWithInputCount returns a random transaction essence with a specific amount of inputs..
+func RandTransactionWithInputCount(inputCount int) *iotago.Transaction {
+	return RandTransactionWithOptions(
 		WithUTXOInputCount(inputCount),
 		WithOutputCount(rand.Intn(iotago.MaxOutputsCount)+1),
 		WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount)+1),
 	)
 }
 
-// RandTransactionEssenceWithOutputCount returns a random transaction essence with a specific amount of outputs.
-func RandTransactionEssenceWithOutputCount(outputCount int) *iotago.Transaction {
-	return RandTransactionEssenceWithOptions(
+// RandTransactionWithOutputCount returns a random transaction essence with a specific amount of outputs.
+func RandTransactionWithOutputCount(outputCount int) *iotago.Transaction {
+	return RandTransactionWithOptions(
 		WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount)+1),
 		WithOutputCount(outputCount),
 		WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount)+1),
 	)
 }
 
-// RandTransactionEssenceWithAllotmentCount returns a random transaction essence with a specific amount of outputs.
-func RandTransactionEssenceWithAllotmentCount(allotmentCount int) *iotago.Transaction {
-	return RandTransactionEssenceWithOptions(
+// RandTransactionWithAllotmentCount returns a random transaction essence with a specific amount of outputs.
+func RandTransactionWithAllotmentCount(allotmentCount int) *iotago.Transaction {
+	return RandTransactionWithOptions(
 		WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount)+1),
 		WithOutputCount(rand.Intn(iotago.MaxOutputsCount)+1),
 		WithAllotmentCount(allotmentCount),
 	)
 }
 
-// RandTransactionEssenceWithOptions returns a random transaction essence with options applied.
-func RandTransactionEssenceWithOptions(opts ...options.Option[iotago.Transaction]) *iotago.Transaction {
+// RandTransactionWithOptions returns a random transaction essence with options applied.
+func RandTransactionWithOptions(opts ...options.Option[iotago.Transaction]) *iotago.Transaction {
 	tx := &iotago.Transaction{
 		TransactionEssence: &iotago.TransactionEssence{
 			NetworkID:     TestNetworkID,
@@ -688,7 +688,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 	//nolint:exhaustive
 	switch withPayloadType {
 	case iotago.PayloadTransaction:
-		payload = RandTransaction(api)
+		payload = RandSignedTransaction(api)
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
 	}
@@ -722,12 +722,12 @@ func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, r
 	return block
 }
 
-// RandTransactionWithEssence returns a random transaction with a specific essence.
-func RandTransactionWithEssence(api iotago.API, essence *iotago.Transaction) *iotago.SignedTransaction {
+// RandSignedTransactionWithTransaction returns a random transaction with a specific essence.
+func RandSignedTransactionWithTransaction(api iotago.API, transaction *iotago.Transaction) *iotago.SignedTransaction {
 	sigTxPayload := &iotago.SignedTransaction{API: api}
-	sigTxPayload.Transaction = essence
+	sigTxPayload.Transaction = transaction
 
-	unlocksCount := len(essence.Inputs)
+	unlocksCount := len(transaction.Inputs)
 	for i := unlocksCount; i > 0; i-- {
 		sigTxPayload.Unlocks = append(sigTxPayload.Unlocks, RandEd25519SignatureUnlock())
 	}
@@ -735,29 +735,29 @@ func RandTransactionWithEssence(api iotago.API, essence *iotago.Transaction) *io
 	return sigTxPayload
 }
 
-// RandTransaction returns a random transaction.
-func RandTransaction(api iotago.API) *iotago.SignedTransaction {
-	return RandTransactionWithEssence(api, RandTransactionEssence())
+// RandSignedTransaction returns a random transaction.
+func RandSignedTransaction(api iotago.API) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransaction())
 }
 
-// RandTransactionWithUTXOInputCount returns a random transaction with a specific amount of inputs.
-func RandTransactionWithUTXOInputCount(api iotago.API, inputCount int) *iotago.SignedTransaction {
-	return RandTransactionWithEssence(api, RandTransactionEssenceWithInputCount(inputCount))
+// RandSignedTransactionWithUTXOInputCount returns a random transaction with a specific amount of inputs.
+func RandSignedTransactionWithUTXOInputCount(api iotago.API, inputCount int) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransactionWithInputCount(inputCount))
 }
 
-// RandTransactionWithOutputCount returns a random transaction with a specific amount of outputs.
-func RandTransactionWithOutputCount(api iotago.API, outputCount int) *iotago.SignedTransaction {
-	return RandTransactionWithEssence(api, RandTransactionEssenceWithOutputCount(outputCount))
+// RandSignedTransactionWithOutputCount returns a random transaction with a specific amount of outputs.
+func RandSignedTransactionWithOutputCount(api iotago.API, outputCount int) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransactionWithOutputCount(outputCount))
 }
 
-// RandTransactionWithAllotmentCount returns a random transaction with a specific amount of allotments.
-func RandTransactionWithAllotmentCount(api iotago.API, allotmentCount int) *iotago.SignedTransaction {
-	return RandTransactionWithEssence(api, RandTransactionEssenceWithAllotmentCount(allotmentCount))
+// RandSignedTransactionWithAllotmentCount returns a random transaction with a specific amount of allotments.
+func RandSignedTransactionWithAllotmentCount(api iotago.API, allotmentCount int) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransactionWithAllotmentCount(allotmentCount))
 }
 
-// RandTransactionWithInputOutputCount returns a random transaction with a specific amount of inputs and outputs.
-func RandTransactionWithInputOutputCount(api iotago.API, inputCount int, outputCount int) *iotago.SignedTransaction {
-	return RandTransactionWithEssence(api, RandTransactionEssenceWithOptions(WithUTXOInputCount(inputCount), WithOutputCount(outputCount)))
+// RandSignedTransactionWithInputOutputCount returns a random transaction with a specific amount of inputs and outputs.
+func RandSignedTransactionWithInputOutputCount(api iotago.API, inputCount int, outputCount int) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransactionWithOptions(WithUTXOInputCount(inputCount), WithOutputCount(outputCount)))
 }
 
 // RandUTXOInput returns a random UTXO input.

@@ -36,8 +36,8 @@ var (
 	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
 	// ErrInputCreationAfterTxCreation gets returned if an input has creation slot after the transaction creation slot.
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
-	// ErrUnknownTransactionEssenceType gets returned for unknown transaction essence types.
-	ErrUnknownTransactionEssenceType = ierrors.New("unknown transaction essence type")
+	// ErrUnknownTransactionType gets returned for unknown transaction types.
+	ErrUnknownTransactionType = ierrors.New("unknown transaction type")
 )
 
 var (
@@ -71,7 +71,7 @@ type TransactionContextInputs ContextInputs[Input]
 type SignedTransaction struct {
 	API API
 	// The transaction essence, respectively the transfer part of a SignedTransaction.
-	Transaction *Transaction `serix:"0,mapKey=essence"` // TODO: RENAME
+	Transaction *Transaction `serix:"0,mapKey=transaction"`
 	// The unlocks defining the unlocking data for the inputs within the Transaction.
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
@@ -208,11 +208,11 @@ func (t *SignedTransaction) String() string {
 func (t *SignedTransaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
 	if len(t.Unlocks) != len(t.Transaction.Inputs) {
-		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Transaction.Inputs))
+		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(t.Transaction.Inputs))
 	}
 
 	if err := t.Transaction.syntacticallyValidate(t.API.ProtocolParameters()); err != nil {
-		return ierrors.Errorf("transaction essence is invalid: %w", err)
+		return ierrors.Errorf("transaction is invalid: %w", err)
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
@@ -226,12 +226,12 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 
 func (t *SignedTransaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
 	// we account for the network traffic only on "Payload" level
-	workScoreEssenceData, err := workScoreStructure.DataByte.Multiply(t.Size())
+	workScoreSignedTransactionData, err := workScoreStructure.DataByte.Multiply(t.Size())
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreEssence, err := t.Transaction.WorkScore(workScoreStructure)
+	workScoreTransaction, err := t.Transaction.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
 	}
@@ -241,5 +241,5 @@ func (t *SignedTransaction) WorkScore(workScoreStructure *WorkScoreStructure) (W
 		return 0, err
 	}
 
-	return workScoreEssenceData.Add(workScoreEssence, workScoreUnlocks)
+	return workScoreSignedTransactionData.Add(workScoreTransaction, workScoreUnlocks)
 }
