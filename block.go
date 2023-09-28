@@ -432,15 +432,7 @@ func (b *BasicBlock) Hash() (Identifier, error) {
 }
 
 func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// work score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold
-	var workScoreMissingParents WorkScore
 	var err error
-	if len(b.StrongParents) < int(workScoreStructure.MinStrongParentsThreshold) {
-		workScoreMissingParents, err = workScoreStructure.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold) - len(b.StrongParents))
-		if err != nil {
-			return 0, err
-		}
-	}
 	var workScorePayload WorkScore
 	if b.Payload != nil {
 		workScorePayload, err = b.Payload.WorkScore(workScoreStructure)
@@ -449,8 +441,8 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 		}
 	}
 
-	// offset for block, plus missing parents, plus payload.
-	return workScoreStructure.Block.Add(workScoreMissingParents, workScorePayload)
+	// offset for block plus payload.
+	return workScoreStructure.Block.Add(workScorePayload)
 }
 
 func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
