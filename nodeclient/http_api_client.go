@@ -45,10 +45,6 @@ const (
 	// GET returns block metadata (including info about "promotion/reattachment needed").
 	RouteBlockMetadata = "/api/core/v2/blocks/%s/metadata"
 
-	// RouteBlockChildren is the route for getting block IDs of the children of a block, identified by its block ID.
-	// GET returns the block IDs of all children.
-	RouteBlockChildren = "/api/core/v2/blocks/%s/children"
-
 	// RouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
@@ -387,18 +383,6 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 	}
 
 	return block, nil
-}
-
-// ChildrenByBlockID gets the BlockIDs of the child blocks of a given block.
-func (client *Client) ChildrenByBlockID(ctx context.Context, parentBlockID iotago.BlockID) (*ChildrenResponse, error) {
-	query := fmt.Sprintf(RouteBlockChildren, iotago.EncodeHex(parentBlockID[:]))
-
-	res := &ChildrenResponse{}
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.

@@ -220,38 +220,6 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	require.EqualValues(t, originBlock, responseBlock)
 }
 
-func TestClient_ChildrenByBlockID(t *testing.T) {
-	defer gock.Off()
-
-	blockID := tpkg.Rand32ByteArray()
-	hexBlockID := iotago.EncodeHex(blockID[:])
-
-	child1 := tpkg.Rand32ByteArray()
-	child2 := tpkg.Rand32ByteArray()
-	child3 := tpkg.Rand32ByteArray()
-
-	originRes := &nodeclient.ChildrenResponse{
-		BlockID:    hexBlockID,
-		MaxResults: 1000,
-		Count:      3,
-		Children: []string{
-			iotago.EncodeHex(child1[:]),
-			iotago.EncodeHex(child2[:]),
-			iotago.EncodeHex(child3[:]),
-		},
-	}
-
-	gock.New(nodeAPIUrl).
-		Get(fmt.Sprintf(nodeclient.RouteBlockChildren, hexBlockID)).
-		Reply(200).
-		JSON(originRes)
-
-	nodeAPI := nodeclient.New(nodeAPIUrl)
-	res, err := nodeAPI.ChildrenByBlockID(context.Background(), blockID)
-	require.NoError(t, err)
-	require.EqualValues(t, originRes, res)
-}
-
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 

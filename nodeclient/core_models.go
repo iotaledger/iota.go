@@ -109,18 +109,6 @@ type (
 		WhiteFlagIndex *uint32 `json:"whiteFlagIndex,omitempty"`
 	}
 
-	// ChildrenResponse defines the response of a GET children REST API call.
-	ChildrenResponse struct {
-		// The hex encoded block ID of the block.
-		BlockID string `json:"blockId"`
-		// The maximum count of results that are returned by the node.
-		MaxResults uint32 `json:"maxResults"`
-		// The actual count of results that are returned.
-		Count uint32 `json:"count"`
-		// The hex encoded IDs of the children of this block.
-		Children []string `json:"children"`
-	}
-
 	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
 	OutputMetadataResponse struct {
 		// The hex encoded ID of the block.
