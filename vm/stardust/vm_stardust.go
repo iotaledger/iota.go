@@ -247,7 +247,7 @@ func accountStateSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParam
 			continue
 		}
 
-		if _, notNew := vmParams.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
+		if _, notNew := vmParams.WorkingSet.InChains[foundryOutput.MustFoundryID()]; notNew {
 			continue
 		}
 
@@ -614,20 +614,20 @@ func foundrySTVF(input *vm.ChainOutput, transType iotago.ChainTransitionType, ne
 
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		if err := foundryGenesisValid(next, vmParams, next.MustID(), outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustID(), next.MustNativeTokenID())
+		if err := foundryGenesisValid(next, vmParams, next.MustFoundryID(), outSums); err != nil {
+			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustFoundryID(), next.MustNativeTokenID())
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryStateChangeValid(current, next, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustID(), current.MustNativeTokenID())
+			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryDestructionValid(current, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustID(), current.MustNativeTokenID())
+			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	default:
 		panic("unknown chain transition type in FoundryOutput")
@@ -679,7 +679,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params
 			continue
 		}
 
-		otherFoundryID, err := otherFoundryOutput.ID()
+		otherFoundryID, err := otherFoundryOutput.FoundryID()
 		if err != nil {
 			return err
 		}
@@ -709,9 +709,9 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	// the check for the serial number and token scheme not being mutated is implicit
 	// as a change would cause the foundry ID to be different, which would result in
 	// no matching foundry to be found to validate the state transition against
-	if current.MustID() != next.MustID() {
+	if current.MustFoundryID() != next.MustFoundryID() {
 		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", current.MustID(), next.MustID()))
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", current.MustFoundryID(), next.MustFoundryID()))
 	}
 
 	nativeTokenID := current.MustNativeTokenID()

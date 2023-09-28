@@ -540,7 +540,7 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 		if !is {
 			continue
 		}
-		foundryID, err := foundryOutput.ID()
+		foundryID, err := foundryOutput.FoundryID()
 		if err != nil {
 			return nil, err
 		}

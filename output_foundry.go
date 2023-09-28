@@ -198,7 +198,7 @@ func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 }
 
 func (f *FoundryOutput) Chain() ChainID {
-	foundryID, err := f.ID()
+	foundryID, err := f.FoundryID()
 	if err != nil {
 		panic(err)
 	}
@@ -206,8 +206,8 @@ func (f *FoundryOutput) Chain() ChainID {
 	return foundryID
 }
 
-// ID returns the FoundryID of this FoundryOutput.
-func (f *FoundryOutput) ID() (FoundryID, error) {
+// FoundryID returns the FoundryID of this FoundryOutput.
+func (f *FoundryOutput) FoundryID() (FoundryID, error) {
 	serixAPI := CommonSerixAPI()
 	var foundryID FoundryID
 	addrBytes, err := serixAPI.Encode(context.Background(), f.Ident())
@@ -221,9 +221,9 @@ func (f *FoundryOutput) ID() (FoundryID, error) {
 	return foundryID, nil
 }
 
-// MustID works like ID but panics if an error occurs.
-func (f *FoundryOutput) MustID() FoundryID {
-	id, err := f.ID()
+// MustFoundryID works like FoundryID but panics if an error occurs.
+func (f *FoundryOutput) MustFoundryID() FoundryID {
+	id, err := f.FoundryID()
 	if err != nil {
 		panic(err)
 	}
@@ -243,7 +243,7 @@ func (f *FoundryOutput) MustNativeTokenID() NativeTokenID {
 
 // NativeTokenID returns the NativeTokenID this FoundryOutput operates on.
 func (f *FoundryOutput) NativeTokenID() (NativeTokenID, error) {
-	return f.ID()
+	return f.FoundryID()
 }
 
 func (f *FoundryOutput) NativeTokenList() NativeTokens {
