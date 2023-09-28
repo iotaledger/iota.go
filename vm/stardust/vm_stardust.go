@@ -142,7 +142,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 			}
 		}
 
-		return implicitAccountSTVF(castedInput, input.OutputID.CreationSlotIndex(), nextAccount, vmParams, transType)
+		return implicitAccountSTVF(castedInput, input.OutputID.CreationSlot(), nextAccount, vmParams, transType)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -457,7 +457,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, currentBlockIssuerFeat *iotag
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
@@ -472,7 +472,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, currentBlockIssuerFeat *iotag
 	} else {
 		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
 	}
-	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}

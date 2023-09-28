@@ -159,8 +159,8 @@ func (outputID OutputID) Index() uint16 {
 	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
 }
 
-// CreationSlotIndex returns the SlotIndex the Output was created in.
-func (outputID OutputID) CreationSlotIndex() SlotIndex {
+// CreationSlot returns the slot the Output was created in.
+func (outputID OutputID) CreationSlot() SlotIndex {
 	return outputID.TransactionID().Slot()
 }
 

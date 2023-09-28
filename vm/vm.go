@@ -77,7 +77,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
-		manaStored, err := manaDecayProvider.ManaWithDecay(input.StoredMana(), outputID.CreationSlotIndex(), txCreationSlot)
+		manaStored, err := manaDecayProvider.ManaWithDecay(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
 		}
@@ -93,7 +93,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 			continue
 		}
 		excessBaseTokens := input.BaseTokenAmount() - minDeposit
-		manaPotential, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, outputID.CreationSlotIndex(), txCreationSlot)
+		manaPotential, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
@@ -569,8 +569,8 @@ func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		txCreationSlot := vmParams.WorkingSet.Tx.Essence.CreationSlot
 		for outputID := range vmParams.WorkingSet.UTXOInputsSet {
-			if outputID.CreationSlotIndex() > txCreationSlot {
-				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlotIndex(), txCreationSlot)
+			if outputID.CreationSlot() > txCreationSlot {
+				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlot(), txCreationSlot)
 			}
 		}
 		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsSet)
