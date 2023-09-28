@@ -469,7 +469,7 @@ func (b *BasicBlock) Size() int {
 
 // syntacticallyValidate syntactically validates the BasicBlock.
 func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
-	if b.Payload != nil && b.Payload.PayloadType() == PayloadTransaction {
+	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
 		blockID, err := protocolBlock.ID()
 		if err != nil {
 			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
@@ -479,11 +479,11 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		minCommittableAge := protocolBlock.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := protocolBlock.API.ProtocolParameters().MaxCommittableAge()
 
-		tx, _ := b.Payload.(*Transaction)
+		tx, _ := b.Payload.(*SignedTransaction)
 
 		// check that transaction CreationSlot is smaller or equal than the block that contains it
-		if blockSlot < tx.Essence.CreationSlot {
-			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Essence.CreationSlot)
+		if blockSlot < tx.Transaction.CreationSlot {
+			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Transaction.CreationSlot)
 		}
 
 		if cInput := tx.CommitmentInput(); cInput != nil {

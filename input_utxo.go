@@ -14,7 +14,7 @@ const (
 	RefUTXOIndexMax = MaxOutputsCount - 1
 )
 
-// UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the Output.
+// UTXOInput references an unspent transaction output by the SignedTransaction's ID and the corresponding index of the Output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
 	TransactionID TransactionID `serix:"0,mapKey=transactionId"`
@@ -69,7 +69,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 }
 
 func (u *UTXOInput) Size() int {
-	// InputType + TransactionID + TransactionOutputIndex
+	// InputType + SignedTransactionID + TransactionOutputIndex
 	return serializer.SmallTypeDenotationByteSize + SlotIdentifierLength + OutputIndexLength
 }
 

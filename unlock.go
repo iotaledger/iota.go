@@ -116,7 +116,7 @@ func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, e
 // UnlocksByType is a map of UnlockType(s) to slice of Unlock(s).
 type UnlocksByType map[UnlockType][]Unlock
 
-// Unlock unlocks inputs of a Transaction.
+// Unlock unlocks inputs of a SignedTransaction.
 type Unlock interface {
 	Sizer
 	ProcessableObject

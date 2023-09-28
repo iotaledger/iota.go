@@ -1,276 +1,209 @@
 package iotago_test
 
 import (
+	"math/big"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
-func TestTransactionDeSerialize(t *testing.T) {
+func TestTransactionEssence_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
-			name:   "ok - UTXO",
-			source: tpkg.RandTransaction(tpkg.TestAPI),
+			name:   "ok",
+			source: tpkg.RandTransaction(),
 			target: &iotago.Transaction{},
 		},
-		{
-			name: "ok -  Commitment",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
-						&iotago.CommitmentInput{
-							CommitmentID: iotago.CommitmentID{},
-						},
-					}),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name: "ok - BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
-						&iotago.BlockIssuanceCreditInput{
-							AccountID: tpkg.RandAccountID(),
-						},
-					}),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name: "ok - Commitment + BIC",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
-						&iotago.CommitmentInput{
-							CommitmentID: iotago.CommitmentID{},
-						},
-						&iotago.BlockIssuanceCreditInput{
-							AccountID: tpkg.RandAccountID(),
-						},
-					}),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
 }
 
-func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
-	tests := []deSerializeTest{
-		{
-			name: "ok",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
-					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
-					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
-					tpkg.WithCommitmentInput(),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name: "too many inputs",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithUTXOInputCount(iotago.MaxInputsCount+1),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
-		},
-		{
-			name: "too many context inputs",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(
-					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
-					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
-					tpkg.WithCommitmentInput(),
-				)),
-			target:    &iotago.Transaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
-	}
-}
+func TestChainConstrainedOutputUniqueness(t *testing.T) {
+	ident1 := tpkg.RandEd25519Address()
 
-func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
-	tests := []deSerializeTest{
-		{
-			name:      "ok",
-			source:    tpkg.RandTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name:      "too many outputs",
-			source:    tpkg.RandTransactionWithOutputCount(tpkg.TestAPI, iotago.MaxOutputsCount+1),
-			target:    &iotago.Transaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
-	}
-}
+	inputIDs := tpkg.RandOutputIDs(1)
 
-func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
-	tests := []deSerializeTest{
-		{
-			name:      "ok",
-			source:    tpkg.RandTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
-		},
-		{
-			name:      "too many outputs",
-			source:    tpkg.RandTransactionWithAllotmentCount(tpkg.TestAPI, iotago.MaxAllotmentCount+1),
-			target:    &iotago.Transaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
-	}
-}
+	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
+	accountID := accountAddress.AccountID()
 
-func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
+	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
+	nftID := nftAddress.NFTID()
+
 	tests := []deSerializeTest{
 		{
-			name: "ok",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
-					&iotago.UTXOInput{
-						TransactionID:          tpkg.RandTransactionID(),
-						TransactionOutputIndex: iotago.RefUTXOIndexMax,
+			// we transition the same Account twice
+			name: "transition the same Account twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID:     tpkg.TestNetworkID,
+						ContextInputs: iotago.TxEssenceContextInputs{},
+						Inputs:        inputIDs.UTXOInputs(),
+						Allotments:    iotago.Allotments{},
 					},
-				}))),
-			target:    &iotago.Transaction{},
-			seriErr:   nil,
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   iotago.ErrNonUniqueChainOutputs,
 			deSeriErr: nil,
 		},
 		{
-			name: "wrong ref index",
-			source: tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-				tpkg.RandTransactionEssenceWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
-					&iotago.UTXOInput{
-						TransactionID:          tpkg.RandTransactionID(),
-						TransactionOutputIndex: iotago.RefUTXOIndexMax + 1,
+			// we transition the same NFT twice
+			name: "transition the same NFT twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID: tpkg.TestNetworkID,
+						Inputs:    inputIDs.UTXOInputs(),
 					},
-				}))),
-			target:    &iotago.Transaction{},
-			seriErr:   iotago.ErrRefUTXOIndexInvalid,
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.NFTOutput{
+							Amount: OneMi,
+							NFTID:  nftID,
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+						&iotago.NFTOutput{
+							Amount: OneMi,
+							NFTID:  nftID,
+							Conditions: iotago.NFTOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   iotago.ErrNonUniqueChainOutputs,
+			deSeriErr: nil,
+		},
+		{
+			// we transition the same Foundry twice
+			name: "transition the same Foundry twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID: tpkg.TestNetworkID,
+						Inputs:    inputIDs.UTXOInputs(),
+					},
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AccountOutput{
+							Amount:    OneMi,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
+								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+						&iotago.FoundryOutput{
+							Amount:       OneMi,
+							NativeTokens: nil,
+							SerialNumber: 1,
+							TokenScheme: &iotago.SimpleTokenScheme{
+								MintedTokens:  big.NewInt(50),
+								MeltedTokens:  big.NewInt(0),
+								MaximumSupply: big.NewInt(50),
+							},
+							Conditions: iotago.FoundryOutputUnlockConditions{
+								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
+							},
+							Features: nil,
+						},
+						&iotago.FoundryOutput{
+							Amount:       OneMi,
+							NativeTokens: nil,
+							SerialNumber: 1,
+							TokenScheme: &iotago.SimpleTokenScheme{
+								MintedTokens:  big.NewInt(50),
+								MeltedTokens:  big.NewInt(0),
+								MaximumSupply: big.NewInt(50),
+							},
+							Conditions: iotago.FoundryOutputUnlockConditions{
+								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
+							},
+							Features: nil,
+						},
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   iotago.ErrNonUniqueChainOutputs,
 			deSeriErr: nil,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
 	}
 }
 
-func TestTransaction_InputTypes(t *testing.T) {
-	utxoInput1 := &iotago.UTXOInput{
-		TransactionID:          tpkg.RandTransactionID(),
-		TransactionOutputIndex: 13,
+func TestAllotmentUniqueness(t *testing.T) {
+	inputIDs := tpkg.RandOutputIDs(1)
+
+	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
+	accountID := accountAddress.AccountID()
+
+	tests := []deSerializeTest{
+		{
+			name: "allot to the same account twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID:     tpkg.TestNetworkID,
+						ContextInputs: iotago.TxEssenceContextInputs{},
+						Inputs:        inputIDs.UTXOInputs(),
+						Allotments: iotago.Allotments{
+							&iotago.Allotment{
+								AccountID: accountID,
+								Value:     0,
+							},
+							&iotago.Allotment{
+								AccountID: tpkg.RandAccountID(),
+								Value:     12,
+							},
+							&iotago.Allotment{
+								AccountID: accountID,
+								Value:     12,
+							},
+						},
+					},
+					Outputs: iotago.TxEssenceOutputs{
+						tpkg.RandBasicOutput(iotago.AddressEd25519),
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   serializer.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: nil,
+		},
 	}
 
-	utxoInput2 := &iotago.UTXOInput{
-		TransactionID:          tpkg.RandTransactionID(),
-		TransactionOutputIndex: 11,
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
 	}
-
-	commitmentInput1 := &iotago.CommitmentInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
-	}
-
-	bicInput1 := &iotago.BlockIssuanceCreditInput{
-		AccountID: tpkg.RandAccountID(),
-	}
-	bicInput2 := &iotago.BlockIssuanceCreditInput{
-		AccountID: tpkg.RandAccountID(),
-	}
-
-	rewardInput1 := &iotago.RewardInput{
-		Index: 3,
-	}
-	rewardInput2 := &iotago.RewardInput{
-		Index: 2,
-	}
-
-	transaction := tpkg.RandTransactionWithEssence(tpkg.TestAPI,
-		tpkg.RandTransactionEssenceWithOptions(
-			tpkg.WithInputs(iotago.TxEssenceInputs{
-				utxoInput1,
-				utxoInput2,
-			}),
-			tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
-				commitmentInput1,
-				bicInput1,
-				bicInput2,
-				rewardInput1,
-				rewardInput2,
-			}),
-		))
-
-	utxoInputs, err := transaction.Inputs()
-	require.NoError(t, err)
-
-	commitmentInput := transaction.CommitmentInput()
-	require.NotNil(t, commitmentInput)
-
-	bicInputs, err := transaction.BICInputs()
-	require.NoError(t, err)
-
-	rewardInputs, err := transaction.RewardInputs()
-	require.NoError(t, err)
-
-	require.Equal(t, 2, len(utxoInputs))
-	require.Equal(t, 2, len(bicInputs))
-	require.Equal(t, 2, len(rewardInputs))
-
-	require.Contains(t, utxoInputs, utxoInput1)
-	require.Contains(t, utxoInputs, utxoInput2)
-
-	require.Equal(t, commitmentInput, commitmentInput1)
-
-	require.Contains(t, bicInputs, bicInput1)
-	require.Contains(t, bicInputs, bicInput2)
-
-	require.Contains(t, rewardInputs, rewardInput1)
-	require.Contains(t, rewardInputs, rewardInput2)
-}
-
-func TestTransaction_Clone(t *testing.T) {
-	transaction := tpkg.RandTransaction(tpkg.TestAPI)
-	txID, err := transaction.ID()
-	require.NoError(t, err)
-
-	//nolint:forcetypeassert
-	cpy := transaction.Clone().(*iotago.Transaction)
-
-	cpyTxID, err := cpy.ID()
-	require.NoError(t, err)
-
-	require.EqualValues(t, txID, cpyTxID)
 }
