@@ -24,9 +24,6 @@ const (
 
 	// NativeTokenIDLength is the byte length of a NativeTokenID which is the same thing as a FoundryID.
 	NativeTokenIDLength = FoundryIDLength
-
-	// NativeTokenVByteCost defines the static virtual byte cost of a NativeToken.
-	NativeTokenVByteCost = NativeTokenIDLength + Uint256ByteSize
 )
 
 var (
@@ -97,8 +94,7 @@ func (n NativeTokens) Clone() NativeTokens {
 }
 
 func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	// length prefix + (native token count * static native token cost)
-	return rentStruct.VBFactorData().Multiply(VBytes(serializer.OneByte + len(n)*NativeTokenVByteCost))
+	return 0
 }
 
 func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
@@ -176,7 +172,7 @@ func (n *NativeToken) Clone() *NativeToken {
 }
 
 func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
-	return NativeTokenVByteCost
+	return 0
 }
 
 func (n *NativeToken) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

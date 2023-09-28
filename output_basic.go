@@ -79,8 +79,7 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 
 func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount + stored mana
-		rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
+		rentStruct.VBFactorData().Multiply(VBytes(e.Size())) +
 		e.NativeTokens.VBytes(rentStruct, nil) +
 		e.Conditions.VBytes(rentStruct, nil) +
 		e.Features.VBytes(rentStruct, nil)

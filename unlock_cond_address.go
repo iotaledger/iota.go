@@ -15,8 +15,7 @@ func (s *AddressUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *AddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize) +
-		s.Address.VBytes(rentStruct, nil)
+	return s.Address.VBytes(rentStruct, nil)
 }
 
 func (s *AddressUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

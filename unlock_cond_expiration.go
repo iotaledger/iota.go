@@ -23,8 +23,7 @@ func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+SlotIndexLength) +
-		s.ReturnAddress.VBytes(rentStruct, nil)
+	return s.ReturnAddress.VBytes(rentStruct, nil)
 }
 
 func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

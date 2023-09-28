@@ -31,7 +31,7 @@ func (addr *Ed25519Address) Clone() Address {
 }
 
 func (addr *Ed25519Address) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
+	return 0
 }
 
 func (addr *Ed25519Address) ID() []byte {

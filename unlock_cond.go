@@ -103,8 +103,7 @@ func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBy
 		sumCost += unlockCond.VBytes(rentStruct, nil)
 	}
 
-	// length prefix + sum cost of conditions
-	return rentStruct.VBFactorData().Multiply(serializer.OneByte) + sumCost
+	return sumCost
 }
 
 func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

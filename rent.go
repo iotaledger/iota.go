@@ -7,8 +7,8 @@ import (
 // VBytes defines the type of the virtual byte costs.
 type VBytes uint64
 
-// VByteCostFactor defines the type of the virtual byte cost factor.
-type VByteCostFactor byte
+// VByteFactor defines the type of the virtual byte cost factor.
+type VByteFactor byte
 
 var (
 	// ErrVByteDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
@@ -19,12 +19,12 @@ var (
 )
 
 // Multiply multiplies in with this factor.
-func (factor VByteCostFactor) Multiply(in VBytes) VBytes {
+func (factor VByteFactor) Multiply(in VBytes) VBytes {
 	return VBytes(factor) * in
 }
 
 // With joins two factors with each other.
-func (factor VByteCostFactor) With(other VByteCostFactor) VByteCostFactor {
+func (factor VByteFactor) With(other VByteFactor) VByteFactor {
 	return factor + other
 }
 
@@ -35,21 +35,21 @@ type RentParameters struct {
 	// Defines the rent of a single virtual byte denoted in IOTA tokens.
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
 	// Defines the factor to be used for data only fields.
-	VBFactorData VByteCostFactor `serix:"1,mapKey=vByteFactorData"`
-	// Defines the factor to be used for key/lookup generating fields.
-	VBFactorKey VByteCostFactor `serix:"2,mapKey=vByteFactorKey"`
-	// Defines the factor to be used for block issuer feature public keys.
-	VBFactorBlockIssuerKey VByteCostFactor `serix:"3,mapKey=vByteFactorBlockIssuerKey"`
-	// Defines the factor to be used for staking feature.
-	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorStakingFeature"`
-	// Defines the factor to be used for delegation output.
-	VBFactorDelegation VByteCostFactor `serix:"5,mapKey=vByteFactorDelegation"`
+	VBFactorData VByteFactor `serix:"1,mapKey=vByteFactorData"`
+	// Defines the offset to be used for key/lookup generating fields.
+	VBOffsetKey VBytes `serix:"2,mapKey=vByteOffsetKey"`
+	// Defines the offset to be used for block issuer feature public keys.
+	VBOffsetEd25519BlockIssuerKey VBytes `serix:"3,mapKey=vByteOffsetBlockIssuerKey"`
+	// Defines the offset to be used for staking feature.
+	VBOffsetStakingFeature VBytes `serix:"4,mapKey=vByteOffsetStakingFeature"`
+	// Defines the offset to be used for delegation output.
+	VBOffsetDelegation VBytes `serix:"5,mapKey=vByteOffsetDelegation"`
 }
 
-// RentStructure includes the rent parameters and the additional factors computed from these parameters.
+// RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
 type RentStructure struct {
 	RentParameters                         *RentParameters
-	VBFactorImplicitAccountCreationAddress VByteCostFactor
+	VBOffsetImplicitAccountCreationAddress VBytes
 }
 
 // VByteCost returns the cost of a single virtual byte denoted in IOTA tokens.
@@ -58,28 +58,28 @@ func (r *RentStructure) VByteCost() uint32 {
 }
 
 // VBFactorData returns the factor to be used for data only fields.
-func (r *RentStructure) VBFactorData() VByteCostFactor {
+func (r *RentStructure) VBFactorData() VByteFactor {
 	return r.RentParameters.VBFactorData
 }
 
-// VBFactorKey returns the factor to be used for key/lookup generating fields.
-func (r *RentStructure) VBFactorKey() VByteCostFactor {
-	return r.RentParameters.VBFactorKey
+// VBOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
+func (r *RentStructure) VBOffsetOutput() VBytes {
+	return r.RentParameters.VBOffsetKey
 }
 
-// VBFactorBlockIssuerKey returns the factor to be used for block issuer feature public keys.
-func (r *RentStructure) VBFactorBlockIssuerKey() VByteCostFactor {
-	return r.RentParameters.VBFactorBlockIssuerKey
+// VBOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
+func (r *RentStructure) VBOffsetEd25519BlockIssuerKey() VBytes {
+	return r.RentParameters.VBOffsetEd25519BlockIssuerKey
 }
 
-// VBFactorStakingFeature returns the factor to be used for staking feature.
-func (r *RentStructure) VBFactorStakingFeature() VByteCostFactor {
-	return r.RentParameters.VBFactorStakingFeature
+// VBOffsetStakingFeature returns the offset to be used for staking feature.
+func (r *RentStructure) VBOffsetStakingFeature() VBytes {
+	return r.RentParameters.VBOffsetStakingFeature
 }
 
-// VBFactorDelegation returns the factor to be used for delegation output.
-func (r *RentStructure) VBFactorDelegation() VByteCostFactor {
-	return r.RentParameters.VBFactorDelegation
+// VBOffsetDelegation returns the offset to be used for delegation output.
+func (r *RentStructure) VBOffsetDelegation() VBytes {
+	return r.RentParameters.VBOffsetDelegation
 }
 
 // NewRentStructure creates a new RentStructure.
@@ -125,11 +125,11 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		RentParameters: rentParameters,
 	}
 
-	// set the vbyte cost factor for implicit account creation addresses as the vbyte cost of the dummy account.
-	vBFactorDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
-	vBFactorDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
-	vBFactorDummyAddress := dummyAddress.VBytes(rentStructure, nil)
-	rentStructure.VBFactorImplicitAccountCreationAddress = VByteCostFactor(vBFactorDummyAccountOutput - vBFactorDummyBasicOutput + vBFactorDummyAddress)
+	// set the vbyte cost offset for implicit account creation addresses as the vbyte cost of the dummy account.
+	vBDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
+	vBDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
+	vBDummyAddress := dummyAddress.VBytes(rentStructure, nil)
+	rentStructure.VBOffsetImplicitAccountCreationAddress = vBDummyAccountOutput - vBDummyBasicOutput + vBDummyAddress
 
 	return rentStructure
 }
@@ -160,10 +160,10 @@ func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseTok
 func (r RentParameters) Equals(other RentParameters) bool {
 	return r.VByteCost == other.VByteCost &&
 		r.VBFactorData == other.VBFactorData &&
-		r.VBFactorKey == other.VBFactorKey &&
-		r.VBFactorBlockIssuerKey == other.VBFactorBlockIssuerKey &&
-		r.VBFactorStakingFeature == other.VBFactorStakingFeature &&
-		r.VBFactorDelegation == other.VBFactorDelegation
+		r.VBOffsetKey == other.VBOffsetKey &&
+		r.VBOffsetEd25519BlockIssuerKey == other.VBOffsetEd25519BlockIssuerKey &&
+		r.VBOffsetStakingFeature == other.VBOffsetStakingFeature &&
+		r.VBOffsetDelegation == other.VBOffsetDelegation
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

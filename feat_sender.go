@@ -20,7 +20,7 @@ func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 		return f(rentStruct)
 	}
 
-	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize) + s.Address.VBytes(rentStruct, nil)
+	return s.Address.VBytes(rentStruct, nil)
 }
 
 func (s *SenderFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

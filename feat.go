@@ -73,8 +73,7 @@ func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 		sumCost += feat.VBytes(rentStruct, nil)
 	}
 
-	// length prefix + sum cost of features
-	return rentStruct.VBFactorData().Multiply(serializer.OneByte) + sumCost
+	return sumCost
 }
 
 func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
