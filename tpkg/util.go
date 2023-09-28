@@ -111,7 +111,7 @@ func RandOutputIDWithCreationSlot(slot iotago.SlotIndex, index uint16) iotago.Ou
 }
 
 func RandOutputID(index uint16) iotago.OutputID {
-	return RandOutputIDWithCreationSlot(RandSlotIndex(), index)
+	return RandOutputIDWithCreationSlot(0, index)
 }
 
 func RandOutputIDsWithCreationSlot(slot iotago.SlotIndex, count uint16) iotago.OutputIDs {

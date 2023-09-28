@@ -58,7 +58,7 @@ var (
 func TestNFTTransition(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 
-	inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
 		inputIDs[0]: &iotago.NFTOutput{
 			Amount: OneMi,
@@ -107,7 +107,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 	accountIdent1 := tpkg.RandAccountAddress()
 
-	inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 3)
+	inputIDs := tpkg.RandOutputIDs(3)
 	inputs := vm.InputSet{
 		inputIDs[0]: &iotago.BasicOutput{
 			Amount: OneMi,
@@ -235,7 +235,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				nft2ID = tpkg.Rand32ByteArray()
 			)
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 16)
+			inputIDs := tpkg.RandOutputIDs(16)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -702,7 +702,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			inFoundry := &iotago.FoundryOutput{
 				Amount:       100,
 				SerialNumber: 5,
@@ -780,7 +780,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -860,7 +860,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -939,7 +939,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -1010,7 +1010,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -1080,7 +1080,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -1141,7 +1141,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
@@ -1251,7 +1251,7 @@ func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		}
 
 		// create the input set
-		inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, uint16(len(inputs)))
+		inputIDs := tpkg.RandOutputIDs(uint16(len(inputs)))
 		inputSet := vm.InputSet{}
 		var totalInputAmount iotago.BaseToken
 		for idx, output := range inputs {
@@ -2470,7 +2470,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddrKeys := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 8)
+			inputIDs := tpkg.RandOutputIDs(8)
 			accountIdent1 := iotago.AccountAddressFromOutputID(inputIDs[1])
 			nftIdent1 := tpkg.RandNFTAddress()
 
@@ -2595,7 +2595,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		func() test {
 			ident1Sk, ident1, _ := tpkg.RandEd25519Identity()
 			_, _, ident2AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -2631,7 +2631,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -2672,7 +2672,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			accountIdent1 := iotago.AccountAddressFromOutputID(inputIDs[0])
 			inputs := vm.InputSet{
@@ -2716,7 +2716,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
 			inputs := vm.InputSet{
@@ -2758,7 +2758,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
 			nftIdent2 := iotago.NFTAddressFromOutputID(inputIDs[1])
@@ -2803,7 +2803,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		func() test {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -2848,7 +2848,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -2892,7 +2892,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 3)
+			inputIDs := tpkg.RandOutputIDs(3)
 
 			var (
 				accountAddr1 = tpkg.RandAccountAddress()
@@ -2957,7 +2957,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		func() test {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			accountAddr1 := tpkg.RandAccountAddress()
 
@@ -3018,7 +3018,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			foundryOutput := &iotago.FoundryOutput{
 				Amount:       100,
 				SerialNumber: 5,
@@ -3109,7 +3109,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 3)
+			inputIDs := tpkg.RandOutputIDs(3)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3199,7 +3199,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3261,7 +3261,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3305,7 +3305,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3350,7 +3350,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3410,7 +3410,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3464,7 +3464,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3522,7 +3522,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -3579,7 +3579,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 			ntID := tpkg.Rand38ByteArray()
 
 			inputs := vm.InputSet{
@@ -3697,7 +3697,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 	}
 	tests := []test{
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 
 			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
@@ -3747,7 +3747,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, iotago.MaxNativeTokensCount)
+			inputIDs := tpkg.RandOutputIDs(iotago.MaxNativeTokensCount)
 			nativeToken := tpkg.RandNativeToken()
 
 			inputs := vm.InputSet{}
@@ -3799,7 +3799,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inCount := 20
 			outCount := 250
@@ -3843,7 +3843,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		}(),
 		func() test {
 			numDistinctNTs := iotago.MaxNativeTokensCount + 1
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, uint16(numDistinctNTs))
+			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
 
 			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
@@ -3885,7 +3885,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		func() test {
 			numDistinctNTs := iotago.MaxNativeTokensCount + 1
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, uint16(numDistinctNTs))
+			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
 
 			inputs := vm.InputSet{}
 			for i := 0; i < numDistinctNTs; i++ {
@@ -3930,7 +3930,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		func() test {
 			numDistinctNTs := iotago.MaxNativeTokensCount
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, iotago.MaxInputsCount)
+			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
 
 			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
@@ -3976,7 +3976,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		func() test {
 			numDistinctNTs := iotago.MaxNativeTokensCount
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, iotago.MaxInputsCount)
+			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
 
 			inputs := vm.InputSet{}
 			for i := 0; i < iotago.MaxInputsCount; i++ {
@@ -4032,7 +4032,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			ntCount := 10
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
@@ -4080,7 +4080,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 			}
 		}(),
 		func() test {
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 3)
+			inputIDs := tpkg.RandOutputIDs(3)
 
 			ntCount := 20
 			nativeTokens := tpkg.RandSortNativeTokens(ntCount)
@@ -4168,7 +4168,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 	tests := []test{
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			nftAddr := tpkg.RandNFTAddress()
 
 			inputs := vm.InputSet{
@@ -4272,7 +4272,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -4319,7 +4319,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 		func() test {
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 
@@ -4372,7 +4372,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 		func() test {
 			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
 			_, governor, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 			currentStateIndex := uint32(1)
@@ -4428,7 +4428,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 		func() test {
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 
@@ -4505,7 +4505,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 
@@ -4572,7 +4572,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
 			_, governor, _ := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 			currentStateIndex := uint32(1)
@@ -4725,7 +4725,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 2)
+			inputIDs := tpkg.RandOutputIDs(2)
 			accountAddr := tpkg.RandAccountAddress()
 			accountID := accountAddr.AccountID()
 
@@ -4813,7 +4813,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	tests := []test{
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -4854,7 +4854,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -4896,7 +4896,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -4938,7 +4938,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 		}(),
 		func() test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
-			inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+			inputIDs := tpkg.RandOutputIDs(1)
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.BasicOutput{
@@ -5342,7 +5342,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
 	currentSlot := testProtoParams.TimeProvider().EpochStart(currentEpoch)
 
-	inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
 		inputIDs[0]: &iotago.AccountOutput{
 			Amount:         OneMi * 10,
@@ -5427,7 +5427,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	currentSlot := 20 * testProtoParams.ParamEpochDurationInSlots()
 	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
 
-	inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
 		inputIDs[0]: &iotago.DelegationOutput{
 			Amount:           OneMi * 10,
