@@ -898,7 +898,7 @@ func RandImplicitAccountIdentity() (ed25519.PrivateKey, *iotago.ImplicitAccountC
 	edSk := RandEd25519PrivateKey()
 	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 	implicitAccAddr := iotago.ImplicitAccountCreationAddressFromPubKey(edSk.Public().(ed25519.PublicKey))
-	addrKeys := iotago.NewAddressKeysForImplicitAccountAddress(implicitAccAddr, edSk)
+	addrKeys := iotago.NewAddressKeysForImplicitAccountCreationAddress(implicitAccAddr, edSk)
 
 	return edSk, implicitAccAddr, addrKeys
 }
