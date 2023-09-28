@@ -15,9 +15,10 @@ var (
 	ErrWrongEpochIndex = ierrors.New("wrong epoch index")
 )
 
-const EpochIndexLength = serializer.UInt32ByteSize
-
-const MaxEpochIndex = EpochIndex(math.MaxUint32)
+const (
+	EpochIndexLength = serializer.UInt32ByteSize
+	MaxEpochIndex    = EpochIndex(math.MaxUint32)
+)
 
 // EpochIndex is the index of an epoch.
 type EpochIndex uint32

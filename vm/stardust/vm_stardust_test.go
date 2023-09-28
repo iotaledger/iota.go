@@ -5215,7 +5215,8 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
+							excessBaseTokens := input.Output.BaseTokenAmount() - rentStructure.MinDeposit(input.Output)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
@@ -5277,7 +5278,8 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							excessBaseTokens := input.Output.BaseTokenAmount() - testProtoParams.RentStructure().MinDeposit(input.Output)
+							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
+							excessBaseTokens := input.Output.BaseTokenAmount() - rentStructure.MinDeposit(input.Output)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 
@@ -6039,5 +6041,246 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				require.NoError(t, err)
 			})
 		}
+	}
+}
+
+func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
+	type test struct {
+		name    string
+		inputs  vm.ResolvedInputs
+		keys    iotago.AddressKeys
+		output  iotago.Output
+		wantErr error
+	}
+
+	_, edIdent, edIdentAddrKeys := tpkg.RandEd25519Identity()
+	_, implicitAccountIdent, implicitAccountIdentAddrKeys := tpkg.RandImplicitAccountIdentity()
+	exampleAmount := iotago.BaseToken(1_000_000)
+	exampleMana := iotago.Mana(10_000_000)
+	exampleNativeTokens := tpkg.RandSortNativeTokens(1)
+	outputID := tpkg.RandOutputID(0)
+	accountID := iotago.AccountIDFromOutputID(outputID)
+	currentSlot := iotago.SlotIndex(10)
+	commitmentSlot := currentSlot - tpkg.TestAPI.ProtocolParameters().MaxCommittableAge()
+
+	exampleInputSet := vm.ResolvedInputs{
+		InputSet: vm.InputSet{
+			outputID: {
+				Output: &iotago.BasicOutput{
+					Amount:       exampleAmount,
+					NativeTokens: exampleNativeTokens,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: edIdent},
+					},
+				},
+				CreationSlot: currentSlot,
+			},
+		},
+	}
+
+	tests := []test{
+		{
+			name:   "ok - implicit account creation",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount: exampleAmount,
+				Mana:   0,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			keys:    edIdentAddrKeys,
+			wantErr: nil,
+		},
+		{
+			name:   "fail - implicit account contains native tokens",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount:       exampleAmount,
+				NativeTokens: exampleNativeTokens,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+				},
+			},
+			keys:    edIdentAddrKeys,
+			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
+		},
+		{
+			name:   "fail - implicit account contains timelock unlock conditions",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount: exampleAmount,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+					&iotago.TimelockUnlockCondition{SlotIndex: 500},
+				},
+			},
+			keys:    edIdentAddrKeys,
+			wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
+		},
+		{
+			name: "ok - implicit account transitioned to account with block issuer feature",
+			inputs: vm.ResolvedInputs{
+				InputSet: vm.InputSet{
+					outputID: {
+						Output: &iotago.BasicOutput{
+							Amount: exampleAmount,
+							Mana:   exampleMana,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+				},
+				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
+					accountID: iotago.BlockIssuanceCredits(0),
+				},
+				CommitmentInput: &iotago.Commitment{
+					Slot: commitmentSlot,
+				},
+			},
+			output: &iotago.AccountOutput{
+				Amount:    exampleAmount,
+				Mana:      exampleMana,
+				AccountID: accountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{
+						Address: edIdent,
+					},
+					&iotago.GovernorAddressUnlockCondition{
+						Address: edIdent,
+					},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.BlockIssuerFeature{
+						ExpirySlot: iotago.MaxSlotIndex,
+						BlockIssuerKeys: iotago.NewBlockIssuerKeys(
+							iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+							iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+							iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+						),
+					},
+				},
+			},
+			keys:    implicitAccountIdentAddrKeys,
+			wantErr: nil,
+		},
+		{
+			name: "fail - implicit account transitioned to account without block issuer feature",
+			inputs: vm.ResolvedInputs{
+				InputSet: vm.InputSet{
+					outputID: {
+						Output: &iotago.BasicOutput{
+							Amount: exampleAmount,
+							Mana:   exampleMana,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+				},
+				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
+					accountID: iotago.BlockIssuanceCredits(0),
+				},
+				CommitmentInput: &iotago.Commitment{
+					Slot: commitmentSlot,
+				},
+			},
+			output: &iotago.AccountOutput{
+				Amount:    exampleAmount,
+				Mana:      exampleMana,
+				AccountID: accountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{
+						Address: edIdent,
+					},
+					&iotago.GovernorAddressUnlockCondition{
+						Address: edIdent,
+					},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			keys:    implicitAccountIdentAddrKeys,
+			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+		},
+		{
+			name: "fail - implicit account transitioned to account without block issuer feature",
+			inputs: vm.ResolvedInputs{
+				InputSet: vm.InputSet{
+					outputID: {
+						Output: &iotago.BasicOutput{
+							Amount: exampleAmount,
+							Mana:   exampleMana,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+				},
+				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
+					accountID: iotago.BlockIssuanceCredits(0),
+				},
+				CommitmentInput: &iotago.Commitment{
+					Slot: commitmentSlot,
+				},
+			},
+			output: &iotago.BasicOutput{
+				Amount: exampleAmount,
+				Mana:   exampleMana,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: edIdent},
+				},
+			},
+			keys:    implicitAccountIdentAddrKeys,
+			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
+		},
+	}
+
+	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKey iotago.AddressKeys) (iotago.Signature, iotago.TransactionEssence) {
+		inputIDs := iotago.OutputIDs{}
+		for outputID := range inputSet {
+			inputIDs = append(inputIDs, outputID)
+		}
+		essence := iotago.TransactionEssence{
+			Inputs: inputIDs.UTXOInputs(),
+			Outputs: iotago.TxEssenceOutputs{
+				output,
+			},
+			CreationSlot: 10,
+		}
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), addrKey)
+		require.NoError(t, err)
+
+		return sigs[0], essence
+	}
+
+	for idx, tt := range tests {
+		resolvedInputs := tests[idx].inputs
+		sig, transactionEssence := makeTransaction(resolvedInputs.InputSet, tests[idx].output, tests[idx].keys)
+
+		vmParams := &vm.Params{
+			API: testAPI,
+		}
+
+		tx := &iotago.Transaction{
+			API:     testAPI,
+			Essence: &transactionEssence,
+			Unlocks: iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sig},
+			},
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			err := stardustVM.Execute(tx, vmParams, resolvedInputs)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
 	}
 }

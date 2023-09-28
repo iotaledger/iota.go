@@ -28,10 +28,10 @@ func (factor VByteCostFactor) With(other VByteCostFactor) VByteCostFactor {
 	return factor + other
 }
 
-// RentStructure defines the parameters of rent cost calculations on objects which take node resources.
+// RentParameters defines the parameters of rent cost calculations on objects which take node resources.
 // This structure defines the minimum base token deposit required on an object. This deposit does not
 // generate Mana, which serves as a rent payment in Mana for storing the object.
-type RentStructure struct {
+type RentParameters struct {
 	// Defines the rent of a single virtual byte denoted in IOTA tokens.
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
 	// Defines the factor to be used for data only fields.
@@ -44,6 +44,94 @@ type RentStructure struct {
 	VBFactorStakingFeature VByteCostFactor `serix:"4,mapKey=vByteFactorStakingFeature"`
 	// Defines the factor to be used for delegation output.
 	VBFactorDelegation VByteCostFactor `serix:"5,mapKey=vByteFactorDelegation"`
+}
+
+// RentStructure includes the rent parameters and the additional factors computed from these parameters.
+type RentStructure struct {
+	RentParameters                         *RentParameters
+	VBFactorImplicitAccountCreationAddress VByteCostFactor
+}
+
+// VByteCost returns the cost of a single virtual byte denoted in IOTA tokens.
+func (r *RentStructure) VByteCost() uint32 {
+	return r.RentParameters.VByteCost
+}
+
+// VBFactorData returns the factor to be used for data only fields.
+func (r *RentStructure) VBFactorData() VByteCostFactor {
+	return r.RentParameters.VBFactorData
+}
+
+// VBFactorKey returns the factor to be used for key/lookup generating fields.
+func (r *RentStructure) VBFactorKey() VByteCostFactor {
+	return r.RentParameters.VBFactorKey
+}
+
+// VBFactorBlockIssuerKey returns the factor to be used for block issuer feature public keys.
+func (r *RentStructure) VBFactorBlockIssuerKey() VByteCostFactor {
+	return r.RentParameters.VBFactorBlockIssuerKey
+}
+
+// VBFactorStakingFeature returns the factor to be used for staking feature.
+func (r *RentStructure) VBFactorStakingFeature() VByteCostFactor {
+	return r.RentParameters.VBFactorStakingFeature
+}
+
+// VBFactorDelegation returns the factor to be used for delegation output.
+func (r *RentStructure) VBFactorDelegation() VByteCostFactor {
+	return r.RentParameters.VBFactorDelegation
+}
+
+// NewRentStructure creates a new RentStructure.
+func NewRentStructure(rentParameters *RentParameters) *RentStructure {
+	// create a dummy account with a block issuer feature to calculate the vbytes cost.
+	dummyAccountOutput := &AccountOutput{
+		Amount:         0,
+		Mana:           0,
+		NativeTokens:   NativeTokens{},
+		AccountID:      EmptyAccountID(),
+		StateIndex:     0,
+		StateMetadata:  []byte{},
+		FoundryCounter: 0,
+		Conditions: AccountOutputUnlockConditions{
+			&GovernorAddressUnlockCondition{
+				Address: &Ed25519Address{},
+			},
+			&StateControllerAddressUnlockCondition{
+				Address: &Ed25519Address{},
+			},
+		},
+		Features: AccountOutputFeatures{
+			&BlockIssuerFeature{
+				BlockIssuerKeys: BlockIssuerKeys{
+					&Ed25519PublicKeyBlockIssuerKey{},
+				},
+			},
+		},
+		ImmutableFeatures: AccountOutputImmFeatures{},
+	}
+
+	dummyAddress := &Ed25519Address{}
+	dummyBasicOutput := &BasicOutput{
+		Conditions: UnlockConditions[basicOutputUnlockCondition]{
+			&AddressUnlockCondition{
+				Address: dummyAddress,
+			},
+		},
+	}
+
+	// create a rent structure with the provided rent parameters.
+	rentStructure := &RentStructure{
+		RentParameters: rentParameters,
+	}
+
+	// set the vbyte cost factor for implicit account creation addresses as the vbyte cost of the dummy account.
+	vBFactorDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
+	vBFactorDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
+	vBFactorDummyAddress := dummyAddress.VBytes(rentStructure, nil)
+	rentStructure.VBFactorImplicitAccountCreationAddress = VByteCostFactor(vBFactorDummyAccountOutput - vBFactorDummyBasicOutput + vBFactorDummyAddress)
+
+	return rentStructure
 }
 
 // CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements
@@ -60,19 +148,22 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 
 // MinDeposit returns the minimum deposit to cover a given object.
 func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
-	return BaseToken(r.VByteCost) * BaseToken(object.VBytes(r, nil))
+	return BaseToken(r.VByteCost()) * BaseToken(object.VBytes(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
-	return BaseToken(r.VByteCost) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+	return BaseToken(r.VByteCost()) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
 }
 
-func (r RentStructure) Equals(other RentStructure) bool {
+func (r RentParameters) Equals(other RentParameters) bool {
 	return r.VByteCost == other.VByteCost &&
 		r.VBFactorData == other.VBFactorData &&
-		r.VBFactorKey == other.VBFactorKey
+		r.VBFactorKey == other.VBFactorKey &&
+		r.VBFactorBlockIssuerKey == other.VBFactorBlockIssuerKey &&
+		r.VBFactorStakingFeature == other.VBFactorStakingFeature &&
+		r.VBFactorDelegation == other.VBFactorDelegation
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

@@ -158,10 +158,10 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize) +
+		rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize) +
 		f.NativeTokens.VBytes(rentStruct, nil) +
 		// serial number
-		rentStruct.VBFactorData.Multiply(serializer.UInt32ByteSize) +
+		rentStruct.VBFactorData().Multiply(serializer.UInt32ByteSize) +
 		f.TokenScheme.VBytes(rentStruct, nil) +
 		f.Conditions.VBytes(rentStruct, nil) +
 		f.Features.VBytes(rentStruct, nil) +

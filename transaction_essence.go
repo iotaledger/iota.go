@@ -67,6 +67,8 @@ var (
 	ErrStorageDepositExceedsTargetOutputAmount = ierrors.New("storage deposit return amount exceeds target output's base token amount")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
+	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
+	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
@@ -196,7 +198,8 @@ func (u *TransactionEssence) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameters) error {
+func (u *TransactionEssence) syntacticallyValidate(api API) error {
+	protoParams := api.ProtocolParameters()
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
@@ -216,7 +219,7 @@ func (u *TransactionEssence) syntacticallyValidate(protoParams ProtocolParameter
 	}
 
 	return SyntacticallyValidateOutputs(u.Outputs,
-		OutputsSyntacticalDepositAmount(protoParams),
+		OutputsSyntacticalDepositAmount(protoParams, api.RentStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),

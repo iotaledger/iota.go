@@ -16,8 +16,8 @@ type BlockIssuerKeyType byte
 const (
 	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
 	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
-	// BlockIssuerKeyEd25519Address denotes a Ed25519AddressBlockIssuerKey.
-	BlockIssuerKeyEd25519Address
+	// BlockIssuerKeyPublicKeyHash denotes a Ed25519PublicKeyHashBlockIssuerKey.
+	BlockIssuerKeyPublicKeyHash
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -83,9 +83,9 @@ func (keys BlockIssuerKeys) Sort() {
 	slices.SortFunc(keys, func(x BlockIssuerKey, y BlockIssuerKey) int {
 		if x.Type() == y.Type() {
 			switch o := x.(type) {
-			case *Ed25519AddressBlockIssuerKey:
+			case *Ed25519PublicKeyHashBlockIssuerKey:
 				//nolint:forcetypeassert
-				return o.Compare(y.(*Ed25519AddressBlockIssuerKey))
+				return o.Compare(y.(*Ed25519PublicKeyHashBlockIssuerKey))
 			case *Ed25519PublicKeyBlockIssuerKey:
 				//nolint:forcetypeassert
 				return o.Compare(y.(*Ed25519PublicKeyBlockIssuerKey))
@@ -126,7 +126,7 @@ func (keys BlockIssuerKeys) Size() int {
 
 func (keys BlockIssuerKeys) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorIssuerKeys: keys length prefix + each key's vbytes
-	vbytes := rentStruct.VBFactorBlockIssuerKey.Multiply(VBytes(serializer.OneByte))
+	vbytes := rentStruct.VBFactorBlockIssuerKey().Multiply(VBytes(serializer.OneByte))
 	for _, key := range keys {
 		vbytes += key.VBytes(rentStruct, nil)
 	}

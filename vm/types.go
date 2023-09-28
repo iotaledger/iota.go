@@ -40,7 +40,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 
 		chainID := chainOutput.Chain()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(iotago.UTXOIDChainID); is {
+			if utxoIDChainID, is := chainID.(iotago.UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(utxoInputID)
 			}
 		}
@@ -75,4 +75,12 @@ type ResolvedInputs struct {
 	BlockIssuanceCreditInputSet
 	CommitmentInput VMCommitmentInput
 	RewardsInputSet
+}
+
+type ImplicitAccountOutput struct {
+	*iotago.BasicOutput `serix:"0,nest=false"`
+}
+
+func (o *ImplicitAccountOutput) Chain() iotago.ChainID {
+	return iotago.EmptyAccountID()
 }

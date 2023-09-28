@@ -175,9 +175,9 @@ func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VByte
 	return outputOffsetVByteCost(rentStruct) +
 		// TODO: Align vbyte factor weight of each field with TIP.
 		// type prefix + amount + delegated amount + start epoch + end epoch
-		rentStruct.VBFactorDelegation.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+BaseTokenSize+EpochIndexLength+EpochIndexLength) +
-		rentStruct.VBFactorDelegation.Multiply(DelegationIDLength) +
-		rentStruct.VBFactorDelegation.Multiply(AccountAddressSerializedBytesSize) +
+		rentStruct.VBFactorDelegation().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+BaseTokenSize+EpochIndexLength+EpochIndexLength) +
+		rentStruct.VBFactorDelegation().Multiply(DelegationIDLength) +
+		rentStruct.VBFactorDelegation().Multiply(AccountAddressSerializedBytesSize) +
 		d.Conditions.VBytes(rentStruct, nil)
 }
 

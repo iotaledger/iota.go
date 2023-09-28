@@ -39,6 +39,11 @@ func NewAddressKeysForEd25519Address(addr *Ed25519Address, prvKey ed25519.Privat
 	return AddressKeys{Address: addr, Keys: prvKey}
 }
 
+// NewAddressKeysForImplicitAccountCreationAddress returns new AddressKeys for ImplicitAccountCreationAddress.
+func NewAddressKeysForImplicitAccountCreationAddress(addr *ImplicitAccountCreationAddress, prvKey ed25519.PrivateKey) AddressKeys {
+	return AddressKeys{Address: addr, Keys: prvKey}
+}
+
 // NewAddressKeysForRestrictedEd25519Address returns new AddressKeys for a restricted Ed25519Address.
 func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey ed25519.PrivateKey) (AddressKeys, error) {
 	switch addr.Address.(type) {
@@ -55,7 +60,7 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 		addrKeys: map[string]interface{}{},
 	}
 	for _, c := range addrKeys {
-		ss.addrKeys[c.Address.String()] = c.Keys
+		ss.addrKeys[c.Address.Key()] = c.Keys
 	}
 
 	return ss
@@ -68,8 +73,8 @@ type InMemoryAddressSigner struct {
 
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
 
-	signatureForEd25519Address := func(edAddr *Ed25519Address, msg []byte) (signature Signature, err error) {
-		maybePrvKey, ok := s.addrKeys[edAddr.String()]
+	signatureForEd25519Address := func(edAddr DirectUnlockableAddress, msg []byte) (signature Signature, err error) {
+		maybePrvKey, ok := s.addrKeys[edAddr.Key()]
 		if !ok {
 			return nil, ierrors.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
 		}
@@ -98,6 +103,8 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 		default:
 			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
 		}
+	case *ImplicitAccountCreationAddress:
+		return signatureForEd25519Address(address, msg)
 
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)

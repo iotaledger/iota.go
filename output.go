@@ -118,9 +118,9 @@ var (
 
 // defines the default offset virtual byte costs for an output.
 func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
-	return rentStruct.VBFactorKey.Multiply(OutputIDLength) +
+	return rentStruct.VBFactorKey().Multiply(OutputIDLength) +
 		// included block id, slot booked
-		rentStruct.VBFactorData.Multiply(BlockIDLength+SlotIndexLength)
+		rentStruct.VBFactorData().Multiply(BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists
@@ -748,7 +748,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the base token amount fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructure *RentStructure) OutputsSyntacticalValidationFunc {
 	var sum BaseToken
 
 	return func(index int, output Output) error {
@@ -764,13 +764,13 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters) OutputsSynt
 		}
 
 		// check whether base token amount fulfills the storage deposit cost
-		if _, err := protoParams.RentStructure().CoversMinDeposit(output, amount); err != nil {
+		if _, err := rentStructure.CoversMinDeposit(output, amount); err != nil {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := protoParams.RentStructure().MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)

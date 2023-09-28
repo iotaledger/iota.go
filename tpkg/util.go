@@ -893,6 +893,16 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	return edSk, edAddr, addrKeys
 }
 
+// RandImplicitAccountIdentity produces a random Implicit Account identity.
+func RandImplicitAccountIdentity() (ed25519.PrivateKey, *iotago.ImplicitAccountCreationAddress, iotago.AddressKeys) {
+	edSk := RandEd25519PrivateKey()
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	implicitAccAddr := iotago.ImplicitAccountCreationAddressFromPubKey(edSk.Public().(ed25519.PublicKey))
+	addrKeys := iotago.NewAddressKeysForImplicitAccountCreationAddress(implicitAccAddr, edSk)
+
+	return edSk, implicitAccAddr, addrKeys
+}
+
 // RandEd25519IdentitiesSortedByAddress returns random Ed25519 identities and keys lexically sorted by the address.
 func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago.AddressKeys) {
 	addresses := make([]iotago.Address, count)
@@ -914,9 +924,9 @@ func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago
 	return addresses, addressKeys
 }
 
-// RandRentStructure produces random rent structure.
-func RandRentStructure() *iotago.RentStructure {
-	return &iotago.RentStructure{
+// RandRentParameters produces random set of rent parameters.
+func RandRentParameters() *iotago.RentParameters {
+	return &iotago.RentParameters{
 		VByteCost:              RandUint32(math.MaxUint32),
 		VBFactorData:           iotago.VByteCostFactor(RandUint8(math.MaxUint8)),
 		VBFactorKey:            iotago.VByteCostFactor(RandUint8(math.MaxUint8)),

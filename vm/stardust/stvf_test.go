@@ -3279,3 +3279,149 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		})
 	}
 }
+
+func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
+	exampleIssuer := tpkg.RandEd25519Address()
+	exampleAccountID := tpkg.RandAccountAddress().AccountID()
+
+	currentEpoch := iotago.EpochIndex(20)
+	currentSlot := tpkg.TestAPI.TimeProvider().EpochStart(currentEpoch)
+	blockIssuerPubKey := iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
+		BlockIssuerKeys: iotago.NewBlockIssuerKeys(blockIssuerPubKey),
+		ExpirySlot:      currentSlot + tpkg.TestAPI.ProtocolParameters().MaxCommittableAge(),
+	}
+
+	exampleBIC := map[iotago.AccountID]iotago.BlockIssuanceCredits{
+		exampleAccountID: 100,
+	}
+
+	type test struct {
+		name      string
+		input     *vm.ChainOutputWithCreationSlot
+		next      *iotago.AccountOutput
+		transType iotago.ChainTransitionType
+		svCtx     *vm.Params
+		wantErr   error
+	}
+
+	implicitAccountCreationAddr := iotago.ImplicitAccountCreationAddressFromPubKey(tpkg.RandEd25519Signature().PublicKey[:])
+	exampleAmount := iotago.BaseToken(100_000)
+
+	tests := []test{
+		{
+			name: "ok - implicit account conversion transition",
+			next: &iotago.AccountOutput{
+				Amount:    exampleAmount,
+				AccountID: exampleAccountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{
+					exampleBlockIssuerFeature,
+				},
+			},
+			input: &vm.ChainOutputWithCreationSlot{
+				ChainID: exampleAccountID,
+				Output: &vm.ImplicitAccountOutput{
+					BasicOutput: &iotago.BasicOutput{
+						Amount: exampleAmount,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{
+								Address: implicitAccountCreationAddr,
+							},
+						},
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					BIC: exampleBIC,
+					Commitment: &iotago.Commitment{
+						Slot: currentSlot,
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - explicit account lacks block issuer feature",
+			next: &iotago.AccountOutput{
+				Amount:    exampleAmount,
+				AccountID: exampleAccountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.AccountOutputFeatures{},
+			},
+			input: &vm.ChainOutputWithCreationSlot{
+				ChainID: exampleAccountID,
+				Output: &vm.ImplicitAccountOutput{
+					BasicOutput: &iotago.BasicOutput{
+						Amount: exampleAmount,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{
+								Address: implicitAccountCreationAddr,
+							},
+						},
+					},
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.TestAPI,
+				WorkingSet: &vm.WorkingSet{
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					BIC: exampleBIC,
+					Commitment: &iotago.Commitment{
+						Slot: currentSlot,
+					},
+					Tx: &iotago.Transaction{
+						Essence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+						},
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil {
+				// create the working set for the test
+				if tt.svCtx.WorkingSet.UTXOInputsWithCreationSlot == nil {
+					tt.svCtx.WorkingSet.UTXOInputsWithCreationSlot = make(vm.InputSet)
+				}
+
+				tt.svCtx.WorkingSet.UTXOInputsWithCreationSlot[tpkg.RandOutputID(0)] = vm.OutputWithCreationSlot{
+					Output:       tt.input.Output,
+					CreationSlot: tt.input.CreationSlot,
+				}
+			}
+
+			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

@@ -19,7 +19,7 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 }
 
 func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize + SlotIndexLength)
+	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize + SlotIndexLength)
 }
 
 func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

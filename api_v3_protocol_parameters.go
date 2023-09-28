@@ -58,8 +58,8 @@ func (p *V3ProtocolParameters) NetworkName() string {
 	return p.basicProtocolParameters.NetworkName
 }
 
-func (p *V3ProtocolParameters) RentStructure() *RentStructure {
-	return &p.basicProtocolParameters.RentStructure
+func (p *V3ProtocolParameters) RentParameters() *RentParameters {
+	return &p.basicProtocolParameters.RentParameters
 }
 
 func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
@@ -145,7 +145,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.Version,
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,
-		p.basicProtocolParameters.RentStructure,
+		p.basicProtocolParameters.RentParameters,
 		p.basicProtocolParameters.WorkScoreStructure,
 		p.basicProtocolParameters.TokenSupply,
 		p.basicProtocolParameters.GenesisUnixTimestamp,
@@ -195,7 +195,7 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorBlockIssuerKey, vBFactorStakingFeature, vBFactorDelegation VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
-		p.basicProtocolParameters.RentStructure = RentStructure{
+		p.basicProtocolParameters.RentParameters = RentParameters{
 			VByteCost:              vByteCost,
 			VBFactorData:           vBFactorData,
 			VBFactorKey:            vBFactorKey,

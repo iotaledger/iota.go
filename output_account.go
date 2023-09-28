@@ -32,7 +32,11 @@ var (
 	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
 	ErrAccountMissing = ierrors.New("account is missing")
-	emptyAccountID    = [AccountIDLength]byte{}
+	// ErrImplicitAccountDestruction gets returned when an implicit account is being destroyed.
+	ErrImplicitAccountDestruction = ierrors.New("implicit account destruction is not allowed")
+	// ErrInvalidImplicitAccountConversion gets returned when there is an invalid conversion from implicit account to account output.
+	ErrInvalidImplicitAccountConversion = ierrors.New("invalid conversion from implicit account to account output")
+	emptyAccountID                      = [AccountIDLength]byte{}
 )
 
 func EmptyAccountID() AccountID {
@@ -252,11 +256,11 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
 		// prefix + amount + stored mana
-		rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
+		rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
-		rentStruct.VBFactorData.Multiply(AccountIDLength) +
+		rentStruct.VBFactorData().Multiply(AccountIDLength) +
 		// state index, state meta length, state meta, foundry counter
-		rentStruct.VBFactorData.Multiply(VBytes(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
+		rentStruct.VBFactorData().Multiply(VBytes(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
 		a.Conditions.VBytes(rentStruct, nil) +
 		a.Features.VBytes(rentStruct, nil) +
 		a.ImmutableFeatures.VBytes(rentStruct, nil)

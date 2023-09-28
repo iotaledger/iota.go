@@ -98,7 +98,7 @@ func (n NativeTokens) Clone() NativeTokens {
 
 func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// length prefix + (native token count * static native token cost)
-	return rentStruct.VBFactorData.Multiply(VBytes(serializer.OneByte + len(n)*NativeTokenVByteCost))
+	return rentStruct.VBFactorData().Multiply(VBytes(serializer.OneByte + len(n)*NativeTokenVByteCost))
 }
 
 func (n NativeTokens) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
