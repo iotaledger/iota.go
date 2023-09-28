@@ -47,7 +47,7 @@ func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Pa
 	return vm.RunVMFuncs(stardustVM, vmParams, stardustVM.execList...)
 }
 
-func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithCreationSlot, next iotago.ChainOutput, vmParams *vm.Params) error {
+func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutput, next iotago.ChainOutput, vmParams *vm.Params) error {
 	transitionState := next
 	if transType != iotago.ChainTransitionTypeGenesis {
 		transitionState = input.Output
@@ -102,7 +102,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 // On account state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
 //
 // On account governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
-func accountSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountSTVF(input *vm.ChainOutput, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := accountGenesisValid(next, vmParams); err != nil {
@@ -153,7 +153,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm.Params, next *iotago.AccountOutput) error {
+func accountStateChangeValid(input *vm.ChainOutput, vmParams *vm.Params, next *iotago.AccountOutput) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
@@ -179,7 +179,7 @@ func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 	return accountStateSTVF(input, next, vmParams)
 }
 
-func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountGovernanceSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 
@@ -208,7 +208,7 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.A
 	return accountBlockIssuerSTVF(input, next, vmParams)
 }
 
-func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountStateSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	switch {
@@ -271,7 +271,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 // The block issuer credit must be non-negative.
 // The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableSlotAge greater than the TX slot index.
 // Check that at least one Block Issuer Key is present.
-func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	currentBlockIssuerFeat := current.FeatureSet().BlockIssuer()
@@ -322,7 +322,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 		manaDecayProvider,
 		rentStructure,
 		vmParams.WorkingSet.Tx.Essence.CreationSlot,
-		vmParams.WorkingSet.UTXOInputsWithCreationSlot,
+		vmParams.WorkingSet.UTXOInputsSet,
 	)
 	if err != nil {
 		return err
@@ -337,7 +337,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
 	}
@@ -352,7 +352,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.
 	} else {
 		excessBaseTokensAccount = current.Amount - minDeposit
 	}
-	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
 	}
@@ -523,7 +523,7 @@ func accountStakingExpiredValidation(
 	return nil
 }
 
-func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm.Params) error {
+func accountDestructionValid(input *vm.ChainOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 
@@ -571,7 +571,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 	return nil
 }
 
-func nftSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
+func nftSTVF(input *vm.ChainOutput, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := nftGenesisValid(next, vmParams); err != nil {
@@ -608,7 +608,7 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 	return nil
 }
 
-func foundrySTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
+func foundrySTVF(input *vm.ChainOutput, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
 	inSums := vmParams.WorkingSet.InNativeTokens
 	outSums := vmParams.WorkingSet.OutNativeTokens
 
@@ -725,7 +725,7 @@ func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.Native
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
 }
 
-func delegationSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
+func delegationSTVF(input *vm.ChainOutput, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := delegationGenesisValid(next, vmParams); err != nil {
