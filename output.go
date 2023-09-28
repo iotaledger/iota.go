@@ -116,11 +116,11 @@ var (
 	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
 )
 
-// defines the default offset virtual byte costs for an output.
-func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
-	return rentStruct.VByteOffsetOutput() +
+// defines the default storage score offset for an output.
+func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
+	return rentStruct.StorageScoreOffsetOutput() +
 		// included output id, block id, and slot booked data size
-		rentStruct.VByteFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
+		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists
@@ -751,7 +751,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - every output has base token amount more than zero
 //   - every output has base token amount less than the total supply
 //   - the sum of base token amounts does not exceed the total supply
-//   - the base token amount fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
+//   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructure *RentStructure) OutputsSyntacticalValidationFunc {

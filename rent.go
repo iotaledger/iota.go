@@ -4,27 +4,27 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 )
 
-// VBytes defines the type of the virtual byte costs.
-type VBytes uint64
+// StorageScore defines the type of storage score.
+type StorageScore uint64
 
-// VByteFactor defines the type of the virtual byte cost factor.
-type VByteFactor byte
+// StorageScoreFactor defines the type of the storage score factor.
+type StorageScoreFactor byte
 
 var (
-	// ErrVByteDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
-	// which is calculated from its virtual byte costs.
-	ErrVByteDepositNotCovered = ierrors.New("virtual byte minimum deposit not covered")
+	// ErrStorageDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
+	// which is calculated from its storage score.
+	ErrStorageDepositNotCovered = ierrors.New("minimum storage deposit not covered")
 	// ErrTypeIsNotSupportedRentStructure gets returned when a serializable was found to not be a supported RentStructure.
 	ErrTypeIsNotSupportedRentStructure = ierrors.New("serializable is not a supported rent structure")
 )
 
 // Multiply multiplies in with this factor.
-func (factor VByteFactor) Multiply(in VBytes) VBytes {
-	return VBytes(factor) * in
+func (factor StorageScoreFactor) Multiply(in StorageScore) StorageScore {
+	return StorageScore(factor) * in
 }
 
 // With joins two factors with each other.
-func (factor VByteFactor) With(other VByteFactor) VByteFactor {
+func (factor StorageScoreFactor) With(other StorageScoreFactor) StorageScoreFactor {
 	return factor + other
 }
 
@@ -32,59 +32,59 @@ func (factor VByteFactor) With(other VByteFactor) VByteFactor {
 // This structure defines the minimum base token deposit required on an object. This deposit does not
 // generate Mana, which serves as a rent payment in Mana for storing the object.
 type RentParameters struct {
-	// Defines the rent of a single virtual byte denoted in IOTA tokens.
-	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
+	// Defines the number of IOTA tokens required per unit of storage score.
+	StorageCost BaseToken `serix:"0,mapKey=storageCost"`
 	// Defines the factor to be used for data only fields.
-	VByteFactorData VByteFactor `serix:"1,mapKey=vByteFactorData"`
+	StorageScoreFactorData StorageScoreFactor `serix:"1,mapKey=storageScoreFactorData"`
 	// Defines the offset to be used for key/lookup generating fields.
-	VByteOffsetOutput VBytes `serix:"2,mapKey=vByteOffsetOutput"`
+	StorageScoreOffsetOutput StorageScore `serix:"2,mapKey=storageScoreOffsetOutput"`
 	// Defines the offset to be used for block issuer feature public keys.
-	VByteOffsetEd25519BlockIssuerKey VBytes `serix:"3,mapKey=vByteOffsetEd25519BlockIssuerKey"`
+	StorageScoreOffsetEd25519BlockIssuerKey StorageScore `serix:"3,mapKey=storageScoreOffsetEd25519BlockIssuerKey"`
 	// Defines the offset to be used for staking feature.
-	VByteOffsetStakingFeature VBytes `serix:"4,mapKey=vByteOffsetStakingFeature"`
+	StorageScoreOffsetStakingFeature StorageScore `serix:"4,mapKey=storageScoreOffsetStakingFeature"`
 	// Defines the offset to be used for delegation output.
-	VByteOffsetDelegation VBytes `serix:"5,mapKey=vByteOffsetDelegation"`
+	StorageScoreOffsetDelegation StorageScore `serix:"5,mapKey=storageScoreOffsetDelegation"`
 }
 
 // RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
 type RentStructure struct {
-	RentParameters                            *RentParameters
-	VByteOffsetImplicitAccountCreationAddress VBytes
+	RentParameters                                   *RentParameters
+	StorageScoreOffsetImplicitAccountCreationAddress StorageScore
 }
 
-// VByteCost returns the cost of a single virtual byte denoted in IOTA tokens.
-func (r *RentStructure) VByteCost() uint32 {
-	return r.RentParameters.VByteCost
+// StorageCost returns the cost of a single unit of storage score denoted in base tokens.
+func (r *RentStructure) StorageCost() BaseToken {
+	return r.RentParameters.StorageCost
 }
 
-// VByteFactorData returns the factor to be used for data only fields.
-func (r *RentStructure) VByteFactorData() VByteFactor {
-	return r.RentParameters.VByteFactorData
+// StorageScoreFactorData returns the factor to be used for data only fields.
+func (r *RentStructure) StorageScoreFactorData() StorageScoreFactor {
+	return r.RentParameters.StorageScoreFactorData
 }
 
-// VByteOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
-func (r *RentStructure) VByteOffsetOutput() VBytes {
-	return r.RentParameters.VByteOffsetOutput
+// StorageScoreOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
+func (r *RentStructure) StorageScoreOffsetOutput() StorageScore {
+	return r.RentParameters.StorageScoreOffsetOutput
 }
 
-// VByteOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
-func (r *RentStructure) VByteOffsetEd25519BlockIssuerKey() VBytes {
-	return r.RentParameters.VByteOffsetEd25519BlockIssuerKey
+// StorageScoreOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
+func (r *RentStructure) StorageScoreOffsetEd25519BlockIssuerKey() StorageScore {
+	return r.RentParameters.StorageScoreOffsetEd25519BlockIssuerKey
 }
 
-// VByteOffsetStakingFeature returns the offset to be used for staking feature.
-func (r *RentStructure) VByteOffsetStakingFeature() VBytes {
-	return r.RentParameters.VByteOffsetStakingFeature
+// StorageScoreOffsetStakingFeature returns the offset to be used for staking feature.
+func (r *RentStructure) StorageScoreOffsetStakingFeature() StorageScore {
+	return r.RentParameters.StorageScoreOffsetStakingFeature
 }
 
-// VByteOffsetDelegation returns the offset to be used for delegation output.
-func (r *RentStructure) VByteOffsetDelegation() VBytes {
-	return r.RentParameters.VByteOffsetDelegation
+// StorageScoreOffsetDelegation returns the offset to be used for delegation output.
+func (r *RentStructure) StorageScoreOffsetDelegation() StorageScore {
+	return r.RentParameters.StorageScoreOffsetDelegation
 }
 
 // NewRentStructure creates a new RentStructure.
 func NewRentStructure(rentParameters *RentParameters) *RentStructure {
-	// create a dummy account with a block issuer feature to calculate the vbytes cost.
+	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
 		Mana:           0,
@@ -125,22 +125,24 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		RentParameters: rentParameters,
 	}
 
-	// set the vbyte cost offset for implicit account creation addresses as the vbyte cost of the dummy account.
-	vBDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
-	vBDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
-	vBDummyAddress := dummyAddress.VBytes(rentStructure, nil)
-	rentStructure.VByteOffsetImplicitAccountCreationAddress = vBDummyAccountOutput - vBDummyBasicOutput + vBDummyAddress
+	// set the storage score offset for implicit account creation addresses as
+	// the difference between the storage score of the dummy account and the storage
+	// score of the dummy basic output minus the storage score of the dummy address.
+	storageScoreAccountOutput := dummyAccountOutput.StorageScore(rentStructure, nil)
+	storageScoreBasicOutput := dummyBasicOutput.StorageScore(rentStructure, nil)
+	storageScoreAddress := dummyAddress.StorageScore(rentStructure, nil)
+	rentStructure.StorageScoreOffsetImplicitAccountCreationAddress = storageScoreAccountOutput - storageScoreBasicOutput + storageScoreAddress
 
 	return rentStructure
 }
 
 // CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements
-// by examining the virtual bytes cost of the object.
+// by examining the storage score of the object.
 // Returns the minimum deposit computed and an error if it is not covered by the base token amount of the object.
 func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
 	minDeposit := r.MinDeposit(object)
 	if amount < minDeposit {
-		return 0, ierrors.Wrapf(ErrVByteDepositNotCovered, "needed %d but only got %d", minDeposit, amount)
+		return 0, ierrors.Wrapf(ErrStorageDepositNotCovered, "needed %d but only got %d", minDeposit, amount)
 	}
 
 	return minDeposit, nil
@@ -148,34 +150,34 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 
 // MinDeposit returns the minimum deposit to cover a given object.
 func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
-	return BaseToken(r.VByteCost()) * BaseToken(object.VBytes(r, nil))
+	return r.StorageCost() * BaseToken(object.StorageScore(r, nil))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
-	return BaseToken(r.VByteCost()) * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).VBytes(r, nil))
+	return r.StorageCost() * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil))
 }
 
 func (r RentParameters) Equals(other RentParameters) bool {
-	return r.VByteCost == other.VByteCost &&
-		r.VByteFactorData == other.VByteFactorData &&
-		r.VByteOffsetOutput == other.VByteOffsetOutput &&
-		r.VByteOffsetEd25519BlockIssuerKey == other.VByteOffsetEd25519BlockIssuerKey &&
-		r.VByteOffsetStakingFeature == other.VByteOffsetStakingFeature &&
-		r.VByteOffsetDelegation == other.VByteOffsetDelegation
+	return r.StorageCost == other.StorageCost &&
+		r.StorageScoreFactorData == other.StorageScoreFactorData &&
+		r.StorageScoreOffsetOutput == other.StorageScoreOffsetOutput &&
+		r.StorageScoreOffsetEd25519BlockIssuerKey == other.StorageScoreOffsetEd25519BlockIssuerKey &&
+		r.StorageScoreOffsetStakingFeature == other.StorageScoreOffsetStakingFeature &&
+		r.StorageScoreOffsetDelegation == other.StorageScoreOffsetDelegation
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it
 // makes up an integral part to execute the IOTA protocol. This kind of objects are associated
 // with costs in terms of the resources they take up.
 type NonEphemeralObject interface {
-	// VBytes returns the cost this object has in terms of taking up
-	// virtual and physical space within the data set needed to implement the IOTA protocol.
+	// StorageScore returns the cost this object has in terms of taking up
+	// virtual and physical space within the data set needed to implement the protocol.
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
-	VBytes(rentStruct *RentStructure, override VBytesFunc) VBytes
+	StorageScore(rentStruct *RentStructure, override StorageScoreFunc) StorageScore
 }
 
-// VBytesFunc is a function which computes the virtual byte cost of a NonEphemeralObject.
-type VBytesFunc func(rentStruct *RentStructure) VBytes
+// StorageScoreFunc is a function which computes the storage score of a NonEphemeralObject.
+type StorageScoreFunc func(rentStruct *RentStructure) StorageScore

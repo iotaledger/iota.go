@@ -155,14 +155,14 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 	return ok
 }
 
-func (f *FoundryOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VByteFactorData().Multiply(VBytes(f.Size())) +
-		f.NativeTokens.VBytes(rentStruct, nil) +
-		f.TokenScheme.VBytes(rentStruct, nil) +
-		f.Conditions.VBytes(rentStruct, nil) +
-		f.Features.VBytes(rentStruct, nil) +
-		f.ImmutableFeatures.VBytes(rentStruct, nil)
+func (f *FoundryOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreOffsetOutput(rentStruct) +
+		rentStruct.StorageScoreFactorData().Multiply(StorageScore(f.Size())) +
+		f.NativeTokens.StorageScore(rentStruct, nil) +
+		f.TokenScheme.StorageScore(rentStruct, nil) +
+		f.Conditions.StorageScore(rentStruct, nil) +
+		f.Features.StorageScore(rentStruct, nil) +
+		f.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
 func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

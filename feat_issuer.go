@@ -18,8 +18,8 @@ func (s *IssuerFeature) Clone() Feature {
 	return &IssuerFeature{Address: s.Address.Clone()}
 }
 
-func (s *IssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.Address.VBytes(rentStruct, nil)
+func (s *IssuerFeature) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.Address.StorageScore(rentStruct, nil)
 }
 
 func (s *IssuerFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

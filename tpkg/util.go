@@ -942,11 +942,11 @@ func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago
 // RandRentParameters produces random set of rent parameters.
 func RandRentParameters() *iotago.RentParameters {
 	return &iotago.RentParameters{
-		VByteCost:                        RandUint32(math.MaxUint32),
-		VByteFactorData:                  iotago.VByteFactor(RandUint8(math.MaxUint8)),
-		VByteOffsetOutput:                iotago.VBytes(RandUint64(math.MaxUint64)),
-		VByteOffsetEd25519BlockIssuerKey: iotago.VBytes(RandUint64(math.MaxUint64)),
-		VByteOffsetStakingFeature:        iotago.VBytes(RandUint64(math.MaxUint64)),
+		StorageCost:                             RandBaseToken(iotago.MaxBaseToken),
+		StorageScoreFactorData:                  iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
+		StorageScoreOffsetOutput:                iotago.StorageScore(RandUint64(math.MaxUint64)),
+		StorageScoreOffsetEd25519BlockIssuerKey: iotago.StorageScore(RandUint64(math.MaxUint64)),
+		StorageScoreOffsetStakingFeature:        iotago.StorageScore(RandUint64(math.MaxUint64)),
 	}
 }
 
@@ -982,12 +982,12 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		),
 		iotago.WithSupplyOptions(
 			RandBaseToken(iotago.MaxBaseToken),
-			RandUint32(math.MaxUint32),
-			iotago.VByteFactor(RandUint8(math.MaxUint8)),
-			iotago.VBytes(RandUint64(math.MaxUint64)),
-			iotago.VBytes(RandUint64(math.MaxUint64)),
-			iotago.VBytes(RandUint64(math.MaxUint64)),
-			iotago.VBytes(RandUint64(math.MaxUint64)),
+			RandBaseToken(iotago.MaxBaseToken),
+			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
+			iotago.StorageScore(RandUint64(math.MaxUint64)),
+			iotago.StorageScore(RandUint64(math.MaxUint64)),
+			iotago.StorageScore(RandUint64(math.MaxUint64)),
+			iotago.StorageScore(RandUint64(math.MaxUint64)),
 		),
 		iotago.WithWorkScoreOptions(
 			RandWorkScore(math.MaxUint32),

@@ -171,11 +171,11 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex
 	return ok
 }
 
-func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VByteFactorData().Multiply(VBytes(d.Size())) +
-		rentStruct.VByteOffsetDelegation() +
-		d.Conditions.VBytes(rentStruct, nil)
+func (d *DelegationOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreOffsetOutput(rentStruct) +
+		rentStruct.StorageScoreFactorData().Multiply(StorageScore(d.Size())) +
+		rentStruct.StorageScoreOffsetDelegation() +
+		d.Conditions.StorageScore(rentStruct, nil)
 }
 
 func (d *DelegationOutput) syntacticallyValidate() error {

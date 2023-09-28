@@ -15,12 +15,12 @@ func (s *SenderFeature) Clone() Feature {
 	return &SenderFeature{Address: s.Address.Clone()}
 }
 
-func (s *SenderFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
+func (s *SenderFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
 		return f(rentStruct)
 	}
 
-	return s.Address.VBytes(rentStruct, nil)
+	return s.Address.StorageScore(rentStruct, nil)
 }
 
 func (s *SenderFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

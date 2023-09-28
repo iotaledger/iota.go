@@ -67,10 +67,10 @@ func (f Features[T]) Clone() Features[T] {
 	return lo.CloneSlice(f)
 }
 
-func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	var sumCost VBytes
+func (f Features[T]) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	var sumCost StorageScore
 	for _, feat := range f {
-		sumCost += feat.VBytes(rentStruct, nil)
+		sumCost += feat.StorageScore(rentStruct, nil)
 	}
 
 	return sumCost

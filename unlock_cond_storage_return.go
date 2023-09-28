@@ -20,8 +20,8 @@ func (s *StorageDepositReturnUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *StorageDepositReturnUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.ReturnAddress.VBytes(rentStruct, nil)
+func (s *StorageDepositReturnUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.ReturnAddress.StorageScore(rentStruct, nil)
 }
 
 func (s *StorageDepositReturnUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

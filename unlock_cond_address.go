@@ -14,8 +14,8 @@ func (s *AddressUnlockCondition) Clone() UnlockCondition {
 	return &AddressUnlockCondition{Address: s.Address.Clone()}
 }
 
-func (s *AddressUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.Address.VBytes(rentStruct, nil)
+func (s *AddressUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.Address.StorageScore(rentStruct, nil)
 }
 
 func (s *AddressUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

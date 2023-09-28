@@ -30,7 +30,7 @@ func (addr *Ed25519Address) Clone() Address {
 	return cpy
 }
 
-func (addr *Ed25519Address) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+func (addr *Ed25519Address) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

@@ -22,8 +22,8 @@ func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *ExpirationUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.ReturnAddress.VBytes(rentStruct, nil)
+func (s *ExpirationUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.ReturnAddress.StorageScore(rentStruct, nil)
 }
 
 func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

@@ -22,8 +22,8 @@ func (s *BlockIssuerFeature) Clone() Feature {
 	return &BlockIssuerFeature{BlockIssuerKeys: s.BlockIssuerKeys, ExpirySlot: s.ExpirySlot}
 }
 
-func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.BlockIssuerKeys.VBytes(rentStruct, nil)
+func (s *BlockIssuerFeature) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.BlockIssuerKeys.StorageScore(rentStruct, nil)
 }
 
 func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

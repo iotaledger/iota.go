@@ -29,7 +29,7 @@ func (addr *NFTAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *NFTAddress) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+func (addr *NFTAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

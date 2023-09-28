@@ -317,7 +317,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrVByteDepositNotCovered,
+			wantErr: iotago.ErrStorageDepositNotCovered,
 		},
 		{
 			name:        "fail - zero deposit",

@@ -93,7 +93,7 @@ func (n NativeTokens) Clone() NativeTokens {
 	return lo.CloneSlice(n)
 }
 
-func (n NativeTokens) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+func (n NativeTokens) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 
@@ -171,7 +171,7 @@ func (n *NativeToken) Clone() *NativeToken {
 	return cpy
 }
 
-func (n *NativeToken) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+func (n *NativeToken) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

@@ -77,12 +77,12 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 	return ok
 }
 
-func (e *BasicOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VByteFactorData().Multiply(VBytes(e.Size())) +
-		e.NativeTokens.VBytes(rentStruct, nil) +
-		e.Conditions.VBytes(rentStruct, nil) +
-		e.Features.VBytes(rentStruct, nil)
+func (e *BasicOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreOffsetOutput(rentStruct) +
+		rentStruct.StorageScoreFactorData().Multiply(StorageScore(e.Size())) +
+		e.NativeTokens.StorageScore(rentStruct, nil) +
+		e.Conditions.StorageScore(rentStruct, nil) +
+		e.Features.StorageScore(rentStruct, nil)
 }
 
 func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

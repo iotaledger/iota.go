@@ -16,8 +16,8 @@ func (s *ImmutableAccountUnlockCondition) Clone() UnlockCondition {
 	return &ImmutableAccountUnlockCondition{Address: s.Address.Clone().(*AccountAddress)}
 }
 
-func (s *ImmutableAccountUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return s.Address.VBytes(rentStruct, nil)
+func (s *ImmutableAccountUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return s.Address.StorageScore(rentStruct, nil)
 }
 
 func (s *ImmutableAccountUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
