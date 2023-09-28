@@ -49,7 +49,7 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Bytes() []byte {
 
 // Type returns the BlockIssuerKeyType.
 func (key *Ed25519PublicKeyHashBlockIssuerKey) Type() BlockIssuerKeyType {
-	return BlockIssuerKeyEd25519Address
+	return BlockIssuerKeyPublicKeyHash
 }
 
 func (key *Ed25519PublicKeyHashBlockIssuerKey) Equal(other BlockIssuerKey) bool {

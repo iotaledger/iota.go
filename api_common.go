@@ -152,7 +152,7 @@ func CommonSerixAPI() *serix.API {
 				serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyEd25519PublicKey)),
 			))
 			must(api.RegisterTypeSettings(Ed25519PublicKeyHashBlockIssuerKey{},
-				serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyEd25519Address)),
+				serix.TypeSettings{}.WithObjectType(byte(BlockIssuerKeyPublicKeyHash)),
 			))
 			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyBlockIssuerKey)(nil)))
 			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyHashBlockIssuerKey)(nil)))

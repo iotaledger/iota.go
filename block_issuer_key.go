@@ -16,8 +16,8 @@ type BlockIssuerKeyType byte
 const (
 	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
 	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
-	// BlockIssuerKeyEd25519Address denotes a Ed25519PublicKeyHashBlockIssuerKey.
-	BlockIssuerKeyEd25519Address
+	// BlockIssuerKeyPublicKeyHash denotes a Ed25519PublicKeyHashBlockIssuerKey.
+	BlockIssuerKeyPublicKeyHash
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
