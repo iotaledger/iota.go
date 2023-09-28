@@ -142,7 +142,7 @@ type DirectUnlockableAddress interface {
 // ChainAddress is a type of Address representing ownership of an output by a ChainOutput.
 type ChainAddress interface {
 	Address
-	Chain() ChainID
+	ChainID() ChainID
 }
 
 // ChainID represents the chain ID of a chain created by a ChainOutput.

@@ -41,7 +41,7 @@ func (addr *NFTAddress) Key() string {
 	return string(addr.ID())
 }
 
-func (addr *NFTAddress) Chain() ChainID {
+func (addr *NFTAddress) ChainID() ChainID {
 	return NFTID(*addr)
 }
 

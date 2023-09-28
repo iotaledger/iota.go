@@ -4,6 +4,7 @@ package tpkg
 import (
 	"bytes"
 	"crypto/ed25519"
+	cryptorand "crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -99,16 +100,27 @@ func RandFloat64(max float64) float64 {
 	return rand.Float64() * max
 }
 
-func RandOutputID(index uint16) iotago.OutputID {
+func RandOutputIDWithCreationSlot(slot iotago.SlotIndex, index uint16) iotago.OutputID {
+	txID := RandTransactionIDWithCreationSlot(slot)
+
 	var outputID iotago.OutputID
-	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(outputID[:iotago.SlotIdentifierLength])
-	if err != nil {
-		panic(err)
-	}
+	copy(outputID[:], txID[:])
 	binary.LittleEndian.PutUint16(outputID[iotago.SlotIdentifierLength:], index)
 
 	return outputID
+}
+
+func RandOutputID(index uint16) iotago.OutputID {
+	return RandOutputIDWithCreationSlot(0, index)
+}
+
+func RandOutputIDsWithCreationSlot(slot iotago.SlotIndex, count uint16) iotago.OutputIDs {
+	outputIDs := make(iotago.OutputIDs, int(count))
+	for i := 0; i < int(count); i++ {
+		outputIDs[i] = RandOutputIDWithCreationSlot(slot, count)
+	}
+
+	return outputIDs
 }
 
 func RandOutputIDs(count uint16) iotago.OutputIDs {
@@ -120,15 +132,19 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 	return outputIDs
 }
 
-func RandTransactionID() iotago.TransactionID {
+func RandTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.TransactionID {
 	var transactionID iotago.TransactionID
-	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	_, err := rand.Read(transactionID[:iotago.SlotIdentifierLength])
+	_, err := cryptorand.Read(transactionID[:iotago.IdentifierLength])
 	if err != nil {
 		panic(err)
 	}
+	binary.LittleEndian.PutUint32(transactionID[iotago.IdentifierLength:iotago.SlotIdentifierLength], uint32(slot))
 
 	return transactionID
+}
+
+func RandTransactionID() iotago.TransactionID {
+	return RandTransactionIDWithCreationSlot(RandSlotIndex())
 }
 
 // RandNativeToken returns a random NativeToken.
@@ -871,8 +887,7 @@ func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 // RandEd25519Seed returns a random Ed25519 seed.
 func RandEd25519Seed() [ed25519.SeedSize]byte {
 	var b [ed25519.SeedSize]byte
-	//nolint:gocritic,staticcheck // we don't need crypto rand in tests
-	read, err := rand.Read(b[:])
+	read, err := cryptorand.Read(b[:])
 	if read != ed25519.SeedSize {
 		panic(fmt.Sprintf("could not read %d required bytes from secure RNG", ed25519.SeedSize))
 	}

@@ -130,6 +130,12 @@ type OutputID [OutputIDLength]byte
 // EmptyOutputID is an empty OutputID.
 var EmptyOutputID = OutputID{}
 
+func EmptyOutputIDWithCreationSlot(slot SlotIndex) OutputID {
+	var outputID OutputID
+	binary.LittleEndian.PutUint32(outputID[IdentifierLength:SlotIdentifierLength], uint32(slot))
+	return outputID
+}
+
 // ToHex converts the OutputID to its hex representation.
 func (outputID OutputID) ToHex() string {
 	return hexutil.EncodeHex(outputID[:])
@@ -153,8 +159,8 @@ func (outputID OutputID) Index() uint16 {
 	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
 }
 
-// CreationSlotIndex returns the SlotIndex the Output was created in.
-func (outputID OutputID) CreationSlotIndex() SlotIndex {
+// CreationSlot returns the slot the Output was created in.
+func (outputID OutputID) CreationSlot() SlotIndex {
 	return outputID.TransactionID().Slot()
 }
 
@@ -423,9 +429,9 @@ func (outputs Outputs[T]) ChainOutputSet(txID TransactionID) ChainOutputSet {
 			continue
 		}
 
-		chainID := chainOutput.Chain()
+		chainID := chainOutput.ChainID()
 		if chainID.Empty() {
-			if utxoIDChainID, is := chainOutput.Chain().(UTXOIDChainID); is {
+			if utxoIDChainID, is := chainOutput.ChainID().(UTXOIDChainID); is {
 				chainID = utxoIDChainID.FromOutputID(OutputIDFromTransactionIDAndIndex(txID, uint16(outputIndex)))
 			}
 		}
@@ -540,7 +546,7 @@ func (outputs OutputsByType) FoundryOutputsSet() (FoundryOutputsSet, error) {
 		if !is {
 			continue
 		}
-		foundryID, err := foundryOutput.ID()
+		foundryID, err := foundryOutput.FoundryID()
 		if err != nil {
 			return nil, err
 		}
@@ -593,13 +599,13 @@ func (outputs OutputsByType) ChainOutputSet() (ChainOutputSet, error) {
 	for _, ty := range []OutputType{OutputAccount, OutputFoundry, OutputNFT} {
 		for _, output := range outputs[ty] {
 			chainOutput, is := output.(ChainOutput)
-			if !is || chainOutput.Chain().Empty() {
+			if !is || chainOutput.ChainID().Empty() {
 				continue
 			}
-			if _, has := chainOutputSet[chainOutput.Chain()]; has {
+			if _, has := chainOutputSet[chainOutput.ChainID()]; has {
 				return nil, ErrNonUniqueChainOutputs
 			}
-			chainOutputSet[chainOutput.Chain()] = chainOutput
+			chainOutputSet[chainOutput.ChainID()] = chainOutput
 		}
 	}
 
@@ -942,7 +948,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalVali
 			return nil
 		}
 
-		chainID := chainConstrainedOutput.Chain()
+		chainID := chainConstrainedOutput.ChainID()
 		if chainID.Empty() {
 			// we can ignore newly minted chainConstrainedOutputs
 			return nil
