@@ -29,13 +29,83 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
+	var err error
+	utxoInputsSet := constructInputSet(inputs.InputSet)
+	workingSet := &vm.WorkingSet{}
+	workingSet.Tx = t
+	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
+	workingSet.UTXOInputsSet = utxoInputsSet
+	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
+	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
+		ref := inputRef.(*iotago.UTXOInput).OutputID()
+		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
+		input, ok := workingSet.UTXOInputsSet[ref]
+		if !ok {
+			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
+		}
+		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
+	}
+
+	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
+	if err != nil {
+		return nil, err
+	}
+
+	workingSet.InputsByType = func() iotago.OutputsByType {
+		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
+		var i int
+		for _, output := range utxoInputsSet {
+			slice[i] = output
+			i++
+		}
+
+		return slice.ToOutputsByType()
+	}()
+
+	txID, err := workingSet.Tx.ID()
+	if err != nil {
+		return nil, err
+	}
+
+	workingSet.InChains = utxoInputsSet.ChainInputSet()
+	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
+	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
+
+	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
+	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
+	workingSet.Commitment = inputs.CommitmentInput
+	workingSet.Rewards = inputs.RewardsInputSet
+
+	return workingSet, nil
+}
+
+func constructInputSet(inputSet vm.InputSet) vm.InputSet {
+	utxoInputsSet := vm.InputSet{}
+	for outputID, outputWithCreationSlot := range inputSet {
+		if basicOutput, isBasic := outputWithCreationSlot.(*iotago.BasicOutput); isBasic {
+			if addressUnlock := basicOutput.UnlockConditionSet().Address(); addressUnlock != nil {
+				if addressUnlock.Address.Type() == iotago.AddressImplicitAccountCreation {
+					utxoInputsSet[outputID] = &vm.ImplicitAccountOutput{BasicOutput: basicOutput}
+
+					continue
+				}
+			}
+		}
+		utxoInputsSet[outputID] = outputWithCreationSlot
+	}
+
+	return utxoInputsSet
+}
+
 func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	if vmParams.API == nil {
 		return ierrors.New("no API provided")
 	}
 
 	var err error
-	vmParams.WorkingSet, err = vm.NewVMParamsWorkingSet(vmParams.API, t, inputs)
+	vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, t, inputs)
 	if err != nil {
 		return err
 	}
@@ -54,7 +124,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 	}
 
 	var ok bool
-	switch transitionState.(type) {
+	switch castedInput := transitionState.(type) {
 	case *iotago.AccountOutput:
 		var nextAccount *iotago.AccountOutput
 		if next != nil {
@@ -64,6 +134,15 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 		}
 
 		return accountSTVF(input, transType, nextAccount, vmParams)
+	case *vm.ImplicitAccountOutput:
+		var nextAccount *iotago.AccountOutput
+		if next != nil {
+			if nextAccount, ok = next.(*iotago.AccountOutput); !ok {
+				return ierrors.New("can only state transition implicit account to an account output")
+			}
+		}
+
+		return implicitAccountSTVF(castedInput, input.OutputID.CreationSlotIndex(), nextAccount, vmParams, transType)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -94,6 +173,49 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 	default:
 		panic(fmt.Sprintf("invalid output type %v passed to Stardust virtual machine", input.Output))
 	}
+}
+
+// For implicit account conversion, there must be a basic output as input, and an account output as output with an AccountID matching the input.
+func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot iotago.SlotIndex, next *iotago.AccountOutput, vmParams *vm.Params, transType iotago.ChainTransitionType) error {
+
+	if transType == iotago.ChainTransitionTypeDestroy || transType == iotago.ChainTransitionTypeGenesis {
+		return iotago.ErrImplicitAccountDestructionDisallowed
+	}
+
+	// Create an dummyAccount output that is essentially the implicit account, so we can call accountGovernanceSTVF.
+	dummyAccount := &vm.ChainOutput{
+		ChainID:  next.AccountID,
+		OutputID: iotago.EmptyOutputIDWithCreationSlot(creationSlot),
+		Output: &iotago.AccountOutput{
+			Amount:       implicitAccount.Amount,
+			Mana:         implicitAccount.Mana,
+			NativeTokens: implicitAccount.NativeTokens,
+			// Does not need to be set to the actual value.
+			AccountID:      iotago.EmptyAccountID(),
+			StateIndex:     0,
+			StateMetadata:  []byte{},
+			FoundryCounter: 0,
+			Conditions: iotago.AccountOutputUnlockConditions{
+				&iotago.StateControllerAddressUnlockCondition{
+					Address: &iotago.Ed25519Address{},
+				},
+				&iotago.GovernorAddressUnlockCondition{
+					Address: &iotago.Ed25519Address{},
+				},
+			},
+			Features: iotago.AccountOutputFeatures{
+				&iotago.BlockIssuerFeature{
+					BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+					// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
+					// the expiry slot to a lower value, which is the behavior we want.
+					ExpirySlot: iotago.MaxSlotIndex,
+				},
+			},
+			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+		},
+	}
+
+	return accountGovernanceSTVF(dummyAccount, next, vmParams)
 }
 
 // For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
@@ -205,7 +327,7 @@ func accountGovernanceSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vm
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
-	return accountBlockIssuerSTVF(input, next, vmParams)
+	return accountBlockIssuerSTVF(input, input.Output.FeatureSet().BlockIssuer(), next, vmParams)
 }
 
 func accountStateSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
@@ -269,12 +391,10 @@ func accountStateSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParam
 
 // If an account output has a block issuer feature, the following conditions for its transition must be checked.
 // The block issuer credit must be non-negative.
-// The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableSlotAge greater than the TX slot index.
+// The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableAge greater than the Commitment Input.
 // Check that at least one Block Issuer Key is present.
-func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, vmParams *vm.Params) error {
-	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-	current := input.Output.(*iotago.AccountOutput)
-	currentBlockIssuerFeat := current.FeatureSet().BlockIssuer()
+func accountBlockIssuerSTVF(input *vm.ChainOutput, currentBlockIssuerFeat *iotago.BlockIssuerFeature, next *iotago.AccountOutput, vmParams *vm.Params) error {
+	current := input.Output
 	nextBlockIssuerFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
 	if currentBlockIssuerFeat == nil && nextBlockIssuerFeat == nil {
@@ -283,7 +403,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 
 	// else if the account has negative bic, this is invalid.
 	// new block issuers may not have a bic registered yet.
-	if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
+	if bic, exists := vmParams.WorkingSet.BIC[next.AccountID]; exists {
 		if bic < 0 {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "negative block issuer credit")
 		}
@@ -317,7 +437,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
-	rentStructure := vmParams.API.ProtocolParameters().RentStructure()
+	rentStructure := vmParams.API.RentStructure()
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		rentStructure,
@@ -337,9 +457,9 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.Mana, input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
-		return ierrors.Wrapf(err, "account %s stored mana calculation failed", current.AccountID)
+		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
 	manaIn -= manaStoredAccount
 
@@ -347,21 +467,21 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
 	var excessBaseTokensAccount iotago.BaseToken
 	minDeposit := rentStructure.MinDeposit(current)
-	if current.Amount <= minDeposit {
+	if current.BaseTokenAmount() <= minDeposit {
 		excessBaseTokensAccount = 0
 	} else {
-		excessBaseTokensAccount = current.Amount - minDeposit
+		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
 	}
 	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlotIndex(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
-		return ierrors.Wrapf(err, "account %s potential mana calculation failed", current.AccountID)
+		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}
 	manaIn -= manaPotentialAccount
 
 	// AccountOutStored
 	manaOut -= next.Mana
 	// AccountOutAllotted
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(current.AccountID)
+	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(next.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
@@ -370,7 +490,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 		if !is {
 			continue
 		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlot) {
+		if basicOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
 			manaOut -= basicOutput.StoredMana()
 		}
 	}
@@ -379,13 +499,13 @@ func accountBlockIssuerSTVF(input *vm.ChainOutput, next *iotago.AccountOutput, v
 		if !is {
 			continue
 		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(current.AccountID, minManalockedSlot) {
+		if nftOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
 			manaOut -= nftOutput.StoredMana()
 		}
 	}
 
 	if manaIn > manaOut {
-		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account")
+		return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account: mana in %d, mana out %d", manaIn, manaOut)
 	}
 
 	return nil

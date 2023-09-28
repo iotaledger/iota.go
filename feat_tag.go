@@ -20,7 +20,7 @@ func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
 		return f(rentStruct)
 	}
 
-	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
+	return rentStruct.VBFactorData().Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
 }
 
 func (s *TagFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

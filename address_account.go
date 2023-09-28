@@ -30,7 +30,7 @@ func (addr *AccountAddress) Clone() Address {
 }
 
 func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
+	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
 }
 
 func (addr *AccountAddress) ID() []byte {

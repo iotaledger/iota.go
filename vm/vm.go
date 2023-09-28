@@ -73,58 +73,6 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs ResolvedInputs) (*WorkingSet, error) {
-	var err error
-	utxoInputsSet := inputs.InputSet
-	workingSet := &WorkingSet{}
-	workingSet.Tx = t
-	workingSet.UnlockedIdents = make(UnlockedIdentities)
-	workingSet.UTXOInputsSet = utxoInputsSet
-	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
-		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		ref := inputRef.(*iotago.UTXOInput).OutputID()
-		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
-		input, ok := workingSet.UTXOInputsSet[ref]
-		if !ok {
-			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
-		}
-		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
-	}
-
-	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
-	if err != nil {
-		return nil, err
-	}
-
-	workingSet.InputsByType = func() iotago.OutputsByType {
-		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
-		var i int
-		for _, output := range utxoInputsSet {
-			slice[i] = output
-			i++
-		}
-
-		return slice.ToOutputsByType()
-	}()
-
-	txID, err := workingSet.Tx.ID()
-	if err != nil {
-		return nil, err
-	}
-
-	workingSet.InChains = utxoInputsSet.ChainInputSet()
-	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
-	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
-
-	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
-	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
-	workingSet.Commitment = inputs.CommitmentInput
-	workingSet.Rewards = inputs.RewardsInputSet
-
-	return workingSet, nil
-}
-
 func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
@@ -625,7 +573,7 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlotIndex(), txCreationSlot)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.ProtocolParameters().RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsSet)
+		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsSet)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}

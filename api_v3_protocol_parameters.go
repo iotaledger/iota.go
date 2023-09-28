@@ -33,7 +33,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				2420916375,
 				21,
 			),
-			WithLivenessOptions(3, 10, 20, 24),
+			WithLivenessOptions(15, 30, 10, 20, 24),
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
@@ -58,8 +58,8 @@ func (p *V3ProtocolParameters) NetworkName() string {
 	return p.basicProtocolParameters.NetworkName
 }
 
-func (p *V3ProtocolParameters) RentStructure() *RentStructure {
-	return &p.basicProtocolParameters.RentStructure
+func (p *V3ProtocolParameters) RentParameters() *RentParameters {
+	return &p.basicProtocolParameters.RentParameters
 }
 
 func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
@@ -95,8 +95,12 @@ func (p *V3ProtocolParameters) PunishmentEpochs() EpochIndex {
 	return p.basicProtocolParameters.PunishmentEpochs
 }
 
-func (p *V3ProtocolParameters) LivenessThreshold() SlotIndex {
-	return p.basicProtocolParameters.LivenessThreshold
+func (p *V3ProtocolParameters) LivenessThresholdLowerBound() time.Duration {
+	return time.Duration(p.basicProtocolParameters.LivenessThresholdLowerBoundInSeconds) * time.Second
+}
+
+func (p *V3ProtocolParameters) LivenessThresholdUpperBound() time.Duration {
+	return time.Duration(p.basicProtocolParameters.LivenessThresholdUpperBoundInSeconds) * time.Second
 }
 
 func (p *V3ProtocolParameters) MinCommittableAge() SlotIndex {
@@ -137,8 +141,29 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
-		p.basicProtocolParameters.Version, p.basicProtocolParameters.NetworkName, p.basicProtocolParameters.Bech32HRP, p.basicProtocolParameters.RentStructure, p.basicProtocolParameters.WorkScoreStructure, p.basicProtocolParameters.TokenSupply, p.basicProtocolParameters.GenesisUnixTimestamp, p.basicProtocolParameters.SlotDurationInSeconds, p.basicProtocolParameters.SlotsPerEpochExponent, p.basicProtocolParameters.ManaStructure, p.basicProtocolParameters.StakingUnbondingPeriod, p.basicProtocolParameters.ValidationBlocksPerSlot, p.basicProtocolParameters.PunishmentEpochs, p.basicProtocolParameters.LivenessThreshold, p.basicProtocolParameters.MinCommittableAge, p.basicProtocolParameters.MaxCommittableAge, p.basicProtocolParameters.EpochNearingThreshold, p.basicProtocolParameters.CongestionControlParameters, p.basicProtocolParameters.VersionSignaling, p.basicProtocolParameters.RewardsParameters)
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
+		p.basicProtocolParameters.Version,
+		p.basicProtocolParameters.NetworkName,
+		p.basicProtocolParameters.Bech32HRP,
+		p.basicProtocolParameters.RentParameters,
+		p.basicProtocolParameters.WorkScoreStructure,
+		p.basicProtocolParameters.TokenSupply,
+		p.basicProtocolParameters.GenesisUnixTimestamp,
+		p.basicProtocolParameters.SlotDurationInSeconds,
+		p.basicProtocolParameters.SlotsPerEpochExponent,
+		p.basicProtocolParameters.ManaStructure,
+		p.basicProtocolParameters.StakingUnbondingPeriod,
+		p.basicProtocolParameters.ValidationBlocksPerSlot,
+		p.basicProtocolParameters.PunishmentEpochs,
+		p.basicProtocolParameters.LivenessThresholdLowerBoundInSeconds,
+		p.basicProtocolParameters.LivenessThresholdUpperBoundInSeconds,
+		p.basicProtocolParameters.MinCommittableAge,
+		p.basicProtocolParameters.MaxCommittableAge,
+		p.basicProtocolParameters.EpochNearingThreshold,
+		p.basicProtocolParameters.CongestionControlParameters,
+		p.basicProtocolParameters.VersionSignaling,
+		p.basicProtocolParameters.RewardsParameters,
+	)
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
@@ -170,7 +195,7 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData, vBFactorKey, vBFactorBlockIssuerKey, vBFactorStakingFeature, vBFactorDelegation VByteCostFactor) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
-		p.basicProtocolParameters.RentStructure = RentStructure{
+		p.basicProtocolParameters.RentParameters = RentParameters{
 			VByteCost:              vByteCost,
 			VBFactorData:           vBFactorData,
 			VBFactorKey:            vBFactorKey,
@@ -213,10 +238,10 @@ func WithWorkScoreOptions(
 	}
 }
 
-func WithTimeProviderOptions(genesisTimestamp int64, slotDuration uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
+func WithTimeProviderOptions(genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
-		p.basicProtocolParameters.SlotDurationInSeconds = slotDuration
+		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
 		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
 	}
 }
@@ -233,9 +258,10 @@ func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExpone
 	}
 }
 
-func WithLivenessOptions(livenessThreshold SlotIndex, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+func WithLivenessOptions(livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.LivenessThreshold = livenessThreshold
+		p.basicProtocolParameters.LivenessThresholdLowerBoundInSeconds = livenessThresholdLowerBoundInSeconds
+		p.basicProtocolParameters.LivenessThresholdUpperBoundInSeconds = livenessThresholdUpperBoundInSeconds
 		p.basicProtocolParameters.MinCommittableAge = minCommittableAge
 		p.basicProtocolParameters.MaxCommittableAge = maxCommittableAge
 		p.basicProtocolParameters.EpochNearingThreshold = epochNearingThreshold

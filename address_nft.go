@@ -30,7 +30,7 @@ func (addr *NFTAddress) Clone() Address {
 }
 
 func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(addr.Size()))
+	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
 }
 
 func (addr *NFTAddress) ID() []byte {

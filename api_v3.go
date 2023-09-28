@@ -188,6 +188,7 @@ type v3api struct {
 	timeProvider              *TimeProvider
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
+	rentStructure             *RentStructure
 	maxBlockWork              WorkScore
 	computedInitialReward     uint64
 	computedFinalReward       uint64
@@ -226,6 +227,10 @@ func (v *v3api) Version() Version {
 
 func (v *v3api) ProtocolParameters() ProtocolParameters {
 	return v.protocolParameters
+}
+
+func (v *v3api) RentStructure() *RentStructure {
+	return v.rentStructure
 }
 
 func (v *v3api) TimeProvider() *TimeProvider {
@@ -274,14 +279,14 @@ func V3API(protoParams ProtocolParameters) API {
 
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
-		serixAPI:                  api,
-		protocolParameters:        protoParams.(*V3ProtocolParameters),
-		timeProvider:              timeProvider,
-		manaDecayProvider:         protoParams.ManaDecayProvider(),
-		livenessThresholdDuration: time.Duration(uint64(protoParams.LivenessThreshold())*uint64(timeProvider.SlotDurationSeconds())) * time.Second,
-		maxBlockWork:              maxBlockWork,
-		computedInitialReward:     initialReward,
-		computedFinalReward:       finalReward,
+		serixAPI:              api,
+		protocolParameters:    protoParams.(*V3ProtocolParameters),
+		rentStructure:         NewRentStructure(protoParams.RentParameters()),
+		timeProvider:          timeProvider,
+		manaDecayProvider:     protoParams.ManaDecayProvider(),
+		maxBlockWork:          maxBlockWork,
+		computedInitialReward: initialReward,
+		computedFinalReward:   finalReward,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},

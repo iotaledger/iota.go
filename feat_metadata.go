@@ -17,7 +17,7 @@ func (s *MetadataFeature) Clone() Feature {
 }
 
 func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData.Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
+	return rentStruct.VBFactorData().Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize + len(s.Data)))
 }
 
 func (s *MetadataFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

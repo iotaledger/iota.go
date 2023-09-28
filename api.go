@@ -58,12 +58,12 @@ type API interface {
 	Version() Version
 	// ProtocolParameters returns the protocol parameters this API is used with.
 	ProtocolParameters() ProtocolParameters
+	// RentStructure returns the rent structure used by the protocol.
+	RentStructure() *RentStructure
 	// TimeProvider returns the underlying time provider used.
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.
 	ManaDecayProvider() *ManaDecayProvider
-	// LivenessThresholdDuration returns the liveness threshold duration.
-	LivenessThresholdDuration() time.Duration
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
 	// ComputedInitialReward returns the initial reward calculated from the parameters.
@@ -111,7 +111,7 @@ type ProtocolParameters interface {
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
 	// RentStructure defines the rent structure used by given node/network.
-	RentStructure() *RentStructure
+	RentParameters() *RentParameters
 	// WorkScoreStructure defines the work score structure used by the given network.
 	WorkScoreStructure() *WorkScoreStructure
 	// TokenSupply defines the current token supply on the network.
@@ -127,7 +127,9 @@ type ProtocolParameters interface {
 
 	PunishmentEpochs() EpochIndex
 
-	LivenessThreshold() SlotIndex
+	LivenessThresholdLowerBound() time.Duration
+
+	LivenessThresholdUpperBound() time.Duration
 
 	MinCommittableAge() SlotIndex
 

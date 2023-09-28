@@ -25,7 +25,7 @@ func (s *BlockIssuerFeature) Clone() Feature {
 func (s *BlockIssuerFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	// VBFactorData: type prefix + expiry slot
 	// + block issuer keys vbytes
-	return rentStruct.VBFactorData.Multiply(serializer.SmallTypeDenotationByteSize+SlotIndexLength) +
+	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+SlotIndexLength) +
 		s.BlockIssuerKeys.VBytes(rentStruct, nil)
 }
 
