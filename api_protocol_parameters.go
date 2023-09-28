@@ -1,9 +1,5 @@
 package iotago
 
-import (
-	"time"
-)
-
 type basicProtocolParameters struct {
 	// Version defines the version of the protocol this protocol parameters are for.
 	Version Version `serix:"0,mapKey=version"`
@@ -40,10 +36,10 @@ type basicProtocolParameters struct {
 
 	// LivenessThresholdLowerBound is used by tip-selection to determine if a block is eligible by evaluating issuingTimes.
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
-	LivenessThresholdLowerBound time.Duration `serix:"13,mapKey=livenessThresholdLowerBound"`
+	LivenessThresholdLowerBoundInSeconds uint16 `serix:"13,mapKey=livenessThresholdLowerBound"`
 	// LivenessThresholdUpperBound is used by tip-selection to determine if a block is eligible by evaluating issuingTimes
 	// and commitments in its past-cone to ATT and lastCommittedSlot respectively.
-	LivenessThresholdUpperBound time.Duration `serix:"14,mapKey=livenessThresholdUpperBound"`
+	LivenessThresholdUpperBoundInSeconds uint16 `serix:"14,mapKey=livenessThresholdUpperBound"`
 
 	// MinCommittableAge is the minimum age relative to the accepted tangle time slot index that a slot can be committed.
 	// For example, if the last accepted slot is in slot 100, and minCommittableAge=10, then the latest committed slot can be at most 100-10=90.
@@ -76,8 +72,8 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
 		b.ValidationBlocksPerSlot == other.ValidationBlocksPerSlot &&
 		b.PunishmentEpochs == other.PunishmentEpochs &&
-		b.LivenessThresholdUpperBound == other.LivenessThresholdUpperBound &&
-		b.LivenessThresholdLowerBound == other.LivenessThresholdLowerBound &&
+		b.LivenessThresholdLowerBoundInSeconds == other.LivenessThresholdLowerBoundInSeconds &&
+		b.LivenessThresholdUpperBoundInSeconds == other.LivenessThresholdUpperBoundInSeconds &&
 		b.MinCommittableAge == other.MinCommittableAge &&
 		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&

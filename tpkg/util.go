@@ -979,7 +979,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandByte(),
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandDuration(), RandDuration(), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
+		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
 		iotago.WithCongestionControlOptions(
 			RandMana(iotago.MaxMana),
 			RandMana(iotago.MaxMana),
