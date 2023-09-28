@@ -527,15 +527,15 @@ func (trans *stakingTransition) FixedCost(fixedCost iotago.Mana) *stakingTransit
 }
 
 // StartEpoch sets the StartEpoch of iotago.StakingFeature.
-func (trans *stakingTransition) StartEpoch(slot iotago.EpochIndex) *stakingTransition {
-	trans.feature.StartEpoch = slot
+func (trans *stakingTransition) StartEpoch(epoch iotago.EpochIndex) *stakingTransition {
+	trans.feature.StartEpoch = epoch
 
 	return trans
 }
 
 // EndEpoch sets the EndEpoch of iotago.StakingFeature.
-func (trans *stakingTransition) EndEpoch(slot iotago.EpochIndex) *stakingTransition {
-	trans.feature.EndEpoch = slot
+func (trans *stakingTransition) EndEpoch(epoch iotago.EpochIndex) *stakingTransition {
+	trans.feature.EndEpoch = epoch
 
 	return trans
 }
