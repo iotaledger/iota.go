@@ -92,7 +92,7 @@ func (t *SignedTransaction) Clone() Payload {
 }
 
 func (t *SignedTransaction) PayloadType() PayloadType {
-	return PayloadTransaction
+	return PayloadSignedTransaction
 }
 
 // OutputsSet returns an OutputSet from the SignedTransaction's outputs, mapped by their OutputID.

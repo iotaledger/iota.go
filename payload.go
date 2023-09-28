@@ -26,10 +26,10 @@ const (
 	PayloadTreasuryTransaction PayloadType = 4
 	// PayloadTaggedData denotes a TaggedData payload.
 	PayloadTaggedData PayloadType = 5
-	// PayloadTransaction denotes a SignedTransaction.
-	PayloadTransaction PayloadType = 6
 	// PayloadMilestone denotes a Milestone.
 	PayloadMilestone PayloadType = 7
+	// PayloadSignedTransaction denotes a SignedTransaction.
+	PayloadSignedTransaction PayloadType = 8
 )
 
 func (payloadType PayloadType) String() string {

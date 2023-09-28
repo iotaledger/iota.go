@@ -29,7 +29,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTransaction), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadSignedTransaction), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{

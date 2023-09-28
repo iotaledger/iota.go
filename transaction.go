@@ -6,9 +6,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 )
 
-// TransactionEssenceType defines the type of transaction.
-type TransactionEssenceType = byte
-
 const (
 	// MaxOutputsCount defines the maximum amount of outputs within a Transaction.
 	MaxOutputsCount = 128
@@ -49,19 +46,6 @@ var (
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
 )
-
-// TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.
-func TransactionEssenceSelector(txType uint32) (*Transaction, error) {
-	var seri *Transaction
-	switch byte(txType) {
-	case TransactionEssenceNormal:
-		seri = &Transaction{}
-	default:
-		return nil, ierrors.Wrapf(ErrUnknownTransactionType, "type byte %d", txType)
-	}
-
-	return seri, nil
-}
 
 type (
 	TxEssenceOutputs = Outputs[TxEssenceOutput]

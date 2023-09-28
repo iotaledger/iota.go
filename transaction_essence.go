@@ -8,9 +8,6 @@ import (
 )
 
 const (
-	// TransactionEssenceNormal denotes a standard transaction essence.
-	TransactionEssenceNormal TransactionEssenceType = 2
-
 	// MinContextInputsCount defines the minimum amount of context inputs within a Transaction.
 	MinContextInputsCount = 0
 	// MaxContextInputsCount defines the maximum amount of context inputs within a Transaction.
@@ -86,10 +83,8 @@ func (u *TransactionEssence) Size() int {
 		payloadSize = u.Payload.Size()
 	}
 
-	// TransactionEssenceType
-	return serializer.OneByte +
-		// NetworkID
-		serializer.UInt64ByteSize +
+	// NetworkID
+	return serializer.UInt64ByteSize +
 		// CreationSlot
 		SlotIndexLength +
 		u.ContextInputs.Size() +

@@ -4,18 +4,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
-
-func TestTransactionEssenceSelector(t *testing.T) {
-	_, err := iotago.TransactionEssenceSelector(100)
-	assert.True(t, ierrors.Is(err, iotago.ErrUnknownTransactionType))
-}
 
 func TestTransactionEssence_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{

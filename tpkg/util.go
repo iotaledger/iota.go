@@ -687,7 +687,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 
 	//nolint:exhaustive
 	switch withPayloadType {
-	case iotago.PayloadTransaction:
+	case iotago.PayloadSignedTransaction:
 		payload = RandSignedTransaction(api)
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
@@ -714,7 +714,7 @@ func RandValidationBlock(api iotago.API) *iotago.ValidationBlock {
 }
 
 func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.ProtocolBlock {
-	basicBlock := RandBasicBlock(api, iotago.PayloadTransaction)
+	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
 
 	block := RandProtocolBlock(basicBlock, TestAPI, rmc)
 	block.IssuerID = issuerID

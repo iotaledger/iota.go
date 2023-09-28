@@ -525,8 +525,6 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(Transaction{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
-
 		must(api.RegisterTypeSettings(CommitmentInput{},
 			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
 		)
@@ -571,7 +569,7 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(SignedTransaction{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTransaction))))
+		must(api.RegisterTypeSettings(SignedTransaction{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadSignedTransaction))))
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))

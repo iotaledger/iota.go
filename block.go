@@ -469,7 +469,7 @@ func (b *BasicBlock) Size() int {
 
 // syntacticallyValidate syntactically validates the BasicBlock.
 func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
-	if b.Payload != nil && b.Payload.PayloadType() == PayloadTransaction {
+	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
 		blockID, err := protocolBlock.ID()
 		if err != nil {
 			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
