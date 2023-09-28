@@ -6048,7 +6048,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 	type test struct {
 		name    string
 		inputs  vm.ResolvedInputs
-		keys    iotago.AddressKeys
+		keys    []iotago.AddressKeys
 		output  iotago.Output
 		wantErr error
 	}
@@ -6092,7 +6092,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 				},
 			},
-			keys:    edIdentAddrKeys,
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
 			wantErr: nil,
 		},
 		{
@@ -6105,7 +6105,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 				},
 			},
-			keys:    edIdentAddrKeys,
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
 			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
 		},
 		{
@@ -6118,7 +6118,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					&iotago.TimelockUnlockCondition{SlotIndex: 500},
 				},
 			},
-			keys:    edIdentAddrKeys,
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
 			wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
 		},
 		{
@@ -6166,7 +6166,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					},
 				},
 			},
-			keys:    implicitAccountIdentAddrKeys,
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
 			wantErr: nil,
 		},
 		{
@@ -6205,7 +6205,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 				},
 				Features: iotago.AccountOutputFeatures{},
 			},
-			keys:    implicitAccountIdentAddrKeys,
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
 			wantErr: iotago.ErrInvalidBlockIssuerTransition,
 		},
 		{
@@ -6237,7 +6237,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: edIdent},
 				},
 			},
-			keys:    implicitAccountIdentAddrKeys,
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
 		},
 		{
@@ -6283,12 +6283,68 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					},
 				},
 			},
-			keys:    implicitAccountIdentAddrKeys,
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
+			wantErr: nil,
+		},
+		{
+			name: "ok - implicit account conversion transaction can contain other non-implicit-account-outputs",
+			inputs: vm.ResolvedInputs{
+				InputSet: vm.InputSet{
+					outputID: {
+						Output: &iotago.BasicOutput{
+							Amount: minAmountImplicitAccount,
+							Mana:   0,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+					tpkg.RandOutputID(1): {
+						Output: &iotago.BasicOutput{
+							Amount: exampleAmount,
+							Mana:   0,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: edIdent},
+							},
+						},
+						CreationSlot: currentSlot,
+					},
+				},
+				BlockIssuanceCreditInputSet: vm.BlockIssuanceCreditInputSet{
+					accountID: iotago.BlockIssuanceCredits(0),
+				},
+				CommitmentInput: &iotago.Commitment{
+					Slot: commitmentSlot,
+				},
+			},
+			output: &iotago.AccountOutput{
+				Amount:    minAmountImplicitAccount + exampleAmount,
+				Mana:      0,
+				AccountID: accountID,
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{
+						Address: edIdent,
+					},
+					&iotago.GovernorAddressUnlockCondition{
+						Address: edIdent,
+					},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.BlockIssuerFeature{
+						ExpirySlot: iotago.MaxSlotIndex,
+						BlockIssuerKeys: iotago.NewBlockIssuerKeys(
+							iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+						),
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys, edIdentAddrKeys},
 			wantErr: nil,
 		},
 	}
 
-	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKey iotago.AddressKeys) (iotago.Signature, iotago.TransactionEssence) {
+	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKeys []iotago.AddressKeys) ([]iotago.Signature, iotago.TransactionEssence) {
 		inputIDs := iotago.OutputIDs{}
 		for outputID := range inputSet {
 			inputIDs = append(inputIDs, outputID)
@@ -6300,26 +6356,29 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			},
 			CreationSlot: 10,
 		}
-		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), addrKey)
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), addrKeys...)
 		require.NoError(t, err)
 
-		return sigs[0], essence
+		return sigs, essence
 	}
 
 	for idx, tt := range tests {
 		resolvedInputs := tests[idx].inputs
-		sig, transactionEssence := makeTransaction(resolvedInputs.InputSet, tests[idx].output, tests[idx].keys)
+		sigs, transactionEssence := makeTransaction(resolvedInputs.InputSet, tests[idx].output, tests[idx].keys)
 
 		vmParams := &vm.Params{
 			API: testAPI,
 		}
 
+		unlocks := iotago.Unlocks{}
+		for _, sig := range sigs {
+			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: sig})
+		}
+
 		tx := &iotago.Transaction{
 			API:     testAPI,
 			Essence: &transactionEssence,
-			Unlocks: iotago.Unlocks{
-				&iotago.SignatureUnlock{Signature: sig},
-			},
+			Unlocks: unlocks,
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
