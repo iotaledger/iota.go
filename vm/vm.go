@@ -844,33 +844,3 @@ func ExecFuncAddressRestrictions() ExecFunc {
 		return nil
 	}
 }
-
-func implicitAccountCreationVF(implicitAccount *iotago.BasicOutput) error {
-	// Implicit accounts may only contain an Address Unlock Condition.
-	if len(implicitAccount.UnlockConditionSet()) != 1 {
-		return iotago.ErrImplicitAccountDisallowedUnlockCondition
-	}
-
-	if len(implicitAccount.NativeTokens) != 0 {
-		return iotago.ErrImplicitAccountContainsNativeTokens
-	}
-
-	return nil
-}
-
-// Returns a func that validates *newly created* implicit accounts.
-func ExecFuncImplicitAccountCreation() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
-		for _, basicOutput := range vmParams.WorkingSet.Tx.Essence.Outputs.ToOutputsByType().BasicOutputs() {
-			if addressUnlockCondition := basicOutput.UnlockConditionSet().Address(); addressUnlockCondition != nil {
-				if addressUnlockCondition.Address.Type() == iotago.AddressImplicitAccountCreation {
-					if err := implicitAccountCreationVF(basicOutput); err != nil {
-						return err
-					}
-				}
-			}
-		}
-
-		return nil
-	}
-}

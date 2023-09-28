@@ -6044,21 +6044,39 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 	}
 }
 
-func TestTxSemanticImplicitAccountCreation(t *testing.T) {
+func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 	type test struct {
 		name    string
-		output  iotago.BasicOutput
+		inputs  []vm.OutputWithCreationSlot
+		output  iotago.Output
 		wantErr error
 	}
 
 	_, edIdent, edIdentAddrKeys := tpkg.RandEd25519Identity()
 	_, implicitAccountIdent, _ := tpkg.RandImplicitAccountIdentity()
+	exampleAmount := iotago.BaseToken(1_000_000)
+	exampleNativeTokens := tpkg.RandSortNativeTokens(1)
+
+	exampleInputSet := []vm.OutputWithCreationSlot{
+		{
+			Output: &iotago.BasicOutput{
+				Amount:       exampleAmount,
+				NativeTokens: exampleNativeTokens,
+				Conditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: edIdent},
+				},
+			},
+			CreationSlot: 10,
+		},
+	}
 
 	tests := []test{
 		{
-			name: "ok - implicit account creation",
-			output: iotago.BasicOutput{
-				Mana: 0,
+			name:   "ok - implicit account creation",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount: exampleAmount,
+				Mana:   0,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 				},
@@ -6066,40 +6084,36 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - implicit account contains native tokens",
-			output: iotago.BasicOutput{
-				NativeTokens: tpkg.RandSortNativeTokens(5),
+			name:   "fail - implicit account contains native tokens",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount:       exampleAmount,
+				NativeTokens: exampleNativeTokens,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 				},
 			},
-			wantErr: iotago.ErrImplicitAccountContainsNativeTokens,
+			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
 		},
 		{
-			name: "fail - implicit account contains additional unlock conditions",
-			output: iotago.BasicOutput{
+			name:   "fail - implicit account contains additional unlock conditions",
+			inputs: exampleInputSet,
+			output: &iotago.BasicOutput{
+				Amount: exampleAmount,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 					&iotago.TimelockUnlockCondition{SlotIndex: 500},
 				},
 			},
-			wantErr: iotago.ErrImplicitAccountDisallowedUnlockCondition,
+			wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
 		},
 	}
 
-	makeTransaction := func(output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
-		inputIDs := tpkg.RandOutputIDs(1)
-
-		inputs := vm.InputSet{
-			inputIDs[0]: vm.OutputWithCreationSlot{
-				Output: &iotago.BasicOutput{
-					Amount: iotago.BaseToken(1_000_000),
-					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: edIdent},
-					},
-				},
-				CreationSlot: 10,
-			},
+	makeTransaction := func(inputs []vm.OutputWithCreationSlot, output iotago.Output) (vm.InputSet, iotago.Signature, *iotago.TransactionEssence) {
+		inputIDs := tpkg.RandOutputIDs(uint16(len(inputs)))
+		inputSet := make(vm.InputSet)
+		for idx, input := range inputs {
+			inputSet[inputIDs[idx]] = input
 		}
 
 		essence := &iotago.TransactionEssence{
@@ -6109,20 +6123,20 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 			},
 			CreationSlot: 10,
 		}
-		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), edIdentAddrKeys)
+		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), edIdentAddrKeys)
 		require.NoError(t, err)
 
-		return inputs, sigs[0], essence
+		return inputSet, sigs[0], essence
 	}
 
 	for idx, tt := range tests {
-		inputs, sig, transactionEssence := makeTransaction(&tests[idx].output)
+		inputSet, sig, transactionEssence := makeTransaction(tests[idx].inputs, tests[idx].output)
 
 		vmParams := &vm.Params{
 			API: testAPI,
 		}
 
-		resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
+		resolvedInputs := vm.ResolvedInputs{InputSet: inputSet}
 		tx := &iotago.Transaction{
 			API:     testAPI,
 			Essence: transactionEssence,
@@ -6132,7 +6146,7 @@ func TestTxSemanticImplicitAccountCreation(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncImplicitAccountCreation())
+			err := stardustVM.Execute(tx, vmParams, resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

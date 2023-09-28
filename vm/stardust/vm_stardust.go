@@ -21,7 +21,6 @@ func NewVirtualMachine() vm.VirtualMachine {
 			vm.ExecFuncChainTransitions(),
 			vm.ExecFuncBalancedMana(),
 			vm.ExecFuncAddressRestrictions(),
-			vm.ExecFuncImplicitAccountCreation(),
 		},
 	}
 }
