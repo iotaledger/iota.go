@@ -69,6 +69,9 @@ var (
 	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
 	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
 	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
+	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one
+	// Implicit Account Creation Address on the input side of a transaction.
+	ErrMultipleImplicitAccountCreationAddresses = ierrors.New("multiple implicit account creation addresses on the input side")
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.

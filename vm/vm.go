@@ -812,10 +812,11 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 	return nil
 }
 
-// Returns a func that validates that the restrictions on an address are adhered to.
+// Returns a func that checks the capability flag restrictions on addresses, and checks that
+// no more than one Implicit Account Creation Address is on the input side of a transaction.
 //
-// Does not validate the Return Address in StorageDepositReturnUnlockCondition because one cannot
-// restrict returning a Basic Output with base tokens.
+// Does not validate the Return Address in StorageDepositReturnUnlockCondition because such a Return Address
+// already is as restricted as the most restricted address.
 func ExecFuncAddressRestrictions() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
 		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
@@ -837,6 +838,19 @@ func ExecFuncAddressRestrictions() ExecFunc {
 			if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
 				if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
 					return err
+				}
+			}
+		}
+
+		transactionHasImplicitAccountCreationAddress := false
+		for _, input := range vmParams.WorkingSet.InputsByType[iotago.OutputBasic] {
+			if addressUnlockCondition := input.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+				if addressUnlockCondition.Address.Type() == iotago.AddressImplicitAccountCreation {
+					if transactionHasImplicitAccountCreationAddress {
+						return iotago.ErrMultipleImplicitAccountCreationAddresses
+					} else {
+						transactionHasImplicitAccountCreationAddress = true
+					}
 				}
 			}
 		}
