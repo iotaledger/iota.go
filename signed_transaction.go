@@ -211,7 +211,7 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(t.Transaction.Inputs))
 	}
 
-	if err := t.Transaction.syntacticallyValidate(t.API.ProtocolParameters()); err != nil {
+	if err := t.Transaction.syntacticallyValidate(t.API); err != nil {
 		return ierrors.Errorf("transaction is invalid: %w", err)
 	}
 

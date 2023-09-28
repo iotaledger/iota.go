@@ -131,13 +131,15 @@ func (t *Transaction) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (t *Transaction) syntacticallyValidate(protoParams ProtocolParameters) error {
-	if err := t.TransactionEssence.syntacticallyValidate(protoParams); err != nil {
+func (t *Transaction) syntacticallyValidate(api API) error {
+	protoParams := api.ProtocolParameters()
+
+	if err := t.TransactionEssence.syntacticallyValidate(api); err != nil {
 		return err
 	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
-		OutputsSyntacticalDepositAmount(protoParams),
+		OutputsSyntacticalDepositAmount(protoParams, api.RentStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
@@ -162,87 +164,3 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 
 	return workscoreTransactionEssence.Add(workScoreOutputs)
 }
-
-//func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
-//	references := make([]*RewardInput, 0, len(t.Essence.ContextInputs))
-//	for _, input := range t.Essence.ContextInputs {
-//		switch castInput := input.(type) {
-//		case *RewardInput:
-//			references = append(references, castInput)
-//		case *CommitmentInput, *BlockIssuanceCreditInput:
-//			// ignore this type
-//		default:
-//			return nil, ErrUnknownContextInputType
-//		}
-//	}
-//
-//	return references, nil
-//}
-//
-//// Returns the first commitment input in the transaction if it exists or nil.
-//func (t *Transaction) CommitmentInput() *CommitmentInput {
-//	for _, input := range t.Essence.ContextInputs {
-//		switch castInput := input.(type) {
-//		case *BlockIssuanceCreditInput, *RewardInput:
-//			// ignore this type
-//		case *CommitmentInput:
-//			return castInput
-//		default:
-//			return nil
-//		}
-//	}
-//
-//	return nil
-//}
-//
-//func (t *Transaction) Size() int {
-//	// PayloadType
-//	return serializer.TypeDenotationByteSize +
-//		t.Essence.Size() +
-//		t.Unlocks.Size()
-//}
-//
-//func (t *Transaction) String() string {
-//	// TODO: stringify for debugging purposes
-//	return fmt.Sprintf("Transaction[%v, %v]", t.Essence, t.Unlocks)
-//}
-//
-//// syntacticallyValidate syntactically validates the Transaction.
-//func (t *Transaction) syntacticallyValidate() error {
-//	// limit unlock block count = input count
-//	if len(t.Unlocks) != len(t.Essence.Inputs) {
-//		return ierrors.Errorf("unlock block count must match inputs in essence, %d vs. %d", len(t.Unlocks), len(t.Essence.Inputs))
-//	}
-//
-//	if err := t.Essence.syntacticallyValidate(t.API); err != nil {
-//		return ierrors.Errorf("transaction essence is invalid: %w", err)
-//	}
-//
-//	if err := ValidateUnlocks(t.Unlocks,
-//		UnlocksSigUniqueAndRefValidator(t.API),
-//	); err != nil {
-//		return ierrors.Errorf("invalid unlocks: %w", err)
-//	}
-//
-//	return nil
-//}
-//
-//func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-//	// we account for the network traffic only on "Payload" level
-//	workScoreEssenceData, err := workScoreStructure.DataByte.Multiply(t.Size())
-//	if err != nil {
-//		return 0, err
-//	}
-//
-//	workScoreEssence, err := t.Essence.WorkScore(workScoreStructure)
-//	if err != nil {
-//		return 0, err
-//	}
-//
-//	workScoreUnlocks, err := t.Unlocks.WorkScore(workScoreStructure)
-//	if err != nil {
-//		return 0, err
-//	}
-//
-//	return workScoreEssenceData.Add(workScoreEssence, workScoreUnlocks)
-//}

@@ -3462,9 +3462,11 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							CreationSlot: currentSlot,
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								CreationSlot: currentSlot,
+							},
 						},
 					},
 				},
@@ -3506,9 +3508,11 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					Tx: &iotago.Transaction{
-						Essence: &iotago.TransactionEssence{
-							CreationSlot: currentSlot,
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								CreationSlot: currentSlot,
+							},
 						},
 					},
 				},

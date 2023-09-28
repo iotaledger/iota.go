@@ -6118,35 +6118,37 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		},
 	}
 
-	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKey iotago.AddressKeys) (iotago.Signature, iotago.TransactionEssence) {
+	makeTransaction := func(inputSet vm.InputSet, output iotago.Output, addrKey iotago.AddressKeys) (iotago.Signature, iotago.Transaction) {
 		inputIDs := iotago.OutputIDs{}
 		for outputID := range inputSet {
 			inputIDs = append(inputIDs, outputID)
 		}
-		essence := iotago.TransactionEssence{
-			Inputs: inputIDs.UTXOInputs(),
+		transaction := iotago.Transaction{
+			TransactionEssence: &iotago.TransactionEssence{
+				Inputs:       inputIDs.UTXOInputs(),
+				CreationSlot: 10,
+			},
 			Outputs: iotago.TxEssenceOutputs{
 				output,
 			},
-			CreationSlot: 10,
 		}
-		sigs, err := essence.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), addrKey)
+		sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), addrKey)
 		require.NoError(t, err)
 
-		return sigs[0], essence
+		return sigs[0], transaction
 	}
 
 	for idx, tt := range tests {
 		resolvedInputs := tests[idx].inputs
-		sig, transactionEssence := makeTransaction(resolvedInputs.InputSet, tests[idx].output, tests[idx].keys)
+		sig, transaction := makeTransaction(resolvedInputs.InputSet, tests[idx].output, tests[idx].keys)
 
 		vmParams := &vm.Params{
 			API: testAPI,
 		}
 
-		tx := &iotago.Transaction{
-			API:     testAPI,
-			Essence: &transactionEssence,
+		tx := &iotago.SignedTransaction{
+			API:         testAPI,
+			Transaction: &transaction,
 			Unlocks: iotago.Unlocks{
 				&iotago.SignatureUnlock{Signature: sig},
 			},
