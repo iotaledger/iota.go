@@ -432,15 +432,7 @@ func (b *BasicBlock) Hash() (Identifier, error) {
 }
 
 func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	// work score for parents is a penalty for each missing strong parent below MinStrongParentsThreshold
-	var workScoreMissingParents WorkScore
 	var err error
-	if len(b.StrongParents) < int(workScoreStructure.MinStrongParentsThreshold) {
-		workScoreMissingParents, err = workScoreStructure.MissingParent.Multiply(int(workScoreStructure.MinStrongParentsThreshold) - len(b.StrongParents))
-		if err != nil {
-			return 0, err
-		}
-	}
 	var workScorePayload WorkScore
 	if b.Payload != nil {
 		workScorePayload, err = b.Payload.WorkScore(workScoreStructure)
@@ -449,8 +441,8 @@ func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScor
 		}
 	}
 
-	// offset for block, plus missing parents, plus payload.
-	return workScoreStructure.Block.Add(workScoreMissingParents, workScorePayload)
+	// offset for block plus payload.
+	return workScoreStructure.Block.Add(workScorePayload)
 }
 
 func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
@@ -477,7 +469,7 @@ func (b *BasicBlock) Size() int {
 
 // syntacticallyValidate syntactically validates the BasicBlock.
 func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
-	if b.Payload != nil && b.Payload.PayloadType() == PayloadTransaction {
+	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
 		blockID, err := protocolBlock.ID()
 		if err != nil {
 			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
@@ -487,11 +479,11 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		minCommittableAge := protocolBlock.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := protocolBlock.API.ProtocolParameters().MaxCommittableAge()
 
-		tx, _ := b.Payload.(*Transaction)
+		tx, _ := b.Payload.(*SignedTransaction)
 
 		// check that transaction CreationSlot is smaller or equal than the block that contains it
-		if blockSlot < tx.Essence.CreationSlot {
-			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Essence.CreationSlot)
+		if blockSlot < tx.Transaction.CreationSlot {
+			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Transaction.CreationSlot)
 		}
 
 		if cInput := tx.CommitmentInput(); cInput != nil {

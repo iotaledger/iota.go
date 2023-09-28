@@ -72,22 +72,22 @@ func TestTransactionBuilder(t *testing.T) {
 					Amount:    1000,
 					AccountID: tpkg.Rand32ByteArray(),
 					Conditions: iotago.AccountOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.Chain().ToAddress()},
+						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
+						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
 					},
 				}
 
 				basicOwnedByAccount = &iotago.BasicOutput{
 					Amount:     1000,
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: accountOwnedByNFT.Chain().ToAddress()}},
+					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: accountOwnedByNFT.ChainID().ToAddress()}},
 				}
 			)
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.OutputID(), Input: basicOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.OutputID(), Input: nftOutput}).
-				AddInput(&builder.TxInput{UnlockTarget: nftOutput.Chain().ToAddress(), InputID: inputID3.OutputID(), Input: accountOwnedByNFT}).
-				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.Chain().ToAddress(), InputID: inputID4.OutputID(), Input: basicOwnedByAccount}).
+				AddInput(&builder.TxInput{UnlockTarget: nftOutput.ChainID().ToAddress(), InputID: inputID3.OutputID(), Input: accountOwnedByNFT}).
+				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.ChainID().ToAddress(), InputID: inputID4.OutputID(), Input: basicOwnedByAccount}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
 					Conditions: iotago.BasicOutputUnlockConditions{

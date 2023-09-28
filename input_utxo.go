@@ -49,8 +49,8 @@ func (u *UTXOInput) Index() uint16 {
 	return u.TransactionOutputIndex
 }
 
-// CreationSlotIndex returns the SlotIndex the Output was created in.
-func (u *UTXOInput) CreationSlotIndex() SlotIndex {
+// CreationSlot returns the slot the Output was created in.
+func (u *UTXOInput) CreationSlot() SlotIndex {
 	return u.TransactionID.Slot()
 }
 
@@ -70,7 +70,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 
 func (u *UTXOInput) Size() int {
 	// InputType + TransactionID + TransactionOutputIndex
-	return serializer.SmallTypeDenotationByteSize + SlotIdentifierLength + OutputIndexLength
+	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + OutputIndexLength
 }
 
 func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

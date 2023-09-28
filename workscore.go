@@ -38,34 +38,29 @@ type WorkScoreStructure struct {
 	DataByte WorkScore `serix:"0,mapKey=dataByte"`
 	// Block accounts for work done to process a block in the node software.
 	Block WorkScore `serix:"1,mapKey=block"`
-	// MissingParent is used for slashing if there are not enough strong tips.
-	MissingParent WorkScore `serix:"2,mapKey=missingParent"`
 	// Input accounts for loading the UTXO from the database and performing the mana calculations.
-	Input WorkScore `serix:"3,mapKey=input"`
+	Input WorkScore `serix:"2,mapKey=input"`
 	// ContextInput accounts for loading and checking the context input.
-	ContextInput WorkScore `serix:"4,mapKey=contextInput"`
+	ContextInput WorkScore `serix:"3,mapKey=contextInput"`
 	// Output accounts for storing the UTXO in the database.
-	Output WorkScore `serix:"5,mapKey=output"`
+	Output WorkScore `serix:"4,mapKey=output"`
 	// NativeToken accounts for calculations done with native tokens.
-	NativeToken WorkScore `serix:"6,mapKey=nativeToken"`
+	NativeToken WorkScore `serix:"5,mapKey=nativeToken"`
 	// Staking accounts for the existence of a staking feature in the output.
 	// The node might need to update the staking vector.
-	Staking WorkScore `serix:"7,mapKey=staking"`
+	Staking WorkScore `serix:"6,mapKey=staking"`
 	// BlockIssuer accounts for the existence of a block issuer feature in the output.
 	// The node might need to update the available public keys that are allowed to issue blocks.
-	BlockIssuer WorkScore `serix:"8,mapKey=blockIssuer"`
+	BlockIssuer WorkScore `serix:"7,mapKey=blockIssuer"`
 	// Allotment accounts for accessing the account based ledger to transform the mana to block issuance credits.
-	Allotment WorkScore `serix:"9,mapKey=allotment"`
+	Allotment WorkScore `serix:"8,mapKey=allotment"`
 	// SignatureEd25519 accounts for an Ed25519 signature check.
-	SignatureEd25519 WorkScore `serix:"10,mapKey=signatureEd25519"`
-	// MinStrongParentsThreshold is the minimum amount of strong parents in a basic block, otherwise the block work increases.
-	MinStrongParentsThreshold byte `serix:"11,mapKey=minStrongParentsThreshold"`
+	SignatureEd25519 WorkScore `serix:"9,mapKey=signatureEd25519"`
 }
 
 func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
 	return w.DataByte == other.DataByte &&
 		w.Block == other.Block &&
-		w.MissingParent == other.MissingParent &&
 		w.Input == other.Input &&
 		w.ContextInput == other.ContextInput &&
 		w.Output == other.Output &&
@@ -73,9 +68,7 @@ func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
 		w.Staking == other.Staking &&
 		w.BlockIssuer == other.BlockIssuer &&
 		w.Allotment == other.Allotment &&
-		w.SignatureEd25519 == other.SignatureEd25519 &&
-
-		w.MinStrongParentsThreshold == other.MinStrongParentsThreshold
+		w.SignatureEd25519 == other.SignatureEd25519
 }
 
 // MaxBlockWork is the maximum work score a block can have.
@@ -89,12 +82,6 @@ func (w WorkScoreStructure) MaxBlockWork() (WorkScore, error) {
 	maxBlockWork += dataFactorBytes
 	// block factor
 	maxBlockWork += w.Block
-	// missing parents factor for zero parents
-	missingParentsFactor, err := w.MissingParent.Multiply(int(w.MinStrongParentsThreshold))
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += missingParentsFactor
 	// inputs factor for max number of inputs
 	inputsFactor, err := w.Input.Multiply(MaxInputsCount)
 	if err != nil {

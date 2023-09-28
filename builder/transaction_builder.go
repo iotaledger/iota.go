@@ -12,23 +12,25 @@ var ErrTransactionBuilder = ierrors.New("transaction builder error")
 func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
-		essence: &iotago.TransactionEssence{
-			NetworkID:     api.ProtocolParameters().NetworkID(),
-			ContextInputs: iotago.TxEssenceContextInputs{},
-			Inputs:        iotago.TxEssenceInputs{},
-			Outputs:       iotago.TxEssenceOutputs{},
-			Allotments:    iotago.Allotments{},
+		transaction: &iotago.Transaction{
+			TransactionEssence: &iotago.TransactionEssence{
+				NetworkID:     api.ProtocolParameters().NetworkID(),
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs:        iotago.TxEssenceInputs{},
+				Allotments:    iotago.Allotments{},
+			},
+			Outputs: iotago.TxEssenceOutputs{},
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
 	}
 }
 
-// TransactionBuilder is used to easily build up a Transaction.
+// TransactionBuilder is used to easily build up a SignedTransaction.
 type TransactionBuilder struct {
 	api              iotago.API
 	occurredBuildErr error
-	essence          *iotago.TransactionEssence
+	transaction      *iotago.Transaction
 	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
 }
@@ -52,7 +54,7 @@ func (b *TransactionBuilder) Clone() *TransactionBuilder {
 	return &TransactionBuilder{
 		api:              b.api,
 		occurredBuildErr: b.occurredBuildErr,
-		essence:          b.essence.Clone(),
+		transaction:      b.transaction.Clone(),
 		inputs:           b.inputs.Clone(),
 		inputOwner:       cpyInputOwner,
 	}
@@ -61,7 +63,7 @@ func (b *TransactionBuilder) Clone() *TransactionBuilder {
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
-	b.essence.Inputs = append(b.essence.Inputs, input.InputID.UTXOInput())
+	b.transaction.Inputs = append(b.transaction.Inputs, input.InputID.UTXOInput())
 	b.inputs[input.InputID] = input.Input
 
 	return b
@@ -74,40 +76,40 @@ type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.O
 
 // AddContextInput adds the given context input to the builder.
 func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
-	b.essence.ContextInputs = append(b.essence.ContextInputs, contextInput)
+	b.transaction.ContextInputs = append(b.transaction.ContextInputs, contextInput)
 
 	return b
 }
 
 // AddAllotment adds the given allotment to the builder.
 func (b *TransactionBuilder) AddAllotment(allotment *iotago.Allotment) *TransactionBuilder {
-	b.essence.Allotments = append(b.essence.Allotments, allotment)
+	b.transaction.Allotments = append(b.transaction.Allotments, allotment)
 
 	return b
 }
 
 // AddOutput adds the given output to the builder.
 func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
-	b.essence.Outputs = append(b.essence.Outputs, output)
+	b.transaction.Outputs = append(b.transaction.Outputs, output)
 
 	return b
 }
 
 func (b *TransactionBuilder) SetCreationSlot(creationSlot iotago.SlotIndex) *TransactionBuilder {
-	b.essence.CreationSlot = creationSlot
+	b.transaction.CreationSlot = creationSlot
 
 	return b
 }
 
 // AddTaggedDataPayload adds the given TaggedData as the inner payload.
 func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *TransactionBuilder {
-	b.essence.Payload = payload
+	b.transaction.Payload = payload
 
 	return b
 }
 
-// TransactionFunc is a function which receives a Transaction as its parameter.
-type TransactionFunc func(tx *iotago.Transaction)
+// TransactionFunc is a function which receives a SignedTransaction as its parameter.
+type TransactionFunc func(tx *iotago.SignedTransaction)
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
@@ -127,7 +129,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
@@ -137,7 +139,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 
 	// prepare the inputs commitment in the same order as the inputs in the essence
 	var inputIDs iotago.OutputIDs
-	for _, input := range b.essence.Inputs {
+	for _, input := range b.transaction.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).OutputID())
 	}
@@ -147,16 +149,16 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 	if err != nil {
 		return nil, ierrors.Wrapf(err, "failed to calculate TX inputs commitment: %s, %s", inputIDs, b.inputs)
 	}
-	copy(b.essence.InputsCommitment[:], commitment)
+	copy(b.transaction.InputsCommitment[:], commitment)
 
-	txEssenceData, err := b.essence.SigningMessage(b.api)
+	txEssenceData, err := b.transaction.SigningMessage(b.api)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to calculate tx essence for signing message")
+		return nil, ierrors.Wrap(err, "failed to calculate tx transaction for signing message")
 	}
 
 	unlockPos := map[string]int{}
 	unlocks := iotago.Unlocks{}
-	for i, inputRef := range b.essence.Inputs {
+	for i, inputRef := range b.transaction.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
 		addrKey := addr.Key()
@@ -172,7 +174,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 			var signature iotago.Signature
 			signature, err = signer.Sign(addr, txEssenceData)
 			if err != nil {
-				return nil, ierrors.Wrapf(err, "failed to sign tx essence: %s", txEssenceData)
+				return nil, ierrors.Wrapf(err, "failed to sign tx transaction: %s", txEssenceData)
 			}
 
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
@@ -186,10 +188,10 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
-	sigTxPayload := &iotago.Transaction{
-		API:     b.api,
-		Essence: b.essence,
-		Unlocks: unlocks,
+	sigTxPayload := &iotago.SignedTransaction{
+		API:         b.api,
+		Transaction: b.transaction,
+		Unlocks:     unlocks,
 	}
 
 	return sigTxPayload, nil
@@ -207,7 +209,7 @@ func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) 
 }
 
 func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
-	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.Chain().Addressable() {
-		prevUnlocked[chainInput.Chain().ToAddress().Key()] = posUnlocked
+	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.ChainID().Addressable() {
+		prevUnlocked[chainInput.ChainID().ToAddress().Key()] = posUnlocked
 	}
 }

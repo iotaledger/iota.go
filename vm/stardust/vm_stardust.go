@@ -29,26 +29,26 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
 	var err error
 	utxoInputsSet := constructInputSet(inputs.InputSet)
 	workingSet := &vm.WorkingSet{}
 	workingSet.Tx = t
 	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
-	workingSet.UTXOInputsWithCreationSlot = utxoInputsSet
+	workingSet.UTXOInputsSet = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.Essence.Inputs {
+	for inputIndex, inputRef := range workingSet.Tx.Transaction.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		ref := inputRef.(*iotago.UTXOInput).OutputID()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
-		input, ok := workingSet.UTXOInputsWithCreationSlot[ref]
+		input, ok := workingSet.UTXOInputsSet[ref]
 		if !ok {
 			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
 		}
-		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input.Output)
+		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.Essence.SigningMessage(api)
+	workingSet.EssenceMsgToSign, err = t.Transaction.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
 		var i int
 		for _, output := range utxoInputsSet {
-			slice[i] = output.Output
+			slice[i] = output
 			i++
 		}
 
@@ -70,8 +70,8 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 	}
 
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
-	workingSet.OutputsByType = t.Essence.Outputs.ToOutputsByType()
-	workingSet.OutChains = workingSet.Tx.Essence.Outputs.ChainOutputSet(txID)
+	workingSet.OutputsByType = t.Transaction.Outputs.ToOutputsByType()
+	workingSet.OutChains = workingSet.Tx.Transaction.Outputs.ChainOutputSet(txID)
 
 	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
@@ -84,13 +84,10 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 	utxoInputsSet := vm.InputSet{}
 	for outputID, outputWithCreationSlot := range inputSet {
-		if basicOutput, isBasic := outputWithCreationSlot.Output.(*iotago.BasicOutput); isBasic {
+		if basicOutput, isBasic := outputWithCreationSlot.(*iotago.BasicOutput); isBasic {
 			if addressUnlock := basicOutput.UnlockConditionSet().Address(); addressUnlock != nil {
 				if addressUnlock.Address.Type() == iotago.AddressImplicitAccountCreation {
-					utxoInputsSet[outputID] = vm.OutputWithCreationSlot{
-						Output:       &vm.ImplicitAccountOutput{BasicOutput: basicOutput},
-						CreationSlot: outputWithCreationSlot.CreationSlot,
-					}
+					utxoInputsSet[outputID] = &vm.ImplicitAccountOutput{BasicOutput: basicOutput}
 
 					continue
 				}
@@ -102,7 +99,7 @@ func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 	return utxoInputsSet
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
+func (stardustVM *virtualMachine) Execute(t *iotago.SignedTransaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
 	if vmParams.API == nil {
 		return ierrors.New("no API provided")
 	}
@@ -120,7 +117,7 @@ func (stardustVM *virtualMachine) Execute(t *iotago.Transaction, vmParams *vm.Pa
 	return vm.RunVMFuncs(stardustVM, vmParams, stardustVM.execList...)
 }
 
-func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithCreationSlot, next iotago.ChainOutput, vmParams *vm.Params) error {
+func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithIDs, next iotago.ChainOutput, vmParams *vm.Params) error {
 	transitionState := next
 	if transType != iotago.ChainTransitionTypeGenesis {
 		transitionState = input.Output
@@ -145,7 +142,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 			}
 		}
 
-		return implicitAccountSTVF(castedInput, input.CreationSlot, nextAccount, vmParams, transType)
+		return implicitAccountSTVF(castedInput, input.OutputID.CreationSlot(), nextAccount, vmParams, transType)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -185,8 +182,10 @@ func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot
 		return iotago.ErrImplicitAccountDestructionDisallowed
 	}
 
-	// Create an account output that is essentially the implicit account, so we can call accountGovernanceSTVF.
-	account := &vm.ChainOutputWithCreationSlot{
+	// Create an dummyAccount output that is essentially the implicit account, so we can call accountGovernanceSTVF.
+	dummyAccount := &vm.ChainOutputWithIDs{
+		ChainID:  next.AccountID,
+		OutputID: iotago.EmptyOutputIDWithCreationSlot(creationSlot),
 		Output: &iotago.AccountOutput{
 			Amount:       implicitAccount.Amount,
 			Mana:         implicitAccount.Mana,
@@ -214,11 +213,9 @@ func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot
 			},
 			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
 		},
-		ChainID:      next.AccountID,
-		CreationSlot: creationSlot,
 	}
 
-	return accountGovernanceSTVF(account, next, vmParams)
+	return accountGovernanceSTVF(dummyAccount, next, vmParams)
 }
 
 // For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
@@ -227,7 +224,7 @@ func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot
 // On account state transitions: The StateIndex must be incremented by 1 and Only Amount, NativeTokens, StateIndex, StateMetadata and FoundryCounter can be mutated.
 //
 // On account governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
-func accountSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := accountGenesisValid(next, vmParams); err != nil {
@@ -278,7 +275,7 @@ func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) err
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm.Params, next *iotago.AccountOutput) error {
+func accountStateChangeValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params, next *iotago.AccountOutput) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
@@ -304,7 +301,7 @@ func accountStateChangeValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 	return accountStateSTVF(input, next, vmParams)
 }
 
-func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 
@@ -333,7 +330,7 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.A
 	return accountBlockIssuerSTVF(input, input.Output.FeatureSet().BlockIssuer(), next, vmParams)
 }
 
-func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	switch {
@@ -366,18 +363,18 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 	}
 
 	var seenNewFoundriesOfAccount uint32
-	for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+	for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 		foundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
 		}
 
-		if _, notNew := vmParams.WorkingSet.InChains[foundryOutput.MustID()]; notNew {
+		if _, notNew := vmParams.WorkingSet.InChains[foundryOutput.MustFoundryID()]; notNew {
 			continue
 		}
 
 		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).Chain()
+		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).ChainID()
 		if !foundryAccountID.Matches(next.AccountID) {
 			continue
 		}
@@ -396,7 +393,7 @@ func accountStateSTVF(input *vm.ChainOutputWithCreationSlot, next *iotago.Accoun
 // The block issuer credit must be non-negative.
 // The expiry time of the block issuer feature, if creating new account or expired already, must be set at least MaxCommittableAge greater than the Commitment Input.
 // Check that at least one Block Issuer Key is present.
-func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockIssuerFeat *iotago.BlockIssuerFeature, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat *iotago.BlockIssuerFeature, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	current := input.Output
 	nextBlockIssuerFeat := next.FeatureSet().BlockIssuer()
 	// if the account has no block issuer feature.
@@ -444,23 +441,23 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockI
 	manaIn, err := vm.TotalManaIn(
 		manaDecayProvider,
 		rentStructure,
-		vmParams.WorkingSet.Tx.Essence.CreationSlot,
-		vmParams.WorkingSet.UTXOInputsWithCreationSlot,
+		vmParams.WorkingSet.Tx.Transaction.CreationSlot,
+		vmParams.WorkingSet.UTXOInputsSet,
 	)
 	if err != nil {
 		return err
 	}
 
 	manaOut, err := vm.TotalManaOut(
-		vmParams.WorkingSet.Tx.Essence.Outputs,
-		vmParams.WorkingSet.Tx.Essence.Allotments,
+		vmParams.WorkingSet.Tx.Transaction.Outputs,
+		vmParams.WorkingSet.Tx.Transaction.Allotments,
 	)
 	if err != nil {
 		return err
 	}
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
@@ -475,7 +472,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockI
 	} else {
 		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
 	}
-	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.CreationSlot, vmParams.WorkingSet.Tx.Essence.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}
@@ -484,7 +481,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockI
 	// AccountOutStored
 	manaOut -= next.Mana
 	// AccountOutAllotted
-	manaOut -= vmParams.WorkingSet.Tx.Essence.Allotments.Get(next.AccountID)
+	manaOut -= vmParams.WorkingSet.Tx.Transaction.Allotments.Get(next.AccountID)
 
 	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
 	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
@@ -646,7 +643,7 @@ func accountStakingExpiredValidation(
 	return nil
 }
 
-func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm.Params) error {
+func accountDestructionValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 
@@ -694,7 +691,7 @@ func accountDestructionValid(input *vm.ChainOutputWithCreationSlot, vmParams *vm
 	return nil
 }
 
-func nftSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
+func nftSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.NFTOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := nftGenesisValid(next, vmParams); err != nil {
@@ -731,26 +728,26 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 	return nil
 }
 
-func foundrySTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
+func foundrySTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
 	inSums := vmParams.WorkingSet.InNativeTokens
 	outSums := vmParams.WorkingSet.OutNativeTokens
 
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		if err := foundryGenesisValid(next, vmParams, next.MustID(), outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustID(), next.MustNativeTokenID())
+		if err := foundryGenesisValid(next, vmParams, next.MustFoundryID(), outSums); err != nil {
+			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustFoundryID(), next.MustNativeTokenID())
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryStateChangeValid(current, next, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustID(), current.MustNativeTokenID())
+			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryDestructionValid(current, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustID(), current.MustNativeTokenID())
+			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	default:
 		panic("unknown chain transition type in FoundryOutput")
@@ -792,7 +789,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
 	// check order of serial number
-	for outputIndex, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+	for outputIndex, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 		otherFoundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
@@ -802,7 +799,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params
 			continue
 		}
 
-		otherFoundryID, err := otherFoundryOutput.ID()
+		otherFoundryID, err := otherFoundryOutput.FoundryID()
 		if err != nil {
 			return err
 		}
@@ -832,9 +829,9 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	// the check for the serial number and token scheme not being mutated is implicit
 	// as a change would cause the foundry ID to be different, which would result in
 	// no matching foundry to be found to validate the state transition against
-	if current.MustID() != next.MustID() {
+	if current.MustFoundryID() != next.MustFoundryID() {
 		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", current.MustID(), next.MustID()))
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", current.MustFoundryID(), next.MustFoundryID()))
 	}
 
 	nativeTokenID := current.MustNativeTokenID()
@@ -848,7 +845,7 @@ func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.Native
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
 }
 
-func delegationSTVF(input *vm.ChainOutputWithCreationSlot, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
+func delegationSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.DelegationOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := delegationGenesisValid(next, vmParams); err != nil {

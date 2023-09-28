@@ -41,7 +41,7 @@ func (addr *AccountAddress) Key() string {
 	return string(addr.ID())
 }
 
-func (addr *AccountAddress) Chain() ChainID {
+func (addr *AccountAddress) ChainID() ChainID {
 	return AccountID(*addr)
 }
 
