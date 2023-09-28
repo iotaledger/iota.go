@@ -67,6 +67,8 @@ var (
 	ErrStorageDepositExceedsTargetOutputAmount = ierrors.New("storage deposit return amount exceeds target output's base token amount")
 	// ErrMaxNativeTokensCountExceeded gets returned if outputs or transactions exceed the MaxNativeTokensCount.
 	ErrMaxNativeTokensCountExceeded = ierrors.New("max native tokens count exceeded")
+	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
+	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
 )
 
 // TransactionEssenceSelector implements SerializableSelectorFunc for transaction essence types.

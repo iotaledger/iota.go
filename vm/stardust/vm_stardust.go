@@ -145,7 +145,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 			}
 		}
 
-		return implicitAccountSTVF(castedInput, input.CreationSlot, nextAccount, vmParams)
+		return implicitAccountSTVF(castedInput, input.CreationSlot, nextAccount, vmParams, transType)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -179,7 +179,12 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 }
 
 // For implicit account conversion, there must be a basic output as input, and an account output as output with an AccountID matching the input.
-func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot iotago.SlotIndex, next *iotago.AccountOutput, vmParams *vm.Params) error {
+func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot iotago.SlotIndex, next *iotago.AccountOutput, vmParams *vm.Params, transType iotago.ChainTransitionType) error {
+
+	if transType == iotago.ChainTransitionTypeDestroy || transType == iotago.ChainTransitionTypeGenesis {
+		return iotago.ErrImplicitAccountDestructionDisallowed
+	}
+
 	// Create an account output that is essentially the implicit account, so we can call accountGovernanceSTVF.
 	account := &vm.ChainOutputWithCreationSlot{
 		Output: &iotago.AccountOutput{
