@@ -76,25 +76,20 @@ type Transaction struct {
 
 // ID computes the ID of the SignedTransaction.
 func (t *Transaction) ID() (TransactionID, error) {
-	//data, err := t.API.Encode(t)
-	//if err != nil {
-	//	return SignedTransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
-	//}
-	//
-	//return TransactionIDFromData(t.Essence.CreationSlot, data), nil
+	// TODO: implement proper ID calculation
 	return EmptyTransactionID, nil
 }
 
-func (u *Transaction) Clone() *Transaction {
+func (t *Transaction) Clone() *Transaction {
 	return &Transaction{
-		TransactionEssence: u.TransactionEssence.Clone(),
-		Outputs:            u.Outputs.Clone(),
+		TransactionEssence: t.TransactionEssence.Clone(),
+		Outputs:            t.Outputs.Clone(),
 	}
 }
 
 // SigningMessage returns the to be signed message.
-func (u *Transaction) SigningMessage(api API) ([]byte, error) {
-	essenceBytes, err := api.Encode(u)
+func (t *Transaction) SigningMessage(api API) ([]byte, error) {
+	essenceBytes, err := api.Encode(t)
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +100,14 @@ func (u *Transaction) SigningMessage(api API) ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (u *Transaction) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+func (t *Transaction) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
 	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
 		return nil, ErrInvalidInputsCommitment
 	}
 
-	copy(u.InputsCommitment[:], inputsCommitment)
+	copy(t.InputsCommitment[:], inputsCommitment)
 
-	signMsg, err := u.SigningMessage(api)
+	signMsg, err := t.SigningMessage(api)
 	if err != nil {
 		return nil, err
 	}
@@ -130,18 +125,18 @@ func (u *Transaction) Sign(api API, inputsCommitment []byte, addrKeys ...Address
 	return sigs, nil
 }
 
-func (u *Transaction) Size() int {
-	return u.TransactionEssence.Size() + u.Outputs.Size()
+func (t *Transaction) Size() int {
+	return t.TransactionEssence.Size() + t.Outputs.Size()
 }
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *Transaction) syntacticallyValidate(protoParams ProtocolParameters) error {
-	if err := u.TransactionEssence.syntacticallyValidate(protoParams); err != nil {
+func (t *Transaction) syntacticallyValidate(protoParams ProtocolParameters) error {
+	if err := t.TransactionEssence.syntacticallyValidate(protoParams); err != nil {
 		return err
 	}
 
-	return SyntacticallyValidateOutputs(u.Outputs,
+	return SyntacticallyValidateOutputs(t.Outputs,
 		OutputsSyntacticalDepositAmount(protoParams),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
@@ -154,13 +149,13 @@ func (u *Transaction) syntacticallyValidate(protoParams ProtocolParameters) erro
 }
 
 // WorkScore calculates the Work Score of the Transaction.
-func (u *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workscoreTransactionEssence, err := u.TransactionEssence.WorkScore(workScoreStructure)
+func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	workscoreTransactionEssence, err := t.TransactionEssence.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreOutputs, err := u.Outputs.WorkScore(workScoreStructure)
+	workScoreOutputs, err := t.Outputs.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
 	}
