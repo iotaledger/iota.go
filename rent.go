@@ -110,14 +110,26 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		},
 		ImmutableFeatures: AccountOutputImmFeatures{},
 	}
+
+	dummyAddress := &Ed25519Address{}
+	dummyBasicOutput := &BasicOutput{
+		Conditions: UnlockConditions[basicOutputUnlockCondition]{
+			&AddressUnlockCondition{
+				Address: dummyAddress,
+			},
+		},
+	}
+
 	// create a rent structure with the provided rent parameters.
 	rentStructure := &RentStructure{
 		RentParameters: rentParameters,
 	}
 
 	// set the vbyte cost factor for implicit account creation addresses as the vbyte cost of the dummy account.
-	vBFactorImplicitAccountCreationAddress := dummyAccountOutput.VBytes(rentStructure, nil)
-	rentStructure.VBFactorImplicitAccountCreationAddress = VByteCostFactor(vBFactorImplicitAccountCreationAddress)
+	vBFactorDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
+	vBFactorDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
+	vBFactorDummyAddress := dummyAddress.VBytes(rentStructure, nil)
+	rentStructure.VBFactorImplicitAccountCreationAddress = VByteCostFactor(vBFactorDummyAccountOutput - vBFactorDummyBasicOutput + vBFactorDummyAddress)
 
 	return rentStructure
 }

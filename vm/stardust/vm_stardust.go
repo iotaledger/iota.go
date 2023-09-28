@@ -503,7 +503,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithCreationSlot, currentBlockI
 	}
 
 	if manaIn > manaOut {
-		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account")
+		return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account: mana in %d, mana out %d", manaIn, manaOut)
 	}
 
 	return nil
