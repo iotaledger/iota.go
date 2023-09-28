@@ -54,7 +54,7 @@ func (addr *ImplicitAccountCreationAddress) Clone() Address {
 }
 
 func (addr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBOffsetImplicitAccountCreationAddress
+	return rentStruct.VByteOffsetImplicitAccountCreationAddress
 }
 
 func (addr *ImplicitAccountCreationAddress) ID() []byte {

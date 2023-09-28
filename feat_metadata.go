@@ -16,7 +16,7 @@ func (s *MetadataFeature) Clone() Feature {
 	return &MetadataFeature{Data: append([]byte(nil), s.Data...)}
 }
 
-func (s *MetadataFeature) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (s *MetadataFeature) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

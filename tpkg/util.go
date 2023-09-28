@@ -942,11 +942,11 @@ func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago
 // RandRentParameters produces random set of rent parameters.
 func RandRentParameters() *iotago.RentParameters {
 	return &iotago.RentParameters{
-		VByteCost:                     RandUint32(math.MaxUint32),
-		VBFactorData:                  iotago.VByteFactor(RandUint8(math.MaxUint8)),
-		VBOffsetKey:                   iotago.VBytes(RandUint64(math.MaxUint64)),
-		VBOffsetEd25519BlockIssuerKey: iotago.VBytes(RandUint64(math.MaxUint64)),
-		VBOffsetStakingFeature:        iotago.VBytes(RandUint64(math.MaxUint64)),
+		VByteCost:                        RandUint32(math.MaxUint32),
+		VByteFactorData:                  iotago.VByteFactor(RandUint8(math.MaxUint8)),
+		VByteOffsetOutput:                iotago.VBytes(RandUint64(math.MaxUint64)),
+		VByteOffsetEd25519BlockIssuerKey: iotago.VBytes(RandUint64(math.MaxUint64)),
+		VByteOffsetStakingFeature:        iotago.VBytes(RandUint64(math.MaxUint64)),
 	}
 }
 

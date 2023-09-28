@@ -35,21 +35,21 @@ type RentParameters struct {
 	// Defines the rent of a single virtual byte denoted in IOTA tokens.
 	VByteCost uint32 `serix:"0,mapKey=vByteCost"`
 	// Defines the factor to be used for data only fields.
-	VBFactorData VByteFactor `serix:"1,mapKey=vByteFactorData"`
+	VByteFactorData VByteFactor `serix:"1,mapKey=vByteFactorData"`
 	// Defines the offset to be used for key/lookup generating fields.
-	VBOffsetKey VBytes `serix:"2,mapKey=vByteOffsetKey"`
+	VByteOffsetOutput VBytes `serix:"2,mapKey=vByteOffsetOutput"`
 	// Defines the offset to be used for block issuer feature public keys.
-	VBOffsetEd25519BlockIssuerKey VBytes `serix:"3,mapKey=vByteOffsetBlockIssuerKey"`
+	VByteOffsetEd25519BlockIssuerKey VBytes `serix:"3,mapKey=vByteOffsetEd25519BlockIssuerKey"`
 	// Defines the offset to be used for staking feature.
-	VBOffsetStakingFeature VBytes `serix:"4,mapKey=vByteOffsetStakingFeature"`
+	VByteOffsetStakingFeature VBytes `serix:"4,mapKey=vByteOffsetStakingFeature"`
 	// Defines the offset to be used for delegation output.
-	VBOffsetDelegation VBytes `serix:"5,mapKey=vByteOffsetDelegation"`
+	VByteOffsetDelegation VBytes `serix:"5,mapKey=vByteOffsetDelegation"`
 }
 
 // RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
 type RentStructure struct {
-	RentParameters                         *RentParameters
-	VBOffsetImplicitAccountCreationAddress VBytes
+	RentParameters                            *RentParameters
+	VByteOffsetImplicitAccountCreationAddress VBytes
 }
 
 // VByteCost returns the cost of a single virtual byte denoted in IOTA tokens.
@@ -57,29 +57,29 @@ func (r *RentStructure) VByteCost() uint32 {
 	return r.RentParameters.VByteCost
 }
 
-// VBFactorData returns the factor to be used for data only fields.
-func (r *RentStructure) VBFactorData() VByteFactor {
-	return r.RentParameters.VBFactorData
+// VByteFactorData returns the factor to be used for data only fields.
+func (r *RentStructure) VByteFactorData() VByteFactor {
+	return r.RentParameters.VByteFactorData
 }
 
-// VBOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
-func (r *RentStructure) VBOffsetOutput() VBytes {
-	return r.RentParameters.VBOffsetKey
+// VByteOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
+func (r *RentStructure) VByteOffsetOutput() VBytes {
+	return r.RentParameters.VByteOffsetOutput
 }
 
-// VBOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
-func (r *RentStructure) VBOffsetEd25519BlockIssuerKey() VBytes {
-	return r.RentParameters.VBOffsetEd25519BlockIssuerKey
+// VByteOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
+func (r *RentStructure) VByteOffsetEd25519BlockIssuerKey() VBytes {
+	return r.RentParameters.VByteOffsetEd25519BlockIssuerKey
 }
 
-// VBOffsetStakingFeature returns the offset to be used for staking feature.
-func (r *RentStructure) VBOffsetStakingFeature() VBytes {
-	return r.RentParameters.VBOffsetStakingFeature
+// VByteOffsetStakingFeature returns the offset to be used for staking feature.
+func (r *RentStructure) VByteOffsetStakingFeature() VBytes {
+	return r.RentParameters.VByteOffsetStakingFeature
 }
 
-// VBOffsetDelegation returns the offset to be used for delegation output.
-func (r *RentStructure) VBOffsetDelegation() VBytes {
-	return r.RentParameters.VBOffsetDelegation
+// VByteOffsetDelegation returns the offset to be used for delegation output.
+func (r *RentStructure) VByteOffsetDelegation() VBytes {
+	return r.RentParameters.VByteOffsetDelegation
 }
 
 // NewRentStructure creates a new RentStructure.
@@ -129,7 +129,7 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 	vBDummyAccountOutput := dummyAccountOutput.VBytes(rentStructure, nil)
 	vBDummyBasicOutput := dummyBasicOutput.VBytes(rentStructure, nil)
 	vBDummyAddress := dummyAddress.VBytes(rentStructure, nil)
-	rentStructure.VBOffsetImplicitAccountCreationAddress = vBDummyAccountOutput - vBDummyBasicOutput + vBDummyAddress
+	rentStructure.VByteOffsetImplicitAccountCreationAddress = vBDummyAccountOutput - vBDummyBasicOutput + vBDummyAddress
 
 	return rentStructure
 }
@@ -159,11 +159,11 @@ func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseTok
 
 func (r RentParameters) Equals(other RentParameters) bool {
 	return r.VByteCost == other.VByteCost &&
-		r.VBFactorData == other.VBFactorData &&
-		r.VBOffsetKey == other.VBOffsetKey &&
-		r.VBOffsetEd25519BlockIssuerKey == other.VBOffsetEd25519BlockIssuerKey &&
-		r.VBOffsetStakingFeature == other.VBOffsetStakingFeature &&
-		r.VBOffsetDelegation == other.VBOffsetDelegation
+		r.VByteFactorData == other.VByteFactorData &&
+		r.VByteOffsetOutput == other.VByteOffsetOutput &&
+		r.VByteOffsetEd25519BlockIssuerKey == other.VByteOffsetEd25519BlockIssuerKey &&
+		r.VByteOffsetStakingFeature == other.VByteOffsetStakingFeature &&
+		r.VByteOffsetDelegation == other.VByteOffsetDelegation
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

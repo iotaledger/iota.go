@@ -173,8 +173,8 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex
 
 func (d *DelegationOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VBFactorData().Multiply(VBytes(d.Size())) +
-		rentStruct.VBOffsetDelegation() +
+		rentStruct.VByteFactorData().Multiply(VBytes(d.Size())) +
+		rentStruct.VByteOffsetDelegation() +
 		d.Conditions.VBytes(rentStruct, nil)
 }
 

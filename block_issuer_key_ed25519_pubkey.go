@@ -59,5 +59,5 @@ func (key *Ed25519PublicKeyBlockIssuerKey) Size() int {
 }
 
 func (key *Ed25519PublicKeyBlockIssuerKey) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBOffsetEd25519BlockIssuerKey()
+	return rentStruct.VByteOffsetEd25519BlockIssuerKey()
 }

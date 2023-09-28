@@ -255,7 +255,7 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 
 func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VBFactorData().Multiply(VBytes(a.Size())) +
+		rentStruct.VByteFactorData().Multiply(VBytes(a.Size())) +
 		a.NativeTokens.VBytes(rentStruct, nil) +
 		a.Conditions.VBytes(rentStruct, nil) +
 		a.Features.VBytes(rentStruct, nil) +

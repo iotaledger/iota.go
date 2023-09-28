@@ -60,7 +60,7 @@ func (addr *MultiAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *MultiAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (addr *MultiAddress) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

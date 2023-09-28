@@ -160,7 +160,7 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 
 func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
 	return outputOffsetVByteCost(rentStruct) +
-		rentStruct.VBFactorData().Multiply(VBytes(n.Size())) +
+		rentStruct.VByteFactorData().Multiply(VBytes(n.Size())) +
 		n.NativeTokens.VBytes(rentStruct, nil) +
 		n.Conditions.VBytes(rentStruct, nil) +
 		n.Features.VBytes(rentStruct, nil) +

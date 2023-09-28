@@ -118,9 +118,9 @@ var (
 
 // defines the default offset virtual byte costs for an output.
 func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
-	return rentStruct.VBOffsetOutput() +
+	return rentStruct.VByteOffsetOutput() +
 		// included output id, block id, and slot booked data size
-		rentStruct.VBFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
+		rentStruct.VByteFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists

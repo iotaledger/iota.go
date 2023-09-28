@@ -25,14 +25,14 @@ func TestRentParameters_DeSerialize(t *testing.T) {
 
 func TestRentParamtersJSONMarshalling(t *testing.T) {
 	rentParameters := &iotago.RentParameters{
-		VByteCost:              500,
-		VBFactorData:           1,
-		VBFactorKey:            10,
-		VBFactorBlockIssuerKey: 50,
-		VBFactorStakingFeature: 100,
-		VBFactorDelegation:     100,
+		VByteCost:                        500,
+		VByteFactorData:                  1,
+		VByteOffsetOutput:                10,
+		VByteOffsetEd25519BlockIssuerKey: 50,
+		VByteOffsetStakingFeature:        100,
+		VByteOffsetDelegation:            100,
 	}
-	rentParametersJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteFactorKey":10,"vByteFactorBlockIssuerKey":50,"vByteFactorStakingFeature":100,"vByteFactorDelegation":100}`
+	rentParametersJSON := `{"vByteCost":500,"vByteFactorData":1,"vByteOffsetOutput":"10","vByteOffsetEd25519BlockIssuerKey":"50","vByteOffsetStakingFeature":"100","vByteOffsetDelegation":"100"}`
 
 	j, err := tpkg.TestAPI.JSONEncode(rentParameters)
 	require.NoError(t, err)

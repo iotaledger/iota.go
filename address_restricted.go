@@ -23,7 +23,7 @@ func (addr *RestrictedAddress) Clone() Address {
 	}
 }
 
-func (addr *RestrictedAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (addr *RestrictedAddress) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

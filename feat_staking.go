@@ -51,7 +51,7 @@ func (s *StakingFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes 
 		return f(rentStruct)
 	}
 
-	return rentStruct.VBOffsetStakingFeature()
+	return rentStruct.VByteOffsetStakingFeature()
 }
 
 func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

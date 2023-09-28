@@ -93,7 +93,7 @@ func (n NativeTokens) Clone() NativeTokens {
 	return lo.CloneSlice(n)
 }
 
-func (n NativeTokens) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (n NativeTokens) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

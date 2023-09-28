@@ -29,7 +29,7 @@ func (addr *AccountAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (addr *AccountAddress) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

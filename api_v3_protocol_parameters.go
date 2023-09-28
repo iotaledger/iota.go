@@ -192,16 +192,16 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vBFactorData VByteFactor, vBOffsetKey, vBOffsetEd25519BlockIssuerKey, vBOffsetStakingFeature, vBOffsetDelegation VBytes) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(totalSupply BaseToken, vByteCost uint32, vByteFactorData VByteFactor, vByteOffsetOutput, vByteOffsetEd25519BlockIssuerKey, vByteOffsetStakingFeature, vByteOffsetDelegation VBytes) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
 		p.basicProtocolParameters.RentParameters = RentParameters{
-			VByteCost:                     vByteCost,
-			VBFactorData:                  vBFactorData,
-			VBOffsetKey:                   vBOffsetKey,
-			VBOffsetEd25519BlockIssuerKey: vBOffsetEd25519BlockIssuerKey,
-			VBOffsetStakingFeature:        vBOffsetStakingFeature,
-			VBOffsetDelegation:            vBOffsetDelegation,
+			VByteCost:                        vByteCost,
+			VByteFactorData:                  vByteFactorData,
+			VByteOffsetOutput:                vByteOffsetOutput,
+			VByteOffsetEd25519BlockIssuerKey: vByteOffsetEd25519BlockIssuerKey,
+			VByteOffsetStakingFeature:        vByteOffsetStakingFeature,
+			VByteOffsetDelegation:            vByteOffsetDelegation,
 		}
 	}
 }

@@ -18,7 +18,7 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (s *TimelockUnlockCondition) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 

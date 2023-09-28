@@ -58,7 +58,7 @@ func (s *SimpleTokenScheme) Equal(other TokenScheme) bool {
 	return true
 }
 
-func (s *SimpleTokenScheme) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
+func (s *SimpleTokenScheme) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
 	return 0
 }
 
