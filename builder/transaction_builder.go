@@ -12,23 +12,25 @@ var ErrTransactionBuilder = ierrors.New("transaction builder error")
 func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
-		essence: &iotago.TransactionEssence{
-			NetworkID:     api.ProtocolParameters().NetworkID(),
-			ContextInputs: iotago.TxEssenceContextInputs{},
-			Inputs:        iotago.TxEssenceInputs{},
-			Outputs:       iotago.TxEssenceOutputs{},
-			Allotments:    iotago.Allotments{},
+		essence: &iotago.Transaction{
+			TransactionEssence: &iotago.TransactionEssence{
+				NetworkID:     api.ProtocolParameters().NetworkID(),
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Inputs:        iotago.TxEssenceInputs{},
+				Allotments:    iotago.Allotments{},
+			},
+			Outputs: iotago.TxEssenceOutputs{},
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
 	}
 }
 
-// TransactionBuilder is used to easily build up a Transaction.
+// TransactionBuilder is used to easily build up a SignedTransaction.
 type TransactionBuilder struct {
 	api              iotago.API
 	occurredBuildErr error
-	essence          *iotago.TransactionEssence
+	essence          *iotago.Transaction
 	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
 }
@@ -106,8 +108,8 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 	return b
 }
 
-// TransactionFunc is a function which receives a Transaction as its parameter.
-type TransactionFunc func(tx *iotago.Transaction)
+// TransactionFunc is a function which receives a SignedTransaction as its parameter.
+type TransactionFunc func(tx *iotago.SignedTransaction)
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
@@ -127,7 +129,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 }
 
 // Build sings the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transaction, error) {
+func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
@@ -186,10 +188,10 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.Transac
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
-	sigTxPayload := &iotago.Transaction{
-		API:     b.api,
-		Essence: b.essence,
-		Unlocks: unlocks,
+	sigTxPayload := &iotago.SignedTransaction{
+		API:         b.api,
+		Transaction: b.essence,
+		Unlocks:     unlocks,
 	}
 
 	return sigTxPayload, nil

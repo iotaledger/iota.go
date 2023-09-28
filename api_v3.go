@@ -525,7 +525,7 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(TransactionEssence{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
+		must(api.RegisterTypeSettings(Transaction{}, serix.TypeSettings{}.WithObjectType(TransactionEssenceNormal)))
 
 		must(api.RegisterTypeSettings(CommitmentInput{},
 			serix.TypeSettings{}.WithObjectType(uint8(InputCommitment))),
@@ -571,11 +571,11 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(Transaction{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTransaction))))
+		must(api.RegisterTypeSettings(SignedTransaction{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadTransaction))))
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
-		must(api.RegisterValidators(Transaction{}, nil, func(ctx context.Context, tx Transaction) error {
+		must(api.RegisterValidators(SignedTransaction{}, nil, func(ctx context.Context, tx SignedTransaction) error {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
@@ -603,7 +603,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*Block)(nil), (*BasicBlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidationBlock)(nil)))
 
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*Transaction)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*SignedTransaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
 
 		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
