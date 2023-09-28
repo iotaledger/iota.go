@@ -58,7 +58,7 @@ type Transaction struct {
 	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
 }
 
-// ID computes the ID of the SignedTransaction.
+// ID computes the ID of the Transaction.
 func (t *Transaction) ID() (TransactionID, error) {
 	// TODO: implement proper ID calculation
 	return EmptyTransactionID, nil

@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
 const (
@@ -39,8 +41,6 @@ var (
 	ErrInputOutputManaMismatch = ierrors.New("inputs and outputs do not contain the same amount of Mana")
 	// ErrInputCreationAfterTxCreation gets returned if an input has creation slot after the transaction creation slot.
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
-	// ErrUnknownTransactionType gets returned for unknown transaction types.
-	ErrUnknownTransactionType = ierrors.New("unknown transaction type")
 )
 
 var (
@@ -111,12 +111,17 @@ func (t *SignedTransaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the SignedTransaction.
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
-	data, err := t.API.Encode(t)
+	unlocksBytes, err := t.API.Encode(t.Unlocks)
+	if err != nil {
+		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
+	transactionID, err := t.Transaction.ID()
 	if err != nil {
 		return SignedTransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
 	}
 
-	return SignedTransactionIDFromData(t.Transaction.CreationSlot, data), nil
+	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(lo.PanicOnErr(transactionID.Identifier().Bytes()), unlocksBytes)), nil
 }
 
 func (t *SignedTransaction) Inputs() ([]*UTXOInput, error) {
