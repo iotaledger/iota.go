@@ -17,7 +17,7 @@ type VirtualMachine interface {
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
 	Execute(t *iotago.Transaction, params *Params, inputs ResolvedInputs, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutput, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithIDs, next iotago.ChainOutput, vmParams *Params) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.

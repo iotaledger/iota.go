@@ -18,7 +18,7 @@ func (inputSet InputSet) OutputSet() iotago.OutputSet {
 	return outputs
 }
 
-type ChainOutput struct {
+type ChainOutputWithIDs struct {
 	ChainID  iotago.ChainID
 	OutputID iotago.OutputID
 	Output   iotago.ChainOutput
@@ -44,7 +44,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 			panic(fmt.Sprintf("output of type %s has empty chain ID but is not utxo dependable", chainOutput.Type()))
 		}
 
-		set[chainID] = &ChainOutput{
+		set[chainID] = &ChainOutputWithIDs{
 			ChainID:  chainID,
 			OutputID: utxoInputID,
 			Output:   chainOutput,
@@ -55,7 +55,7 @@ func (inputSet InputSet) ChainInputSet() ChainInputSet {
 }
 
 // ChainInputSet is a map of ChainID to ChainOutput.
-type ChainInputSet map[iotago.ChainID]*ChainOutput
+type ChainInputSet map[iotago.ChainID]*ChainOutputWithIDs
 
 type BlockIssuanceCreditInputSet map[iotago.AccountID]iotago.BlockIssuanceCredits
 
