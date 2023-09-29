@@ -5966,8 +5966,14 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 	currentSlot := iotago.SlotIndex(10)
 	commitmentSlot := currentSlot - testAPI.ProtocolParameters().MaxCommittableAge()
 
-	rentStructure := testAPI.RentStructure()
-	minAmountImplicitAccount := iotago.BaseToken(rentStructure.VByteCost()) * iotago.BaseToken(rentStructure.VBOffsetImplicitAccountCreationAddress)
+	dummyImplicitAccount := &iotago.BasicOutput{
+		Amount: 0,
+		Conditions: iotago.BasicOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+		},
+	}
+	vBytes := dummyImplicitAccount.VBytes(testAPI.RentStructure(), nil)
+	minAmountImplicitAccount := iotago.BaseToken(testAPI.RentStructure().VByteCost()) * iotago.BaseToken(vBytes)
 
 	exampleInputs := []TestInput{
 		{
@@ -6435,4 +6441,43 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// Ensure that the storage score offset for implicit accounts is the
+// minimum required for a full block issuer account.
+func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
+	_, implicitAccountIdent, _ := tpkg.RandImplicitAccountIdentity()
+
+	implicitAccount := &iotago.BasicOutput{
+		Amount: 0,
+		Conditions: iotago.BasicOutputUnlockConditions{
+			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+		},
+	}
+	vbytes := implicitAccount.VBytes(testAPI.RentStructure(), nil)
+	minAmount := iotago.BaseToken(testAPI.RentStructure().VByteCost()) * iotago.BaseToken(vbytes)
+	implicitAccount.Amount = minAmount
+	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.RentStructure())
+	require.NoError(t, depositValidationFunc(0, implicitAccount))
+
+	convertedAccount := &iotago.AccountOutput{
+		Amount: implicitAccount.Amount,
+		Conditions: iotago.AccountOutputUnlockConditions{
+			&iotago.GovernorAddressUnlockCondition{
+				Address: &iotago.Ed25519Address{},
+			},
+			&iotago.StateControllerAddressUnlockCondition{
+				Address: &iotago.Ed25519Address{},
+			},
+		},
+		Features: iotago.AccountOutputFeatures{
+			&iotago.BlockIssuerFeature{
+				BlockIssuerKeys: iotago.BlockIssuerKeys{
+					&iotago.Ed25519PublicKeyBlockIssuerKey{},
+				},
+			},
+		},
+	}
+
+	require.NoError(t, depositValidationFunc(0, convertedAccount))
 }

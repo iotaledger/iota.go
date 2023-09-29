@@ -181,21 +181,21 @@ func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, outputID iot
 		return iotago.ErrImplicitAccountDestructionDisallowed
 	}
 
-	// Create an dummyAccount output that is essentially the implicit account, so we can call accountGovernanceSTVF.
+	// Create a wrapper around the implicit account.
 	implicitAccountChainOutput := &vm.ChainOutputWithIDs{
 		ChainID:  next.AccountID,
 		OutputID: outputID,
 		Output:   implicitAccount,
 	}
 
-	blockIssuerFeature := &iotago.BlockIssuerFeature{
+	implicitAccountBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 		// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
 		// the expiry slot to a lower value, which is the behavior we want.
 		ExpirySlot: iotago.MaxSlotIndex,
 	}
 
-	if err := accountBlockIssuerSTVF(implicitAccountChainOutput, blockIssuerFeature, next, vmParams); err != nil {
+	if err := accountBlockIssuerSTVF(implicitAccountChainOutput, implicitAccountBlockIssuerFeature, next, vmParams); err != nil {
 		return err
 	}
 
