@@ -582,8 +582,16 @@ func ExecFuncBalancedMana() ExecFunc {
 			manaIn += reward
 		}
 
-		if manaIn < manaOut {
-			return ierrors.Wrapf(iotago.ErrInputOutputManaMismatch, "Mana in %d, Mana out %d", manaIn, manaOut)
+		if manaIn != manaOut {
+			if manaIn < manaOut {
+				// less mana on input side than on output side => not allowed
+				return ierrors.Wrapf(iotago.ErrInputOutputManaMismatch, "Mana in %d, Mana out %d", manaIn, manaOut)
+			} else {
+				// less mana on output side than on input side => check if mana burning is allowed
+				if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotBurnMana() {
+					return ierrors.Join(iotago.ErrInputOutputManaMismatch, iotago.ErrTxCapabilitiesManaBurningNotAllowed)
+				}
+			}
 		}
 
 		return nil
