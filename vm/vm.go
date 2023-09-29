@@ -845,6 +845,7 @@ func ExecFuncAddressRestrictions() ExecFunc {
 			}
 		}
 
+		// Check that no more than one Implicit Account Creation Address is on the input side of a transaction.
 		transactionHasImplicitAccountCreationAddress := false
 		for _, input := range vmParams.WorkingSet.UTXOInputs {
 			addressUnlockCondition := input.UnlockConditionSet().Address()
