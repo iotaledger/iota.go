@@ -29,9 +29,6 @@ const (
 // InputsCommitment is a commitment to the inputs of a transaction.
 type InputsCommitment = [InputsCommitmentLength]byte
 
-// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
-var ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
-
 type (
 	txEssenceContextInput  interface{ Input }
 	txEssenceInput         interface{ Input }
