@@ -843,14 +843,14 @@ func ExecFuncAddressRestrictions() ExecFunc {
 		}
 
 		transactionHasImplicitAccountCreationAddress := false
-		for _, input := range vmParams.WorkingSet.InputsByType[iotago.OutputBasic] {
-			if addressUnlockCondition := input.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+		for _, input := range vmParams.WorkingSet.UTXOInputs {
+			addressUnlockCondition := input.UnlockConditionSet().Address()
+			if input.Type() == iotago.OutputBasic && addressUnlockCondition != nil {
 				if addressUnlockCondition.Address.Type() == iotago.AddressImplicitAccountCreation {
 					if transactionHasImplicitAccountCreationAddress {
 						return iotago.ErrMultipleImplicitAccountCreationAddresses
-					} else {
-						transactionHasImplicitAccountCreationAddress = true
 					}
+					transactionHasImplicitAccountCreationAddress = true
 				}
 			}
 		}

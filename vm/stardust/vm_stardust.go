@@ -142,7 +142,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 			}
 		}
 
-		return implicitAccountSTVF(castedInput, input.OutputID.CreationSlot(), nextAccount, vmParams, transType)
+		return implicitAccountSTVF(castedInput, input.OutputID, nextAccount, vmParams, transType)
 	case *iotago.FoundryOutput:
 		var nextFoundry *iotago.FoundryOutput
 		if next != nil {
@@ -176,46 +176,30 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 }
 
 // For implicit account conversion, there must be a basic output as input, and an account output as output with an AccountID matching the input.
-func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot iotago.SlotIndex, next *iotago.AccountOutput, vmParams *vm.Params, transType iotago.ChainTransitionType) error {
-
-	if transType == iotago.ChainTransitionTypeDestroy || transType == iotago.ChainTransitionTypeGenesis {
+func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, outputID iotago.OutputID, next *iotago.AccountOutput, vmParams *vm.Params, transType iotago.ChainTransitionType) error {
+	if transType == iotago.ChainTransitionTypeDestroy {
 		return iotago.ErrImplicitAccountDestructionDisallowed
 	}
 
 	// Create an dummyAccount output that is essentially the implicit account, so we can call accountGovernanceSTVF.
-	dummyAccount := &vm.ChainOutputWithIDs{
+	implicitAccountChainOutput := &vm.ChainOutputWithIDs{
 		ChainID:  next.AccountID,
-		OutputID: iotago.EmptyOutputIDWithCreationSlot(creationSlot),
-		Output: &iotago.AccountOutput{
-			Amount:       implicitAccount.Amount,
-			Mana:         implicitAccount.Mana,
-			NativeTokens: implicitAccount.NativeTokens,
-			// Does not need to be set to the actual value.
-			AccountID:      iotago.EmptyAccountID(),
-			StateIndex:     0,
-			StateMetadata:  []byte{},
-			FoundryCounter: 0,
-			Conditions: iotago.AccountOutputUnlockConditions{
-				&iotago.StateControllerAddressUnlockCondition{
-					Address: &iotago.Ed25519Address{},
-				},
-				&iotago.GovernorAddressUnlockCondition{
-					Address: &iotago.Ed25519Address{},
-				},
-			},
-			Features: iotago.AccountOutputFeatures{
-				&iotago.BlockIssuerFeature{
-					BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
-					// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
-					// the expiry slot to a lower value, which is the behavior we want.
-					ExpirySlot: iotago.MaxSlotIndex,
-				},
-			},
-			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
-		},
+		OutputID: outputID,
+		Output:   implicitAccount,
 	}
 
-	return accountGovernanceSTVF(dummyAccount, next, vmParams)
+	blockIssuerFeature := &iotago.BlockIssuerFeature{
+		BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+		// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
+		// the expiry slot to a lower value, which is the behavior we want.
+		ExpirySlot: iotago.MaxSlotIndex,
+	}
+
+	if err := accountBlockIssuerSTVF(implicitAccountChainOutput, blockIssuerFeature, next, vmParams); err != nil {
+		return err
+	}
+
+	return accountGenesisValid(next, vmParams, false)
 }
 
 // For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
@@ -227,7 +211,7 @@ func implicitAccountSTVF(implicitAccount *vm.ImplicitAccountOutput, creationSlot
 func accountSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.AccountOutput, vmParams *vm.Params) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
-		if err := accountGenesisValid(next, vmParams); err != nil {
+		if err := accountGenesisValid(next, vmParams, true); err != nil {
 			return ierrors.Wrapf(err, " account %s", next.AccountID)
 		}
 	case iotago.ChainTransitionTypeStateChange:
@@ -251,8 +235,8 @@ func accountSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionT
 	return nil
 }
 
-func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params) error {
-	if !current.AccountID.Empty() {
+func accountGenesisValid(current *iotago.AccountOutput, vmParams *vm.Params, accountIDMustBeZeroed bool) error {
+	if accountIDMustBeZeroed && !current.AccountID.Empty() {
 		return ierrors.Wrap(iotago.ErrInvalidAccountStateTransition, "AccountOutput's ID is not zeroed even though it is new")
 	}
 
@@ -504,7 +488,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 		}
 	}
 
-	if manaIn > manaOut {
+	if manaIn < manaOut {
 		return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account: mana in %d, mana out %d", manaIn, manaOut)
 	}
 

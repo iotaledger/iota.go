@@ -32,11 +32,13 @@ var (
 	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrAccountMissing gets returned when an account is missing.
 	ErrAccountMissing = ierrors.New("account is missing")
-	// ErrImplicitAccountDestruction gets returned when an implicit account is being destroyed.
-	ErrImplicitAccountDestruction = ierrors.New("implicit account destruction is not allowed")
-	// ErrInvalidImplicitAccountConversion gets returned when there is an invalid conversion from implicit account to account output.
-	ErrInvalidImplicitAccountConversion = ierrors.New("invalid conversion from implicit account to account output")
-	emptyAccountID                      = [AccountIDLength]byte{}
+	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
+	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
+	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one
+	// Implicit Account Creation Address on the input side of a transaction.
+	ErrMultipleImplicitAccountCreationAddresses = ierrors.New("multiple implicit account creation addresses on the input side")
+
+	emptyAccountID = [AccountIDLength]byte{}
 )
 
 func EmptyAccountID() AccountID {
