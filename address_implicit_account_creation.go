@@ -53,9 +53,8 @@ func (addr *ImplicitAccountCreationAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *ImplicitAccountCreationAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size())) +
-		rentStruct.VBOffsetImplicitAccountCreationAddress
+func (addr *ImplicitAccountCreationAddress) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return rentStruct.StorageScoreOffsetImplicitAccountCreationAddress
 }
 
 func (addr *ImplicitAccountCreationAddress) ID() []byte {

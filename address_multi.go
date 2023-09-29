@@ -60,8 +60,8 @@ func (addr *MultiAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *MultiAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
+func (addr *MultiAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
 }
 
 func (addr *MultiAddress) ID() []byte {

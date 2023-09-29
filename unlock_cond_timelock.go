@@ -18,8 +18,8 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *TimelockUnlockCondition) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize + SlotIndexLength)
+func (s *TimelockUnlockCondition) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
 }
 
 func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

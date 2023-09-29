@@ -158,15 +158,13 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 	return ok
 }
 
-func (n *NFTOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount + stored mana
-		rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
-		n.NativeTokens.VBytes(rentStruct, nil) +
-		rentStruct.VBFactorData().Multiply(NFTIDLength) +
-		n.Conditions.VBytes(rentStruct, nil) +
-		n.Features.VBytes(rentStruct, nil) +
-		n.ImmutableFeatures.VBytes(rentStruct, nil)
+func (n *NFTOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreOffsetOutput(rentStruct) +
+		rentStruct.StorageScoreFactorData().Multiply(StorageScore(n.Size())) +
+		n.NativeTokens.StorageScore(rentStruct, nil) +
+		n.Conditions.StorageScore(rentStruct, nil) +
+		n.Features.StorageScore(rentStruct, nil) +
+		n.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
 func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

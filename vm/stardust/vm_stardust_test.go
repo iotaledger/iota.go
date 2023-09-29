@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -5119,7 +5120,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
+							minDeposit, err := rentStructure.MinDeposit(input)
+							require.NoError(t, err)
+							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
+							require.NoError(t, err)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
@@ -5184,7 +5188,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
+							minDeposit, err := rentStructure.MinDeposit(input)
+							require.NoError(t, err)
+							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
+							require.NoError(t, err)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 
@@ -5972,8 +5979,8 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	vBytes := dummyImplicitAccount.VBytes(testAPI.RentStructure(), nil)
-	minAmountImplicitAccount := iotago.BaseToken(testAPI.RentStructure().VByteCost()) * iotago.BaseToken(vBytes)
+	storageScore := dummyImplicitAccount.StorageScore(testAPI.RentStructure(), nil)
+	minAmountImplicitAccount := iotago.BaseToken(testAPI.RentStructure().StorageCost()) * iotago.BaseToken(storageScore)
 
 	exampleInputs := []TestInput{
 		{
@@ -6158,7 +6165,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
 		},
 		{
-			name: "ok - implicit account with VBOffsetImplicitAccountCreationAddress can be transitioned",
+			name: "ok - implicit account with StorageScoreOffsetImplicitAccountCreationAddress can be transitioned",
 			inputs: []TestInput{
 				{
 					inputID: outputID1,
@@ -6454,8 +6461,8 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	vbytes := implicitAccount.VBytes(testAPI.RentStructure(), nil)
-	minAmount := iotago.BaseToken(testAPI.RentStructure().VByteCost()) * iotago.BaseToken(vbytes)
+	storageScore := implicitAccount.StorageScore(testAPI.RentStructure(), nil)
+	minAmount := iotago.BaseToken(testAPI.RentStructure().StorageCost()) * iotago.BaseToken(storageScore)
 	implicitAccount.Amount = minAmount
 	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.RentStructure())
 	require.NoError(t, depositValidationFunc(0, implicitAccount))

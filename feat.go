@@ -67,14 +67,13 @@ func (f Features[T]) Clone() Features[T] {
 	return lo.CloneSlice(f)
 }
 
-func (f Features[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	var sumCost VBytes
+func (f Features[T]) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	var sumCost StorageScore
 	for _, feat := range f {
-		sumCost += feat.VBytes(rentStruct, nil)
+		sumCost += feat.StorageScore(rentStruct, nil)
 	}
 
-	// length prefix + sum cost of features
-	return rentStruct.VBFactorData().Multiply(serializer.OneByte) + sumCost
+	return sumCost
 }
 
 func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

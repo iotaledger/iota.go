@@ -221,7 +221,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
 	)
 
-	var minAmount iotago.BaseToken = 47400
+	var minAmount iotago.BaseToken = 14200
 
 	tests := []struct {
 		name        string
@@ -317,7 +317,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrVByteDepositNotCovered,
+			wantErr: iotago.ErrStorageDepositNotCovered,
 		},
 		{
 			name:        "fail - zero deposit",
