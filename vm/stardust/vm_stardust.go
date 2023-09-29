@@ -729,7 +729,7 @@ func foundrySTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionT
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
-		if err := foundryDestructionValid(current, inSums, outSums); err != nil {
+		if err := foundryDestructionValid(current, inSums, outSums, vmParams); err != nil {
 			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	default:
@@ -822,7 +822,11 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeStateChange, next.TokenScheme, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
 }
 
-func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum) error {
+func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum, vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyFoundryOutputs() {
+		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition, iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed)
+	}
+
 	nativeTokenID := current.MustNativeTokenID()
 
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
