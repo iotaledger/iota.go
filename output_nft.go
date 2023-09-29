@@ -16,6 +16,10 @@ var (
 	emptyNFTID = [NFTIDLength]byte{}
 )
 
+func EmptyNFTID() NFTID {
+	return emptyNFTID
+}
+
 // NFTID is the identifier for an NFT.
 // It is computed as the Blake2b-256 hash of the OutputID of the output which created the NFT.
 type NFTID [NFTIDLength]byte
