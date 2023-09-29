@@ -11,27 +11,27 @@ import (
 const (
 	canBurnNativeTokensBitIndex = iota
 	canBurnManaBitIndex
-	canBurnAccountOutputsBitIndex
-	canBurnTokenFoundryOutputsBitIndex
-	canBurnNFTOutputsBitIndex
+	canDestroyAccountOutputsBitIndex
+	canDestroyFoundryOutputsBitIndex
+	canDestroyNFTOutputsBitIndex
 )
 
 // TransactionCapabilitiesOptions defines the possible capabilities of a TransactionCapabilitiesBitMask.
 type TransactionCapabilitiesOptions struct {
-	canBurnNativeTokens        bool
-	canBurnMana                bool
-	canBurnAccountOutputs      bool
-	canBurnTokenFoundryOutputs bool
-	canBurnNFTOutputs          bool
+	canBurnNativeTokens      bool
+	canBurnMana              bool
+	canDestroyAccountOutputs bool
+	canDestroyFoundryOutputs bool
+	canDestroyNFTOutputs     bool
 }
 
 func WithTransactionCanDoAnything() options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
 		o.canBurnNativeTokens = true
 		o.canBurnMana = true
-		o.canBurnAccountOutputs = true
-		o.canBurnTokenFoundryOutputs = true
-		o.canBurnNFTOutputs = true
+		o.canDestroyAccountOutputs = true
+		o.canDestroyFoundryOutputs = true
+		o.canDestroyNFTOutputs = true
 	}
 }
 
@@ -47,21 +47,21 @@ func WithTransactionCanBurnMana(canBurnMana bool) options.Option[TransactionCapa
 	}
 }
 
-func WithTransactionCanBurnAccountOutputs(canBurnAccountOutputs bool) options.Option[TransactionCapabilitiesOptions] {
+func WithTransactionCanDestroyAccountOutputs(canDestroyAccountOutputs bool) options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
-		o.canBurnAccountOutputs = canBurnAccountOutputs
+		o.canDestroyAccountOutputs = canDestroyAccountOutputs
 	}
 }
 
-func WithTransactionCanBurnTokenFoundryOutputs(canBurnTokenFoundryOutputs bool) options.Option[TransactionCapabilitiesOptions] {
+func WithTransactionCanDestroyFoundryOutputs(canDestroyFoundryOutputs bool) options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
-		o.canBurnTokenFoundryOutputs = canBurnTokenFoundryOutputs
+		o.canDestroyFoundryOutputs = canDestroyFoundryOutputs
 	}
 }
 
-func WithTransactionCanBurnNFTOutputs(canBurnNFTOutputs bool) options.Option[TransactionCapabilitiesOptions] {
+func WithTransactionCanDestroyNFTOutputs(canDestroyNFTOutputs bool) options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
-		o.canBurnNFTOutputs = canBurnNFTOutputs
+		o.canDestroyNFTOutputs = canDestroyNFTOutputs
 	}
 }
 
@@ -86,16 +86,16 @@ func TransactionCapabilitiesBitMaskWithCapabilities(opts ...options.Option[Trans
 		bm = BitMaskSetBit(bm, canBurnManaBitIndex)
 	}
 
-	if options.canBurnAccountOutputs {
-		bm = BitMaskSetBit(bm, canBurnAccountOutputsBitIndex)
+	if options.canDestroyAccountOutputs {
+		bm = BitMaskSetBit(bm, canDestroyAccountOutputsBitIndex)
 	}
 
-	if options.canBurnTokenFoundryOutputs {
-		bm = BitMaskSetBit(bm, canBurnTokenFoundryOutputsBitIndex)
+	if options.canDestroyFoundryOutputs {
+		bm = BitMaskSetBit(bm, canDestroyFoundryOutputsBitIndex)
 	}
 
-	if options.canBurnNFTOutputs {
-		bm = BitMaskSetBit(bm, canBurnNFTOutputsBitIndex)
+	if options.canDestroyNFTOutputs {
+		bm = BitMaskSetBit(bm, canDestroyNFTOutputsBitIndex)
 	}
 
 	return bm
@@ -117,14 +117,14 @@ func (bm TransactionCapabilitiesBitMask) CannotBurnMana() bool {
 	return !BitMaskHasBit(bm, canBurnManaBitIndex)
 }
 
-func (bm TransactionCapabilitiesBitMask) CannotBurnAccountOutputs() bool {
-	return !BitMaskHasBit(bm, canBurnAccountOutputsBitIndex)
+func (bm TransactionCapabilitiesBitMask) CannotDestroyAccountOutputs() bool {
+	return !BitMaskHasBit(bm, canDestroyAccountOutputsBitIndex)
 }
 
-func (bm TransactionCapabilitiesBitMask) CannotBurnTokenFoundryOutputs() bool {
-	return !BitMaskHasBit(bm, canBurnTokenFoundryOutputsBitIndex)
+func (bm TransactionCapabilitiesBitMask) CannotDestroyFoundryOutputs() bool {
+	return !BitMaskHasBit(bm, canDestroyFoundryOutputsBitIndex)
 }
 
-func (bm TransactionCapabilitiesBitMask) CannotBurnNFTOutputs() bool {
-	return !BitMaskHasBit(bm, canBurnNFTOutputsBitIndex)
+func (bm TransactionCapabilitiesBitMask) CannotDestroyNFTOutputs() bool {
+	return !BitMaskHasBit(bm, canDestroyNFTOutputsBitIndex)
 }
