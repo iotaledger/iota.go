@@ -145,7 +145,7 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
 	minDeposit, err := r.MinDeposit(object)
 	if err != nil {
-		return 0, err
+		return 0, ierrors.Wrap(err, "failed to compute min deposit")
 	}
 	if amount < minDeposit {
 		return 0, ierrors.Wrapf(ErrStorageDepositNotCovered, "needed %d but only got %d", minDeposit, amount)

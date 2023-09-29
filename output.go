@@ -778,7 +778,7 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
 			minStorageDepositForReturnOutput, err := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			if err != nil {
-				return ierrors.Wrapf(err, "output index %d", index)
+				return ierrors.Wrapf(err, "failed to calculate storage deposit for output index %d", index)
 			}
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:

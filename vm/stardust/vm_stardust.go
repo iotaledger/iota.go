@@ -470,8 +470,10 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	if err != nil {
 		return err
 	}
-	// no need to check underflow error as the result of safe sub will be zero in that case
-	excessBaseTokensAccount, _ := safemath.SafeSub(current.BaseTokenAmount(), minDeposit)
+	excessBaseTokensAccount, err := safemath.SafeSub(current.BaseTokenAmount(), minDeposit)
+	if err != nil {
+		excessBaseTokensAccount = 0
+	}
 	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
