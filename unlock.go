@@ -73,20 +73,6 @@ func (o Unlocks) Clone() Unlocks {
 	return lo.CloneSlice(o)
 }
 
-// ToUnlockByType converts the Unlocks slice to UnlocksByType.
-func (o Unlocks) ToUnlockByType() UnlocksByType {
-	unlocksByType := make(UnlocksByType)
-	for _, unlock := range o {
-		slice, has := unlocksByType[unlock.Type()]
-		if !has {
-			slice = make(Unlocks, 0)
-		}
-		unlocksByType[unlock.Type()] = append(slice, unlock)
-	}
-
-	return unlocksByType
-}
-
 func (o Unlocks) Size() int {
 	sum := serializer.UInt16ByteSize
 	for _, unlock := range o {
@@ -112,9 +98,6 @@ func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, e
 
 	return workScoreUnlocks, nil
 }
-
-// UnlocksByType is a map of UnlockType(s) to slice of Unlock(s).
-type UnlocksByType map[UnlockType][]Unlock
 
 // Unlock unlocks inputs of a SignedTransaction.
 type Unlock interface {

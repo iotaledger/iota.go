@@ -43,20 +43,14 @@ type WorkingSet struct {
 	Tx *iotago.SignedTransaction
 	// The message which signatures are signing.
 	EssenceMsgToSign []byte
-	// The inputs of the transaction mapped by type.
-	InputsByType iotago.OutputsByType
 	// The ChainOutput(s) at the input side.
 	InChains ChainInputSet
 	// The sum of NativeTokens at the input side.
 	InNativeTokens iotago.NativeTokenSum
-	// The Outputs of the transaction mapped by type.
-	OutputsByType iotago.OutputsByType
 	// The ChainOutput(s) at the output side.
 	OutChains iotago.ChainOutputSet
 	// The sum of NativeTokens at the output side.
 	OutNativeTokens iotago.NativeTokenSum
-	// The Unlocks carried by the transaction mapped by type.
-	UnlocksByType iotago.UnlocksByType
 	// BIC is the block issuance credit for MCA slots prior to the transaction's creation slot (or for the slot to which the block commits)
 	// Contains one value for each account output touched in the transaction and empty if no account outputs touched.
 	BIC BlockIssuanceCreditInputSet
@@ -64,6 +58,10 @@ type WorkingSet struct {
 	Commitment VMCommitmentInput
 	// Rewards contains a set of account or delegation IDs mapped to their rewards amount.
 	Rewards RewardsInputSet
+	// TotalManaIn is the total decayed potential and stored Mana from the input side.
+	TotalManaIn iotago.Mana
+	// TotalManaOut is the total stored and allotted Mana from the output side.
+	TotalManaOut iotago.Mana
 }
 
 // UTXOInputAtIndex retrieves the UTXOInput at the given index.
@@ -576,15 +574,8 @@ func ExecFuncBalancedMana() ExecFunc {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlot(), txCreationSlot)
 			}
 		}
-		manaIn, err := TotalManaIn(vmParams.API.ManaDecayProvider(), vmParams.API.RentStructure(), txCreationSlot, vmParams.WorkingSet.UTXOInputsSet)
-		if err != nil {
-			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
-		}
-
-		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Transaction.Outputs, vmParams.WorkingSet.Tx.Transaction.Allotments)
-		if err != nil {
-			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
-		}
+		manaIn := vmParams.WorkingSet.TotalManaIn
+		manaOut := vmParams.WorkingSet.TotalManaOut
 
 		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
 		for _, reward := range vmParams.WorkingSet.Rewards {
