@@ -477,6 +477,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					Inputs:       inputIDs.UTXOInputs(),
 					CreationSlot: creationSlot,
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -6418,6 +6419,9 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		}
 
 		txBuilder := builder.NewTransactionBuilder(testAPI)
+		txBuilder.WithTransactionCapabilities(
+			iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+		)
 
 		for _, input := range tests[idx].inputs {
 			txBuilder.AddInput(&builder.TxInput{
