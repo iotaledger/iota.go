@@ -19,6 +19,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs:        iotago.TxEssenceInputs{},
 				Allotments:    iotago.Allotments{},
+				Capabilities:  iotago.TransactionCapabilitiesBitMask{},
 			},
 			Outputs: iotago.TxEssenceOutputs{},
 		},
@@ -109,6 +110,12 @@ func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value
 func (b *TransactionBuilder) AddOutput(output iotago.Output) *TransactionBuilder {
 	b.transaction.Outputs = append(b.transaction.Outputs, output)
 
+	return b
+}
+
+// WithTransactionCapabilities sets the capabilities of the transaction.
+func (b *TransactionBuilder) WithTransactionCapabilities(capabilities iotago.TransactionCapabilitiesBitMask) *TransactionBuilder {
+	b.transaction.Capabilities = capabilities
 	return b
 }
 

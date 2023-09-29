@@ -53,8 +53,10 @@ type TransactionEssence struct {
 	InputsCommitment InputsCommitment `serix:"4,mapKey=inputsCommitment"`
 	// The optional accounts map with corresponding allotment values.
 	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"`
+	// The capabilities of the transaction.
+	Capabilities TransactionCapabilitiesBitMask `serix:"6,mapKey=capabilities"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"7,optional,mapKey=payload"`
 }
 
 func (u *TransactionEssence) Clone() *TransactionEssence {
@@ -70,6 +72,7 @@ func (u *TransactionEssence) Clone() *TransactionEssence {
 		Inputs:           u.Inputs.Clone(),
 		InputsCommitment: u.InputsCommitment,
 		Allotments:       u.Allotments.Clone(),
+		Capabilities:     u.Capabilities.Clone(),
 		Payload:          payload,
 	}
 }
@@ -89,6 +92,7 @@ func (u *TransactionEssence) Size() int {
 		// InputsCommitment
 		InputsCommitmentLength +
 		u.Allotments.Size() +
+		u.Capabilities.Size() +
 		payloadSize
 }
 

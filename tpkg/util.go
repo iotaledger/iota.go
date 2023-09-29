@@ -521,6 +521,7 @@ func RandTransactionWithOptions(opts ...options.Option[iotago.Transaction]) *iot
 			ContextInputs: iotago.TxEssenceContextInputs{},
 			Inputs:        iotago.TxEssenceInputs{},
 			Allotments:    iotago.Allotments{},
+			Capabilities:  iotago.TransactionCapabilitiesBitMask{},
 		},
 		Outputs: iotago.TxEssenceOutputs{},
 	}
@@ -850,8 +851,9 @@ func OneInputOutputTransaction() *iotago.SignedTransaction {
 						TransactionOutputIndex: 0,
 					},
 				},
-				Allotments: iotago.Allotments{},
-				Payload:    nil,
+				Allotments:   iotago.Allotments{},
+				Capabilities: iotago.TransactionCapabilitiesBitMask{},
+				Payload:      nil,
 			},
 			Outputs: iotago.TxEssenceOutputs{
 				&iotago.BasicOutput{
