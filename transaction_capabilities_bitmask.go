@@ -3,9 +3,23 @@ package iotago
 import (
 	"context"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
+)
+
+var (
+	// ErrTxCapabilitiesNativeTokenBurningNotAllowed gets returned when native tokens are burned in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesNativeTokenBurningNotAllowed = ierrors.New("native token burning is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesManaBurningNotAllowed gets returned when mana is burned in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesManaBurningNotAllowed = ierrors.New("mana burning is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesAccountDestructionNotAllowed gets returned when an account is destroyed in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesAccountDestructionNotAllowed = ierrors.New("account destruction is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesFoundryDestructionNotAllowed gets returned when a foundry is destroyed in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesFoundryDestructionNotAllowed = ierrors.New("foundry destruction is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesNFTDestructionNotAllowed gets returned when a NFT is destroyed in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesNFTDestructionNotAllowed = ierrors.New("NFT destruction is not allowed by the transaction capabilities")
 )
 
 const (

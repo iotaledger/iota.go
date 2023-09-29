@@ -623,6 +623,10 @@ func accountStakingExpiredValidation(
 }
 
 func accountDestructionValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyAccountOutputs() {
+		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
+	}
+
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 
