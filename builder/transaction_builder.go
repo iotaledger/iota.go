@@ -84,6 +84,10 @@ func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *Transac
 
 // IncreaseAllotment adds or increases the given allotment to the builder.
 func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value iotago.Mana) *TransactionBuilder {
+	if value == 0 {
+		return b
+	}
+
 	// check if the allotment already exists and add the value on top
 	for _, allotment := range b.transaction.Allotments {
 		if allotment.AccountID == accountID {
@@ -159,37 +163,37 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	}
 
 	// update the unbound mana balance
-	updateUnboundManaBalance := func(storedMana iotago.Mana) error {
-		if unboundManaInputs < storedMana {
+	updateUnboundManaBalance := func(manaOut iotago.Mana) error {
+		if unboundManaInputs < manaOut {
 			return ierrors.New("not enough unbound mana available on the input side")
 		}
-		unboundManaInputs -= storedMana
+		unboundManaInputs -= manaOut
 
 		return nil
 	}
 
 	// update the account bound mana balances if they exist and/or the onbound mana balance
-	updateUnboundAndAccountBoundManaBalances := func(accountID iotago.AccountID, storedMana iotago.Mana) error {
+	updateUnboundAndAccountBoundManaBalances := func(accountID iotago.AccountID, accountBoundManaOut iotago.Mana) error {
 		// check if there is account bound mana for this account on the input side
 		if accountBalance, exists := accountBoundManaInputs[accountID]; exists {
 			// check if there is enough account bound mana for this account on the input side
-			if accountBalance < storedMana {
+			if accountBalance < accountBoundManaOut {
 				// not enough mana for this account on the input side
 				// => set the remaining account bound mana for this account to 0
 				accountBoundManaInputs[accountID] = 0
 
 				// subtract the remainder from the unbound mana
-				return updateUnboundManaBalance(storedMana - accountBalance)
+				return updateUnboundManaBalance(accountBoundManaOut - accountBalance)
 			}
 
 			// there is enough account bound mana for this account, subtract it from there
-			accountBoundManaInputs[accountID] -= storedMana
+			accountBoundManaInputs[accountID] -= accountBoundManaOut
 
 			return nil
 		}
 
 		// no account bound mana available for the given account, subtract it from the unbounded mana
-		return updateUnboundManaBalance(storedMana)
+		return updateUnboundManaBalance(accountBoundManaOut)
 	}
 
 	if storedManaOutputIndex >= len(b.transaction.Outputs) {
