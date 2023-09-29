@@ -776,7 +776,10 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput, err := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			if err != nil {
+				return ierrors.Wrapf(err, "output index %d", index)
+			}
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)

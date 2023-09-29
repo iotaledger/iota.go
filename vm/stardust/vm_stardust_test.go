@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -5024,7 +5025,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
+							minDeposit, err := rentStructure.MinDeposit(input)
+							require.NoError(t, err)
+							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
+							require.NoError(t, err)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
@@ -5084,7 +5088,10 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							excessBaseTokens := input.BaseTokenAmount() - rentStructure.MinDeposit(input)
+							minDeposit, err := rentStructure.MinDeposit(input)
+							require.NoError(t, err)
+							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
+							require.NoError(t, err)
 							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 

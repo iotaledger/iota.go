@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/vm"
@@ -465,13 +466,12 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 
 	// AccountInPotential
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-	var excessBaseTokensAccount iotago.BaseToken
-	minDeposit := rentStructure.MinDeposit(current)
-	if current.BaseTokenAmount() <= minDeposit {
-		excessBaseTokensAccount = 0
-	} else {
-		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
+	minDeposit, err := rentStructure.MinDeposit(current)
+	if err != nil {
+		return err
 	}
+	// no need to check underflow error as the result of safe sub will be zero in that case
+	excessBaseTokensAccount, _ := safemath.SafeSub(current.BaseTokenAmount(), minDeposit)
 	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Essence.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)

@@ -88,11 +88,14 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 
 		// potential Mana
 		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-		minDeposit := rentStructure.MinDeposit(input)
-		if input.BaseTokenAmount() <= minDeposit {
+		minDeposit, err := rentStructure.MinDeposit(input)
+		if err != nil {
+			return 0, ierrors.Wrapf(err, "input %s min deposit calculation failed", outputID)
+		}
+		excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
+		if err != nil {
 			continue
 		}
-		excessBaseTokens := input.BaseTokenAmount() - minDeposit
 		manaPotential, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)

@@ -1,7 +1,9 @@
 package iotago
 
 import (
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 )
 
 // StorageScore defines the type of storage score.
@@ -129,9 +131,10 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 	// the difference between the storage score of the dummy account and the storage
 	// score of the dummy basic output minus the storage score of the dummy address.
 	storageScoreAccountOutput := dummyAccountOutput.StorageScore(rentStructure, nil)
-	storageScoreBasicOutput := dummyBasicOutput.StorageScore(rentStructure, nil)
-	storageScoreAddress := dummyAddress.StorageScore(rentStructure, nil)
-	rentStructure.StorageScoreOffsetImplicitAccountCreationAddress = storageScoreAccountOutput - storageScoreBasicOutput + storageScoreAddress
+	storageScoreBasicOutputWithoutAddress := dummyBasicOutput.StorageScore(rentStructure, nil) - dummyAddress.StorageScore(rentStructure, nil)
+	rentStructure.StorageScoreOffsetImplicitAccountCreationAddress = lo.PanicOnErr(
+		safemath.SafeSub(storageScoreAccountOutput, storageScoreBasicOutputWithoutAddress),
+	)
 
 	return rentStructure
 }
@@ -140,7 +143,10 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 // by examining the storage score of the object.
 // Returns the minimum deposit computed and an error if it is not covered by the base token amount of the object.
 func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
-	minDeposit := r.MinDeposit(object)
+	minDeposit, err := r.MinDeposit(object)
+	if err != nil {
+		return 0, err
+	}
 	if amount < minDeposit {
 		return 0, ierrors.Wrapf(ErrStorageDepositNotCovered, "needed %d but only got %d", minDeposit, amount)
 	}
@@ -149,14 +155,15 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 }
 
 // MinDeposit returns the minimum deposit to cover a given object.
-func (r *RentStructure) MinDeposit(object NonEphemeralObject) BaseToken {
-	return r.StorageCost() * BaseToken(object.StorageScore(r, nil))
+func (r *RentStructure) MinDeposit(object NonEphemeralObject) (BaseToken, error) {
+	return safemath.SafeMul(r.StorageCost(), BaseToken(object.StorageScore(r, nil)))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
-func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) BaseToken {
-	return r.StorageCost() * BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil))
+func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
+	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
+
 }
 
 func (r RentParameters) Equals(other RentParameters) bool {
