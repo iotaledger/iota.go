@@ -486,7 +486,7 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Transaction.CreationSlot)
 		}
 
-		if cInput := tx.CommitmentInput(); cInput != nil {
+		if cInput := tx.Transaction.CommitmentInput(); cInput != nil {
 			cInputSlot := cInput.CommitmentID.Slot()
 			// check that commitment input is not too recent.
 			if cInputSlot > 0 && // Don't filter commitments to genesis based on being too recent.

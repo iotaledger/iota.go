@@ -124,81 +124,9 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(lo.PanicOnErr(transactionID.Identifier().Bytes()), unlocksBytes)), nil
 }
 
-func (t *SignedTransaction) Inputs() ([]*UTXOInput, error) {
-	references := make([]*UTXOInput, 0, len(t.Transaction.Inputs))
-	for _, input := range t.Transaction.Inputs {
-		switch castInput := input.(type) {
-		case *UTXOInput:
-			references = append(references, castInput)
-		default:
-			return nil, ErrUnknownInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) ContextInputs() (TransactionContextInputs, error) {
-	references := make(TransactionContextInputs, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
-			references = append(references, castInput)
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
-	references := make([]*BlockIssuanceCreditInput, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput:
-			references = append(references, castInput)
-		case *CommitmentInput, *RewardInput:
-			// ignore this type
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) RewardInputs() ([]*RewardInput, error) {
-	references := make([]*RewardInput, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *RewardInput:
-			references = append(references, castInput)
-		case *CommitmentInput, *BlockIssuanceCreditInput:
-			// ignore this type
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-// Returns the first commitment input in the transaction if it exists or nil.
-func (t *SignedTransaction) CommitmentInput() *CommitmentInput {
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput, *RewardInput:
-			// ignore this type
-		case *CommitmentInput:
-			return castInput
-		default:
-			return nil
-		}
-	}
-
-	return nil
-}
+//func (t *SignedTransaction) Transaction() *Transaction {
+//	return t.Transaction
+//}
 
 func (t *SignedTransaction) Size() int {
 	// PayloadType
@@ -215,8 +143,13 @@ func (t *SignedTransaction) String() string {
 // syntacticallyValidate syntactically validates the SignedTransaction.
 func (t *SignedTransaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
-	if len(t.Unlocks) != len(t.Transaction.Inputs) {
-		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(t.Transaction.Inputs))
+	inputs, err := t.Transaction.Inputs()
+	if err != nil {
+		return err
+	}
+
+	if len(t.Unlocks) != len(inputs) {
+		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(inputs))
 	}
 
 	if err := t.Transaction.syntacticallyValidate(t.API); err != nil {

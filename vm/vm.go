@@ -70,7 +70,7 @@ type WorkingSet struct {
 // Caller must ensure that the index is valid.
 func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOInput {
 	//nolint:forcetypeassert // we can safely assume that this is a UTXOInput
-	return workingSet.Tx.Transaction.Inputs[inputIndex].(*iotago.UTXOInput)
+	return workingSet.Tx.Transaction.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
 func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
@@ -403,7 +403,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 				return nil, iotago.ErrTransDepIdentOutputNonUTXOChainID
 			}
 			//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Transaction.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
+			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Transaction.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
 		}
 
 		next := vmParams.WorkingSet.OutChains[chainID]

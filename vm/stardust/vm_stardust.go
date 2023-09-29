@@ -38,7 +38,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
 	workingSet.UTXOInputsSet = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.Transaction.Inputs {
+	for inputIndex, inputRef := range workingSet.Tx.Transaction.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		ref := inputRef.(*iotago.UTXOInput).OutputID()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)

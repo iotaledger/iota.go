@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"fmt"
+
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -58,9 +60,9 @@ type Transaction struct {
 	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
 }
 
-// ID computes the ID of the Transaction.
+// ID returns the TransactionID created without the signatures.
 func (t *Transaction) ID() (TransactionID, error) {
-	// TODO: implement proper ID calculation
+	// TODO: implementme
 	return EmptyTransactionID, nil
 }
 
@@ -69,6 +71,82 @@ func (t *Transaction) Clone() *Transaction {
 		TransactionEssence: t.TransactionEssence.Clone(),
 		Outputs:            t.Outputs.Clone(),
 	}
+}
+
+func (t *Transaction) Inputs() ([]*UTXOInput, error) {
+	references := make([]*UTXOInput, 0, len(t.TransactionEssence.Inputs))
+	for _, input := range t.TransactionEssence.Inputs {
+		switch castInput := input.(type) {
+		case *UTXOInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnknownInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
+	references := make(TransactionContextInputs, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+	references := make([]*BlockIssuanceCreditInput, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BlockIssuanceCreditInput:
+			references = append(references, castInput)
+		case *CommitmentInput, *RewardInput:
+			// ignore this type
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
+	references := make([]*RewardInput, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *RewardInput:
+			references = append(references, castInput)
+		case *CommitmentInput, *BlockIssuanceCreditInput:
+			// ignore this type
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+// Returns the first commitment input in the transaction if it exists or nil.
+func (t *Transaction) CommitmentInput() *CommitmentInput {
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BlockIssuanceCreditInput, *RewardInput:
+			// ignore this type
+		case *CommitmentInput:
+			return castInput
+		default:
+			return nil
+		}
+	}
+
+	return nil
 }
 
 // SigningMessage returns the to be signed message.
@@ -147,4 +225,9 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 	}
 
 	return workscoreTransactionEssence.Add(workScoreOutputs)
+}
+
+func (t *Transaction) String() string {
+	// TODO: stringify for debugging purposes
+	return fmt.Sprintf("SignedTransaction[%v %v]", t.TransactionEssence, t.Outputs)
 }

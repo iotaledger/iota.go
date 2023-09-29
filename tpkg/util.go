@@ -527,7 +527,7 @@ func RandTransactionWithOptions(opts ...options.Option[iotago.Transaction]) *iot
 
 	inputCount := 1
 	for i := inputCount; i > 0; i-- {
-		tx.Inputs = append(tx.Inputs, RandUTXOInput())
+		tx.TransactionEssence.Inputs = append(tx.TransactionEssence.Inputs, RandUTXOInput())
 	}
 
 	outputCount := 1
@@ -541,7 +541,7 @@ func RandTransactionWithOptions(opts ...options.Option[iotago.Transaction]) *iot
 func WithBlockIssuanceCreditInputCount(inputCount int) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
 		for i := inputCount; i > 0; i-- {
-			tx.ContextInputs = append(tx.ContextInputs, RandBlockIssuanceCreditInput())
+			tx.TransactionEssence.ContextInputs = append(tx.TransactionEssence.ContextInputs, RandBlockIssuanceCreditInput())
 		}
 	}
 }
@@ -552,23 +552,23 @@ func WithRewardInputCount(inputCount uint16) options.Option[iotago.Transaction] 
 			rewardInput := &iotago.RewardInput{
 				Index: i,
 			}
-			tx.ContextInputs = append(tx.ContextInputs, rewardInput)
+			tx.TransactionEssence.ContextInputs = append(tx.TransactionEssence.ContextInputs, rewardInput)
 		}
 	}
 }
 
 func WithCommitmentInput() options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
-		tx.ContextInputs = append(tx.ContextInputs, RandCommitmentInput())
+		tx.TransactionEssence.ContextInputs = append(tx.TransactionEssence.ContextInputs, RandCommitmentInput())
 	}
 }
 
 func WithUTXOInputCount(inputCount int) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
-		tx.Inputs = make(iotago.TxEssenceInputs, 0, inputCount)
+		tx.TransactionEssence.Inputs = make(iotago.TxEssenceInputs, 0, inputCount)
 
 		for i := inputCount; i > 0; i-- {
-			tx.Inputs = append(tx.Inputs, RandUTXOInput())
+			tx.TransactionEssence.Inputs = append(tx.TransactionEssence.Inputs, RandUTXOInput())
 		}
 	}
 }
@@ -591,13 +591,13 @@ func WithAllotmentCount(allotmentCount int) options.Option[iotago.Transaction] {
 
 func WithInputs(inputs iotago.TxEssenceInputs) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
-		tx.Inputs = inputs
+		tx.TransactionEssence.Inputs = inputs
 	}
 }
 
 func WithContextInputs(inputs iotago.TxEssenceContextInputs) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
-		tx.ContextInputs = inputs
+		tx.TransactionEssence.ContextInputs = inputs
 	}
 }
 
@@ -727,7 +727,7 @@ func RandSignedTransactionWithTransaction(api iotago.API, transaction *iotago.Tr
 	sigTxPayload := &iotago.SignedTransaction{API: api}
 	sigTxPayload.Transaction = transaction
 
-	unlocksCount := len(transaction.Inputs)
+	unlocksCount := len(transaction.TransactionEssence.Inputs)
 	for i := unlocksCount; i > 0; i-- {
 		sigTxPayload.Unlocks = append(sigTxPayload.Unlocks, RandEd25519SignatureUnlock())
 	}
