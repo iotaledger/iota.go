@@ -54,30 +54,35 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 		return nil, err
 	}
 
-	workingSet.InputsByType = func() iotago.OutputsByType {
-		slice := make(iotago.Outputs[iotago.Output], len(utxoInputsSet))
-		var i int
-		for _, output := range utxoInputsSet {
-			slice[i] = output
-			i++
-		}
-
-		return slice.ToOutputsByType()
-	}()
-
 	txID, err := workingSet.Tx.ID()
 	if err != nil {
 		return nil, err
 	}
 
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
-	workingSet.OutputsByType = t.Transaction.Outputs.ToOutputsByType()
 	workingSet.OutChains = workingSet.Tx.Transaction.Outputs.ChainOutputSet(txID)
 
-	workingSet.UnlocksByType = t.Unlocks.ToUnlockByType()
 	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
 	workingSet.Commitment = inputs.CommitmentInput
 	workingSet.Rewards = inputs.RewardsInputSet
+
+	workingSet.TotalManaIn, err = vm.TotalManaIn(
+		api.ProtocolParameters().ManaDecayProvider(),
+		api.RentStructure(),
+		workingSet.Tx.Transaction.CreationSlot,
+		workingSet.UTXOInputsSet,
+	)
+	if err != nil {
+		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
+	}
+
+	workingSet.TotalManaOut, err = vm.TotalManaOut(
+		workingSet.Tx.Transaction.Outputs,
+		workingSet.Tx.Transaction.Allotments,
+	)
+	if err != nil {
+		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
+	}
 
 	return workingSet, nil
 }
@@ -439,32 +444,21 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
 	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
 	rentStructure := vmParams.API.RentStructure()
-	manaIn, err := vm.TotalManaIn(
-		manaDecayProvider,
-		rentStructure,
-		vmParams.WorkingSet.Tx.Transaction.CreationSlot,
-		vmParams.WorkingSet.UTXOInputsSet,
-	)
-	if err != nil {
-		return err
-	}
 
-	manaOut, err := vm.TotalManaOut(
-		vmParams.WorkingSet.Tx.Transaction.Outputs,
-		vmParams.WorkingSet.Tx.Transaction.Allotments,
-	)
-	if err != nil {
-		return err
-	}
+	manaIn := vmParams.WorkingSet.TotalManaIn
+	manaOut := vmParams.WorkingSet.TotalManaOut
 
 	// AccountInStored
 	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
-	manaIn -= manaStoredAccount
+	manaIn, err = safemath.SafeSub(manaIn, manaStoredAccount)
+	if err != nil {
+		return ierrors.Wrapf(err, "account %s stored mana in exceeds total remaining mana in", next.AccountID)
+	}
 
-	// AccountInPotential
+	// AccountInPotential - the potential mana from the input side of the account in question
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
 	minDeposit, err := rentStructure.MinDeposit(current)
 	if err != nil {
@@ -478,31 +472,30 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}
-	manaIn -= manaPotentialAccount
-
-	// AccountOutStored
-	manaOut -= next.Mana
-	// AccountOutAllotted
-	manaOut -= vmParams.WorkingSet.Tx.Transaction.Allotments.Get(next.AccountID)
-
-	// subtract AccountOutLocked - we only consider basic and NFT outputs because only these output types can include a timelock and address unlock condition.
-	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
-	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputBasic] {
-		basicOutput, is := output.(*iotago.BasicOutput)
-		if !is {
-			continue
-		}
-		if basicOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
-			manaOut -= basicOutput.StoredMana()
-		}
+	manaIn, err = safemath.SafeSub(manaIn, manaPotentialAccount)
+	if err != nil {
+		return ierrors.Wrapf(err, "account %s potential mana in exceeds total remaining mana in", next.AccountID)
 	}
-	for _, output := range vmParams.WorkingSet.OutputsByType[iotago.OutputNFT] {
-		nftOutput, is := output.(*iotago.NFTOutput)
-		if !is {
-			continue
-		}
-		if nftOutput.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
-			manaOut -= nftOutput.StoredMana()
+	// AccountOutStored - stored Mana on the output side of the account in question
+	manaOut, err = safemath.SafeSub(manaOut, next.Mana)
+	if err != nil {
+		return ierrors.Wrapf(err, "account %s stored mana out exceeds total remaining mana out", next.AccountID)
+	}
+	// AccountOutAllotted - allotments to the account in question
+	accountOutAllotted := vmParams.WorkingSet.Tx.Transaction.Allotments.Get(next.AccountID)
+	manaOut, err = safemath.SafeSub(manaOut, accountOutAllotted)
+	if err != nil {
+		return ierrors.Wrapf(err, "account %s allotment exceeds total remaining mana out", next.AccountID)
+	}
+
+	// AccountOutLocked - outputs with manalock conditions
+	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
+	for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
+		if output.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
+			manaOut, err = safemath.SafeSub(manaOut, output.StoredMana())
+			if err != nil {
+				return ierrors.Wrapf(err, "account %s manalocked output mana exceeds total remaining mana out", next.AccountID)
+			}
 		}
 	}
 
