@@ -14,6 +14,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
 		transaction: &iotago.Transaction{
+			API: api,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     api.ProtocolParameters().NetworkID(),
 				ContextInputs: iotago.TxEssenceContextInputs{},

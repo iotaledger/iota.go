@@ -137,6 +137,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
@@ -179,6 +180,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 10001,
 							},
@@ -221,6 +223,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 991,
 							},
@@ -263,6 +266,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -306,6 +310,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -349,6 +354,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -392,6 +398,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -434,6 +441,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -498,6 +506,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -649,6 +658,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -709,6 +719,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -773,6 +784,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -837,6 +849,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -903,6 +916,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -962,6 +976,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -1015,6 +1030,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -1073,6 +1089,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -1137,6 +1154,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -1202,6 +1220,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -1269,6 +1288,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
 							},
@@ -1312,6 +1332,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
 							},
@@ -1353,6 +1374,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1000,
 							},
@@ -1396,6 +1418,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
@@ -1450,6 +1473,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 999,
@@ -1504,6 +1528,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
@@ -1560,6 +1585,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
@@ -1617,6 +1643,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs: nil,
 							},
@@ -1696,6 +1723,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
@@ -1805,6 +1833,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
@@ -1867,6 +1896,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
@@ -1930,6 +1960,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 900,
@@ -1990,6 +2021,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
@@ -2052,6 +2084,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
 							},
@@ -2123,6 +2156,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs: nil,
 							},
@@ -2248,8 +2282,10 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					InChains:       vm.ChainInputSet{},
 					Tx: &iotago.SignedTransaction{
-						API:         tpkg.TestAPI,
-						Transaction: &iotago.Transaction{},
+						API: tpkg.TestAPI,
+						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
+						},
 					},
 				},
 			},
@@ -2356,6 +2392,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API:     tpkg.TestAPI,
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2388,6 +2425,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API:     tpkg.TestAPI,
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2420,6 +2458,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API:     tpkg.TestAPI,
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2450,6 +2489,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							Outputs: iotago.TxEssenceOutputs{
 								&iotago.FoundryOutput{
 									Amount: 100,
@@ -3463,7 +3503,9 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 						Slot: currentSlot,
 					},
 					Tx: &iotago.SignedTransaction{
+						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},
@@ -3509,7 +3551,9 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 						Slot: currentSlot,
 					},
 					Tx: &iotago.SignedTransaction{
+						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							API: tpkg.TestAPI,
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
 							},

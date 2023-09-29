@@ -13,8 +13,8 @@ func TestTransactionEssence_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandTransaction(),
-			target: &iotago.Transaction{},
+			source: tpkg.RandTransaction(tpkg.TestAPI),
+			target: &iotago.Transaction{API: tpkg.TestAPI},
 		},
 	}
 
@@ -40,6 +40,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			name: "transition the same Account twice",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
+					API: tpkg.TestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
 						ContextInputs: iotago.TxEssenceContextInputs{},
@@ -76,6 +77,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			name: "transition the same NFT twice",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
+					API: tpkg.TestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID: tpkg.TestNetworkID,
 						Inputs:    inputIDs.UTXOInputs(),
@@ -108,6 +110,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			name: "transition the same Foundry twice",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
+					API: tpkg.TestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID: tpkg.TestNetworkID,
 						Inputs:    inputIDs.UTXOInputs(),
@@ -174,6 +177,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 			name: "allot to the same account twice",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
+					API: tpkg.TestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
 						ContextInputs: iotago.TxEssenceContextInputs{},

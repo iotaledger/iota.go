@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
@@ -111,17 +110,17 @@ func (t *SignedTransaction) OutputsSet() (OutputSet, error) {
 
 // ID computes the ID of the SignedTransaction.
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
+	transactionBytes, err := t.API.Encode(t.Unlocks)
+	if err != nil {
+		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
 	unlocksBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
 		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
-	transactionID, err := t.Transaction.ID()
-	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
-	}
-
-	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(lo.PanicOnErr(transactionID.Identifier().Bytes()), unlocksBytes)), nil
+	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
 }
 
 //func (t *SignedTransaction) Transaction() *Transaction {

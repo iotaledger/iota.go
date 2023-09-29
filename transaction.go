@@ -1,11 +1,13 @@
 package iotago
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
 const (
@@ -55,6 +57,7 @@ type (
 
 // Transaction is the part of a SignedTransaction that contains inputs and outputs.
 type Transaction struct {
+	API                 API
 	*TransactionEssence `serix:"0"`
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
@@ -62,12 +65,26 @@ type Transaction struct {
 
 // ID returns the TransactionID created without the signatures.
 func (t *Transaction) ID() (TransactionID, error) {
-	// TODO: implementme
-	return EmptyTransactionID, nil
+	essenceBytes, err := t.API.Encode(t.TransactionEssence)
+	if err != nil {
+		return TransactionID{}, ierrors.Errorf("can't compute essence bytes: %w", err)
+	}
+
+	outputBytes, err := t.API.Encode(t.Outputs)
+	if err != nil {
+		return TransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
+	return SignedTransactionIDFromData(t.CreationSlot, byteutils.ConcatBytes(essenceBytes, outputBytes)), nil
+}
+
+func (t *Transaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
 }
 
 func (t *Transaction) Clone() *Transaction {
 	return &Transaction{
+		API:                t.API,
 		TransactionEssence: t.TransactionEssence.Clone(),
 		Outputs:            t.Outputs.Clone(),
 	}

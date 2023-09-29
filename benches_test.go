@@ -15,6 +15,7 @@ var (
 	benchLargeTx = &iotago.SignedTransaction{
 		API: tpkg.TestAPI,
 		Transaction: &iotago.Transaction{
+			API: tpkg.TestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     tpkg.TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
