@@ -5980,7 +5980,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		},
 	}
 	storageScore := dummyImplicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmountImplicitAccount := iotago.BaseToken(testAPI.RentStructure().StorageCost()) * iotago.BaseToken(storageScore)
+	minAmountImplicitAccount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
 
 	exampleInputs := []TestInput{
 		{
@@ -6462,7 +6462,7 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 		},
 	}
 	storageScore := implicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmount := iotago.BaseToken(testAPI.RentStructure().StorageCost()) * iotago.BaseToken(storageScore)
+	minAmount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
 	implicitAccount.Amount = minAmount
 	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.RentStructure())
 	require.NoError(t, depositValidationFunc(0, implicitAccount))
