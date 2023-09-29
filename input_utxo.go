@@ -70,7 +70,7 @@ func (u *UTXOInput) Equals(other *UTXOInput) bool {
 
 func (u *UTXOInput) Size() int {
 	// InputType + TransactionID + TransactionOutputIndex
-	return serializer.SmallTypeDenotationByteSize + SlotIdentifierLength + OutputIndexLength
+	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + OutputIndexLength
 }
 
 func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

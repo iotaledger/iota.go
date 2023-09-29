@@ -21,7 +21,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100, 100),
-			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
 			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
 			WithManaOptions(63,
 				1,
@@ -209,7 +209,6 @@ func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, storageScor
 func WithWorkScoreOptions(
 	dataByte WorkScore,
 	block WorkScore,
-	missingParent WorkScore,
 	input WorkScore,
 	contextInput WorkScore,
 	output WorkScore,
@@ -218,22 +217,19 @@ func WithWorkScoreOptions(
 	blockIssuer WorkScore,
 	allotment WorkScore,
 	signatureEd25519 WorkScore,
-	minStrongParentsThreshold byte,
 ) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
-			DataByte:                  dataByte,
-			Block:                     block,
-			MissingParent:             missingParent,
-			Input:                     input,
-			ContextInput:              contextInput,
-			Output:                    output,
-			NativeToken:               nativeToken,
-			Staking:                   staking,
-			BlockIssuer:               blockIssuer,
-			Allotment:                 allotment,
-			SignatureEd25519:          signatureEd25519,
-			MinStrongParentsThreshold: minStrongParentsThreshold,
+			DataByte:         dataByte,
+			Block:            block,
+			Input:            input,
+			ContextInput:     contextInput,
+			Output:           output,
+			NativeToken:      nativeToken,
+			Staking:          staking,
+			BlockIssuer:      blockIssuer,
+			Allotment:        allotment,
+			SignatureEd25519: signatureEd25519,
 		}
 	}
 }

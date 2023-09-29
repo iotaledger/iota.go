@@ -15,7 +15,7 @@ import (
 type VirtualMachine interface {
 	// Execute executes the given tx in the VM.
 	// Pass own ExecFunc(s) to override the VM's default execution function list.
-	Execute(t *iotago.Transaction, params *Params, inputs ResolvedInputs, overrideFuncs ...ExecFunc) error
+	Execute(t *iotago.SignedTransaction, params *Params, inputs ResolvedInputs, overrideFuncs ...ExecFunc) error
 	// ChainSTVF executes the chain state transition validation function.
 	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithIDs, next iotago.ChainOutput, vmParams *Params) error
 }
@@ -29,7 +29,7 @@ type Params struct {
 }
 
 // WorkingSet contains fields which get automatically populated
-// by the library during execution of a Transaction.
+// by the library during execution of a SignedTransaction.
 type WorkingSet struct {
 	// The identities which are successfully unlocked from the input side.
 	UnlockedIdents UnlockedIdentities
@@ -40,7 +40,7 @@ type WorkingSet struct {
 	// The mapping of inputs' OutputID to the index.
 	InputIDToIndex map[iotago.OutputID]uint16
 	// The transaction for which this semantic validation happens.
-	Tx *iotago.Transaction
+	Tx *iotago.SignedTransaction
 	// The message which signatures are signing.
 	EssenceMsgToSign []byte
 	// The inputs of the transaction mapped by type.
@@ -70,7 +70,7 @@ type WorkingSet struct {
 // Caller must ensure that the index is valid.
 func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOInput {
 	//nolint:forcetypeassert // we can safely assume that this is a UTXOInput
-	return workingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput)
+	return workingSet.Tx.Transaction.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
 func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
@@ -158,7 +158,7 @@ func RunVMFuncs(vm VirtualMachine, vmParams *Params, execFuncs ...ExecFunc) erro
 	return nil
 }
 
-// UnlockedIdentities defines a set of identities which are unlocked from the input side of a Transaction.
+// UnlockedIdentities defines a set of identities which are unlocked from the input side of a SignedTransaction.
 // The value represent the index of the unlock which unlocked the identity.
 type UnlockedIdentities map[string]*UnlockedIdentity
 
@@ -347,7 +347,7 @@ func ExecFuncInputUnlocks() ExecFunc {
 			return ierrors.Join(err, iotago.ErrInvalidInputsCommitment)
 		}
 
-		expectedInputCommitment := vmParams.WorkingSet.Tx.Essence.InputsCommitment[:]
+		expectedInputCommitment := vmParams.WorkingSet.Tx.Transaction.InputsCommitment[:]
 		if !bytes.Equal(expectedInputCommitment, actualInputCommitment) {
 			return ierrors.Wrapf(iotago.ErrInvalidInputsCommitment, "specified %v but got %v", expectedInputCommitment, actualInputCommitment)
 		}
@@ -403,7 +403,7 @@ func identToUnlock(vmParams *Params, input iotago.Output, inputIndex uint16) (io
 				return nil, iotago.ErrTransDepIdentOutputNonUTXOChainID
 			}
 			//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Essence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
+			chainID = utxoChainID.FromOutputID(vmParams.WorkingSet.Tx.Transaction.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
 		}
 
 		next := vmParams.WorkingSet.OutChains[chainID]
@@ -550,7 +550,7 @@ func unlockOutput(vmParams *Params, output iotago.Output, inputIndex uint16) err
 // the given identity is unlocked on the input side.
 func ExecFuncSenderUnlocked() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		for outputIndex, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+		for outputIndex, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 			senderFeat := output.FeatureSet().SenderFeature()
 			if senderFeat == nil {
 				continue
@@ -570,7 +570,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 // ExecFuncBalancedMana validates that Mana is balanced from the input/output side.
 func ExecFuncBalancedMana() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		txCreationSlot := vmParams.WorkingSet.Tx.Essence.CreationSlot
+		txCreationSlot := vmParams.WorkingSet.Tx.Transaction.CreationSlot
 		for outputID := range vmParams.WorkingSet.UTXOInputsSet {
 			if outputID.CreationSlot() > txCreationSlot {
 				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlot(), txCreationSlot)
@@ -581,7 +581,7 @@ func ExecFuncBalancedMana() ExecFunc {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
 
-		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Essence.Outputs, vmParams.WorkingSet.Tx.Essence.Allotments)
+		manaOut, err := TotalManaOut(vmParams.WorkingSet.Tx.Transaction.Outputs, vmParams.WorkingSet.Tx.Transaction.Allotments)
 		if err != nil {
 			return ierrors.Join(iotago.ErrManaAmountInvalid, err)
 		}
@@ -628,7 +628,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		}
 
 		outputSimpleTransfersPerIdent := make(map[string]iotago.BaseToken)
-		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+		for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 			outAmount := output.BaseTokenAmount()
 			out += outAmount
 
@@ -725,7 +725,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 			return ierrors.Wrapf(iotago.ErrMaxNativeTokensCountExceeded, "inputs native token count %d exceeds max of %d", inNTCount, iotago.MaxNativeTokensCount)
 		}
 
-		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Essence.Outputs.NativeTokenSum()
+		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Transaction.Outputs.NativeTokenSum()
 		if err != nil {
 			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, err)
 		}
@@ -821,7 +821,7 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 // restrict returning a Basic Output with base tokens.
 func ExecFuncAddressRestrictions() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		for _, output := range vmParams.WorkingSet.Tx.Essence.Outputs {
+		for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
 			if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
 				if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
 					return err

@@ -98,8 +98,6 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			8,
 			9,
 			10,
-			11,
-			12,
 		),
 		iotago.WithTimeProviderOptions(
 			1681373293,
@@ -138,7 +136,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		iotago.WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
 	)
 
-	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentParameters":{"storageCost":"6","storageScoreFactorData":7,"storageScoreOffsetOutput":"8","storageScoreOffsetEd25519BlockIssuerKey":"9","storageScoreOffsetStakingFeature":"10","storageScoreOffsetDelegation":"10"},"workScoreStructure":{"dataByte":1,"block":2,"missingParent":3,"input":4,"contextInput":5,"output":6,"nativeToken":7,"staking":8,"blockIssuer":9,"allotment":10,"signatureEd25519":11,"minStrongParentsThreshold":12},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaStructure":{"bitsCount":1,"generationRate":1,"generationRateExponent":27,"decayFactors":[10,20],"decayFactorsExponent":32,"decayFactorEpochsSum":1337,"decayFactorEpochsSumExponent":20},"stakingUnbondingPeriod":11,"validationBlocksPerSlot":10,"punishmentEpochs":9,"livenessThresholdLowerBound":15,"livenessThresholdUpperBound":30,"minCommittableAge":10,"maxCommittableAge":20,"epochNearingThreshold":24,"congestionControlParameters":{"minReferenceManaCost":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"minMana":"1","maxBufferSize":1000,"maxValidationBufferSize":100},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1},"rewardsParameters":{"validatorBlocksPerSlot":10,"profitMarginExponent":8,"bootstrappingDuration":1154,"manaShareCoefficient":"2","decayBalancingConstantExponent":8,"decayBalancingConstant":"1","poolCoefficientExponent":31}}`
+	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","rentParameters":{"storageCost":"6","storageScoreFactorData":7,"storageScoreOffsetOutput":"8","storageScoreOffsetEd25519BlockIssuerKey":"9","storageScoreOffsetStakingFeature":"10","storageScoreOffsetDelegation":"10"},"workScoreStructure":{"dataByte":1,"block":2,"input":3,"contextInput":4,"output":5,"nativeToken":6,"staking":7,"blockIssuer":8,"allotment":9,"signatureEd25519":10},"tokenSupply":"1234567890987654321","genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"manaStructure":{"bitsCount":1,"generationRate":1,"generationRateExponent":27,"decayFactors":[10,20],"decayFactorsExponent":32,"decayFactorEpochsSum":1337,"decayFactorEpochsSumExponent":20},"stakingUnbondingPeriod":11,"validationBlocksPerSlot":10,"punishmentEpochs":9,"livenessThresholdLowerBound":15,"livenessThresholdUpperBound":30,"minCommittableAge":10,"maxCommittableAge":20,"epochNearingThreshold":24,"congestionControlParameters":{"minReferenceManaCost":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"minMana":"1","maxBufferSize":1000,"maxValidationBufferSize":100},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1},"rewardsParameters":{"validatorBlocksPerSlot":10,"profitMarginExponent":8,"bootstrappingDuration":1154,"manaShareCoefficient":"2","decayBalancingConstantExponent":8,"decayBalancingConstant":"1","poolCoefficientExponent":31}}`
 
 	jsonProtoParams, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)
