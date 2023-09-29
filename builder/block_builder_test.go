@@ -21,7 +21,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 	block, err := builder.NewBasicBlockBuilder(tpkg.TestAPI).
 		Payload(taggedDataPayload).
 		StrongParents(parents).
-		BurnedMana(100).
+		MaxBurnedMana(100).
 		Build()
 	require.NoError(t, err)
 
@@ -30,7 +30,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 	basicBlock := block.Block.(*iotago.BasicBlock)
 	expectedBurnedMana, err := basicBlock.ManaCost(100, tpkg.TestAPI.ProtocolParameters().WorkScoreStructure())
 	require.NoError(t, err)
-	require.EqualValues(t, expectedBurnedMana, basicBlock.BurnedMana)
+	require.EqualValues(t, expectedBurnedMana, basicBlock.MaxBurnedMana)
 }
 
 func TestValidationBlockBuilder(t *testing.T) {

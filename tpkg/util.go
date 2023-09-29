@@ -654,7 +654,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iot
 		if err != nil {
 			panic(err)
 		}
-		basicBlock.BurnedMana = burnedMana
+		basicBlock.MaxBurnedMana = burnedMana
 
 		return &iotago.ProtocolBlock{
 			API: api,
@@ -699,7 +699,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
 		Payload:            payload,
-		BurnedMana:         RandMana(1000),
+		MaxBurnedMana:      RandMana(1000),
 	}
 }
 

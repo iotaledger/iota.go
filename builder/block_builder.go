@@ -163,8 +163,8 @@ func (b *BasicBlockBuilder) Payload(payload iotago.Payload) *BasicBlockBuilder {
 	return b
 }
 
-// BurnedMana sets the amount of mana burned by the block based on the provided reference mana cost.
-func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
+// MaxBurnedMana sets the maximum amount of mana allowed to be burned by the block based on the provided reference mana cost.
+func (b *BasicBlockBuilder) MaxBurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -175,7 +175,7 @@ func (b *BasicBlockBuilder) BurnedMana(rmc iotago.Mana) *BasicBlockBuilder {
 		return b
 	}
 
-	b.basicBlock.BurnedMana = burnedMana
+	b.basicBlock.MaxBurnedMana = burnedMana
 
 	return b
 }
