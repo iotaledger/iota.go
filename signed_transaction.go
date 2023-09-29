@@ -123,10 +123,6 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
 }
 
-//func (t *SignedTransaction) Transaction() *Transaction {
-//	return t.Transaction
-//}
-
 func (t *SignedTransaction) Size() int {
 	// PayloadType
 	return serializer.TypeDenotationByteSize +
