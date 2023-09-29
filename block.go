@@ -399,7 +399,7 @@ type BasicBlock struct {
 	// The inner payload of the block. Can be nil.
 	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
 
-	BurnedMana Mana `serix:"4,mapKey=burnedMana"`
+	MaxBurnedMana Mana `serix:"4,mapKey=maxBurnedMana"`
 }
 
 func (b *BasicBlock) SetDeserializationContext(ctx context.Context) {
