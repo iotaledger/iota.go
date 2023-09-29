@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/vm"
@@ -465,12 +466,13 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 
 	// AccountInPotential
 	// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-	var excessBaseTokensAccount iotago.BaseToken
-	minDeposit := rentStructure.MinDeposit(current)
-	if current.BaseTokenAmount() <= minDeposit {
+	minDeposit, err := rentStructure.MinDeposit(current)
+	if err != nil {
+		return err
+	}
+	excessBaseTokensAccount, err := safemath.SafeSub(current.BaseTokenAmount(), minDeposit)
+	if err != nil {
 		excessBaseTokensAccount = 0
-	} else {
-		excessBaseTokensAccount = current.BaseTokenAmount() - minDeposit
 	}
 	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
 	if err != nil {

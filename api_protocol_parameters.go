@@ -10,7 +10,7 @@ type basicProtocolParameters struct {
 	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 
 	// RentStructure defines the rent structure used by given node/network.
-	RentParameters RentParameters `serix:"3,mapKey=rentStructure"`
+	RentParameters RentParameters `serix:"3,mapKey=rentParameters"`
 	// WorkScoreStructure defines the work score structure used by given node/network.
 	WorkScoreStructure WorkScoreStructure `serix:"4,mapKey=workScoreStructure"`
 	// TokenSupply defines the current token supply on the network.

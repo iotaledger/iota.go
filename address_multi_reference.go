@@ -21,7 +21,7 @@ func (addr *MultiAddressReference) Clone() Address {
 	}
 }
 
-func (addr *MultiAddressReference) VBytes(_ *RentStructure, _ VBytesFunc) VBytes {
+func (addr *MultiAddressReference) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
 	panic("not used")
 }
 

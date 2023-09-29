@@ -253,17 +253,13 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 	return outputUnlockableBy(a, next, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 }
 
-func (a *AccountOutput) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return outputOffsetVByteCost(rentStruct) +
-		// prefix + amount + stored mana
-		rentStruct.VBFactorData().Multiply(serializer.SmallTypeDenotationByteSize+BaseTokenSize+ManaSize) +
-		a.NativeTokens.VBytes(rentStruct, nil) +
-		rentStruct.VBFactorData().Multiply(AccountIDLength) +
-		// state index, state meta length, state meta, foundry counter
-		rentStruct.VBFactorData().Multiply(VBytes(serializer.UInt32ByteSize+serializer.UInt16ByteSize+len(a.StateMetadata)+serializer.UInt32ByteSize)) +
-		a.Conditions.VBytes(rentStruct, nil) +
-		a.Features.VBytes(rentStruct, nil) +
-		a.ImmutableFeatures.VBytes(rentStruct, nil)
+func (a *AccountOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreOffsetOutput(rentStruct) +
+		rentStruct.StorageScoreFactorData().Multiply(StorageScore(a.Size())) +
+		a.NativeTokens.StorageScore(rentStruct, nil) +
+		a.Conditions.StorageScore(rentStruct, nil) +
+		a.Features.StorageScore(rentStruct, nil) +
+		a.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
 func (a *AccountOutput) syntacticallyValidate() error {

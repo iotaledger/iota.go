@@ -97,14 +97,13 @@ func (f UnlockConditions[T]) Equal(other UnlockConditions[T]) bool {
 	return true
 }
 
-func (f UnlockConditions[T]) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	var sumCost VBytes
+func (f UnlockConditions[T]) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+	var sumCost StorageScore
 	for _, unlockCond := range f {
-		sumCost += unlockCond.VBytes(rentStruct, nil)
+		sumCost += unlockCond.StorageScore(rentStruct, nil)
 	}
 
-	// length prefix + sum cost of conditions
-	return rentStruct.VBFactorData().Multiply(serializer.OneByte) + sumCost
+	return sumCost
 }
 
 func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {

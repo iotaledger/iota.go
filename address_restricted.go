@@ -23,8 +23,8 @@ func (addr *RestrictedAddress) Clone() Address {
 	}
 }
 
-func (addr *RestrictedAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
+func (addr *RestrictedAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
 }
 
 func (addr *RestrictedAddress) ID() []byte {

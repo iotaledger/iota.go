@@ -29,8 +29,8 @@ func (addr *NFTAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *NFTAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
+func (addr *NFTAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
 }
 
 func (addr *NFTAddress) ID() []byte {

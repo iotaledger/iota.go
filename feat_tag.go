@@ -15,12 +15,12 @@ func (s *TagFeature) Clone() Feature {
 	return &TagFeature{Tag: append([]byte(nil), s.Tag...)}
 }
 
-func (s *TagFeature) VBytes(rentStruct *RentStructure, f VBytesFunc) VBytes {
+func (s *TagFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
 		return f(rentStruct)
 	}
 
-	return rentStruct.VBFactorData().Multiply(VBytes(serializer.SmallTypeDenotationByteSize + serializer.OneByte + len(s.Tag)))
+	return 0
 }
 
 func (s *TagFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {

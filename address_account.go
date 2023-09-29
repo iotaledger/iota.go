@@ -29,8 +29,8 @@ func (addr *AccountAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *AccountAddress) VBytes(rentStruct *RentStructure, _ VBytesFunc) VBytes {
-	return rentStruct.VBFactorData().Multiply(VBytes(addr.Size()))
+func (addr *AccountAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
 }
 
 func (addr *AccountAddress) ID() []byte {

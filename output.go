@@ -116,11 +116,11 @@ var (
 	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
 )
 
-// defines the default offset virtual byte costs for an output.
-func outputOffsetVByteCost(rentStruct *RentStructure) VBytes {
-	return rentStruct.VBFactorKey().Multiply(OutputIDLength) +
-		// included block id, slot booked
-		rentStruct.VBFactorData().Multiply(BlockIDLength+SlotIndexLength)
+// defines the default storage score offset for an output.
+func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
+	return rentStruct.StorageScoreOffsetOutput() +
+		// included output id, block id, and slot booked data size
+		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
 }
 
 // OutputID defines the identifier for an UTXO which consists
@@ -751,7 +751,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - every output has base token amount more than zero
 //   - every output has base token amount less than the total supply
 //   - the sum of base token amounts does not exceed the total supply
-//   - the base token amount fulfills the minimum storage deposit as calculated from the virtual byte cost of the output
+//   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
 func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructure *RentStructure) OutputsSyntacticalValidationFunc {
@@ -776,7 +776,10 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput, err := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			if err != nil {
+				return ierrors.Wrapf(err, "failed to calculate storage deposit for output index %d", index)
+			}
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
 				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
