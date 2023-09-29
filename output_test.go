@@ -947,10 +947,10 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 		maxCommittableAge   iotago.SlotIndex
 		canUnlock           bool
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "can unlock - target is source (no unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -965,8 +965,8 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           true,
 			}
 		}(),
-		func() test {
-			return test{
+		func() *test {
+			return &test{
 				name: "can not unlock - target is not source (no timelocks or expiration unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -981,9 +981,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           false,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "expiration - receiver ident can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1002,10 +1002,10 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           true,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
 			returnIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "expiration - receiver ident can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1024,10 +1024,10 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           false,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
 			returnIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "expiration - return ident can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1046,10 +1046,10 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           true,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
 			returnIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "expiration - return ident can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1068,9 +1068,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           false,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "timelock - expired timelock is unlockable",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1086,9 +1086,9 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           true,
 			}
 		}(),
-		func() test {
+		func() *test {
 			receiverIdent := tpkg.RandEd25519Address()
-			return test{
+			return &test{
 				name: "timelock - non-expired timelock is not unlockable",
 				output: &iotago.BasicOutput{
 					Amount: OneMi,
@@ -1128,12 +1128,12 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 		wantErr               error
 		canUnlock             bool
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
 
-			return test{
+			return &test{
 				name: "state ctrl can unlock - state index increase",
 				current: &iotago.AccountOutput{
 					Amount:       OneMi,
@@ -1159,11 +1159,11 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				canUnlock:           true,
 			}
 		}(),
-		func() test {
+		func() *test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
 
-			return test{
+			return &test{
 				name: "state ctrl can not unlock - state index same",
 				current: &iotago.AccountOutput{
 					Amount:       OneMi,
@@ -1190,11 +1190,11 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 				canUnlock:             false,
 			}
 		}(),
-		func() test {
+		func() *test {
 			stateCtrl := tpkg.RandEd25519Address()
 			govCtrl := tpkg.RandEd25519Address()
 
-			return test{
+			return &test{
 				name: "state ctrl can not unlock - transition destroy",
 				current: &iotago.AccountOutput{
 					Amount:       OneMi,

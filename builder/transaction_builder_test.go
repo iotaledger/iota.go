@@ -26,8 +26,8 @@ func TestTransactionBuilder(t *testing.T) {
 		buildErr   error
 	}
 
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
@@ -39,13 +39,13 @@ func TestTransactionBuilder(t *testing.T) {
 					},
 				})
 
-			return test{
+			return &test{
 				name:       "ok - 1 input/output",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    bdl,
 			}
 		}(),
-		func() test {
+		func() *test {
 			var (
 				inputID1 = &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 				inputID2 = &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 1}
@@ -95,13 +95,13 @@ func TestTransactionBuilder(t *testing.T) {
 					},
 				})
 
-			return test{
+			return &test{
 				name:       "ok - mix basic+chain outputs",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    bdl,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
@@ -114,13 +114,13 @@ func TestTransactionBuilder(t *testing.T) {
 				}).
 				AddTaggedDataPayload(&iotago.TaggedData{Tag: []byte("index"), Data: nil})
 
-			return test{
+			return &test{
 				name:       "ok - with tagged data payload",
 				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
 				builder:    bdl,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
@@ -138,14 +138,14 @@ func TestTransactionBuilder(t *testing.T) {
 			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongIdentity.Public().(ed25519.PublicKey))
 			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongIdentity}
 
-			return test{
+			return &test{
 				name:       "err - missing address keys (wrong address)",
 				addrSigner: iotago.NewInMemoryAddressSigner(wrongAddrKeys),
 				builder:    bdl,
 				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
 			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
@@ -157,7 +157,7 @@ func TestTransactionBuilder(t *testing.T) {
 					},
 				})
 
-			return test{
+			return &test{
 				name:       "err - missing address keys (no keys given at all)",
 				addrSigner: iotago.NewInMemoryAddressSigner(),
 				builder:    bdl,

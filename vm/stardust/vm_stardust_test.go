@@ -78,7 +78,8 @@ func TestNFTTransition(t *testing.T) {
 
 	transaction := &iotago.Transaction{
 		TransactionEssence: &iotago.TransactionEssence{
-			Inputs: inputIDs.UTXOInputs(),
+			Inputs:       inputIDs.UTXOInputs(),
+			Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 		},
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.NFTOutput{
@@ -160,7 +161,8 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 
 	transaction := &iotago.Transaction{
 		TransactionEssence: &iotago.TransactionEssence{
-			Inputs: inputIDs.UTXOInputs(),
+			Inputs:       inputIDs.UTXOInputs(),
+			Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 		},
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.AccountOutput{
@@ -220,8 +222,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			var (
 				_, ident1, ident1AddrKeys = tpkg.RandEd25519Identity()
 				_, ident2, ident2AddrKeys = tpkg.RandEd25519Identity()
@@ -477,7 +479,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					Inputs:       inputIDs.UTXOInputs(),
 					CreationSlot: creationSlot,
-					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -668,7 +670,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -706,7 +708,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -746,7 +748,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 
 			transaction := &iotago.Transaction{
 				TransactionEssence: &iotago.TransactionEssence{
-					Inputs: inputIDs.UTXOInputs(),
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
@@ -765,7 +768,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - changed immutable account address unlock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -786,7 +789,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: iotago.ErrNativeTokenSumUnbalanced,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, _ := tpkg.RandEd25519Identity()
@@ -820,7 +823,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 							AccountID: accountAddr1.AccountID(),
 						},
 					},
-					Inputs: inputIDs.UTXOInputs(),
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
@@ -852,7 +856,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - modify block issuer account",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -868,7 +872,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, _ := tpkg.RandEd25519Identity()
@@ -902,7 +906,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 							AccountID: accountAddr1.AccountID(),
 						},
 					},
-					Inputs: inputIDs.UTXOInputs(),
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
@@ -934,7 +939,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - set block issuer expiry to max value",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -950,7 +955,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -983,7 +988,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 							AccountID: accountAddr1.AccountID(),
 						},
 					},
-					Inputs: inputIDs.UTXOInputs(),
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -1006,7 +1012,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - destroy block issuer account with expiry at slot with max value",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -1023,7 +1029,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: iotago.ErrInvalidBlockIssuerTransition,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -1056,7 +1062,8 @@ func TestStardustTransactionExecution(t *testing.T) {
 							AccountID: accountAddr1.AccountID(),
 						},
 					},
-					Inputs: inputIDs.UTXOInputs(),
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -1079,7 +1086,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - destroy block issuer account",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -1095,7 +1102,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -1124,6 +1131,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: 110,
 					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.BasicOutput{
@@ -1142,7 +1150,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - destroy block issuer account without supplying BIC",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -1158,7 +1166,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -1187,6 +1195,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: 110,
 					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
@@ -1210,7 +1219,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - modify block issuer without supplying BIC",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -1304,6 +1313,7 @@ func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs:        inputIDs.UTXOInputs(),
 				Allotments:    iotago.Allotments{},
+				Capabilities:  iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 			},
 			Outputs: outputs,
 		}
@@ -2491,8 +2501,8 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddrKeys := tpkg.RandEd25519Identity()
 
@@ -2575,6 +2585,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					Inputs:       inputIDs.UTXOInputs(),
 					CreationSlot: creationSlot,
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AccountOutput{
@@ -2592,7 +2603,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2620,7 +2631,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			ident1Sk, ident1, _ := tpkg.RandEd25519Identity()
 			_, _, ident2AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -2641,7 +2652,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 
 			copy(sigs[0].(*iotago.Ed25519Signature).PublicKey[:], ident1Sk.Public().(ed25519.PublicKey))
 
-			return test{
+			return &test{
 				name: "fail - invalid signature",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2657,7 +2668,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrEd25519SignatureInvalid,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
@@ -2683,7 +2694,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - should contain reference unlock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2700,7 +2711,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
@@ -2729,7 +2740,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - should contain account unlock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2746,7 +2757,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 
@@ -2774,7 +2785,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - should contain NFT unlock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2791,7 +2802,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			nftIdent1 := iotago.NFTAddressFromOutputID(inputIDs[0])
@@ -2819,7 +2830,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			}}
 			_, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI))
 			require.NoError(t, err)
-			return test{
+			return &test{
 				name: "fail - circular NFT unlock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2836,7 +2847,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -2860,7 +2871,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - sender can not unlock yet",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2881,7 +2892,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrExpirationConditionUnlockFailed,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -2905,7 +2916,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - receiver can not unlock anymore",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2926,7 +2937,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrEd25519PubKeyAndAddrMismatch,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(3)
 
@@ -2973,7 +2984,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - referencing other account unlocked by source account",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -2992,7 +3003,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, _ := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddressKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
@@ -3035,7 +3046,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - account output not state transitioning",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3052,7 +3063,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				wantErr: iotago.ErrInvalidInputUnlock,
 			}
 		}(),
-		func() test {
+		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
 
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
@@ -3106,7 +3117,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - wrong unlock for foundry",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3147,8 +3158,8 @@ func TestTxSemanticDeposit(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, ident2AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(3)
@@ -3217,7 +3228,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3240,7 +3251,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3289,7 +3300,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - more storage deposit returned via more outputs",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3305,7 +3316,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -3335,7 +3346,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - unbalanced, more on output than input",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3351,7 +3362,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrInputOutputSumMismatch,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -3381,7 +3392,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - unbalanced, more on input than output",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3397,7 +3408,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrInputOutputSumMismatch,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3438,7 +3449,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - return not fulfilled",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3459,7 +3470,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrReturnAmountNotFulFilled,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3499,7 +3510,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - storage deposit return not basic output",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3515,7 +3526,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrReturnAmountNotFulFilled,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3559,7 +3570,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - storage deposit return has additional unlocks",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3575,7 +3586,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrReturnAmountNotFulFilled,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3618,7 +3629,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - storage deposit return has feature",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3634,7 +3645,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 				wantErr: iotago.ErrReturnAmountNotFulFilled,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, ident2, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -3687,7 +3698,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - storage deposit return has native tokens",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3755,8 +3766,8 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(2)
 
 			ntCount := 10
@@ -3794,7 +3805,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3808,7 +3819,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxNativeTokensCount)
 			nativeToken := tpkg.RandNativeToken()
 
@@ -3848,7 +3859,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "ok - exceeds limit (in+out) but same native token",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3862,7 +3873,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			inCount := 20
@@ -3893,7 +3904,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "fail - exceeds limit (in+out)",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3907,7 +3918,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 			}
 		}(),
-		func() test {
+		func() *test {
 			numDistinctNTs := iotago.MaxNativeTokensCount + 1
 			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
 
@@ -3936,7 +3947,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "fail - too many on input side already",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3950,7 +3961,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 			}
 		}(),
-		func() test {
+		func() *test {
 			numDistinctNTs := iotago.MaxNativeTokensCount + 1
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(uint16(numDistinctNTs))
@@ -3983,7 +3994,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				Outputs: outs,
 			}
 
-			return test{
+			return &test{
 				name: "fail - too many on output side already",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -3997,7 +4008,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 			}
 		}(),
-		func() test {
+		func() *test {
 			numDistinctNTs := iotago.MaxNativeTokensCount
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
@@ -4031,7 +4042,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				Outputs: outputs,
 			}
 
-			return test{
+			return &test{
 				name: "ok - most possible tokens in a tx",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4045,7 +4056,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			numDistinctNTs := iotago.MaxNativeTokensCount
 			tokens := tpkg.RandSortNativeTokens(numDistinctNTs)
 			inputIDs := tpkg.RandOutputIDs(iotago.MaxInputsCount)
@@ -4091,7 +4102,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				Outputs: outputs,
 			}
 
-			return test{
+			return &test{
 				name: "fail - max nt count just exceeded",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4105,7 +4116,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: iotago.ErrMaxNativeTokensCountExceeded,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(1)
 
 			ntCount := 10
@@ -4141,7 +4152,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "fail - unbalanced on output",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4155,7 +4166,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				wantErr: iotago.ErrNativeTokenSumUnbalanced,
 			}
 		}(),
-		func() test {
+		func() *test {
 			inputIDs := tpkg.RandOutputIDs(3)
 
 			ntCount := 20
@@ -4206,7 +4217,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 				},
 			}
 
-			return test{
+			return &test{
 				name: "fail - unbalanced with unrelated foundry in term of new output tokens",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4243,8 +4254,8 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(2)
 			nftAddr := tpkg.RandNFTAddress()
@@ -4333,7 +4344,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4350,7 +4361,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -4382,7 +4393,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - sender not unlocked",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4398,7 +4409,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: iotago.ErrSenderFeatureNotUnlocked,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -4437,7 +4448,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - sender not unlocked due to governance transition",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4453,7 +4464,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: iotago.ErrSenderFeatureNotUnlocked,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
 			_, governor, _ := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -4495,7 +4506,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - account addr unlocked with state transition",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4511,7 +4522,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
@@ -4550,7 +4561,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - sender is governor address",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4588,8 +4599,8 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
@@ -4641,7 +4652,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - issuer not unlocked due to governance transition",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4658,7 +4669,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				wantErr: iotago.ErrIssuerFeatureNotUnlocked,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, stateControllerAddrKeys := tpkg.RandEd25519Identity()
 			_, governor, _ := tpkg.RandEd25519Identity()
@@ -4796,7 +4807,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - issuer unlocked with state transition",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4813,7 +4824,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			_, stateController, _ := tpkg.RandEd25519Identity()
 			_, governor, governorAddrKeys := tpkg.RandEd25519Identity()
@@ -4865,7 +4876,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - issuer is the governor",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4904,8 +4915,8 @@ func TestTxSemanticTimelocks(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -4925,7 +4936,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4946,7 +4957,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -4967,7 +4978,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - timelock not expired",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -4988,7 +4999,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				wantErr: iotago.ErrTimelockNotExpired,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -5009,7 +5020,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - timelock not expired",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5030,7 +5041,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 				wantErr: iotago.ErrTimelockNotExpired,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDs(1)
 
@@ -5051,7 +5062,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - no commitment input for timelock",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5092,8 +5103,8 @@ func TestTxSemanticMana(t *testing.T) {
 		tx             *iotago.SignedTransaction
 		wantErr        error
 	}
-	tests := []test{
-		func() test {
+	tests := []*test{
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(10, 1)
 
@@ -5142,7 +5153,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - stored Mana only without allotment",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5158,7 +5169,7 @@ func TestTxSemanticMana(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(10, 1)
 
@@ -5211,7 +5222,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - stored and allotted",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5227,7 +5238,7 @@ func TestTxSemanticMana(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(20, 1)
 
@@ -5259,7 +5270,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - input created after tx",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5275,7 +5286,7 @@ func TestTxSemanticMana(t *testing.T) {
 				wantErr: iotago.ErrInputCreationAfterTxCreation,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(15, 1)
 
@@ -5307,7 +5318,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "ok - input created in same slot as tx",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5323,7 +5334,7 @@ func TestTxSemanticMana(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(15, 2)
 
@@ -5362,7 +5373,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - mana overflow on the input side sum",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5379,7 +5390,7 @@ func TestTxSemanticMana(t *testing.T) {
 				wantErr: iotago.ErrManaOverflow,
 			}
 		}(),
-		func() test {
+		func() *test {
 			_, ident1, ident1AddrKeys := tpkg.RandEd25519Identity()
 			inputIDs := tpkg.RandOutputIDsWithCreationSlot(15, 1)
 
@@ -5418,7 +5429,7 @@ func TestTxSemanticMana(t *testing.T) {
 			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
-			return test{
+			return &test{
 				name: "fail - mana overflow on the output side sum",
 				vmParams: &vm.Params{
 					API: testAPI,
@@ -5563,6 +5574,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		TransactionEssence: &iotago.TransactionEssence{
 			Inputs:       inputIDs.UTXOInputs(),
 			CreationSlot: currentSlot,
+			Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 		},
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.BasicOutput{
@@ -5614,7 +5626,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 
 	iotago.RestrictedAddressWithCapabilities(addr)
 
-	tests := []test{
+	tests := []*test{
 		{
 			createTestOutput: func(address iotago.Address) iotago.Output {
 				return &iotago.BasicOutput{
@@ -5997,7 +6009,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		},
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:   "ok - implicit account creation",
 			inputs: exampleInputs,

@@ -78,7 +78,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		wantErr   error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name: "ok - genesis transition",
 			next: &iotago.AccountOutput{
@@ -99,6 +99,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -139,6 +146,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -181,6 +189,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 10001,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -223,6 +232,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 991,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -265,6 +275,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -308,6 +319,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -351,6 +363,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -394,6 +407,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -436,6 +450,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -500,6 +515,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -552,6 +568,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 					BIC: exampleBIC,
 				},
 			},
@@ -600,6 +623,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 					BIC: exampleBIC,
 				},
@@ -651,6 +681,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -711,6 +742,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -775,6 +807,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -839,6 +872,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -905,6 +939,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -964,6 +999,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1017,6 +1053,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1075,6 +1112,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1139,6 +1177,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1204,6 +1243,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1234,6 +1274,14 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.SignedTransaction{
+						API: tpkg.TestAPI,
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -1271,6 +1319,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1314,6 +1363,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1001,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1355,6 +1405,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 1000,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1399,6 +1450,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1453,6 +1505,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 999,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1507,6 +1560,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 1001,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1562,6 +1616,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1618,7 +1673,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
-								Inputs: nil,
+								Inputs:       nil,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 							Outputs: iotago.TxEssenceOutputs{
 								&iotago.FoundryOutput{
@@ -1699,6 +1755,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1748,6 +1805,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleStateCtrl.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -1808,6 +1872,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1870,6 +1935,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 990,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1933,6 +1999,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							TransactionEssence: &iotago.TransactionEssence{
 								Inputs:       nil,
 								CreationSlot: 900,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -1992,6 +2059,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -2054,6 +2122,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: 900,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -2124,7 +2193,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
-								Inputs: nil,
+								Inputs:       nil,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 							Outputs: iotago.TxEssenceOutputs{
 								&iotago.FoundryOutput{
@@ -2183,6 +2253,13 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidAccountGovernanceTransition,
@@ -2248,8 +2325,12 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					InChains:       vm.ChainInputSet{},
 					Tx: &iotago.SignedTransaction{
-						API:         tpkg.TestAPI,
-						Transaction: &iotago.Transaction{},
+						API: tpkg.TestAPI,
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2257,7 +2338,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt2 := range tests {
+		tt := tt2
 
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
@@ -2344,7 +2426,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		wantErr   error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:      "ok - genesis transition",
 			next:      exampleFoundry,
@@ -2356,6 +2438,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2388,6 +2473,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2420,6 +2508,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
 							Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 						},
 						Unlocks: nil,
@@ -2450,6 +2541,9 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					Tx: &iotago.SignedTransaction{
 						API: tpkg.TestAPI,
 						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
 							Outputs: iotago.TxEssenceOutputs{
 								&iotago.FoundryOutput{
 									Amount: 100,
@@ -2503,6 +2597,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2527,6 +2628,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(300),
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2556,6 +2664,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(50),
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2575,6 +2690,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(50),
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2602,6 +2724,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						exampleFoundry.MustNativeTokenID(): startingSupply,
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2628,6 +2757,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						// 100 excess
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(200),
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrNativeTokenSumUnbalanced,
@@ -2653,6 +2789,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						// 50 deficit
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(50),
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2683,6 +2826,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						// 25 excess
 						exampleFoundry.MustNativeTokenID(): new(big.Int).SetUint64(75),
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrNativeTokenSumUnbalanced,
@@ -2704,7 +2854,15 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
 			svCtx: &vm.Params{
-				WorkingSet: &vm.WorkingSet{},
+				WorkingSet: &vm.WorkingSet{
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
+				},
 			},
 			wantErr: &iotago.ChainTransitionError{},
 		},
@@ -2719,6 +2877,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					InNativeTokens:  map[iotago.NativeTokenID]*big.Int{},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2737,6 +2902,13 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): new(big.Int).Mul(startingSupply, new(big.Int).SetUint64(2)),
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2799,7 +2971,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		wantErr   error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:      "ok - genesis transition",
 			next:      exampleCurrentNFTOutput,
@@ -2810,6 +2982,13 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2827,6 +3006,13 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2855,6 +3041,13 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -2882,6 +3075,13 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 				API: tpkg.TestAPI,
 				WorkingSet: &vm.WorkingSet{
 					UnlockedIdents: vm.UnlockedIdentities{},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: &iotago.ChainTransitionError{},
@@ -2942,7 +3142,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		wantErr   error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name: "ok - valid genesis",
 			next: &iotago.DelegationOutput{
@@ -2964,6 +3164,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -2991,6 +3198,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
@@ -3016,6 +3230,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3043,6 +3264,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationNonZeroEndEpoch,
@@ -3067,6 +3295,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3096,6 +3331,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3144,6 +3386,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationModified,
@@ -3182,6 +3431,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3222,6 +3478,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: epochEndCommitmentIndex,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationEndEpoch,
@@ -3254,6 +3517,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 1,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3288,6 +3558,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: nil,
@@ -3318,6 +3595,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
+					},
 				},
 			},
 			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
@@ -3342,6 +3626,13 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
+					},
+					Tx: &iotago.SignedTransaction{
+						Transaction: &iotago.Transaction{
+							TransactionEssence: &iotago.TransactionEssence{
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+							},
+						},
 					},
 				},
 			},
@@ -3423,7 +3714,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 	implicitAccountCreationAddr := iotago.ImplicitAccountCreationAddressFromPubKey(tpkg.RandEd25519Signature().PublicKey[:])
 	exampleAmount := iotago.BaseToken(100_000)
 
-	tests := []test{
+	tests := []*test{
 		{
 			name: "ok - implicit account conversion transition",
 			next: &iotago.AccountOutput{
@@ -3466,6 +3757,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
@@ -3512,6 +3804,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 						Transaction: &iotago.Transaction{
 							TransactionEssence: &iotago.TransactionEssence{
 								CreationSlot: currentSlot,
+								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 							},
 						},
 					},
