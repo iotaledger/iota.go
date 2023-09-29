@@ -687,7 +687,11 @@ func nftSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType,
 			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		return nil
+		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
+		current := input.Output.(*iotago.NFTOutput)
+		if err := nftDestructionValid(vmParams); err != nil {
+			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+		}
 	default:
 		panic("unknown chain transition type in NFTOutput")
 	}
@@ -706,6 +710,14 @@ func nftGenesisValid(current *iotago.NFTOutput, vmParams *vm.Params) error {
 func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) error {
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
 		return ierrors.Errorf("old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures)
+	}
+
+	return nil
+}
+
+func nftDestructionValid(vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyNFTOutputs() {
+		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrTxCapabilitiesNFTDestructionNotAllowed)
 	}
 
 	return nil

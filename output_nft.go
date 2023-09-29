@@ -3,8 +3,14 @@ package iotago
 import (
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
+)
+
+var (
+	// ErrInvalidNFTStateTransition gets returned when a NFT is doing an invalid state transition.
+	ErrInvalidNFTStateTransition = ierrors.New("invalid NFT state transition")
 )
 
 const (
