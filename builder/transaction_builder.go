@@ -286,7 +286,10 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 		var potentialMana iotago.Mana
 
 		// we need to ignore the storage deposit, because it doesn't generate mana
-		minDeposit := iotago.NewRentStructure(protoParams.RentParameters()).MinDeposit(input)
+		minDeposit, err := iotago.NewRentStructure(protoParams.RentParameters()).MinDeposit(input)
+		if err != nil {
+			return 0, 0, nil, ierrors.Wrap(err, "failed to calculate min deposit")
+		}
 		if input.BaseTokenAmount() > minDeposit {
 			excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
 			if err != nil {
