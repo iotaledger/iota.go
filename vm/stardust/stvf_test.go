@@ -3526,10 +3526,24 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 			if tt.input != nil {
 				// create the working set for the test
 				if tt.svCtx.WorkingSet.UTXOInputsSet == nil {
-					tt.svCtx.WorkingSet.UTXOInputsSet = make(vm.InputSet)
+					tt.svCtx.WorkingSet.UTXOInputsSet = vm.InputSet{tt.input.OutputID: tt.input.Output}
 				}
 
 				tt.svCtx.WorkingSet.UTXOInputsSet[tpkg.RandOutputID(0)] = tt.input.Output
+				totalManaIn, err := vm.TotalManaIn(
+					tpkg.TestAPI.ManaDecayProvider(),
+					tpkg.TestAPI.RentStructure(),
+					tt.svCtx.WorkingSet.Tx.Transaction.CreationSlot,
+					tt.svCtx.WorkingSet.UTXOInputsSet,
+				)
+				tt.svCtx.WorkingSet.TotalManaIn = totalManaIn
+				require.NoError(t, err)
+				totalManaOut, err := vm.TotalManaOut(
+					tt.svCtx.WorkingSet.Tx.Transaction.Outputs,
+					tt.svCtx.WorkingSet.Tx.Transaction.Allotments,
+				)
+				tt.svCtx.WorkingSet.TotalManaOut = totalManaOut
+				require.NoError(t, err)
 			}
 
 			err := stardustVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
