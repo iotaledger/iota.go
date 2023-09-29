@@ -50,7 +50,11 @@ type RentParameters struct {
 
 // RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
 type RentStructure struct {
-	RentParameters                                   *RentParameters
+	RentParameters *RentParameters
+	// The storage score that a minimal block issuer account needs to have minus the wrapping Basic Output.
+	// Since this value is used for implicit account creation addresses, this value plus the wrapping
+	// Basic Output (the Implicit Account Creation Address is contained in) results in the
+	// minimum storage score of a block issuer account.
 	StorageScoreOffsetImplicitAccountCreationAddress StorageScore
 }
 
@@ -127,7 +131,7 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		RentParameters: rentParameters,
 	}
 
-	// set the storage score offset for implicit account creation addresses as
+	// Set the storage score offset for implicit account creation addresses as
 	// the difference between the storage score of the dummy account and the storage
 	// score of the dummy basic output minus the storage score of the dummy address.
 	storageScoreAccountOutput := dummyAccountOutput.StorageScore(rentStructure, nil)
