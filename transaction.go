@@ -75,7 +75,7 @@ func (t *Transaction) ID() (TransactionID, error) {
 		return TransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
-	return SignedTransactionIDFromData(t.CreationSlot, byteutils.ConcatBytes(essenceBytes, outputBytes)), nil
+	return TransactionIDFromData(t.CreationSlot, byteutils.ConcatBytes(essenceBytes, outputBytes)), nil
 }
 
 func (t *Transaction) SetDeserializationContext(ctx context.Context) {
