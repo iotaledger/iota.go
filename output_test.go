@@ -75,6 +75,8 @@ func TestOutputIDString(t *testing.T) {
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
+	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID())
+
 	tests := []deSerializeTest{
 		{
 			name: "ok - BasicOutput",
@@ -208,6 +210,49 @@ func TestOutputsDeSerialize(t *testing.T) {
 			},
 			target:  &iotago.DelegationOutput{},
 			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - NFT Output contains Implicit Account Creation Address",
+			source: &iotago.NFTOutput{
+				Conditions: iotago.NFTOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			target:  &iotago.NFTOutput{},
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Account Output contains Implicit Account Creation Address as State Controller",
+			source: &iotago.AccountOutput{
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			target:  &iotago.AccountOutput{},
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Account Output contains Implicit Account Creation Address as Governor",
+			source: &iotago.AccountOutput{
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			target:  &iotago.AccountOutput{},
+			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Delegation Output contains empty validator address",
+			source: &iotago.DelegationOutput{
+				ValidatorAddress: &emptyAccountAddress,
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			target:  &iotago.DelegationOutput{},
+			seriErr: iotago.ErrDelegationValidatorAddressEmpty,
 		},
 	}
 
