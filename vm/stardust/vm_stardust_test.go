@@ -4,7 +4,6 @@ package stardust_test
 import (
 	"bytes"
 	"crypto/ed25519"
-	"fmt"
 	"math/big"
 	"slices"
 	"testing"
@@ -4250,7 +4249,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncBalancedNativeTokens())
+			_, err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncBalancedNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -5106,7 +5105,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncTimelocks())
+			_, err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncTimelocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -5968,7 +5967,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				err := stardustVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
+				_, err := stardustVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)
 					return
@@ -6527,7 +6526,5 @@ func validateAndExecuteSignedTransaction(tx *iotago.SignedTransaction, resolvedI
 		return err
 	}
 
-	fmt.Println("unlockedIdentities", unlockedIdentities)
-
-	return stardustVM.Execute(tx.Transaction, resolvedInputs, unlockedIdentities, execFunctions...)
+	return lo.Return2(stardustVM.Execute(tx.Transaction, resolvedInputs, unlockedIdentities, execFunctions...))
 }

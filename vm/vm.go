@@ -16,7 +16,7 @@ type VirtualMachine interface {
 	// ValidateUnlocks validates the unlocks of the given SignedTransaction and returns the unlocked identities.
 	ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs ResolvedInputs) (unlockedIdentities UnlockedIdentities, err error)
 	// Execute executes the given tx in the VM. It is possible to optionally override the default execution functions.
-	Execute(transaction *iotago.Transaction, inputs ResolvedInputs, unlockedIdentities UnlockedIdentities, execFunctions ...ExecFunc) error
+	Execute(transaction *iotago.Transaction, inputs ResolvedInputs, unlockedIdentities UnlockedIdentities, execFunctions ...ExecFunc) (outputs []iotago.Output, err error)
 	// ChainSTVF executes the chain state transition validation function.
 	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithIDs, next iotago.ChainOutput, vmParams *Params) error
 }

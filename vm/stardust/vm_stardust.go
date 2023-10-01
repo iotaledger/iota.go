@@ -108,13 +108,13 @@ func (stardustVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.Sign
 	return vm.ValidateUnlocks(signedTransaction, inputs)
 }
 
-func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (err error) {
+func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
 	vmParams := &vm.Params{
 		API: transaction.API,
 	}
 
 	if vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, transaction, inputs); err != nil {
-		return ierrors.Wrap(err, "failed to create working set")
+		return nil, ierrors.Wrap(err, "failed to create working set")
 	}
 	vmParams.WorkingSet.UnlockedIdents = unlockedIdentities
 
@@ -122,7 +122,17 @@ func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, input
 		execFunctions = stardustVM.execList
 	}
 
-	return vm.RunVMFuncs(stardustVM, vmParams, execFunctions...)
+	err = vm.RunVMFuncs(stardustVM, vmParams, execFunctions...)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "failed to execute transaction")
+	}
+
+	outputs = make([]iotago.Output, len(transaction.Outputs))
+	for i, output := range transaction.Outputs {
+		outputs[i] = output
+	}
+
+	return outputs, nil
 }
 
 func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithIDs, next iotago.ChainOutput, vmParams *vm.Params) error {
