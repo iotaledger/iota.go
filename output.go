@@ -127,6 +127,15 @@ func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
 // out of the referenced TransactionID and the output's index.
 type OutputID [OutputIDLength]byte
 
+func NewOutputID(slotIdentifier SlotIdentifier, index uint16) OutputID {
+	var outputID OutputID
+
+	copy(outputID[:], slotIdentifier[:])
+	binary.LittleEndian.PutUint16(outputID[SlotIdentifierLength:], index)
+
+	return outputID
+}
+
 // EmptyOutputID is an empty OutputID.
 var EmptyOutputID = OutputID{}
 

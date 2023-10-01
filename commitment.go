@@ -46,10 +46,20 @@ func NewEmptyCommitment(version Version) *Commitment {
 func (c *Commitment) ID() (CommitmentID, error) {
 	data, err := CommonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
-		return CommitmentID{}, ierrors.Errorf("can't compute commitment ID: %w", err)
+		return CommitmentID{}, ierrors.Errorf("failed to serialize commitment: %w", err)
 	}
 
 	return SlotIdentifierRepresentingData(c.Slot, data), nil
+}
+
+// OutputID returns a virtual OutputID that is used to address the commitment. C
+func (c *Commitment) OutputID() (outputID OutputID, err error) {
+	commitmentID, err := c.ID()
+	if err != nil {
+		return outputID, ierrors.Wrap(err, "failed to compute commitment ID")
+	}
+
+	return NewOutputID(commitmentID, 0), nil
 }
 
 func (c *Commitment) StateID() Identifier {
