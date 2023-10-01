@@ -2541,6 +2541,644 @@ func TestStardustTransactionExecution_MultiAddress(t *testing.T) {
 	}
 }
 
+func TestStardustTransactionExecution_TxCapabilities(t *testing.T) {
+
+	var defaultAmount iotago.BaseToken = OneMi
+
+	// builds a transaction that burns native tokens
+	burnNativeTokenTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			return []iotago.Output{
+				&iotago.BasicOutput{
+					Amount: defaultAmount,
+					// add native tokens
+					NativeTokens: tpkg.RandSortNativeTokens(1),
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				&iotago.BasicOutput{
+					Amount: totalInputAmount,
+					Mana:   totalInputMana,
+					// burn the native tokens
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+			}
+		},
+	}
+
+	// builds a transaction that melts native tokens
+	meltNativeTokenTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+			accountAddress := tpkg.RandAccountAddress()
+			return []iotago.Address{
+				accountAddress,
+			}
+		},
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			foundryID, err := iotago.FoundryIDFromAddressAndSerialNumberAndTokenScheme(testAddresses[0], 1, iotago.TokenSchemeSimple)
+			require.NoError(t, err)
+
+			return []iotago.Output{
+				&iotago.AccountOutput{
+					Amount:         defaultAmount,
+					Mana:           0,
+					NativeTokens:   iotago.NativeTokens{},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     0,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+				&iotago.FoundryOutput{
+					Amount:       defaultAmount,
+					NativeTokens: iotago.NativeTokens{},
+					SerialNumber: 1,
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: big.NewInt(100),
+					},
+					Conditions: iotago.FoundryOutputUnlockConditions{
+						&iotago.ImmutableAccountUnlockCondition{
+							Address: testAddresses[0].(*iotago.AccountAddress),
+						},
+					},
+					Features:          iotago.FoundryOutputFeatures{},
+					ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				},
+				&iotago.BasicOutput{
+					Amount: defaultAmount,
+					NativeTokens: iotago.NativeTokens{
+						&iotago.NativeToken{
+							ID:     foundryID,
+							Amount: big.NewInt(100),
+						},
+					},
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			foundryID, err := iotago.FoundryIDFromAddressAndSerialNumberAndTokenScheme(testAddresses[0], 1, iotago.TokenSchemeSimple)
+			require.NoError(t, err)
+
+			return iotago.TxEssenceOutputs{
+				&iotago.AccountOutput{
+					Amount: totalInputAmount - defaultAmount,
+					Mana:   totalInputMana,
+					NativeTokens: iotago.NativeTokens{
+						&iotago.NativeToken{
+							ID:     foundryID,
+							Amount: big.NewInt(50),
+						},
+					},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     1,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+				&iotago.FoundryOutput{
+					Amount:       defaultAmount,
+					NativeTokens: iotago.NativeTokens{},
+					SerialNumber: 1,
+					TokenScheme: &iotago.SimpleTokenScheme{
+						// melt the native tokens
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(50),
+						MaximumSupply: big.NewInt(100),
+					},
+					Conditions: iotago.FoundryOutputUnlockConditions{
+						&iotago.ImmutableAccountUnlockCondition{
+							Address: testAddresses[0].(*iotago.AccountAddress),
+						},
+					},
+					Features:          iotago.FoundryOutputFeatures{},
+					ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+				&iotago.AccountUnlock{Reference: 0},
+				&iotago.ReferenceUnlock{Reference: 0},
+			}
+		},
+	}
+
+	// builds a transaction that burns and melts native tokens
+	burnAndMeltNativeTokenTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+			accountAddress := tpkg.RandAccountAddress()
+			return []iotago.Address{
+				accountAddress,
+			}
+		},
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			foundryID, err := iotago.FoundryIDFromAddressAndSerialNumberAndTokenScheme(testAddresses[0], 1, iotago.TokenSchemeSimple)
+			require.NoError(t, err)
+
+			return []iotago.Output{
+				&iotago.AccountOutput{
+					Amount:         defaultAmount,
+					Mana:           0,
+					NativeTokens:   iotago.NativeTokens{},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     0,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+				&iotago.FoundryOutput{
+					Amount:       defaultAmount,
+					NativeTokens: iotago.NativeTokens{},
+					SerialNumber: 1,
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(0),
+						MaximumSupply: big.NewInt(100),
+					},
+					Conditions: iotago.FoundryOutputUnlockConditions{
+						&iotago.ImmutableAccountUnlockCondition{
+							Address: testAddresses[0].(*iotago.AccountAddress),
+						},
+					},
+					Features:          iotago.FoundryOutputFeatures{},
+					ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				},
+				&iotago.BasicOutput{
+					Amount: defaultAmount,
+					NativeTokens: iotago.NativeTokens{
+						&iotago.NativeToken{
+							ID:     foundryID,
+							Amount: big.NewInt(100),
+						},
+					},
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				&iotago.AccountOutput{
+					Amount:         totalInputAmount - defaultAmount,
+					Mana:           totalInputMana,
+					NativeTokens:   iotago.NativeTokens{},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     1,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+				&iotago.FoundryOutput{
+					Amount:       defaultAmount,
+					NativeTokens: iotago.NativeTokens{},
+					SerialNumber: 1,
+					TokenScheme: &iotago.SimpleTokenScheme{
+						// melt the native tokens
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(50),
+						MaximumSupply: big.NewInt(100),
+					},
+					Conditions: iotago.FoundryOutputUnlockConditions{
+						&iotago.ImmutableAccountUnlockCondition{
+							Address: testAddresses[0].(*iotago.AccountAddress),
+						},
+					},
+					Features:          iotago.FoundryOutputFeatures{},
+					ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+				&iotago.AccountUnlock{Reference: 0},
+				&iotago.ReferenceUnlock{Reference: 0},
+			}
+		},
+	}
+
+	// builds a transaction that burns mana
+	burnManaTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			return []iotago.Output{
+				&iotago.BasicOutput{
+					Amount: defaultAmount,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				&iotago.BasicOutput{
+					Amount: totalInputAmount,
+					// burn mana
+					Mana: totalInputMana - 10,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+			}
+		},
+	}
+
+	// builds a transaction that destroys an account
+	destroyAccountTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			return []iotago.Output{
+				&iotago.AccountOutput{
+					Amount: defaultAmount,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				// destroy the account output
+				&iotago.BasicOutput{
+					Amount: totalInputAmount,
+					Mana:   totalInputMana,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+			}
+		},
+	}
+
+	// builds a transaction that destroys a foundry
+	destroyFoundryTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		addressesFunc: func(ed25519Addresses []iotago.Address) []iotago.Address {
+			accountAddress := tpkg.RandAccountAddress()
+			return []iotago.Address{
+				accountAddress,
+			}
+		},
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			return []iotago.Output{
+				&iotago.AccountOutput{
+					Amount:         defaultAmount,
+					Mana:           0,
+					NativeTokens:   iotago.NativeTokens{},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     0,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+				&iotago.FoundryOutput{
+					Amount:       defaultAmount,
+					NativeTokens: iotago.NativeTokens{},
+					SerialNumber: 1,
+					TokenScheme: &iotago.SimpleTokenScheme{
+						MintedTokens:  big.NewInt(100),
+						MeltedTokens:  big.NewInt(100),
+						MaximumSupply: big.NewInt(100),
+					},
+					Conditions: iotago.FoundryOutputUnlockConditions{
+						&iotago.ImmutableAccountUnlockCondition{
+							Address: testAddresses[0].(*iotago.AccountAddress),
+						},
+					},
+					Features:          iotago.FoundryOutputFeatures{},
+					ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				// destroy the foundry output
+				&iotago.AccountOutput{
+					Amount:         totalInputAmount,
+					Mana:           totalInputMana,
+					NativeTokens:   iotago.NativeTokens{},
+					AccountID:      testAddresses[0].(*iotago.AccountAddress).AccountID(),
+					StateIndex:     1,
+					StateMetadata:  []byte{},
+					FoundryCounter: 1,
+					Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
+						&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+					Features:          iotago.AccountOutputFeatures{},
+					ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+				&iotago.AccountUnlock{Reference: 0},
+			}
+		},
+	}
+
+	// builds a transaction that destroys a NFT
+	destroyNFTTxBuilder := &txBuilder{
+		ed25519AddrCnt: 1,
+		inputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address) []iotago.Output {
+			return []iotago.Output{
+				&iotago.NFTOutput{
+					Amount: defaultAmount,
+					Conditions: iotago.NFTOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		outputsFunc: func(ed25519Addresses []iotago.Address, testAddresses []iotago.Address, totalInputAmount iotago.BaseToken, totalInputMana iotago.Mana) iotago.TxEssenceOutputs {
+			return iotago.TxEssenceOutputs{
+				// destroy the NFT output
+				&iotago.BasicOutput{
+					Amount: totalInputAmount,
+					Mana:   totalInputMana,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
+					},
+				},
+			}
+		},
+		unlocksFunc: func(sigs []iotago.Signature, testAddresses []iotago.Address) iotago.Unlocks {
+			return iotago.Unlocks{
+				&iotago.SignatureUnlock{Signature: sigs[0]},
+			}
+		},
+	}
+
+	tests := []*txExecTest{
+		// ok - burn native tokens (burning enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - burn native tokens (burning enabled)",
+				txBuilder: burnNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanBurnNativeTokens(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - burn native tokens (burning disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - burn native tokens (burning disabled)",
+				txBuilder: burnNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanBurnNativeTokens(false),
+					)
+				},
+				wantErr: iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed,
+			}
+		}(),
+
+		// ok - melt native tokens (burning enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - melt native tokens (burning enabled)",
+				txBuilder: meltNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanBurnNativeTokens(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// ok - melt native tokens (burning disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - melt native tokens (burning disabled)",
+				txBuilder: meltNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanBurnNativeTokens(false),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// ok - burn and melt native tokens (burning enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - burn and melt native tokens (burning enabled)",
+				txBuilder: burnAndMeltNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanBurnNativeTokens(true),
+					)
+				},
+				wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			}
+		}(),
+
+		// fail - burn and melt native tokens (burning disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - burn and melt native tokens (burning disabled)",
+				txBuilder: burnAndMeltNativeTokenTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanBurnNativeTokens(false),
+					)
+				},
+				wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			}
+		}(),
+
+		// ok - burn mana (burning enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - burn mana (burning enabled)",
+				txBuilder: burnManaTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanBurnMana(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - burn mana (burning disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - burn mana (burning disabled)",
+				txBuilder: burnManaTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanBurnMana(false),
+					)
+				},
+				wantErr: iotago.ErrTxCapabilitiesManaBurningNotAllowed,
+			}
+		}(),
+
+		// ok - destroy account (destruction enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - destroy account (destruction enabled)",
+				txBuilder: destroyAccountTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDestroyAccountOutputs(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - destroy account (destruction disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - destroy account (destruction disabled)",
+				txBuilder: destroyAccountTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanDestroyAccountOutputs(false),
+					)
+				},
+				wantErr: iotago.ErrTxCapabilitiesAccountDestructionNotAllowed,
+			}
+		}(),
+
+		// ok - destroy foundry (destruction enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - destroy foundry (destruction enabled)",
+				txBuilder: destroyFoundryTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDestroyFoundryOutputs(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - destroy foundry (destruction disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - destroy foundry (destruction disabled)",
+				txBuilder: destroyFoundryTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanDestroyFoundryOutputs(false),
+					)
+				},
+				wantErr: iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed,
+			}
+		}(),
+
+		// ok - destroy NFT (destruction enabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "ok - destroy NFT (destruction enabled)",
+				txBuilder: destroyNFTTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDestroyNFTOutputs(true),
+					)
+				},
+				wantErr: nil,
+			}
+		}(),
+
+		// fail - destroy NFT (destruction disabled)
+		func() *txExecTest {
+			return &txExecTest{
+				name:      "fail - destroy NFT (destruction disabled)",
+				txBuilder: destroyNFTTxBuilder,
+				txPreSignHook: func(t *iotago.Transaction) {
+					t.Capabilities = iotago.TransactionCapabilitiesBitMaskWithCapabilities(
+						iotago.WithTransactionCanDoAnything(),
+						iotago.WithTransactionCanDestroyNFTOutputs(false),
+					)
+				},
+				wantErr: iotago.ErrTxCapabilitiesNFTDestructionNotAllowed,
+			}
+		}(),
+	}
+
+	for _, tt := range tests {
+		runStardustTransactionExecutionTest(t, tt)
+	}
+}
+
 // TODO: add test case for transaction with context inputs.
 func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {

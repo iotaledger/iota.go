@@ -26,6 +26,20 @@ var (
 // FoundryID defines the identifier for a foundry consisting out of the address, serial number and TokenScheme.
 type FoundryID [FoundryIDLength]byte
 
+func FoundryIDFromAddressAndSerialNumberAndTokenScheme(addr Address, serialNumber uint32, tokenScheme TokenSchemeType) (NativeTokenID, error) {
+	serixAPI := CommonSerixAPI()
+	var foundryID FoundryID
+	addrBytes, err := serixAPI.Encode(context.Background(), addr)
+	if err != nil {
+		return foundryID, err
+	}
+	copy(foundryID[:], addrBytes)
+	binary.LittleEndian.PutUint32(foundryID[len(addrBytes):], serialNumber)
+	foundryID[len(foundryID)-1] = byte(tokenScheme)
+
+	return foundryID, nil
+}
+
 func (fID FoundryID) ToHex() string {
 	return hexutil.EncodeHex(fID[:])
 }
@@ -205,17 +219,7 @@ func (f *FoundryOutput) ChainID() ChainID {
 
 // FoundryID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) FoundryID() (FoundryID, error) {
-	serixAPI := CommonSerixAPI()
-	var foundryID FoundryID
-	addrBytes, err := serixAPI.Encode(context.Background(), f.Ident())
-	if err != nil {
-		return foundryID, err
-	}
-	copy(foundryID[:], addrBytes)
-	binary.LittleEndian.PutUint32(foundryID[len(addrBytes):], f.SerialNumber)
-	foundryID[len(foundryID)-1] = byte(f.TokenScheme.Type())
-
-	return foundryID, nil
+	return FoundryIDFromAddressAndSerialNumberAndTokenScheme(f.Ident(), f.SerialNumber, f.TokenScheme.Type())
 }
 
 // MustFoundryID works like FoundryID but panics if an error occurs.
