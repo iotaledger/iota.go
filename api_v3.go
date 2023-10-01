@@ -30,16 +30,6 @@ func disallowImplicitAccountCreationAddress(address Address) error {
 }
 
 var (
-	// Note that when UniquenessSliceFunc is set and the mode is no dups and lexical order, then both will use
-	// the return value of UniquenessSliceFunc for those checks.
-	nativeTokensV3ArrRules = &serix.ArrayRules{
-		Min: MinNativeTokenCountPerOutput,
-		Max: MaxNativeTokenCountPerOutput,
-		// Uniqueness and lexical order is checked based on the Token ID.
-		UniquenessSliceFunc: func(next []byte) []byte { return next[:NativeTokenIDLength] },
-		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
 	basicOutputV3UnlockCondArrRules = &serix.ArrayRules{
 		Min: 1,
 		Max: 4,
@@ -52,7 +42,7 @@ var (
 	}
 	basicOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0,
-		Max: 8,
+		Max: 4,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -71,7 +61,7 @@ var (
 
 	accountOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0,
-		Max: 3,
+		Max: 4,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -96,7 +86,7 @@ var (
 	}
 
 	foundryOutputV3FeatBlocksArrRules = &serix.ArrayRules{
-		Min: 0, Max: 1,
+		Min: 0, Max: 2,
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -301,17 +291,20 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterTypeSettings(SenderFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))),
+		)
 		must(api.RegisterTypeSettings(IssuerFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureIssuer))),
 		)
 		must(api.RegisterTypeSettings(MetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))),
 		)
-		must(api.RegisterTypeSettings(SenderFeature{},
-			serix.TypeSettings{}.WithObjectType(uint8(FeatureSender))),
-		)
 		must(api.RegisterTypeSettings(TagFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))),
+		)
+		must(api.RegisterTypeSettings(NativeTokenFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureNativeToken))),
 		)
 		must(api.RegisterTypeSettings(BlockIssuerFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureBlockIssuer))),
@@ -319,10 +312,11 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StakingFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureStaking))),
 		)
+		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*Feature)(nil), (*NativeTokenFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*BlockIssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*StakingFeature)(nil)))
 	}
@@ -394,13 +388,6 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(NativeToken{}, serix.TypeSettings{}))
-		must(api.RegisterTypeSettings(NativeTokens{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nativeTokensV3ArrRules),
-		))
-	}
-
-	{
 		must(api.RegisterTypeSettings(BasicOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputBasic))))
 
 		must(api.RegisterTypeSettings(BasicOutputUnlockConditions{},
@@ -419,6 +406,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 	}
 
 	{
@@ -467,6 +455,7 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 
 		must(api.RegisterInterfaceObjects((*foundryOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*foundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 
 		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3ImmFeatBlocksArrRules),

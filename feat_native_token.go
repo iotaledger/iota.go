@@ -1,0 +1,87 @@
+package iotago
+
+import (
+	"math/big"
+
+	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2"
+)
+
+const (
+	// Uint256ByteSize defines the size of an uint256.
+	Uint256ByteSize = 32
+
+	// NativeTokenIDLength is the byte length of a NativeTokenID which is the same thing as a FoundryID.
+	NativeTokenIDLength = FoundryIDLength
+)
+
+var (
+	// ErrNativeTokenAmountLessThanEqualZero gets returned when a NativeToken.Amount is not bigger than 0.
+	ErrNativeTokenAmountLessThanEqualZero = ierrors.New("native token must be a value bigger than zero")
+	// ErrNativeTokenSumExceedsUint256 gets returned when a NativeToken.Amount addition results in a value bigger than the max value of a uint256.
+	ErrNativeTokenSumExceedsUint256 = ierrors.New("native token sum exceeds max value of a uint256")
+	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
+	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
+)
+
+// NativeTokenID is an identifier which uniquely identifies a NativeToken.
+type NativeTokenID = FoundryID
+
+// NativeTokenSum is a mapping of NativeTokenID to a sum value.
+type NativeTokenSum map[NativeTokenID]*big.Int
+
+// ValueOrBigInt0 returns the value for the given native token or a 0 big int.
+func (sum NativeTokenSum) ValueOrBigInt0(id NativeTokenID) *big.Int {
+	v, has := sum[id]
+	if !has {
+		return big.NewInt(0)
+	}
+
+	return v
+}
+
+// NativeTokenFeature is a feature that holds a native token which represents a token that resides natively on the ledger.
+type NativeTokenFeature struct {
+	ID     NativeTokenID `serix:"0,mapKey=id"`
+	Amount *big.Int      `serix:"1,mapKey=amount"`
+}
+
+// Clone clones the NativeTokenFeature.
+func (n *NativeTokenFeature) Clone() Feature {
+	cpy := &NativeTokenFeature{}
+	copy(cpy.ID[:], n.ID[:])
+	cpy.Amount = new(big.Int).Set(n.Amount)
+
+	return cpy
+}
+
+func (n *NativeTokenFeature) Type() FeatureType {
+	return FeatureNativeToken
+}
+
+func (n *NativeTokenFeature) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+	return 0
+}
+
+func (n *NativeTokenFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+	return workScoreStructure.NativeToken, nil
+}
+
+// Equal checks whether other is equal to this NativeToken.
+func (n *NativeTokenFeature) Equal(other Feature) bool {
+	otherFeat, is := other.(*NativeTokenFeature)
+	if !is {
+		return false
+	}
+
+	if n.ID != otherFeat.ID {
+		return false
+	}
+
+	return n.Amount.Cmp(otherFeat.Amount) == 0
+}
+
+func (n *NativeTokenFeature) Size() int {
+	// FeatureType + NativeTokenID + Amount (uint256)
+	return serializer.SmallTypeDenotationByteSize + NativeTokenIDLength + serializer.UInt256ByteSize
+}

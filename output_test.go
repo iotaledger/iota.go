@@ -81,9 +81,8 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - BasicOutput",
 			source: &iotago.BasicOutput{
-				Amount:       1337,
-				Mana:         500,
-				NativeTokens: tpkg.RandSortNativeTokens(2),
+				Amount: 1337,
+				Mana:   500,
 				Conditions: iotago.BasicOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.StorageDepositReturnUnlockCondition{
@@ -100,6 +99,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Data: tpkg.RandBytes(100)},
 					&iotago.TagFeature{Tag: tpkg.RandBytes(32)},
+					tpkg.RandNativeTokenFeature(),
 				},
 			},
 			target: &iotago.BasicOutput{},
@@ -109,7 +109,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 			source: &iotago.AccountOutput{
 				Amount:         1337,
 				Mana:           500,
-				NativeTokens:   tpkg.RandSortNativeTokens(2),
 				AccountID:      tpkg.RandAccountAddress().AccountID(),
 				StateIndex:     10,
 				StateMetadata:  []byte("hello world"),
@@ -132,7 +131,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 			name: "ok - FoundryOutput",
 			source: &iotago.FoundryOutput{
 				Amount:       1337,
-				NativeTokens: tpkg.RandSortNativeTokens(2),
 				SerialNumber: 0,
 				TokenScheme: &iotago.SimpleTokenScheme{
 					MintedTokens:  new(big.Int).SetUint64(100),
@@ -152,10 +150,9 @@ func TestOutputsDeSerialize(t *testing.T) {
 		{
 			name: "ok - NFTOutput",
 			source: &iotago.NFTOutput{
-				Amount:       1337,
-				Mana:         500,
-				NativeTokens: tpkg.RandSortNativeTokens(2),
-				NFTID:        tpkg.Rand32ByteArray(),
+				Amount: 1337,
+				Mana:   500,
+				NFTID:  tpkg.Rand32ByteArray(),
 				Conditions: iotago.NFTOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.StorageDepositReturnUnlockCondition{
@@ -266,7 +263,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
 	)
 
-	var minAmount iotago.BaseToken = 14200
+	var minAmount iotago.BaseToken = 14100
 
 	tests := []struct {
 		name        string
@@ -513,49 +510,33 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 			name: "ok",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(5),
+					Amount: 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
+					Features: iotago.BasicOutputFeatures{
+						tpkg.RandNativeTokenFeature(),
+					},
 				},
 				&iotago.BasicOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(10),
+					Amount: 1,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					},
+					Features: iotago.BasicOutputFeatures{
+						tpkg.RandNativeTokenFeature(),
 					},
 				},
 			},
 			wantErr: nil,
 		},
 		{
-			name: "fail - sum more than max native tokens count",
-			outputs: iotago.Outputs[iotago.Output]{
-				&iotago.BasicOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(50),
-					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-				&iotago.BasicOutput{
-					Amount:       1,
-					NativeTokens: tpkg.RandSortNativeTokens(50),
-					Conditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					},
-				},
-			},
-			wantErr: iotago.ErrMaxNativeTokensCountExceeded,
-		},
-		{
 			name: "fail - native token with zero amount",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 1,
-					NativeTokens: iotago.NativeTokens{
-						&iotago.NativeToken{
+					Features: iotago.BasicOutputFeatures{
+						&iotago.NativeTokenFeature{
 							ID:     iotago.NativeTokenID{},
 							Amount: big.NewInt(0),
 						},
@@ -720,7 +701,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
-					NativeTokens: nil,
 					SerialNumber: 5,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(5),
@@ -740,7 +720,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
-					NativeTokens: nil,
 					SerialNumber: 5,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(10),
@@ -760,7 +739,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
-					NativeTokens: nil,
 					SerialNumber: 5,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  new(big.Int).SetUint64(5),
@@ -780,7 +758,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
-					NativeTokens: nil,
 					SerialNumber: 5,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  big.NewInt(5),
@@ -800,7 +777,6 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.FoundryOutput{
 					Amount:       1337,
-					NativeTokens: nil,
 					SerialNumber: 5,
 					TokenScheme: &iotago.SimpleTokenScheme{
 						MintedTokens:  big.NewInt(50),
@@ -1136,9 +1112,8 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 			return &test{
 				name: "state ctrl can unlock - state index increase",
 				current: &iotago.AccountOutput{
-					Amount:       OneMi,
-					NativeTokens: nil,
-					StateIndex:   0,
+					Amount:     OneMi,
+					StateIndex: 0,
 					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
@@ -1166,9 +1141,8 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 			return &test{
 				name: "state ctrl can not unlock - state index same",
 				current: &iotago.AccountOutput{
-					Amount:       OneMi,
-					NativeTokens: nil,
-					StateIndex:   0,
+					Amount:     OneMi,
+					StateIndex: 0,
 					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
@@ -1197,9 +1171,8 @@ func TestAccountOutput_UnlockableBy(t *testing.T) {
 			return &test{
 				name: "state ctrl can not unlock - transition destroy",
 				current: &iotago.AccountOutput{
-					Amount:       OneMi,
-					NativeTokens: nil,
-					StateIndex:   0,
+					Amount:     OneMi,
+					StateIndex: 0,
 					Conditions: iotago.AccountOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},

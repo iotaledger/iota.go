@@ -97,24 +97,21 @@ type (
 type FoundryOutput struct {
 	// The amount of IOTA tokens held by the output.
 	Amount BaseToken `serix:"0,mapKey=amount"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"1,mapKey=nativeTokens,omitempty"`
 	// The serial number of the foundry.
-	SerialNumber uint32 `serix:"2,mapKey=serialNumber"`
+	SerialNumber uint32 `serix:"1,mapKey=serialNumber"`
 	// The token scheme this foundry uses.
-	TokenScheme TokenScheme `serix:"3,mapKey=tokenScheme"`
+	TokenScheme TokenScheme `serix:"2,mapKey=tokenScheme"`
 	// The unlock conditions on this output.
-	Conditions FoundryOutputUnlockConditions `serix:"4,mapKey=unlockConditions,omitempty"`
+	Conditions FoundryOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
 	// The feature on the output.
-	Features FoundryOutputFeatures `serix:"5,mapKey=features,omitempty"`
+	Features FoundryOutputFeatures `serix:"4,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures FoundryOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures FoundryOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
 }
 
 func (f *FoundryOutput) Clone() Output {
 	return &FoundryOutput{
 		Amount:            f.Amount,
-		NativeTokens:      f.NativeTokens.Clone(),
 		SerialNumber:      f.SerialNumber,
 		TokenScheme:       f.TokenScheme.Clone(),
 		Conditions:        f.Conditions.Clone(),
@@ -130,10 +127,6 @@ func (f *FoundryOutput) Equal(other Output) bool {
 	}
 
 	if f.Amount != otherOutput.Amount {
-		return false
-	}
-
-	if !f.NativeTokens.Equal(otherOutput.NativeTokens) {
 		return false
 	}
 
@@ -172,7 +165,6 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 func (f *FoundryOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreOffsetOutput(rentStruct) +
 		rentStruct.StorageScoreFactorData().Multiply(StorageScore(f.Size())) +
-		f.NativeTokens.StorageScore(rentStruct, nil) +
 		f.TokenScheme.StorageScore(rentStruct, nil) +
 		f.Conditions.StorageScore(rentStruct, nil) +
 		f.Features.StorageScore(rentStruct, nil) +
@@ -180,11 +172,6 @@ func (f *FoundryOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFu
 }
 
 func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreNativeTokens, err := f.NativeTokens.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreTokenScheme, err := f.TokenScheme.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -205,7 +192,7 @@ func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreNativeTokens.Add(workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreTokenScheme.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (f *FoundryOutput) ChainID() ChainID {
@@ -247,10 +234,6 @@ func (f *FoundryOutput) NativeTokenID() (NativeTokenID, error) {
 	return f.FoundryID()
 }
 
-func (f *FoundryOutput) NativeTokenList() NativeTokens {
-	return f.NativeTokens
-}
-
 func (f *FoundryOutput) FeatureSet() FeatureSet {
 	return f.Features.MustSet()
 }
@@ -279,7 +262,6 @@ func (f *FoundryOutput) Size() int {
 	// OutputType
 	return serializer.OneByte +
 		BaseTokenSize +
-		f.NativeTokens.Size() +
 		// SerialNumber
 		serializer.UInt32ByteSize +
 		f.TokenScheme.Size() +

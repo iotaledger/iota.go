@@ -98,23 +98,20 @@ type NFTOutput struct {
 	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The stored mana held by the output.
 	Mana Mana `serix:"1,mapKey=mana"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
 	// The identifier of this NFT.
-	NFTID NFTID `serix:"3,mapKey=nftId"`
+	NFTID NFTID `serix:"2,mapKey=nftId"`
 	// The unlock conditions on this output.
-	Conditions NFTOutputUnlockConditions `serix:"4,mapKey=unlockConditions,omitempty"`
+	Conditions NFTOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
 	// The feature on the output.
-	Features NFTOutputFeatures `serix:"5,mapKey=features,omitempty"`
+	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures NFTOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
 }
 
 func (n *NFTOutput) Clone() Output {
 	return &NFTOutput{
 		Amount:            n.Amount,
 		Mana:              n.Mana,
-		NativeTokens:      n.NativeTokens.Clone(),
 		NFTID:             n.NFTID,
 		Conditions:        n.Conditions.Clone(),
 		Features:          n.Features.Clone(),
@@ -133,10 +130,6 @@ func (n *NFTOutput) Equal(other Output) bool {
 	}
 
 	if n.Mana != otherOutput.Mana {
-		return false
-	}
-
-	if !n.NativeTokens.Equal(otherOutput.NativeTokens) {
 		return false
 	}
 
@@ -171,18 +164,12 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 func (n *NFTOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreOffsetOutput(rentStruct) +
 		rentStruct.StorageScoreFactorData().Multiply(StorageScore(n.Size())) +
-		n.NativeTokens.StorageScore(rentStruct, nil) +
 		n.Conditions.StorageScore(rentStruct, nil) +
 		n.Features.StorageScore(rentStruct, nil) +
 		n.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
 func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreNativeTokens, err := n.NativeTokens.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreConditions, err := n.Conditions.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -198,7 +185,7 @@ func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore
 		return 0, err
 	}
 
-	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (n *NFTOutput) syntacticallyValidate() error {
@@ -214,10 +201,6 @@ func (n *NFTOutput) syntacticallyValidate() error {
 
 func (n *NFTOutput) ChainID() ChainID {
 	return n.NFTID
-}
-
-func (n *NFTOutput) NativeTokenList() NativeTokens {
-	return n.NativeTokens
 }
 
 func (n *NFTOutput) FeatureSet() FeatureSet {
@@ -249,7 +232,6 @@ func (n *NFTOutput) Size() int {
 	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
-		n.NativeTokens.Size() +
 		NFTIDLength +
 		n.Conditions.Size() +
 		n.Features.Size() +

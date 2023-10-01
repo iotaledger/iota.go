@@ -94,7 +94,6 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
 		Mana:           0,
-		NativeTokens:   NativeTokens{},
 		AccountID:      EmptyAccountID(),
 		StateIndex:     0,
 		StateMetadata:  []byte{},

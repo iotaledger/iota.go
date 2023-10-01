@@ -147,24 +147,13 @@ func RandTransactionID() iotago.TransactionID {
 	return RandTransactionIDWithCreationSlot(RandSlotIndex())
 }
 
-// RandNativeToken returns a random NativeToken.
-func RandNativeToken() *iotago.NativeToken {
+// RandNativeTokenFeature returns a random NativeToken feature.
+func RandNativeTokenFeature() *iotago.NativeTokenFeature {
 	b := RandBytes(iotago.NativeTokenIDLength)
-	nt := &iotago.NativeToken{Amount: RandUint256()}
+	nt := &iotago.NativeTokenFeature{Amount: RandUint256()}
 	copy(nt.ID[:], b)
 
 	return nt
-}
-
-// RandSortNativeTokens returns count sorted NativeToken.
-func RandSortNativeTokens(count int) iotago.NativeTokens {
-	var nativeTokens iotago.NativeTokens
-	for i := 0; i < count; i++ {
-		nativeTokens = append(nativeTokens, RandNativeToken())
-	}
-	nativeTokens.Sort()
-
-	return nativeTokens
 }
 
 func RandUint256() *big.Int {
@@ -794,10 +783,9 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 // RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
-		Amount:       0,
-		NativeTokens: iotago.NativeTokens{},
-		Conditions:   iotago.BasicOutputUnlockConditions{},
-		Features:     iotago.BasicOutputFeatures{},
+		Amount:     0,
+		Conditions: iotago.BasicOutputUnlockConditions{},
+		Features:   iotago.BasicOutputFeatures{},
 	}
 
 	//nolint:exhaustive

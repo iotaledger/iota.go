@@ -61,7 +61,6 @@ func TestTransactionBuilder(t *testing.T) {
 
 				nftOutput = &iotago.NFTOutput{
 					Amount:            1000,
-					NativeTokens:      nil,
 					NFTID:             tpkg.Rand32ByteArray(),
 					Conditions:        iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
 					Features:          nil,
