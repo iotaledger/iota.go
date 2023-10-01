@@ -29,8 +29,9 @@ var (
 
 					return inputs
 				}(),
-				Allotments: iotago.Allotments{},
-				Payload:    nil,
+				Allotments:   iotago.Allotments{},
+				Capabilities: iotago.TransactionCapabilitiesBitMask{},
+				Payload:      nil,
 			},
 			Outputs: func() iotago.TxEssenceOutputs {
 				var outputs iotago.TxEssenceOutputs

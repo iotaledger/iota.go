@@ -18,7 +18,7 @@ func TestTaggedDataDeSerialize(t *testing.T) {
 		},
 		{
 			name:   "empty-tag",
-			source: tpkg.RandTaggedData(nil),
+			source: tpkg.RandTaggedData([]byte{}),
 			target: &iotago.TaggedData{},
 		},
 	}

@@ -3,6 +3,7 @@ package iotago
 import (
 	"context"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -102,103 +103,79 @@ func AddressCapabilitiesBitMaskFromBytes(bytes []byte) (AddressCapabilitiesBitMa
 func AddressCapabilitiesBitMaskWithCapabilities(opts ...options.Option[AddressCapabilitiesOptions]) AddressCapabilitiesBitMask {
 	options := options.Apply(new(AddressCapabilitiesOptions), opts)
 
-	bm := AddressCapabilitiesBitMask{}
+	bm := []byte{}
 
 	if options.canReceiveNativeTokens {
-		bm = bm.setBit(canReceiveNativeTokensBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveNativeTokensBitIndex)
 	}
 
 	if options.canReceiveMana {
-		bm = bm.setBit(canReceiveManaBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveManaBitIndex)
 	}
 
 	if options.canReceiveOutputsWithTimelockUnlockCondition {
-		bm = bm.setBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveOutputsWithTimelockUnlockConditionBitIndex)
 	}
 
 	if options.canReceiveOutputsWithExpirationUnlockCondition {
-		bm = bm.setBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveOutputsWithExpirationUnlockConditionBitIndex)
 	}
 
 	if options.canReceiveOutputsWithStorageDepositReturnUnlockCondition {
-		bm = bm.setBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
 	}
 
 	if options.canReceiveAccountOutputs {
-		bm = bm.setBit(canReceiveAccountOutputsBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveAccountOutputsBitIndex)
 	}
 
 	if options.canReceiveNFTOutputs {
-		bm = bm.setBit(canReceiveNFTOutputsBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveNFTOutputsBitIndex)
 	}
 
 	if options.canReceiveDelegationOutputs {
-		bm = bm.setBit(canReceiveDelegationOutputsBitIndex)
+		bm = BitMaskSetBit(bm, canReceiveDelegationOutputsBitIndex)
 	}
 
 	return bm
 }
 
 func (bm AddressCapabilitiesBitMask) Clone() AddressCapabilitiesBitMask {
-	cpy := make(AddressCapabilitiesBitMask, 0, len(bm))
-	copy(cpy, bm)
-	return cpy
-}
-
-func (bm AddressCapabilitiesBitMask) hasBit(bit uint) bool {
-	byteIndex := bit / 8
-	if uint(len(bm)) <= byteIndex {
-		return false
-	}
-	bitIndex := bit % 8
-
-	return bm[byteIndex]&(1<<bitIndex) > 0
-}
-
-func (bm AddressCapabilitiesBitMask) setBit(bit uint) AddressCapabilitiesBitMask {
-	newBitmask := bm
-	byteIndex := bit / 8
-	for uint(len(newBitmask)) <= byteIndex {
-		newBitmask = append(newBitmask, 0)
-	}
-	bitIndex := bit % 8
-	newBitmask[byteIndex] |= 1 << bitIndex
-
-	return newBitmask
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveNativeTokens() bool {
-	return !bm.hasBit(canReceiveNativeTokensBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveMana() bool {
-	return !bm.hasBit(canReceiveManaBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
-	return !bm.hasBit(canReceiveOutputsWithTimelockUnlockConditionBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
-	return !bm.hasBit(canReceiveOutputsWithExpirationUnlockConditionBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
-	return !bm.hasBit(canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveAccountOutputs() bool {
-	return !bm.hasBit(canReceiveAccountOutputsBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveNFTOutputs() bool {
-	return !bm.hasBit(canReceiveNFTOutputsBitIndex)
-}
-
-func (bm AddressCapabilitiesBitMask) CannotReceiveDelegationOutputs() bool {
-	return !bm.hasBit(canReceiveDelegationOutputsBitIndex)
+	return lo.CopySlice(bm)
 }
 
 func (bm AddressCapabilitiesBitMask) Size() int {
 	return serializer.SmallTypeDenotationByteSize + len(bm)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveNativeTokens() bool {
+	return !BitMaskHasBit(bm, canReceiveNativeTokensBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveMana() bool {
+	return !BitMaskHasBit(bm, canReceiveManaBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithTimelockUnlockCondition() bool {
+	return !BitMaskHasBit(bm, canReceiveOutputsWithTimelockUnlockConditionBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithExpirationUnlockCondition() bool {
+	return !BitMaskHasBit(bm, canReceiveOutputsWithExpirationUnlockConditionBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool {
+	return !BitMaskHasBit(bm, canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveAccountOutputs() bool {
+	return !BitMaskHasBit(bm, canReceiveAccountOutputsBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveNFTOutputs() bool {
+	return !BitMaskHasBit(bm, canReceiveNFTOutputsBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveDelegationOutputs() bool {
+	return !BitMaskHasBit(bm, canReceiveDelegationOutputsBitIndex)
 }

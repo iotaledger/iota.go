@@ -45,6 +45,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						ContextInputs: iotago.TxEssenceContextInputs{},
 						Inputs:        inputIDs.UTXOInputs(),
 						Allotments:    iotago.Allotments{},
+						Capabilities:  iotago.TransactionCapabilitiesBitMask{},
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
@@ -77,8 +78,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
-						NetworkID: tpkg.TestNetworkID,
-						Inputs:    inputIDs.UTXOInputs(),
+						NetworkID:    tpkg.TestNetworkID,
+						Inputs:       inputIDs.UTXOInputs(),
+						Capabilities: iotago.TransactionCapabilitiesBitMask{},
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.NFTOutput{
@@ -109,8 +111,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				&iotago.Transaction{
 					TransactionEssence: &iotago.TransactionEssence{
-						NetworkID: tpkg.TestNetworkID,
-						Inputs:    inputIDs.UTXOInputs(),
+						NetworkID:    tpkg.TestNetworkID,
+						Inputs:       inputIDs.UTXOInputs(),
+						Capabilities: iotago.TransactionCapabilitiesBitMask{},
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
@@ -192,6 +195,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 								Value:     12,
 							},
 						},
+						Capabilities: iotago.TransactionCapabilitiesBitMask{},
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						tpkg.RandBasicOutput(iotago.AddressEd25519),
