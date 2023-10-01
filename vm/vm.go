@@ -748,16 +748,12 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 			outSum := vmParams.WorkingSet.OutNativeTokens[nativeTokenID]
 
-			if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotBurnNativeTokens() {
+			if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotBurnNativeTokens() && (outSum == nil || inSum.Cmp(outSum) != 0) {
 				// if burning is not allowed, the input sum must be equal to the output sum
-				if outSum == nil || inSum.Cmp(outSum) != 0 {
-					return ierrors.Wrapf(iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed, "%w: native token %s is less on output (%d) than input (%d) side but burning is not allowed in the transaction and the foundry is absent for melting", iotago.ErrNativeTokenSumUnbalanced, nativeTokenID, outSum, inSum)
-				}
-			} else {
+				return ierrors.Wrapf(iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed, "%w: native token %s is less on output (%d) than input (%d) side but burning is not allowed in the transaction and the foundry is absent for melting", iotago.ErrNativeTokenSumUnbalanced, nativeTokenID, outSum, inSum)
+			} else if (outSum != nil) && (inSum.Cmp(outSum) == -1) {
 				// input sum must be greater equal the output sum (burning allows it to be greater)
-				if outSum != nil && inSum.Cmp(outSum) == -1 {
-					return ierrors.Wrapf(iotago.ErrNativeTokenSumUnbalanced, "native token %s is less on input (%d) than output (%d) side but the foundry is absent for minting", nativeTokenID, inSum, outSum)
-				}
+				return ierrors.Wrapf(iotago.ErrNativeTokenSumUnbalanced, "native token %s is less on input (%d) than output (%d) side but the foundry is absent for minting", nativeTokenID, inSum, outSum)
 			}
 		}
 
