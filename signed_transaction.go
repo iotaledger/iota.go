@@ -78,36 +78,6 @@ type SignedTransaction struct {
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
 
-func (t *SignedTransaction) SetDeserializationContext(ctx context.Context) {
-	t.API = APIFromContext(ctx)
-}
-
-func (t *SignedTransaction) Clone() Payload {
-	return &SignedTransaction{
-		API:         t.API,
-		Transaction: t.Transaction.Clone(),
-		Unlocks:     t.Unlocks.Clone(),
-	}
-}
-
-func (t *SignedTransaction) PayloadType() PayloadType {
-	return PayloadSignedTransaction
-}
-
-// OutputsSet returns an OutputSet from the SignedTransaction's outputs, mapped by their OutputID.
-func (t *SignedTransaction) OutputsSet() (OutputSet, error) {
-	txID, err := t.ID()
-	if err != nil {
-		return nil, err
-	}
-	set := make(OutputSet)
-	for index, output := range t.Transaction.Outputs {
-		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
-	}
-
-	return set, nil
-}
-
 // ID computes the ID of the SignedTransaction.
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	transactionBytes, err := t.API.Encode(t.Unlocks)
@@ -128,6 +98,22 @@ func (t *SignedTransaction) Size() int {
 	return serializer.TypeDenotationByteSize +
 		t.Transaction.Size() +
 		t.Unlocks.Size()
+}
+
+func (t *SignedTransaction) PayloadType() PayloadType {
+	return PayloadSignedTransaction
+}
+
+func (t *SignedTransaction) Clone() Payload {
+	return &SignedTransaction{
+		API:         t.API,
+		Transaction: t.Transaction.Clone(),
+		Unlocks:     t.Unlocks.Clone(),
+	}
+}
+
+func (t *SignedTransaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
 }
 
 func (t *SignedTransaction) String() string {

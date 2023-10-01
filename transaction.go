@@ -104,6 +104,20 @@ func (t *Transaction) Inputs() ([]*UTXOInput, error) {
 	return references, nil
 }
 
+// OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
+func (t *Transaction) OutputsSet() (OutputSet, error) {
+	txID, err := t.ID()
+	if err != nil {
+		return nil, err
+	}
+	set := make(OutputSet)
+	for index, output := range t.Outputs {
+		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
+	}
+
+	return set, nil
+}
+
 func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
 	references := make(TransactionContextInputs, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
