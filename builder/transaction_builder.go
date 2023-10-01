@@ -394,7 +394,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	}
 	copy(b.transaction.InputsCommitment[:], commitment)
 
-	txEssenceData, err := b.transaction.SigningMessage(b.api)
+	txEssenceData, err := b.transaction.SigningMessage()
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to calculate tx transaction for signing message")
 	}

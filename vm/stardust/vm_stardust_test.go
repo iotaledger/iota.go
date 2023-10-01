@@ -4,6 +4,7 @@ package stardust_test
 import (
 	"bytes"
 	"crypto/ed25519"
+	"fmt"
 	"math/big"
 	"slices"
 	"testing"
@@ -93,7 +94,7 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -103,10 +104,8 @@ func TestNFTTransition(t *testing.T) {
 			&iotago.SignatureUnlock{Signature: sigs[0]},
 		},
 	}
-	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
-		API: testAPI,
-	}, resolvedInputs))
+
+	require.NoError(t, validateAndExecuteSignedTransaction(tx, vm.ResolvedInputs{InputSet: inputs}))
 }
 
 func TestCirculatingSupplyMelting(t *testing.T) {
@@ -195,7 +194,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -208,10 +207,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
-		API: testAPI,
-	}, resolvedInputs))
+	require.NoError(t, validateAndExecuteSignedTransaction(tx, vm.ResolvedInputs{InputSet: inputs}))
 }
 
 func TestStardustTransactionExecution(t *testing.T) {
@@ -667,7 +663,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -765,7 +761,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -853,7 +849,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -936,7 +932,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1009,7 +1005,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1083,7 +1079,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1147,7 +1143,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1216,7 +1212,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -1238,7 +1234,7 @@ func TestStardustTransactionExecution(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs)
+			err := validateAndExecuteSignedTransaction(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -1319,7 +1315,7 @@ func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		}
 
 		// sign the transaction essence
-		sigs, err := txtransaction.Sign(testAPI, inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
+		sigs, err := txtransaction.Sign(inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
 		require.NoError(t, err)
 
 		// pass the signatures and get the unlock conditions
@@ -1340,11 +1336,7 @@ func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		require.NoError(t, err)
 
 		// execute the transaction
-		err = stardustVM.Execute(
-			tx,
-			&vm.Params{API: testAPI},
-			vm.ResolvedInputs{InputSet: inputSet},
-		)
+		err = validateAndExecuteSignedTransaction(tx, vm.ResolvedInputs{InputSet: inputSet})
 		if test.wantErr != nil {
 			require.ErrorIs(t, err, test.wantErr)
 			return
@@ -2600,7 +2592,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2650,7 +2642,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddrKeys)
 			require.NoError(t, err)
 
 			copy(sigs[0].(*iotago.Ed25519Signature).PublicKey[:], ident1Sk.Public().(ed25519.PublicKey))
@@ -2694,7 +2686,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2740,7 +2732,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2785,7 +2777,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2831,7 +2823,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 			}}
-			_, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI))
+			_, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI))
 			require.NoError(t, err)
 			return test{
 				name: "fail - circular NFT unlock",
@@ -2871,7 +2863,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			creationSlot := iotago.SlotIndex(5)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2916,7 +2908,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -2984,7 +2976,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3047,7 +3039,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3119,7 +3111,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3143,7 +3135,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks())
+			_, err := stardustVM.ValidateUnlocks(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3231,7 +3223,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3304,7 +3296,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3351,7 +3343,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3398,7 +3390,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3456,7 +3448,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3518,7 +3510,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3579,7 +3571,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3639,7 +3631,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3709,7 +3701,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -3731,7 +3723,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedBaseTokens())
+			err := validateAndExecuteSignedTransaction(tt.tx, tt.resolvedInputs, vm.ExecFuncBalancedBaseTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -4258,7 +4250,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncBalancedNativeTokens())
+			err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncBalancedNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -4365,7 +4357,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4415,7 +4407,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4471,7 +4463,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4530,7 +4522,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4586,7 +4578,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4608,7 +4600,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncSenderUnlocked())
+			err := validateAndExecuteSignedTransaction(tt.tx, tt.resolvedInputs, vm.ExecFuncSenderUnlocked())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -4678,7 +4670,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4834,7 +4826,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4904,7 +4896,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -4927,7 +4919,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs)
+			err := validateAndExecuteSignedTransaction(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -4964,7 +4956,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5006,7 +4998,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: 10}}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5048,7 +5040,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(666)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5090,7 +5082,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(1005)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5114,7 +5106,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncTimelocks())
+			err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncTimelocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -5182,7 +5174,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5252,7 +5244,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5301,7 +5293,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5350,7 +5342,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5406,7 +5398,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5463,7 +5455,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
 			require.NoError(t, err)
 
 			return test{
@@ -5485,7 +5477,7 @@ func TestTxSemanticMana(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tt.tx, tt.vmParams, tt.resolvedInputs, vm.ExecFuncInputUnlocks(), vm.ExecFuncBalancedMana())
+			err := validateAndExecuteSignedTransaction(tt.tx, tt.resolvedInputs, vm.ExecFuncBalancedMana())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -5560,7 +5552,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -5580,9 +5572,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 			Slot: currentSlot,
 		},
 	}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
-		API: testAPI,
-	}, resolvedInputs))
+	require.NoError(t, validateAndExecuteSignedTransaction(tx, resolvedInputs))
 }
 
 func TestManaRewardsClaimingDelegation(t *testing.T) {
@@ -5626,7 +5616,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -5643,9 +5633,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 			delegationID: manaRewardAmount,
 		},
 	}
-	require.NoError(t, stardustVM.Execute(tx, &vm.Params{
-		API: testAPI,
-	}, resolvedInputs))
+	require.NoError(t, validateAndExecuteSignedTransaction(tx, resolvedInputs))
 }
 
 func TestTxSemanticAddressRestrictions(t *testing.T) {
@@ -5957,7 +5945,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				output,
 			},
 		}
-		sigs, err := transaction.Sign(testAPI, inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+		sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
 		require.NoError(t, err)
 
 		return inputs, sigs[0], transaction
@@ -5971,10 +5959,6 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 
 				inputs, sig, transaction := makeTransaction(testOutput)
 
-				vmParams := &vm.Params{
-					API: testAPI,
-				}
-
 				resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 				tx := &iotago.SignedTransaction{
 					API:         testAPI,
@@ -5984,7 +5968,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				err := stardustVM.Execute(tx, vmParams, resolvedInputs, vm.ExecFuncAddressRestrictions())
+				err := stardustVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)
 					return
@@ -6465,10 +6449,6 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			InputSet: vm.InputSet{},
 		}
 
-		vmParams := &vm.Params{
-			API: testAPI,
-		}
-
 		txBuilder := builder.NewTransactionBuilder(testAPI)
 
 		for _, input := range tests[idx].inputs {
@@ -6491,7 +6471,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		resolvedInputs.CommitmentInput = &tests[idx].resolvedCommitmentInput
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := stardustVM.Execute(tx, vmParams, resolvedInputs)
+			err := validateAndExecuteSignedTransaction(tx, resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -6539,4 +6519,15 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 	}
 
 	require.NoError(t, depositValidationFunc(0, convertedAccount))
+}
+
+func validateAndExecuteSignedTransaction(tx *iotago.SignedTransaction, resolvedInputs vm.ResolvedInputs, execFunctions ...vm.ExecFunc) (err error) {
+	unlockedIdentities, err := stardustVM.ValidateUnlocks(tx, resolvedInputs)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("unlockedIdentities", unlockedIdentities)
+
+	return stardustVM.Execute(tx.Transaction, resolvedInputs, unlockedIdentities, execFunctions...)
 }

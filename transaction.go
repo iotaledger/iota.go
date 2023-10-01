@@ -167,8 +167,8 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 }
 
 // SigningMessage returns the to be signed message.
-func (t *Transaction) SigningMessage(api API) ([]byte, error) {
-	essenceBytes, err := api.Encode(t)
+func (t *Transaction) SigningMessage() ([]byte, error) {
+	essenceBytes, err := t.API.Encode(t)
 	if err != nil {
 		return nil, err
 	}
@@ -179,14 +179,14 @@ func (t *Transaction) SigningMessage(api API) ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (t *Transaction) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+func (t *Transaction) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
 	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
 		return nil, ErrInvalidInputsCommitment
 	}
 
 	copy(t.InputsCommitment[:], inputsCommitment)
 
-	signMsg, err := t.SigningMessage(api)
+	signMsg, err := t.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
