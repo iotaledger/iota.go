@@ -10,8 +10,10 @@ import (
 )
 
 const (
+	FoundrySerialNumberLength = serializer.UInt32ByteSize
+	FoundryTokenSchemeLength  = serializer.OneByte
 	// FoundryIDLength is the byte length of a FoundryID consisting out of the account address, serial number and token scheme.
-	FoundryIDLength = AccountAddressSerializedBytesSize + serializer.UInt32ByteSize + serializer.OneByte
+	FoundryIDLength = AccountAddressSerializedBytesSize + FoundrySerialNumberLength + FoundryTokenSchemeLength
 )
 
 var (
@@ -50,7 +52,7 @@ func (fID FoundryID) Addressable() bool {
 
 // FoundrySerialNumber returns the serial number of the foundry.
 func (fID FoundryID) FoundrySerialNumber() uint32 {
-	return binary.LittleEndian.Uint32(fID[AccountAddressSerializedBytesSize : AccountAddressSerializedBytesSize+serializer.UInt32ByteSize])
+	return binary.LittleEndian.Uint32(fID[AccountAddressSerializedBytesSize : AccountAddressSerializedBytesSize+FoundrySerialNumberLength])
 }
 
 func (fID FoundryID) Matches(other ChainID) bool {
@@ -60,6 +62,20 @@ func (fID FoundryID) Matches(other ChainID) bool {
 	}
 
 	return fID == otherFID
+}
+
+func (fID FoundryID) AccountAddress() (*AccountAddress, error) {
+	var addr Address
+	if _, err := CommonSerixAPI().Decode(context.Background(), fID[:], &addr); err != nil {
+		return nil, err
+	}
+
+	accountAddr, isAccountAddr := addr.(*AccountAddress)
+	if !isAccountAddr {
+		return nil, ierrors.New("address is not an account address")
+	}
+
+	return accountAddr, nil
 }
 
 func (fID FoundryID) ToAddress() ChainAddress {
@@ -195,6 +211,25 @@ func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 	return workScoreTokenScheme.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
+func (f *FoundryOutput) syntacticallyValidate() error {
+	nativeTokenFeature := f.FeatureSet().NativeToken()
+	if nativeTokenFeature == nil {
+		return nil
+	}
+
+	foundryID, err := f.FoundryID()
+	if err != nil {
+		return err
+	}
+
+	// NativeTokenFeature ID should have the same ID as the foundry
+	if !foundryID.Matches(nativeTokenFeature.ID) {
+		return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
+	}
+
+	return nil
+}
+
 func (f *FoundryOutput) ChainID() ChainID {
 	foundryID, err := f.FoundryID()
 	if err != nil {
@@ -262,8 +297,7 @@ func (f *FoundryOutput) Size() int {
 	// OutputType
 	return serializer.OneByte +
 		BaseTokenSize +
-		// SerialNumber
-		serializer.UInt32ByteSize +
+		FoundrySerialNumberLength +
 		f.TokenScheme.Size() +
 		f.Conditions.Size() +
 		f.Features.Size() +

@@ -22,6 +22,8 @@ var (
 	ErrNativeTokenSumExceedsUint256 = ierrors.New("native token sum exceeds max value of a uint256")
 	// ErrNativeTokenSumUnbalanced gets returned when two NativeTokenSum(s) are unbalanced.
 	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
+	// ErrFoundryIDNativeTokenIDMismatch gets returned when a native token features exists in a foundry output but the IDs mismatch.
+	ErrFoundryIDNativeTokenIDMismatch = ierrors.New("native token feature ID in foundry output must match the foundry ID")
 )
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.

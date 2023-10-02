@@ -147,13 +147,25 @@ func RandTransactionID() iotago.TransactionID {
 	return RandTransactionIDWithCreationSlot(RandSlotIndex())
 }
 
+func RandNativeTokenID() iotago.NativeTokenID {
+	var nativeTokenID iotago.NativeTokenID
+	copy(nativeTokenID[:], RandBytes(iotago.NativeTokenIDLength))
+
+	// the underlying address needs to be an account address
+	nativeTokenID[0] = byte(iotago.AddressAccount)
+
+	// set the simple token scheme type
+	nativeTokenID[iotago.FoundryIDLength-iotago.FoundryTokenSchemeLength] = byte(iotago.TokenSchemeSimple)
+
+	return nativeTokenID
+}
+
 // RandNativeTokenFeature returns a random NativeToken feature.
 func RandNativeTokenFeature() *iotago.NativeTokenFeature {
-	b := RandBytes(iotago.NativeTokenIDLength)
-	nt := &iotago.NativeTokenFeature{Amount: RandUint256()}
-	copy(nt.ID[:], b)
-
-	return nt
+	return &iotago.NativeTokenFeature{
+		ID:     RandNativeTokenID(),
+		Amount: RandUint256(),
+	}
 }
 
 func RandUint256() *big.Int {

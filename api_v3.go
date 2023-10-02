@@ -443,6 +443,10 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(FoundryOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputFoundry))),
 		)
+		must(api.RegisterValidators(FoundryOutput{}, nil, func(ctx context.Context, foundry FoundryOutput) error {
+			//nolint:contextcheck
+			return foundry.syntacticallyValidate()
+		}))
 
 		must(api.RegisterTypeSettings(FoundryOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3UnlockCondArrRules),
