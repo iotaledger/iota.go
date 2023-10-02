@@ -161,8 +161,6 @@ type AccountOutput struct {
 	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The stored mana held by the output.
 	Mana Mana `serix:"1,mapKey=mana"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
 	// The identifier for this account.
 	AccountID AccountID `serix:"3,mapKey=accountId"`
 	// The index of the state.
@@ -191,7 +189,6 @@ func (a *AccountOutput) Clone() Output {
 	return &AccountOutput{
 		Amount:            a.Amount,
 		Mana:              a.Mana,
-		NativeTokens:      a.NativeTokens.Clone(),
 		AccountID:         a.AccountID,
 		StateIndex:        a.StateIndex,
 		StateMetadata:     append([]byte(nil), a.StateMetadata...),
@@ -213,10 +210,6 @@ func (a *AccountOutput) Equal(other Output) bool {
 	}
 
 	if a.Mana != otherOutput.Mana {
-		return false
-	}
-
-	if !a.NativeTokens.Equal(otherOutput.NativeTokens) {
 		return false
 	}
 
@@ -258,7 +251,6 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 func (a *AccountOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreOffsetOutput(rentStruct) +
 		rentStruct.StorageScoreFactorData().Multiply(StorageScore(a.Size())) +
-		a.NativeTokens.StorageScore(rentStruct, nil) +
 		a.Conditions.StorageScore(rentStruct, nil) +
 		a.Features.StorageScore(rentStruct, nil) +
 		a.ImmutableFeatures.StorageScore(rentStruct, nil)
@@ -277,11 +269,6 @@ func (a *AccountOutput) syntacticallyValidate() error {
 }
 
 func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreNativeTokens, err := a.NativeTokens.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreConditions, err := a.Conditions.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -297,7 +284,7 @@ func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 		return 0, err
 	}
 
-	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
@@ -325,10 +312,6 @@ func (a *AccountOutput) ChainID() ChainID {
 
 func (a *AccountOutput) AccountEmpty() bool {
 	return a.AccountID == emptyAccountID
-}
-
-func (a *AccountOutput) NativeTokenList() NativeTokens {
-	return a.NativeTokens
 }
 
 func (a *AccountOutput) FeatureSet() FeatureSet {
@@ -367,7 +350,6 @@ func (a *AccountOutput) Size() int {
 	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
-		a.NativeTokens.Size() +
 		AccountIDLength +
 		// StateIndex
 		serializer.UInt32ByteSize +

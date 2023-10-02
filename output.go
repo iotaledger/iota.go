@@ -50,9 +50,6 @@ type Output interface {
 	// StoredMana returns the stored mana held by this output.
 	StoredMana() Mana
 
-	// NativeTokenList returns the NativeToken this output defines.
-	NativeTokenList() NativeTokens
-
 	// UnlockConditionSet returns the UnlockConditionSet this output defines.
 	UnlockConditionSet() UnlockConditionSet
 
@@ -480,22 +477,24 @@ func (outputs Outputs[T]) Filter(f OutputsFilterFunc) Outputs[T] {
 func (outputs Outputs[T]) NativeTokenSum() (NativeTokenSum, error) {
 	sum := make(map[NativeTokenID]*big.Int)
 	for _, output := range outputs {
-		nativeTokens := output.NativeTokenList()
-		for _, nativeToken := range nativeTokens {
-			if sign := nativeToken.Amount.Sign(); sign == -1 || sign == 0 {
-				return nil, ErrNativeTokenAmountLessThanEqualZero
-			}
-
-			val := sum[nativeToken.ID]
-			if val == nil {
-				val = new(big.Int)
-			}
-
-			if val.Add(val, nativeToken.Amount).Cmp(abi.MaxUint256) == 1 {
-				return nil, ErrNativeTokenSumExceedsUint256
-			}
-			sum[nativeToken.ID] = val
+		nativeTokenFeature := output.FeatureSet().NativeToken()
+		if nativeTokenFeature == nil {
+			continue
 		}
+
+		if sign := nativeTokenFeature.Amount.Sign(); sign == -1 || sign == 0 {
+			return nil, ErrNativeTokenAmountLessThanEqualZero
+		}
+
+		val := sum[nativeTokenFeature.ID]
+		if val == nil {
+			val = new(big.Int)
+		}
+
+		if val.Add(val, nativeTokenFeature.Amount).Cmp(abi.MaxUint256) == 1 {
+			return nil, ErrNativeTokenSumExceedsUint256
+		}
+		sum[nativeTokenFeature.ID] = val
 	}
 
 	return sum, nil
@@ -668,22 +667,16 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 }
 
 // OutputsSyntacticalNativeTokens returns an OutputsSyntacticalValidationFunc which checks that:
-//   - the sum of native tokens count across all outputs does not exceed MaxNativeTokensCount
 //   - each native token holds an amount bigger than zero
 func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
-	distinctNativeTokens := make(map[NativeTokenID]struct{})
-
 	return func(index int, output Output) error {
-		nativeTokens := output.NativeTokenList()
+		nativeToken := output.FeatureSet().NativeToken()
+		if nativeToken == nil {
+			return nil
+		}
 
-		for i, nt := range nativeTokens {
-			distinctNativeTokens[nt.ID] = struct{}{}
-			if len(distinctNativeTokens) > MaxNativeTokensCount {
-				return ErrMaxNativeTokensCountExceeded
-			}
-			if nt.Amount.Cmp(common.Big0) == 0 {
-				return ierrors.Wrapf(ErrNativeTokenAmountLessThanEqualZero, "output %d, native token index %d", index, i)
-			}
+		if nativeToken.Amount.Cmp(common.Big0) == 0 {
+			return ierrors.Wrapf(ErrNativeTokenAmountLessThanEqualZero, "output %d", index)
 		}
 
 		return nil

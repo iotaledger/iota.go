@@ -20,26 +20,23 @@ type BasicOutput struct {
 	Amount BaseToken `serix:"0,mapKey=amount"`
 	// The stored mana held by the output.
 	Mana Mana `serix:"1,mapKey=mana"`
-	// The native tokens held by the output.
-	NativeTokens NativeTokens `serix:"2,mapKey=nativeTokens,omitempty"`
 	// The unlock conditions on this output.
-	Conditions BasicOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
+	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
 	// The features on the output.
-	Features BasicOutputFeatures `serix:"4,mapKey=features,omitempty"`
+	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
 func (e *BasicOutput) IsSimpleTransfer() bool {
-	return len(e.FeatureSet()) == 0 && len(e.UnlockConditionSet()) == 1 && len(e.NativeTokens) == 0
+	return len(e.FeatureSet()) == 0 && len(e.UnlockConditionSet()) == 1
 }
 
 func (e *BasicOutput) Clone() Output {
 	return &BasicOutput{
-		Amount:       e.Amount,
-		Mana:         e.Mana,
-		NativeTokens: e.NativeTokens.Clone(),
-		Conditions:   e.Conditions.Clone(),
-		Features:     e.Features.Clone(),
+		Amount:     e.Amount,
+		Mana:       e.Mana,
+		Conditions: e.Conditions.Clone(),
+		Features:   e.Features.Clone(),
 	}
 }
 
@@ -54,10 +51,6 @@ func (e *BasicOutput) Equal(other Output) bool {
 	}
 
 	if e.Mana != otherOutput.Mana {
-		return false
-	}
-
-	if !e.NativeTokens.Equal(otherOutput.NativeTokens) {
 		return false
 	}
 
@@ -80,17 +73,11 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 func (e *BasicOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreOffsetOutput(rentStruct) +
 		rentStruct.StorageScoreFactorData().Multiply(StorageScore(e.Size())) +
-		e.NativeTokens.StorageScore(rentStruct, nil) +
 		e.Conditions.StorageScore(rentStruct, nil) +
 		e.Features.StorageScore(rentStruct, nil)
 }
 
 func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreNativeTokens, err := e.NativeTokens.WorkScore(workScoreStructure)
-	if err != nil {
-		return 0, err
-	}
-
 	workScoreConditions, err := e.Conditions.WorkScore(workScoreStructure)
 	if err != nil {
 		return 0, err
@@ -101,11 +88,7 @@ func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 		return 0, err
 	}
 
-	return workScoreNativeTokens.Add(workScoreConditions, workScoreFeatures)
-}
-
-func (e *BasicOutput) NativeTokenList() NativeTokens {
-	return e.NativeTokens
+	return workScoreConditions.Add(workScoreFeatures)
 }
 
 func (e *BasicOutput) FeatureSet() FeatureSet {
@@ -137,7 +120,6 @@ func (e *BasicOutput) Size() int {
 	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
-		e.NativeTokens.Size() +
 		e.Conditions.Size() +
 		e.Features.Size()
 }

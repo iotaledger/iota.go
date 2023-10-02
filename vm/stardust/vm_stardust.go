@@ -310,8 +310,6 @@ func accountGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AccountOut
 	switch {
 	case current.Amount != next.Amount:
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
-	case !current.NativeTokens.Equal(next.NativeTokens):
-		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "native tokens changed, in %v / out %v", current.NativeTokens, next.NativeTokens)
 	case current.StateIndex != next.StateIndex:
 		return ierrors.Wrapf(iotago.ErrInvalidAccountGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
 	case !bytes.Equal(current.StateMetadata, next.StateMetadata):

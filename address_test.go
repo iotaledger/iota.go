@@ -658,10 +658,10 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 			}
 		}(),
 
-		// fail - raw address part of all addresses inside MultiAddress need to be unique
+		// fail - the binary encoding of all addresses inside a MultiAddress need to be unique
 		func() *outputsSyntacticalValidationTest {
 			return &outputsSyntacticalValidationTest{
-				name:           "fail - raw address part of all addresses inside MultiAddress need to be unique",
+				name:           "fail - the binary encoding of all addresses inside a MultiAddress need to be unique",
 				ed25519AddrCnt: 1,
 				outputsFunc: func(ed25519Addresses []iotago.Address) iotago.TxEssenceOutputs {
 					return iotago.TxEssenceOutputs{

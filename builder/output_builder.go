@@ -8,9 +8,8 @@ import (
 // NewBasicOutputBuilder creates a new BasicOutputBuilder with the required target address and base token amount.
 func NewBasicOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *BasicOutputBuilder {
 	return &BasicOutputBuilder{output: &iotago.BasicOutput{
-		Amount:       amount,
-		Mana:         0,
-		NativeTokens: iotago.NativeTokens{},
+		Amount: amount,
+		Mana:   0,
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
@@ -51,15 +50,8 @@ func (builder *BasicOutputBuilder) Address(addr iotago.Address) *BasicOutputBuil
 }
 
 // NativeToken adds/modifies a native token to/on the output.
-func (builder *BasicOutputBuilder) NativeToken(nt *iotago.NativeToken) *BasicOutputBuilder {
-	builder.output.NativeTokens.Upsert(nt)
-
-	return builder
-}
-
-// NativeTokens sets the native tokens held by the output.
-func (builder *BasicOutputBuilder) NativeTokens(nts iotago.NativeTokens) *BasicOutputBuilder {
-	builder.output.NativeTokens = nts
+func (builder *BasicOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *BasicOutputBuilder {
+	builder.output.Features.Upsert(nt)
 
 	return builder
 }
@@ -110,7 +102,6 @@ func (builder *BasicOutputBuilder) Tag(tag []byte) *BasicOutputBuilder {
 func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
 	builder.output.Conditions.Sort()
 	builder.output.Features.Sort()
-	builder.output.NativeTokens.Sort()
 
 	return builder.output, nil
 }
@@ -130,7 +121,6 @@ func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, a
 	return &AccountOutputBuilder{output: &iotago.AccountOutput{
 		Amount:         amount,
 		Mana:           0,
-		NativeTokens:   iotago.NativeTokens{},
 		AccountID:      iotago.EmptyAccountID(),
 		StateIndex:     0,
 		StateMetadata:  []byte{},
@@ -195,22 +185,6 @@ func (builder *AccountOutputBuilder) StateMetadata(data []byte) *AccountOutputBu
 // FoundriesToGenerate bumps the output's foundry counter by the amount of foundries to generate.
 func (builder *AccountOutputBuilder) FoundriesToGenerate(count uint32) *AccountOutputBuilder {
 	builder.output.FoundryCounter += count
-	builder.stateCtrlReq = true
-
-	return builder
-}
-
-// NativeToken adds/modifies a native token to/on the output.
-func (builder *AccountOutputBuilder) NativeToken(nt *iotago.NativeToken) *AccountOutputBuilder {
-	builder.output.NativeTokens.Upsert(nt)
-	builder.stateCtrlReq = true
-
-	return builder
-}
-
-// NativeTokens sets the native tokens held by the output.
-func (builder *AccountOutputBuilder) NativeTokens(nts iotago.NativeTokens) *AccountOutputBuilder {
-	builder.output.NativeTokens = nts
 	builder.stateCtrlReq = true
 
 	return builder
@@ -312,7 +286,6 @@ func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 	builder.output.Conditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
-	builder.output.NativeTokens.Sort()
 
 	return builder.output, nil
 }
@@ -356,16 +329,6 @@ func (trans *accountStateTransition) StateMetadata(data []byte) *accountStateTra
 // FoundriesToGenerate bumps the output's foundry counter by the amount of foundries to generate.
 func (trans *accountStateTransition) FoundriesToGenerate(count uint32) *accountStateTransition {
 	return trans.builder.FoundriesToGenerate(count).StateTransition()
-}
-
-// NativeToken adds/modifies a native token to/on the output.
-func (trans *accountStateTransition) NativeToken(nt *iotago.NativeToken) *accountStateTransition {
-	return trans.builder.NativeToken(nt).StateTransition()
-}
-
-// NativeTokens sets the native tokens held by the output.
-func (trans *accountStateTransition) NativeTokens(nts iotago.NativeTokens) *accountStateTransition {
-	return trans.builder.NativeTokens(nts).StateTransition()
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
@@ -554,7 +517,6 @@ func (trans *stakingTransition) Builder() *AccountOutputBuilder {
 func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iotago.TokenScheme, amount iotago.BaseToken) *FoundryOutputBuilder {
 	return &FoundryOutputBuilder{output: &iotago.FoundryOutput{
 		Amount:       amount,
-		NativeTokens: iotago.NativeTokens{},
 		SerialNumber: 0,
 		TokenScheme:  tokenScheme,
 		Conditions: iotago.FoundryOutputUnlockConditions{
@@ -588,15 +550,8 @@ func (builder *FoundryOutputBuilder) Amount(amount iotago.BaseToken) *FoundryOut
 }
 
 // NativeToken adds/modifies a native token to/on the output.
-func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeToken) *FoundryOutputBuilder {
-	builder.output.NativeTokens.Upsert(nt)
-
-	return builder
-}
-
-// NativeTokens sets the native tokens held by the output.
-func (builder *FoundryOutputBuilder) NativeTokens(nts iotago.NativeTokens) *FoundryOutputBuilder {
-	builder.output.NativeTokens = nts
+func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *FoundryOutputBuilder {
+	builder.output.Features.Upsert(nt)
 
 	return builder
 }
@@ -627,7 +582,6 @@ func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 	builder.output.Conditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
-	builder.output.NativeTokens.Sort()
 
 	return builder.output, nil
 }
@@ -646,10 +600,9 @@ func (builder *FoundryOutputBuilder) MustBuild() *iotago.FoundryOutput {
 // NewNFTOutputBuilder creates a new NFTOutputBuilder with the address and base token amount.
 func NewNFTOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *NFTOutputBuilder {
 	return &NFTOutputBuilder{output: &iotago.NFTOutput{
-		Amount:       amount,
-		Mana:         0,
-		NativeTokens: iotago.NativeTokens{},
-		NFTID:        iotago.EmptyNFTID(),
+		Amount: amount,
+		Mana:   0,
+		NFTID:  iotago.EmptyNFTID(),
 		Conditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
@@ -690,20 +643,6 @@ func (builder *NFTOutputBuilder) Mana(mana iotago.Mana) *NFTOutputBuilder {
 // Address sets/modifies an iotago.AddressUnlockCondition on the output.
 func (builder *NFTOutputBuilder) Address(addr iotago.Address) *NFTOutputBuilder {
 	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
-
-	return builder
-}
-
-// NativeToken adds/modifies a native token to/on the output.
-func (builder *NFTOutputBuilder) NativeToken(nt *iotago.NativeToken) *NFTOutputBuilder {
-	builder.output.NativeTokens.Upsert(nt)
-
-	return builder
-}
-
-// NativeTokens sets the native tokens held by the output.
-func (builder *NFTOutputBuilder) NativeTokens(nts iotago.NativeTokens) *NFTOutputBuilder {
-	builder.output.NativeTokens = nts
 
 	return builder
 }
@@ -785,7 +724,6 @@ func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 	builder.output.Conditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
-	builder.output.NativeTokens.Sort()
 
 	return builder.output, nil
 }

@@ -731,27 +731,10 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		if err != nil {
 			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, ierrors.Errorf("invalid input native token set: %w", err))
 		}
-		inNTCount := len(vmParams.WorkingSet.InNativeTokens)
-
-		if inNTCount > iotago.MaxNativeTokensCount {
-			return ierrors.Wrapf(iotago.ErrMaxNativeTokensCountExceeded, "inputs native token count %d exceeds max of %d", inNTCount, iotago.MaxNativeTokensCount)
-		}
 
 		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Outputs.NativeTokenSum()
 		if err != nil {
 			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, err)
-		}
-
-		distinctNTCount := make(map[iotago.NativeTokenID]struct{})
-		for nt := range vmParams.WorkingSet.InNativeTokens {
-			distinctNTCount[nt] = struct{}{}
-		}
-		for nt := range vmParams.WorkingSet.OutNativeTokens {
-			distinctNTCount[nt] = struct{}{}
-		}
-
-		if len(distinctNTCount) > iotago.MaxNativeTokensCount {
-			return ierrors.Wrapf(iotago.ErrMaxNativeTokensCountExceeded, "native token count %d exceeds max of %d", distinctNTCount, iotago.MaxNativeTokensCount)
 		}
 
 		// check invariants for when token foundry is absent
@@ -797,7 +780,7 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 		return nil
 	}
 
-	if addrWithCapabilities.CannotReceiveNativeTokens() && len(output.NativeTokenList()) != 0 {
+	if addrWithCapabilities.CannotReceiveNativeTokens() && output.FeatureSet().HasNativeTokenFeature() {
 		return iotago.ErrAddressCannotReceiveNativeTokens
 	}
 

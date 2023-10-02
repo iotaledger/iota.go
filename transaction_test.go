@@ -130,7 +130,6 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 						&iotago.FoundryOutput{
 							Amount:       OneMi,
-							NativeTokens: nil,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),
@@ -144,7 +143,6 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 						&iotago.FoundryOutput{
 							Amount:       OneMi,
-							NativeTokens: nil,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),

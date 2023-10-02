@@ -41,6 +41,8 @@ const (
 	FeatureMetadata
 	// FeatureTag denotes a TagFeature.
 	FeatureTag
+	// NativeTokenFeature denotes a NativeTokenFeature.
+	FeatureNativeToken
 	// FeatureBlockIssuer denotes a BlockIssuerFeature.
 	FeatureBlockIssuer
 	// FeatureStaking denotes a StakingFeature.
@@ -56,7 +58,7 @@ func (featType FeatureType) String() string {
 }
 
 var featNames = [FeatureStaking + 1]string{
-	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "BlockIssuerFeature", "StakingFeature",
+	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "NativeTokenFeature", "BlockIssuerFeature", "StakingFeature",
 }
 
 // Features is a slice of Feature(s).
@@ -232,6 +234,23 @@ func (f FeatureSet) Tag() *TagFeature {
 
 	//nolint:forcetypeassert // we can safely assume that this is a TagFeature
 	return b.(*TagFeature)
+}
+
+// HasNativeTokenFeature tells whether this set has a FeatureNativeToken.
+func (f FeatureSet) HasNativeTokenFeature() bool {
+	_, has := f[FeatureNativeToken]
+	return has
+}
+
+// NativeToken returns the NativeTokenFeature in the set or nil.
+func (f FeatureSet) NativeToken() *NativeTokenFeature {
+	b, has := f[FeatureNativeToken]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a NativeTokenFeature
+	return b.(*NativeTokenFeature)
 }
 
 // EveryTuple runs f for every key which exists in both this set and other.
