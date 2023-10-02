@@ -19,9 +19,8 @@ var (
 
 	// multiAddressValidatorFunc is a validator which checks that:
 	//  1. ImplicitAccountCreationAddress, MultiAddresses, RestrictedAddress are not nested inside the MultiAddress.
-	//  2. "raw address part" of all addresses are unique (without type byte and capabilities).
-	//  3. The weight of each address is at least 1.
-	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
+	//  2. The weight of each address is at least 1.
+	//  3. The threshold is smaller or equal to the cumulative weight of all addresses.
 	multiAddressValidatorFunc = func(ctx context.Context, addr MultiAddress) error {
 		var cumulativeWeight uint16
 		for idx, address := range addr.Addresses {
