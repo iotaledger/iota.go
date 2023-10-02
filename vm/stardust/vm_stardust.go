@@ -635,7 +635,7 @@ func accountStakingExpiredValidation(
 }
 
 func accountDestructionValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyAccountOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyAccountOutputs() {
 		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
 	}
 
@@ -728,7 +728,7 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 }
 
 func nftDestructionValid(vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyNFTOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyNFTOutputs() {
 		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrTxCapabilitiesNFTDestructionNotAllowed)
 	}
 
@@ -847,7 +847,7 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 }
 
 func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum, vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyFoundryOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyFoundryOutputs() {
 		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition, iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed)
 	}
 

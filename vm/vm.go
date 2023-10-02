@@ -602,7 +602,7 @@ func ExecFuncBalancedMana() ExecFunc {
 			return ierrors.Wrapf(iotago.ErrInputOutputManaMismatch, "Mana in %d, Mana out %d", manaIn, manaOut)
 		} else if manaIn > manaOut {
 			// less mana on output side than on input side => check if mana burning is allowed
-			if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotBurnMana() {
+			if vmParams.WorkingSet.Tx.Capabilities.CannotBurnMana() {
 				return ierrors.Join(iotago.ErrInputOutputManaMismatch, iotago.ErrTxCapabilitiesManaBurningNotAllowed)
 			}
 		}
@@ -763,7 +763,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 			outSum := vmParams.WorkingSet.OutNativeTokens[nativeTokenID]
 
-			if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotBurnNativeTokens() && (outSum == nil || inSum.Cmp(outSum) != 0) {
+			if vmParams.WorkingSet.Tx.Capabilities.CannotBurnNativeTokens() && (outSum == nil || inSum.Cmp(outSum) != 0) {
 				// if burning is not allowed, the input sum must be equal to the output sum
 				return ierrors.Wrapf(iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed, "%w: native token %s is less on output (%d) than input (%d) side but burning is not allowed in the transaction and the foundry is absent for melting", iotago.ErrNativeTokenSumUnbalanced, nativeTokenID, outSum, inSum)
 			} else if (outSum != nil) && (inSum.Cmp(outSum) == -1) {

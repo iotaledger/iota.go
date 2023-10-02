@@ -100,11 +100,9 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					UnlockedIdents: vm.UnlockedIdentities{
 						exampleIssuer.Key(): {UnlockedAt: 0},
 					},
-					Tx: &iotago.SignedTransaction{
-						Transaction: &iotago.Transaction{
-							TransactionEssence: &iotago.TransactionEssence{
-								Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
-							},
+					Tx: &iotago.Transaction{
+						TransactionEssence: &iotago.TransactionEssence{
+							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
 						},
 					},
 				},
