@@ -635,6 +635,10 @@ func accountStakingExpiredValidation(
 }
 
 func accountDestructionValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyAccountOutputs() {
+		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
+	}
+
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	outputToDestroy := input.Output.(*iotago.AccountOutput)
 
@@ -695,7 +699,11 @@ func nftSTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType,
 			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		return nil
+		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
+		current := input.Output.(*iotago.NFTOutput)
+		if err := nftDestructionValid(vmParams); err != nil {
+			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+		}
 	default:
 		panic("unknown chain transition type in NFTOutput")
 	}
@@ -719,6 +727,14 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 	return nil
 }
 
+func nftDestructionValid(vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyNFTOutputs() {
+		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrTxCapabilitiesNFTDestructionNotAllowed)
+	}
+
+	return nil
+}
+
 func foundrySTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.FoundryOutput, vmParams *vm.Params) error {
 	inSums := vmParams.WorkingSet.InNativeTokens
 	outSums := vmParams.WorkingSet.OutNativeTokens
@@ -737,7 +753,7 @@ func foundrySTVF(input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionT
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
-		if err := foundryDestructionValid(current, inSums, outSums); err != nil {
+		if err := foundryDestructionValid(current, inSums, outSums, vmParams); err != nil {
 			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
 		}
 	default:
@@ -830,7 +846,11 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeStateChange, next.TokenScheme, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))
 }
 
-func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum) error {
+func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum, vmParams *vm.Params) error {
+	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyFoundryOutputs() {
+		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition, iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed)
+	}
+
 	nativeTokenID := current.MustNativeTokenID()
 
 	return current.TokenScheme.StateTransition(iotago.ChainTransitionTypeDestroy, nil, inSums.ValueOrBigInt0(nativeTokenID), outSums.ValueOrBigInt0(nativeTokenID))

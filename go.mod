@@ -5,14 +5,14 @@ go 1.21
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/ethereum/go-ethereum v1.12.2
-	github.com/iotaledger/hive.go/constraints v0.0.0-20230926103137-8f457ed70521
-	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230921132212-c286a9bd46ea
-	github.com/iotaledger/hive.go/crypto v0.0.0-20230921132212-c286a9bd46ea
-	github.com/iotaledger/hive.go/ierrors v0.0.0-20230921132212-c286a9bd46ea
-	github.com/iotaledger/hive.go/lo v0.0.0-20230921132212-c286a9bd46ea
-	github.com/iotaledger/hive.go/runtime v0.0.0-20230921132212-c286a9bd46ea
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230926122307-d671b36a4a65
-	github.com/iotaledger/hive.go/stringify v0.0.0-20230921132212-c286a9bd46ea
+	github.com/iotaledger/hive.go/constraints v0.0.0-20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/crypto v0.0.0-20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/lo v0.0.0-20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/runtime v0.0.0-20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230929122509-67f34bfed40d
+	github.com/iotaledger/hive.go/stringify v0.0.0-20230929122509-67f34bfed40d
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/crypto v0.12.0

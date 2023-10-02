@@ -133,7 +133,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 		wantErr     error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:        "check if mana decay works for 0 mana values",
 			storedMana:  0,
@@ -207,7 +207,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 		wantErr     error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:        "check if mana decay works for 0 base token values",
 			amount:      0,
@@ -305,7 +305,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 		wantErr      error
 	}
 
-	tests := []test{
+	tests := []*test{
 		{
 			name:         "check if mana decay works for 0 mana values",
 			rewards:      0,

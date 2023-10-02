@@ -122,6 +122,7 @@ func (s *SimpleTokenScheme) destructionValid(out *big.Int, in *big.Int) error {
 }
 
 // checks the balance between the in/out tokens and the invariants concerning supply counter changes.
+// burning of tokens is never allowed while doing this transition.
 func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int, out *big.Int) error {
 	next, is := nextState.(*SimpleTokenScheme)
 	if !is {
@@ -146,6 +147,7 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 
 	switch {
 	case tokenDiffType == 1:
+		// out > in
 		switch {
 		case mintedSupplyDelta.Cmp(tokenDiff) != 0:
 			// positive token diff requires the minted supply delta to equal the token diff
@@ -156,17 +158,18 @@ func (s *SimpleTokenScheme) stateChangeValid(nextState TokenScheme, in *big.Int,
 		}
 
 	case tokenDiffType == -1:
+		// out < in
 		switch {
-		case meltedSupplyDelta.Cmp(big.NewInt(0).Abs(tokenDiff)) == 1:
-			// negative token diff requires the melted supply delta to be equal less than the token diff.
-			// can be less than because we support burning and melting at the same time
-			return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "negative token diff not balanced by melted supply change: next melted supply %s - current melted supply %s = %s which is > abs. delta %s", next.MintedTokens, s.MintedTokens, meltedSupplyDelta, tokenDiff)
+		case meltedSupplyDelta.Cmp(big.NewInt(0).Neg(tokenDiff)) != 0:
+			// negative token diff requires the melted supply delta to equal the token diff
+			return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "negative token diff not balanced by melted supply change: next melted supply %s - current melted supply %s = %s != token delta %s", next.MeltedTokens, s.MeltedTokens, meltedSupplyDelta, tokenDiff)
 		case next.MintedTokens.Cmp(s.MintedTokens) != 0:
 			// must not change minting supply while melting
 			return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "negative token diff requires equal minted supply between current/next state: current (minted=%s), next (minted=%s)", s.MintedTokens, next.MintedTokens)
 		}
 
 	case tokenDiffType == 0:
+		// out == in
 		if s.MintedTokens.Cmp(next.MintedTokens) != 0 || s.MeltedTokens.Cmp(next.MeltedTokens) != 0 {
 			// no mutations to minted/melted fields while balance is kept
 			return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "zero token diff requires equal minted/melted supply between current/next state: current (minted/melted=%s/%s), next (minted/melted=%s/%s)", s.MintedTokens, s.MeltedTokens, next.MintedTokens, next.MeltedTokens)

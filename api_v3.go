@@ -559,6 +559,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules),
 		))
+		must(api.RegisterTypeSettings(TransactionCapabilitiesBitMask{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
+		))
 
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))

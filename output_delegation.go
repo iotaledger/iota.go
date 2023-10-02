@@ -34,7 +34,9 @@ var (
 	ErrInvalidDelegationEndEpoch = ierrors.New("invalid end epoch")
 	// ErrDelegationCommitmentInputRequired gets returned when no commitment input was passed in a TX containing a Delegation Output.
 	ErrDelegationCommitmentInputRequired = ierrors.New("delegation output validation requires a commitment input")
-	emptyDelegationID                    = [DelegationIDLength]byte{}
+	// ErrDelegationValidatorAddressEmpty gets returned when the Validator Address in a Delegation Output is empty.
+	ErrDelegationValidatorAddressEmpty = ierrors.New("delegation output's validator address is empty")
+	emptyDelegationID                  = [DelegationIDLength]byte{}
 )
 
 func EmptyDelegationID() DelegationID {
@@ -179,6 +181,10 @@ func (d *DelegationOutput) StorageScore(rentStruct *RentStructure, _ StorageScor
 }
 
 func (d *DelegationOutput) syntacticallyValidate() error {
+	if d.ValidatorAddress.AccountID().Empty() {
+		return ErrDelegationValidatorAddressEmpty
+	}
+
 	// Address should never be nil.
 	address := d.Conditions.MustSet().Address().Address
 
