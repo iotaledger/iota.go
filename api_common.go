@@ -14,7 +14,7 @@ var (
 	addressesWithWeightArrRules = &serix.ArrayRules{
 		Min:            1,
 		Max:            10,
-		ValidationMode: serializer.ArrayValidationModeLexicalOrdering,
+		ValidationMode: serializer.ArrayValidationModeLexicalOrdering | serializer.ArrayValidationModeNoDuplicates,
 	}
 
 	// multiAddressValidatorFunc is a validator which checks that:
@@ -23,19 +23,12 @@ var (
 	//  3. The weight of each address is at least 1.
 	//  4. The threshold is smaller or equal to the cumulative weight of all addresses.
 	multiAddressValidatorFunc = func(ctx context.Context, addr MultiAddress) error {
-		addrSet := map[string]int{}
-
 		var cumulativeWeight uint16
 		for idx, address := range addr.Addresses {
-			var addrWithoutTypeAndCapabilities []byte
-
 			switch addr := address.Address.(type) {
 			case *Ed25519Address:
-				addrWithoutTypeAndCapabilities = addr[:]
 			case *AccountAddress:
-				addrWithoutTypeAndCapabilities = addr[:]
 			case *NFTAddress:
-				addrWithoutTypeAndCapabilities = addr[:]
 			case *ImplicitAccountCreationAddress:
 				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an implicit account creation address inside a multi address", idx)
 			case *MultiAddress:
@@ -45,14 +38,6 @@ var (
 			default:
 				return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d has an unknown address type (%T) inside a multi address", idx, addr)
 			}
-
-			// we need to check for uniqueness of the address, but instead of the whole serialized address, we need to ignore
-			// different address types or capabilities, that might result in the same signature.
-			addrString := string(addrWithoutTypeAndCapabilities)
-			if j, has := addrSet[addrString]; has {
-				return ierrors.Wrapf(serializer.ErrArrayValidationViolatesUniqueness, "addresses with indices %d and %d in multi address are duplicates", j, idx)
-			}
-			addrSet[addrString] = idx
 
 			// check for minimum address weight
 			if address.Weight == 0 {
