@@ -203,10 +203,6 @@ func (d *DelegationOutput) ChainID() ChainID {
 	return d.DelegationID
 }
 
-func (d *DelegationOutput) NativeTokenList() NativeTokens {
-	return make(NativeTokens, 0)
-}
-
 func (d *DelegationOutput) FeatureSet() FeatureSet {
 	return make(FeatureSet, 0)
 }

@@ -19,17 +19,18 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
 
 	output1 := &iotago.BasicOutput{
-		Amount:       100000,
-		NativeTokens: tpkg.RandSortNativeTokens(2),
+		Amount: 100000,
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{
 				Address: addr,
 			},
 		},
+		Features: iotago.BasicOutputFeatures{
+			tpkg.RandNativeTokenFeature(),
+		},
 	}
 	output2 := &iotago.AccountOutput{
-		Amount:       1_000_000,
-		NativeTokens: tpkg.RandSortNativeTokens(3),
+		Amount: 1_000_000,
 		Conditions: iotago.AccountOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{
 				Address: addr,
@@ -50,6 +51,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 				StakedAmount: 500_00,
 				FixedCost:    500,
 			},
+			tpkg.RandNativeTokenFeature(),
 		},
 	}
 
@@ -95,7 +97,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		workScoreStructure.SignatureEd25519 +
 		workScoreStructure.BlockIssuer +
 		workScoreStructure.Staking +
-		workScoreStructure.NativeToken*5 +
+		workScoreStructure.NativeToken*2 +
 		workScoreStructure.Allotment*2
 
 	require.Equal(t, expectedWorkScore, workScore, "work score expected: %d, actual: %d", expectedWorkScore, workScore)

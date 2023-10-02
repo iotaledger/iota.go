@@ -14,18 +14,18 @@ import (
 
 func TestBasicOutputBuilder(t *testing.T) {
 	var (
-		targetAddr                        = tpkg.RandEd25519Address()
-		amount           iotago.BaseToken = 1337
-		nt                                = tpkg.RandNativeToken()
-		expirationTarget                  = tpkg.RandEd25519Address()
-		metadata                          = []byte("123456")
-		slotTimeProvider                  = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
+		targetAddr                          = tpkg.RandEd25519Address()
+		amount             iotago.BaseToken = 1337
+		nativeTokenFeature                  = tpkg.RandNativeTokenFeature()
+		expirationTarget                    = tpkg.RandEd25519Address()
+		metadata                            = []byte("123456")
+		slotTimeProvider                    = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
 	)
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
 	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))
 
 	basicOutput, err := builder.NewBasicOutputBuilder(targetAddr, amount).
-		NativeToken(nt).
+		NativeToken(nativeTokenFeature).
 		Timelock(timelock).
 		Expiration(expirationTarget, expiration).
 		Metadata(metadata).
@@ -33,8 +33,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, &iotago.BasicOutput{
-		Amount:       1337,
-		NativeTokens: iotago.NativeTokens{nt},
+		Amount: 1337,
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 			&iotago.TimelockUnlockCondition{SlotIndex: timelock},
@@ -42,6 +41,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 		},
 		Features: iotago.BasicOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
+			nativeTokenFeature,
 		},
 	}, basicOutput)
 }
@@ -51,7 +51,6 @@ func TestAccountOutputBuilder(t *testing.T) {
 		stateCtrl                    = tpkg.RandEd25519Address()
 		gov                          = tpkg.RandEd25519Address()
 		amount      iotago.BaseToken = 1337
-		nt                           = tpkg.RandNativeToken()
 		metadata                     = []byte("123456")
 		immMetadata                  = []byte("654321")
 		immSender                    = tpkg.RandEd25519Address()
@@ -64,7 +63,6 @@ func TestAccountOutputBuilder(t *testing.T) {
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(stateCtrl, gov, amount).
-		NativeToken(nt).
 		Metadata(metadata).
 		StateMetadata(metadata).
 		Staking(amount, 1, 1000).
@@ -79,7 +77,6 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
-		NativeTokens:   iotago.NativeTokens{nt},
 		StateIndex:     1,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
@@ -133,7 +130,6 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
-		NativeTokens:   iotago.NativeTokens{nt},
 		StateIndex:     1,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
@@ -223,27 +219,27 @@ func TestFoundryOutputBuilder(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: big.NewInt(1000),
 		}
-		nt          = tpkg.RandNativeToken()
-		metadata    = []byte("123456")
-		immMetadata = []byte("654321")
+		nativeTokenFeature = tpkg.RandNativeTokenFeature()
+		metadata           = []byte("123456")
+		immMetadata        = []byte("654321")
 	)
 
 	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, amount).
-		NativeToken(nt).
+		NativeToken(nativeTokenFeature).
 		Metadata(metadata).
 		ImmutableMetadata(immMetadata).
 		Build()
 	require.NoError(t, err)
 
 	require.Equal(t, &iotago.FoundryOutput{
-		Amount:       1337,
-		TokenScheme:  tokenScheme,
-		NativeTokens: iotago.NativeTokens{nt},
+		Amount:      1337,
+		TokenScheme: tokenScheme,
 		Conditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features: iotago.FoundryOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
+			nativeTokenFeature,
 		},
 		ImmutableFeatures: iotago.FoundryOutputImmFeatures{
 			&iotago.MetadataFeature{Data: immMetadata},
@@ -255,21 +251,18 @@ func TestNFTOutputBuilder(t *testing.T) {
 	var (
 		targetAddr                   = tpkg.RandAccountAddress()
 		amount      iotago.BaseToken = 1337
-		nt                           = tpkg.RandNativeToken()
 		metadata                     = []byte("123456")
 		immMetadata                  = []byte("654321")
 	)
 
 	nftOutput, err := builder.NewNFTOutputBuilder(targetAddr, amount).
-		NativeToken(nt).
 		Metadata(metadata).
 		ImmutableMetadata(immMetadata).
 		Build()
 	require.NoError(t, err)
 
 	require.Equal(t, &iotago.NFTOutput{
-		Amount:       1337,
-		NativeTokens: iotago.NativeTokens{nt},
+		Amount: 1337,
 		Conditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},

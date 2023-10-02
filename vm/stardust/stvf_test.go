@@ -1640,9 +1640,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			next: &iotago.AccountOutput{
-				Amount:       200,
-				NativeTokens: tpkg.RandSortNativeTokens(50),
-				AccountID:    exampleAccountID,
+				Amount:    200,
+				AccountID: exampleAccountID,
 				Conditions: iotago.AccountOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
@@ -2237,9 +2236,6 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			nextMut: map[string]fieldMutations{
 				"amount": {
 					"Amount": iotago.BaseToken(1337),
-				},
-				"native_tokens": {
-					"NativeTokens": tpkg.RandSortNativeTokens(10),
 				},
 				"state_metadata": {
 					"StateMetadata": []byte("7331"),
@@ -3031,9 +3027,6 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					"Conditions": iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
-				},
-				"native_tokens": {
-					"NativeTokens": tpkg.RandSortNativeTokens(10),
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,

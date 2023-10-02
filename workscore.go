@@ -101,7 +101,7 @@ func (w WorkScoreStructure) MaxBlockWork() (WorkScore, error) {
 	}
 	maxBlockWork += outputsFactor
 	// native tokens factor for max number of outputs
-	nativeTokensFactor, err := w.NativeToken.Multiply(MaxNativeTokenCountPerOutput * MaxOutputsCount)
+	nativeTokensFactor, err := w.NativeToken.Multiply(MaxOutputsCount)
 	if err != nil {
 		return 0, err
 	}
