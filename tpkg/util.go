@@ -132,6 +132,17 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 	return outputIDs
 }
 
+func RandSignedTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.SignedTransactionID {
+	var signedTransactionID iotago.SignedTransactionID
+	_, err := cryptorand.Read(signedTransactionID[:iotago.IdentifierLength])
+	if err != nil {
+		panic(err)
+	}
+	binary.LittleEndian.PutUint32(signedTransactionID[iotago.IdentifierLength:iotago.SlotIdentifierLength], uint32(slot))
+
+	return signedTransactionID
+}
+
 func RandTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.TransactionID {
 	var transactionID iotago.TransactionID
 	_, err := cryptorand.Read(transactionID[:iotago.IdentifierLength])
@@ -141,6 +152,10 @@ func RandTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.Transaction
 	binary.LittleEndian.PutUint32(transactionID[iotago.IdentifierLength:iotago.SlotIdentifierLength], uint32(slot))
 
 	return transactionID
+}
+
+func RandSignedTransactionID() iotago.SignedTransactionID {
+	return RandSignedTransactionIDWithCreationSlot(RandSlotIndex())
 }
 
 func RandTransactionID() iotago.TransactionID {
