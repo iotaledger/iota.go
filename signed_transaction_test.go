@@ -224,7 +224,7 @@ func TestTransaction_InputTypes(t *testing.T) {
 		Index: 2,
 	}
 
-	transaction := tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+	signedTransaction := tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 		tpkg.RandTransactionWithOptions(
 			tpkg.TestAPI,
 			tpkg.WithInputs(iotago.TxEssenceInputs{
@@ -240,16 +240,16 @@ func TestTransaction_InputTypes(t *testing.T) {
 			}),
 		))
 
-	utxoInputs, err := transaction.Transaction.Inputs()
+	utxoInputs, err := signedTransaction.Transaction.Inputs()
 	require.NoError(t, err)
 
-	commitmentInput := transaction.Transaction.CommitmentInput()
+	commitmentInput := signedTransaction.Transaction.CommitmentInput()
 	require.NotNil(t, commitmentInput)
 
-	bicInputs, err := transaction.Transaction.BICInputs()
+	bicInputs, err := signedTransaction.Transaction.BICInputs()
 	require.NoError(t, err)
 
-	rewardInputs, err := transaction.Transaction.RewardInputs()
+	rewardInputs, err := signedTransaction.Transaction.RewardInputs()
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(utxoInputs))
