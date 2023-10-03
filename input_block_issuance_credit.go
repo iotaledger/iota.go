@@ -26,7 +26,7 @@ func (b *BlockIssuanceCreditInput) Type() StateType {
 	return InputBlockIssuanceCredit
 }
 
-func (b *BlockIssuanceCreditInput) ReadOnly() bool {
+func (b *BlockIssuanceCreditInput) IsReadOnly() bool {
 	return true
 }
 

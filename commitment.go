@@ -56,7 +56,7 @@ func (c *Commitment) StateID() Identifier {
 	return IdentifierFromData(lo.PanicOnErr(c.MustID().Bytes()))
 }
 
-func (b *Commitment) ReadOnly() bool {
+func (c *Commitment) IsReadOnly() bool {
 	return true
 }
 

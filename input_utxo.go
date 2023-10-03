@@ -37,7 +37,7 @@ func (u *UTXOInput) Type() StateType {
 	return InputUTXO
 }
 
-func (u *UTXOInput) ReadOnly() bool {
+func (u *UTXOInput) IsReadOnly() bool {
 	return false
 }
 

@@ -22,7 +22,7 @@ func (c *CommitmentInput) Type() StateType {
 	return InputCommitment
 }
 
-func (b *CommitmentInput) ReadOnly() bool {
+func (c *CommitmentInput) IsReadOnly() bool {
 	return true
 }
 
