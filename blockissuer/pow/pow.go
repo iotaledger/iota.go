@@ -11,12 +11,15 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
-// Hash defines the hash function that is used to compute the PoW digest.
 const (
+	// Hash defines the hash function that is used to compute the PoW digest.
 	//nolint:nosnakecase
-	Hash             = crypto.BLAKE2b_256
-	HashLength       = blake2b.Size256
-	NonceLength      = serializer.UInt64ByteSize
+	Hash = crypto.BLAKE2b_256
+	// HashLength defines the length of the hash function in bytes.
+	HashLength = blake2b.Size256
+	// NonceLength defines the length of the nonce in bytes.
+	NonceLength = serializer.UInt64ByteSize
+	// MaxTrailingZeros defines the maximum amount of trailing zeros.
 	MaxTrailingZeros = serializer.UInt64ByteSize * 8
 )
 

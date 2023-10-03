@@ -9,10 +9,11 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 )
 
-// errors returned by the PoW.
 var (
-	ErrCancelled = ierrors.New("canceled")
-	ErrDone      = ierrors.New("done")
+	// ErrCanceled gets returned when the context for the PoW was canceled.
+	ErrCanceled = ierrors.New("canceled")
+	// ErrDone gets returned when the PoW was done but no valid nonce was found.
+	ErrDone = ierrors.New("done")
 )
 
 // The Worker performs the PoW.
@@ -80,7 +81,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetTrailingZeros int)
 
 	nonce, ok := <-results
 	if !ok {
-		return 0, ErrCancelled
+		return 0, ErrCanceled
 	}
 
 	return nonce, nil

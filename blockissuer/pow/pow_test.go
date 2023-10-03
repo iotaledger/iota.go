@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	workers             = 2
+	workerCount         = 2
 	targetTrailingZeros = 10
 )
 
-var testWorker = pow.New(workers)
+var testWorker = pow.New(workerCount)
 
 func TestWorker_Mine(t *testing.T) {
 	msg := []byte("Hello, World!")
@@ -44,5 +44,5 @@ func TestWorker_Cancel(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	cancel()
 
-	assert.Eventually(t, func() bool { return ierrors.Is(err, pow.ErrCancelled) }, time.Second, 10*time.Millisecond)
+	assert.Eventually(t, func() bool { return ierrors.Is(err, pow.ErrCanceled) }, time.Second, 10*time.Millisecond)
 }
