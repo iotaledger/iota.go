@@ -67,6 +67,12 @@ func (r *Roots) TangleProof() *merklehasher.Proof[Identifier] {
 	return lo.PanicOnErr(merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256).ComputeProofForIndex(r.values(), 0))
 }
 
+func (r *Roots) MutationProof() *merklehasher.Proof[Identifier] {
+	// We can ignore the error because Identifier.Bytes() will never return an error
+	//nolint:nosnakecase // false positive
+	return lo.PanicOnErr(merklehasher.NewHasher[Identifier](crypto.BLAKE2b_256).ComputeProofForIndex(r.values(), 1))
+}
+
 func VerifyProof(proof *merklehasher.Proof[Identifier], proofedRoot Identifier, treeRoot Identifier) bool {
 	// We can ignore the error because Identifier.Bytes() will never return an error
 	if !lo.PanicOnErr(proof.ContainsValue(proofedRoot)) {
