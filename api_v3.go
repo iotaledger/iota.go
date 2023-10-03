@@ -168,6 +168,10 @@ var (
 	blockIDsArrRules = &serix.ArrayRules{
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
+
+	transactionIDsArrRules = &serix.ArrayRules{
+		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
+	}
 )
 
 // v3api implements the iota-core 1.0 protocol core models.
@@ -578,6 +582,12 @@ func V3API(protoParams ProtocolParameters) API {
 	{
 		must(api.RegisterTypeSettings(BlockIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(blockIDsArrRules),
+		))
+	}
+
+	{
+		must(api.RegisterTypeSettings(TransactionIDs{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(transactionIDsArrRules),
 		))
 	}
 
