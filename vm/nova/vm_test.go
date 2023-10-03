@@ -1,5 +1,5 @@
 //nolint:forcetypeassert,dupl,nlreturn,scopelint
-package stardust_test
+package nova_test
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/iota.go/v4/vm"
-	"github.com/iotaledger/iota.go/v4/vm/stardust"
+	"github.com/iotaledger/iota.go/v4/vm/nova"
 )
 
 const (
@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	stardustVM = stardust.NewVirtualMachine()
+	novaVM = nova.NewVirtualMachine()
 
 	schedulerRate   iotago.WorkScore = 100000
 	testProtoParams                  = iotago.NewV3ProtocolParameters(
@@ -205,7 +205,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 	require.NoError(t, validateAndExecuteSignedTransaction(tx, vm.ResolvedInputs{InputSet: inputs}))
 }
 
-func TestStardustTransactionExecution(t *testing.T) {
+func TestNovaTransactionExecution(t *testing.T) {
 	type test struct {
 		name           string
 		vmParams       *vm.Params
@@ -1257,7 +1257,7 @@ type txExecTest struct {
 	wantErr error
 }
 
-func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
+func runNovaTransactionExecutionTest(t *testing.T, test *txExecTest) {
 	t.Helper()
 
 	t.Run(test.name, func(t *testing.T) {
@@ -1354,7 +1354,7 @@ func runStardustTransactionExecutionTest(t *testing.T, test *txExecTest) {
 	})
 }
 
-func TestStardustTransactionExecution_RestrictedAddress(t *testing.T) {
+func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 
 	var defaultAmount iotago.BaseToken = OneMi
 
@@ -1545,11 +1545,11 @@ func TestStardustTransactionExecution_RestrictedAddress(t *testing.T) {
 		}(),
 	}
 	for _, tt := range tests {
-		runStardustTransactionExecutionTest(t, tt)
+		runNovaTransactionExecutionTest(t, tt)
 	}
 }
 
-func TestStardustTransactionExecution_MultiAddress(t *testing.T) {
+func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 
 	var defaultAmount iotago.BaseToken = OneMi
 
@@ -2509,11 +2509,11 @@ func TestStardustTransactionExecution_MultiAddress(t *testing.T) {
 		}(),
 	}
 	for _, tt := range tests {
-		runStardustTransactionExecutionTest(t, tt)
+		runNovaTransactionExecutionTest(t, tt)
 	}
 }
 
-func TestStardustTransactionExecution_TxCapabilities(t *testing.T) {
+func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 
 	var defaultAmount iotago.BaseToken = OneMi
 
@@ -3138,7 +3138,7 @@ func TestStardustTransactionExecution_TxCapabilities(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		runStardustTransactionExecutionTest(t, tt)
+		runNovaTransactionExecutionTest(t, tt)
 	}
 }
 
@@ -3794,7 +3794,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := stardustVM.ValidateUnlocks(tt.tx, tt.resolvedInputs)
+			_, err := novaVM.ValidateUnlocks(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -4742,7 +4742,7 @@ func TestTxSemanticNativeTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncBalancedNativeTokens())
+			_, err := novaVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncBalancedNativeTokens())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -5598,7 +5598,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := stardustVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncTimelocks())
+			_, err := novaVM.Execute(tt.tx.Transaction, tt.resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncTimelocks())
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -6460,7 +6460,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				_, err := stardustVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
+				_, err := novaVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)
 					return
@@ -7021,10 +7021,10 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 }
 
 func validateAndExecuteSignedTransaction(tx *iotago.SignedTransaction, resolvedInputs vm.ResolvedInputs, execFunctions ...vm.ExecFunc) (err error) {
-	unlockedIdentities, err := stardustVM.ValidateUnlocks(tx, resolvedInputs)
+	unlockedIdentities, err := novaVM.ValidateUnlocks(tx, resolvedInputs)
 	if err != nil {
 		return err
 	}
 
-	return lo.Return2(stardustVM.Execute(tx.Transaction, resolvedInputs, unlockedIdentities, execFunctions...))
+	return lo.Return2(novaVM.Execute(tx.Transaction, resolvedInputs, unlockedIdentities, execFunctions...))
 }

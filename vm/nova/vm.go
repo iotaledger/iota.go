@@ -1,4 +1,4 @@
-package stardust
+package nova
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/vm"
 )
 
-// NewVirtualMachine returns an VirtualMachine adhering to the Stardust protocol.
+// NewVirtualMachine returns an VirtualMachine adhering to the Nova protocol.
 func NewVirtualMachine() vm.VirtualMachine {
 	return &virtualMachine{
 		execList: []vm.ExecFunc{
@@ -104,11 +104,11 @@ func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 	return utxoInputsSet
 }
 
-func (stardustVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs vm.ResolvedInputs) (unlockedIdentities vm.UnlockedIdentities, err error) {
+func (novaVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs vm.ResolvedInputs) (unlockedIdentities vm.UnlockedIdentities, err error) {
 	return vm.ValidateUnlocks(signedTransaction, inputs)
 }
 
-func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
+func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
 	vmParams := &vm.Params{
 		API: transaction.API,
 	}
@@ -119,10 +119,10 @@ func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, input
 	vmParams.WorkingSet.UnlockedIdents = unlockedIdentities
 
 	if len(execFunctions) == 0 {
-		execFunctions = stardustVM.execList
+		execFunctions = novaVM.execList
 	}
 
-	err = vm.RunVMFuncs(stardustVM, vmParams, execFunctions...)
+	err = vm.RunVMFuncs(novaVM, vmParams, execFunctions...)
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to execute transaction")
 	}
@@ -135,7 +135,7 @@ func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, input
 	return outputs, nil
 }
 
-func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithIDs, next iotago.ChainOutput, vmParams *vm.Params) error {
+func (novaVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithIDs, next iotago.ChainOutput, vmParams *vm.Params) error {
 	transitionState := next
 	if transType != iotago.ChainTransitionTypeGenesis {
 		transitionState = input.Output
@@ -189,7 +189,7 @@ func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType
 
 		return delegationSTVF(input, transType, nextDelegationOutput, vmParams)
 	default:
-		panic(fmt.Sprintf("invalid output type %v passed to Stardust virtual machine", input.Output))
+		panic(fmt.Sprintf("invalid output type %v passed to Nova virtual machine", input.Output))
 	}
 }
 
