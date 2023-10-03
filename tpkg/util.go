@@ -1035,7 +1035,6 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
-			RandMana(iotago.MaxMana),
 			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),

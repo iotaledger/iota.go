@@ -34,7 +34,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				21,
 			),
 			WithLivenessOptions(15, 30, 10, 20, 24),
-			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1, 1000, 100),
+			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
@@ -264,7 +264,7 @@ func WithLivenessOptions(livenessThresholdLowerBoundInSeconds uint16, livenessTh
 	}
 }
 
-func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, minMana Mana, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
+func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, rmcDecrease Mana, rmcIncreaseThreshold WorkScore, rmcDecreaseThreshold WorkScore, schedulerRate WorkScore, maxBufferSize uint32, maxValBufferSize uint32) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.CongestionControlParameters.MinReferenceManaCost = minReferenceManaCost
 		p.basicProtocolParameters.CongestionControlParameters.Increase = rmcIncrease
@@ -272,7 +272,6 @@ func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, r
 		p.basicProtocolParameters.CongestionControlParameters.IncreaseThreshold = rmcIncreaseThreshold
 		p.basicProtocolParameters.CongestionControlParameters.DecreaseThreshold = rmcDecreaseThreshold
 		p.basicProtocolParameters.CongestionControlParameters.SchedulerRate = schedulerRate
-		p.basicProtocolParameters.CongestionControlParameters.MinMana = minMana
 		p.basicProtocolParameters.CongestionControlParameters.MaxBufferSize = maxBufferSize
 		p.basicProtocolParameters.CongestionControlParameters.MaxValidationBufferSize = maxValBufferSize
 	}
