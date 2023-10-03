@@ -9,14 +9,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 )
 
-const (
-	// SignedTransactionIDLength defines the length of a SignedTransactionID.
-	SignedTransactionIDLength = SlotIdentifierLength
-
-	// TransactionIDLength defines the length of a TransactionID.
-	TransactionIDLength = SlotIdentifierLength
-)
-
 var (
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = ierrors.New("missing utxo")
@@ -42,31 +34,6 @@ var (
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
 )
 
-var (
-	EmptySignedTransactionID = SignedTransactionID{}
-	EmptyTransactionID       = TransactionID{}
-)
-
-type SignedTransactionID = SlotIdentifier
-
-// SignedTransactionIDs are IDs of signed transactions.
-type SignedTransactionIDs []SignedTransactionID
-
-// SignedTransactionIDFromData returns a new SignedTransactionID for the given data by hashing it with blake2b and appending the creation slot index.
-func SignedTransactionIDFromData(creationSlot SlotIndex, data []byte) SignedTransactionID {
-	return SlotIdentifierRepresentingData(creationSlot, data)
-}
-
-type TransactionID = SlotIdentifier
-
-// TransactionIDs are IDs of transactions.
-type TransactionIDs []SignedTransactionID
-
-// TransactionIDFromData returns a new SignedTransactionID for the given data by hashing it with blake2b and appending the creation slot index.
-func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
-	return SlotIdentifierRepresentingData(creationSlot, data)
-}
-
 type TransactionContextInputs ContextInputs[Input]
 
 // SignedTransaction is a transaction with its inputs, outputs and unlocks.
@@ -90,7 +57,7 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
-	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
+	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
 }
 
 func (t *SignedTransaction) Size() int {

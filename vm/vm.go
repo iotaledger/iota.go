@@ -339,8 +339,8 @@ type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 
 // ValidateUnlocks produces the UnlockedIdentities which will be set into the given Params and verifies that inputs are
 // correctly unlocked and that the inputs commitment matches.
-func ValidateUnlocks(tx *iotago.SignedTransaction, resolvedInputs ResolvedInputs) (unlockedIdentities UnlockedIdentities, err error) {
-	utxoInputs, err := tx.Transaction.Inputs()
+func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs ResolvedInputs) (unlockedIdentities UnlockedIdentities, err error) {
+	utxoInputs, err := signedTransaction.Transaction.Inputs()
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to get inputs from transaction")
 	}
@@ -350,30 +350,30 @@ func ValidateUnlocks(tx *iotago.SignedTransaction, resolvedInputs ResolvedInputs
 		inputs = append(inputs, resolvedInputs.InputSet[input.OutputID()])
 	}
 
-	actualInputCommitment, err := inputs.Commitment(tx.API)
+	actualInputCommitment, err := inputs.Commitment(signedTransaction.API)
 	if err != nil {
 		return nil, ierrors.Join(err, iotago.ErrInvalidInputsCommitment)
 	}
 
-	expectedInputCommitment := tx.Transaction.InputsCommitment[:]
+	expectedInputCommitment := signedTransaction.Transaction.InputsCommitment[:]
 	if !bytes.Equal(expectedInputCommitment, actualInputCommitment) {
 		return nil, ierrors.Wrapf(iotago.ErrInvalidInputsCommitment, "specified %v but got %v", expectedInputCommitment, actualInputCommitment)
 	}
 
-	txID, err := tx.ID()
+	txID, err := signedTransaction.Transaction.ID()
 	if err != nil {
 		return nil, ierrors.Wrapf(err, "failed to compute transaction ID")
 	}
 
-	essenceMsgToSign, err := tx.Transaction.SigningMessage()
+	essenceMsgToSign, err := signedTransaction.Transaction.SigningMessage()
 	if err != nil {
 		return nil, ierrors.Wrapf(err, "failed to compute signing message")
 	}
 
 	unlockedIdentities = make(UnlockedIdentities)
-	outChains := tx.Transaction.Outputs.ChainOutputSet(txID)
+	outChains := signedTransaction.Transaction.Outputs.ChainOutputSet(txID)
 	for inputIndex, input := range inputs {
-		if err = unlockOutput(tx.Transaction, resolvedInputs.CommitmentInput, input, tx.Unlocks[inputIndex], uint16(inputIndex), unlockedIdentities, outChains, essenceMsgToSign); err != nil {
+		if err = unlockOutput(signedTransaction.Transaction, resolvedInputs.CommitmentInput, input, signedTransaction.Unlocks[inputIndex], uint16(inputIndex), unlockedIdentities, outChains, essenceMsgToSign); err != nil {
 			return nil, err
 		}
 
@@ -383,7 +383,7 @@ func ValidateUnlocks(tx *iotago.SignedTransaction, resolvedInputs ResolvedInputs
 			chainID := chainConstrOutput.ChainID()
 			if chainID.Empty() {
 				//nolint:forcetypeassert // we can safely assume that this is an UTXOIDChainID
-				chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(tx.Transaction.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
+				chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(signedTransaction.Transaction.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
 			}
 
 			// for account outputs which are not state transitioning, we do not add it to the set of unlocked chains

@@ -67,7 +67,7 @@ func TestOutputIDString(t *testing.T) {
 		outputID         iotago.OutputID
 		outputTypeString string
 	}{
-		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.SlotIdentifierFromHexString("0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc")), 1), outputTypeString: "OutputID(0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc:4242168339:1)"},
+		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.TransactionIDFromHexString("0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc")), 1), outputTypeString: "OutputID(0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc:4242168339:1)"},
 	}
 	for _, tt := range tests {
 		require.Equal(t, tt.outputID.String(), tt.outputTypeString)
