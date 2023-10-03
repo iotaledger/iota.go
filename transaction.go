@@ -1,9 +1,13 @@
 package iotago
 
 import (
+	"context"
+
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/hive.go/stringify"
 )
 
 const (
@@ -51,27 +55,132 @@ type (
 
 // Transaction is the part of a SignedTransaction that contains inputs and outputs.
 type Transaction struct {
+	API                 API
 	*TransactionEssence `serix:"0"`
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
 }
 
-// ID computes the ID of the Transaction.
+// ID returns the TransactionID created without the signatures.
 func (t *Transaction) ID() (TransactionID, error) {
-	// TODO: implement proper ID calculation
-	return EmptyTransactionID, nil
+	essenceBytes, err := t.API.Encode(t.TransactionEssence)
+	if err != nil {
+		return TransactionID{}, ierrors.Errorf("can't compute essence bytes: %w", err)
+	}
+
+	outputBytes, err := t.API.Encode(t.Outputs)
+	if err != nil {
+		return TransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
+	return TransactionIDRepresentingData(t.CreationSlot, byteutils.ConcatBytes(essenceBytes, outputBytes)), nil
+}
+
+func (t *Transaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
 }
 
 func (t *Transaction) Clone() *Transaction {
 	return &Transaction{
+		API:                t.API,
 		TransactionEssence: t.TransactionEssence.Clone(),
 		Outputs:            t.Outputs.Clone(),
 	}
 }
 
+func (t *Transaction) Inputs() ([]*UTXOInput, error) {
+	references := make([]*UTXOInput, 0, len(t.TransactionEssence.Inputs))
+	for _, input := range t.TransactionEssence.Inputs {
+		switch castInput := input.(type) {
+		case *UTXOInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnknownInputType
+		}
+	}
+
+	return references, nil
+}
+
+// OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
+func (t *Transaction) OutputsSet() (OutputSet, error) {
+	txID, err := t.ID()
+	if err != nil {
+		return nil, err
+	}
+	set := make(OutputSet)
+	for index, output := range t.Outputs {
+		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
+	}
+
+	return set, nil
+}
+
+func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
+	references := make(TransactionContextInputs, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
+			references = append(references, castInput)
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+	references := make([]*BlockIssuanceCreditInput, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BlockIssuanceCreditInput:
+			references = append(references, castInput)
+		case *CommitmentInput, *RewardInput:
+			// ignore this type
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
+	references := make([]*RewardInput, 0, len(t.TransactionEssence.ContextInputs))
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *RewardInput:
+			references = append(references, castInput)
+		case *CommitmentInput, *BlockIssuanceCreditInput:
+			// ignore this type
+		default:
+			return nil, ErrUnknownContextInputType
+		}
+	}
+
+	return references, nil
+}
+
+// Returns the first commitment input in the transaction if it exists or nil.
+func (t *Transaction) CommitmentInput() *CommitmentInput {
+	for _, input := range t.TransactionEssence.ContextInputs {
+		switch castInput := input.(type) {
+		case *BlockIssuanceCreditInput, *RewardInput:
+			// ignore this type
+		case *CommitmentInput:
+			return castInput
+		default:
+			return nil
+		}
+	}
+
+	return nil
+}
+
 // SigningMessage returns the to be signed message.
-func (t *Transaction) SigningMessage(api API) ([]byte, error) {
-	essenceBytes, err := api.Encode(t)
+func (t *Transaction) SigningMessage() ([]byte, error) {
+	essenceBytes, err := t.API.Encode(t)
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +191,14 @@ func (t *Transaction) SigningMessage(api API) ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (t *Transaction) Sign(api API, inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
+func (t *Transaction) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
 	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
 		return nil, ErrInvalidInputsCommitment
 	}
 
 	copy(t.InputsCommitment[:], inputsCommitment)
 
-	signMsg, err := t.SigningMessage(api)
+	signMsg, err := t.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -145,4 +254,12 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 	}
 
 	return workscoreTransactionEssence.Add(workScoreOutputs)
+}
+
+// String returns a human readable version of the Transaction.
+func (t *Transaction) String() string {
+	return stringify.Struct("Transaction",
+		stringify.NewStructField("TransactionEssence", t.TransactionEssence),
+		stringify.NewStructField("Outputs", t.Outputs),
+	)
 }

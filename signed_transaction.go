@@ -2,20 +2,11 @@ package iotago
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
-)
-
-const (
-	// SignedTransactionIDLength defines the length of a SignedTransactionID.
-	SignedTransactionIDLength = SlotIdentifierLength
-
-	// TransactionIDLength defines the length of a TransactionID.
-	TransactionIDLength = SlotIdentifierLength
+	"github.com/iotaledger/hive.go/stringify"
 )
 
 var (
@@ -43,31 +34,6 @@ var (
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
 )
 
-var (
-	EmptySignedTransactionID = SignedTransactionID{}
-	EmptyTransactionID       = TransactionID{}
-)
-
-type SignedTransactionID = SlotIdentifier
-
-// SignedTransactionIDs are IDs of signed transactions.
-type SignedTransactionIDs []SignedTransactionID
-
-// SignedTransactionIDFromData returns a new SignedTransactionID for the given data by hashing it with blake2b and appending the creation slot index.
-func SignedTransactionIDFromData(creationSlot SlotIndex, data []byte) SignedTransactionID {
-	return SlotIdentifierRepresentingData(creationSlot, data)
-}
-
-type TransactionID = SlotIdentifier
-
-// TransactionIDs are IDs of transactions.
-type TransactionIDs []TransactionID
-
-// TransactionIDFromData returns a new SignedTransactionID for the given data by hashing it with blake2b and appending the creation slot index.
-func TransactionIDFromData(creationSlot SlotIndex, data []byte) TransactionID {
-	return SlotIdentifierRepresentingData(creationSlot, data)
-}
-
 type TransactionContextInputs ContextInputs[Input]
 
 // SignedTransaction is a transaction with its inputs, outputs and unlocks.
@@ -79,8 +45,30 @@ type SignedTransaction struct {
 	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
 }
 
-func (t *SignedTransaction) SetDeserializationContext(ctx context.Context) {
-	t.API = APIFromContext(ctx)
+// ID computes the ID of the SignedTransaction.
+func (t *SignedTransaction) ID() (SignedTransactionID, error) {
+	transactionBytes, err := t.API.Encode(t.Unlocks)
+	if err != nil {
+		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
+	unlocksBytes, err := t.API.Encode(t.Unlocks)
+	if err != nil {
+		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+	}
+
+	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
+}
+
+func (t *SignedTransaction) Size() int {
+	// PayloadType
+	return serializer.TypeDenotationByteSize +
+		t.Transaction.Size() +
+		t.Unlocks.Size()
+}
+
+func (t *SignedTransaction) PayloadType() PayloadType {
+	return PayloadSignedTransaction
 }
 
 func (t *SignedTransaction) Clone() Payload {
@@ -91,132 +79,28 @@ func (t *SignedTransaction) Clone() Payload {
 	}
 }
 
-func (t *SignedTransaction) PayloadType() PayloadType {
-	return PayloadSignedTransaction
+func (t *SignedTransaction) SetDeserializationContext(ctx context.Context) {
+	t.API = APIFromContext(ctx)
 }
 
-// OutputsSet returns an OutputSet from the SignedTransaction's outputs, mapped by their OutputID.
-func (t *SignedTransaction) OutputsSet() (OutputSet, error) {
-	txID, err := t.ID()
-	if err != nil {
-		return nil, err
-	}
-	set := make(OutputSet)
-	for index, output := range t.Transaction.Outputs {
-		set[OutputIDFromTransactionIDAndIndex(txID, uint16(index))] = output
-	}
-
-	return set, nil
-}
-
-// ID computes the ID of the SignedTransaction.
-func (t *SignedTransaction) ID() (SignedTransactionID, error) {
-	unlocksBytes, err := t.API.Encode(t.Unlocks)
-	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
-	}
-
-	transactionID, err := t.Transaction.ID()
-	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute transaction ID: %w", err)
-	}
-
-	return SignedTransactionIDFromData(t.Transaction.CreationSlot, byteutils.ConcatBytes(lo.PanicOnErr(transactionID.Identifier().Bytes()), unlocksBytes)), nil
-}
-
-func (t *SignedTransaction) Inputs() ([]*UTXOInput, error) {
-	references := make([]*UTXOInput, 0, len(t.Transaction.Inputs))
-	for _, input := range t.Transaction.Inputs {
-		switch castInput := input.(type) {
-		case *UTXOInput:
-			references = append(references, castInput)
-		default:
-			return nil, ErrUnknownInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) ContextInputs() (TransactionContextInputs, error) {
-	references := make(TransactionContextInputs, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
-			references = append(references, castInput)
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
-	references := make([]*BlockIssuanceCreditInput, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput:
-			references = append(references, castInput)
-		case *CommitmentInput, *RewardInput:
-			// ignore this type
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-func (t *SignedTransaction) RewardInputs() ([]*RewardInput, error) {
-	references := make([]*RewardInput, 0, len(t.Transaction.ContextInputs))
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *RewardInput:
-			references = append(references, castInput)
-		case *CommitmentInput, *BlockIssuanceCreditInput:
-			// ignore this type
-		default:
-			return nil, ErrUnknownContextInputType
-		}
-	}
-
-	return references, nil
-}
-
-// Returns the first commitment input in the transaction if it exists or nil.
-func (t *SignedTransaction) CommitmentInput() *CommitmentInput {
-	for _, input := range t.Transaction.ContextInputs {
-		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput, *RewardInput:
-			// ignore this type
-		case *CommitmentInput:
-			return castInput
-		default:
-			return nil
-		}
-	}
-
-	return nil
-}
-
-func (t *SignedTransaction) Size() int {
-	// PayloadType
-	return serializer.TypeDenotationByteSize +
-		t.Transaction.Size() +
-		t.Unlocks.Size()
-}
-
+// String returns a human readable version of the SignedTransaction.
 func (t *SignedTransaction) String() string {
-	// TODO: stringify for debugging purposes
-	return fmt.Sprintf("SignedTransaction[%v, %v]", t.Transaction, t.Unlocks)
+	return stringify.Struct("SignedTransaction",
+		stringify.NewStructField("Transaction", t.Transaction),
+		stringify.NewStructField("Unlocks", t.Unlocks),
+	)
 }
 
 // syntacticallyValidate syntactically validates the SignedTransaction.
 func (t *SignedTransaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
-	if len(t.Unlocks) != len(t.Transaction.Inputs) {
-		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(t.Transaction.Inputs))
+	inputs, err := t.Transaction.Inputs()
+	if err != nil {
+		return err
+	}
+
+	if len(t.Unlocks) != len(inputs) {
+		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(inputs))
 	}
 
 	if err := t.Transaction.syntacticallyValidate(t.API); err != nil {

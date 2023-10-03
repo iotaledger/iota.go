@@ -15,7 +15,6 @@ func NewVirtualMachine() vm.VirtualMachine {
 	return &virtualMachine{
 		execList: []vm.ExecFunc{
 			vm.ExecFuncTimelocks(),
-			vm.ExecFuncInputUnlocks(),
 			vm.ExecFuncSenderUnlocked(),
 			vm.ExecFuncBalancedBaseTokens(),
 			vm.ExecFuncBalancedNativeTokens(),
@@ -30,7 +29,7 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
 	var err error
 	utxoInputsSet := constructInputSet(inputs.InputSet)
 	workingSet := &vm.WorkingSet{}
@@ -38,7 +37,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
 	workingSet.UTXOInputsSet = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.Transaction.Inputs {
+	for inputIndex, inputRef := range workingSet.Tx.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		ref := inputRef.(*iotago.UTXOInput).OutputID()
 		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
@@ -49,7 +48,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.Transaction.SigningMessage(api)
+	workingSet.EssenceMsgToSign, err = t.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 	}
 
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
-	workingSet.OutChains = workingSet.Tx.Transaction.Outputs.ChainOutputSet(txID)
+	workingSet.OutChains = workingSet.Tx.Outputs.ChainOutputSet(txID)
 
 	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
 	workingSet.Commitment = inputs.CommitmentInput
@@ -69,7 +68,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 	workingSet.TotalManaIn, err = vm.TotalManaIn(
 		api.ProtocolParameters().ManaDecayProvider(),
 		api.RentStructure(),
-		workingSet.Tx.Transaction.CreationSlot,
+		workingSet.Tx.CreationSlot,
 		workingSet.UTXOInputsSet,
 	)
 	if err != nil {
@@ -77,8 +76,8 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.SignedTransaction, inputs v
 	}
 
 	workingSet.TotalManaOut, err = vm.TotalManaOut(
-		workingSet.Tx.Transaction.Outputs,
-		workingSet.Tx.Transaction.Allotments,
+		workingSet.Tx.Outputs,
+		workingSet.Tx.Allotments,
 	)
 	if err != nil {
 		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
@@ -105,22 +104,35 @@ func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 	return utxoInputsSet
 }
 
-func (stardustVM *virtualMachine) Execute(t *iotago.SignedTransaction, vmParams *vm.Params, inputs vm.ResolvedInputs, overrideFuncs ...vm.ExecFunc) error {
-	if vmParams.API == nil {
-		return ierrors.New("no API provided")
+func (stardustVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs vm.ResolvedInputs) (unlockedIdentities vm.UnlockedIdentities, err error) {
+	return vm.ValidateUnlocks(signedTransaction, inputs)
+}
+
+func (stardustVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
+	vmParams := &vm.Params{
+		API: transaction.API,
 	}
 
-	var err error
-	vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, t, inputs)
+	if vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, transaction, inputs); err != nil {
+		return nil, ierrors.Wrap(err, "failed to create working set")
+	}
+	vmParams.WorkingSet.UnlockedIdents = unlockedIdentities
+
+	if len(execFunctions) == 0 {
+		execFunctions = stardustVM.execList
+	}
+
+	err = vm.RunVMFuncs(stardustVM, vmParams, execFunctions...)
 	if err != nil {
-		return err
+		return nil, ierrors.Wrap(err, "failed to execute transaction")
 	}
 
-	if len(overrideFuncs) > 0 {
-		return vm.RunVMFuncs(stardustVM, vmParams, overrideFuncs...)
+	outputs = make([]iotago.Output, len(transaction.Outputs))
+	for i, output := range transaction.Outputs {
+		outputs[i] = output
 	}
 
-	return vm.RunVMFuncs(stardustVM, vmParams, stardustVM.execList...)
+	return outputs, nil
 }
 
 func (stardustVM *virtualMachine) ChainSTVF(transType iotago.ChainTransitionType, input *vm.ChainOutputWithIDs, next iotago.ChainOutput, vmParams *vm.Params) error {
@@ -351,7 +363,7 @@ func accountStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AccountOutput, 
 	}
 
 	var seenNewFoundriesOfAccount uint32
-	for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
+	for _, output := range vmParams.WorkingSet.Tx.Outputs {
 		foundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
@@ -431,7 +443,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	manaOut := vmParams.WorkingSet.TotalManaOut
 
 	// AccountInStored
-	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
+	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s stored mana calculation failed", next.AccountID)
 	}
@@ -450,7 +462,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	if err != nil {
 		excessBaseTokensAccount = 0
 	}
-	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.Transaction.CreationSlot)
+	manaPotentialAccount, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokensAccount, input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.CreationSlot)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s potential mana calculation failed", next.AccountID)
 	}
@@ -464,7 +476,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 		return ierrors.Wrapf(err, "account %s stored mana out exceeds total remaining mana out", next.AccountID)
 	}
 	// AccountOutAllotted - allotments to the account in question
-	accountOutAllotted := vmParams.WorkingSet.Tx.Transaction.Allotments.Get(next.AccountID)
+	accountOutAllotted := vmParams.WorkingSet.Tx.Allotments.Get(next.AccountID)
 	manaOut, err = safemath.SafeSub(manaOut, accountOutAllotted)
 	if err != nil {
 		return ierrors.Wrapf(err, "account %s allotment exceeds total remaining mana out", next.AccountID)
@@ -472,7 +484,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 
 	// AccountOutLocked - outputs with manalock conditions
 	minManalockedSlot := pastBoundedSlot + vmParams.API.ProtocolParameters().MaxCommittableAge()
-	for _, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
+	for _, output := range vmParams.WorkingSet.Tx.Outputs {
 		if output.UnlockConditionSet().HasManalockCondition(next.AccountID, minManalockedSlot) {
 			manaOut, err = safemath.SafeSub(manaOut, output.StoredMana())
 			if err != nil {
@@ -621,7 +633,7 @@ func accountStakingExpiredValidation(
 }
 
 func accountDestructionValid(input *vm.ChainOutputWithIDs, vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyAccountOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyAccountOutputs() {
 		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
 	}
 
@@ -714,7 +726,7 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 }
 
 func nftDestructionValid(vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyNFTOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyNFTOutputs() {
 		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrTxCapabilitiesNFTDestructionNotAllowed)
 	}
 
@@ -782,7 +794,7 @@ func foundrySerialNumberValid(current *iotago.FoundryOutput, vmParams *vm.Params
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
 	// check order of serial number
-	for outputIndex, output := range vmParams.WorkingSet.Tx.Transaction.Outputs {
+	for outputIndex, output := range vmParams.WorkingSet.Tx.Outputs {
 		otherFoundryOutput, is := output.(*iotago.FoundryOutput)
 		if !is {
 			continue
@@ -833,7 +845,7 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 }
 
 func foundryDestructionValid(current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum, vmParams *vm.Params) error {
-	if vmParams.WorkingSet.Tx.Transaction.Capabilities.CannotDestroyFoundryOutputs() {
+	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyFoundryOutputs() {
 		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition, iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed)
 	}
 

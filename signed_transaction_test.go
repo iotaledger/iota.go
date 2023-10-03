@@ -21,6 +21,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			name: "ok -  Commitment",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.CommitmentInput{
 							CommitmentID: iotago.CommitmentID{},
@@ -35,6 +36,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			name: "ok - BIC",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.BlockIssuanceCreditInput{
 							AccountID: tpkg.RandAccountID(),
@@ -49,6 +51,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			name: "ok - Commitment + BIC",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
 						&iotago.CommitmentInput{
 							CommitmentID: iotago.CommitmentID{},
@@ -74,6 +77,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			name: "ok",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
 					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
@@ -87,6 +91,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			name: "too many inputs",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount+1),
 				)),
 			target:    &iotago.SignedTransaction{},
@@ -97,6 +102,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			name: "too many context inputs",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 				tpkg.RandTransactionWithOptions(
+					tpkg.TestAPI,
 					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
 					tpkg.WithCommitmentInput(),
@@ -160,7 +166,7 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 		{
 			name: "ok",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
-				tpkg.RandTransactionWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
+				tpkg.RandTransactionWithOptions(tpkg.TestAPI, tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax,
@@ -173,7 +179,7 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 		{
 			name: "wrong ref index",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
-				tpkg.RandTransactionWithOptions(tpkg.WithInputs(iotago.TxEssenceInputs{
+				tpkg.RandTransactionWithOptions(tpkg.TestAPI, tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax + 1,
@@ -218,8 +224,9 @@ func TestTransaction_InputTypes(t *testing.T) {
 		Index: 2,
 	}
 
-	transaction := tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+	signedTransaction := tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
 		tpkg.RandTransactionWithOptions(
+			tpkg.TestAPI,
 			tpkg.WithInputs(iotago.TxEssenceInputs{
 				utxoInput1,
 				utxoInput2,
@@ -233,16 +240,16 @@ func TestTransaction_InputTypes(t *testing.T) {
 			}),
 		))
 
-	utxoInputs, err := transaction.Inputs()
+	utxoInputs, err := signedTransaction.Transaction.Inputs()
 	require.NoError(t, err)
 
-	commitmentInput := transaction.CommitmentInput()
+	commitmentInput := signedTransaction.Transaction.CommitmentInput()
 	require.NotNil(t, commitmentInput)
 
-	bicInputs, err := transaction.BICInputs()
+	bicInputs, err := signedTransaction.Transaction.BICInputs()
 	require.NoError(t, err)
 
-	rewardInputs, err := transaction.RewardInputs()
+	rewardInputs, err := signedTransaction.Transaction.RewardInputs()
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(utxoInputs))

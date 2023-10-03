@@ -15,6 +15,7 @@ var (
 	benchLargeTx = &iotago.SignedTransaction{
 		API: tpkg.TestAPI,
 		Transaction: &iotago.Transaction{
+			API: tpkg.TestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     tpkg.TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
@@ -129,7 +130,7 @@ func BenchmarkSignEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Transaction.SigningMessage(tpkg.TestAPI)
+	txEssenceData, err := txPayload.Transaction.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()
@@ -145,7 +146,7 @@ func BenchmarkVerifyEd25519OneIOTxEssence(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 	b.ResetTimer()
 
-	txEssenceData, err := txPayload.Transaction.SigningMessage(tpkg.TestAPI)
+	txEssenceData, err := txPayload.Transaction.SigningMessage()
 	tpkg.Must(err)
 
 	seed := tpkg.RandEd25519Seed()

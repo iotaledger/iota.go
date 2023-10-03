@@ -479,14 +479,14 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 		minCommittableAge := protocolBlock.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := protocolBlock.API.ProtocolParameters().MaxCommittableAge()
 
-		tx, _ := b.Payload.(*SignedTransaction)
+		signedTransaction, _ := b.Payload.(*SignedTransaction)
 
 		// check that transaction CreationSlot is smaller or equal than the block that contains it
-		if blockSlot < tx.Transaction.CreationSlot {
-			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, tx.Transaction.CreationSlot)
+		if blockSlot < signedTransaction.Transaction.CreationSlot {
+			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, signedTransaction.Transaction.CreationSlot)
 		}
 
-		if cInput := tx.CommitmentInput(); cInput != nil {
+		if cInput := signedTransaction.Transaction.CommitmentInput(); cInput != nil {
 			cInputSlot := cInput.CommitmentID.Slot()
 			// check that commitment input is not too recent.
 			if cInputSlot > 0 && // Don't filter commitments to genesis based on being too recent.

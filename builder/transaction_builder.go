@@ -14,6 +14,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 	return &TransactionBuilder{
 		api: api,
 		transaction: &iotago.Transaction{
+			API: api,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     api.ProtocolParameters().NetworkID(),
 				ContextInputs: iotago.TxEssenceContextInputs{},
@@ -65,7 +66,7 @@ func (b *TransactionBuilder) Clone() *TransactionBuilder {
 // AddInput adds the given input to the builder.
 func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 	b.inputOwner[input.InputID] = input.UnlockTarget
-	b.transaction.Inputs = append(b.transaction.Inputs, input.InputID.UTXOInput())
+	b.transaction.TransactionEssence.Inputs = append(b.transaction.TransactionEssence.Inputs, input.InputID.UTXOInput())
 	b.inputs[input.InputID] = input.Input
 
 	return b
@@ -78,7 +79,7 @@ type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.O
 
 // AddContextInput adds the given context input to the builder.
 func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
-	b.transaction.ContextInputs = append(b.transaction.ContextInputs, contextInput)
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, contextInput)
 
 	return b
 }
@@ -388,7 +389,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 
 	// prepare the inputs commitment in the same order as the inputs in the essence
 	var inputIDs iotago.OutputIDs
-	for _, input := range b.transaction.Inputs {
+	for _, input := range b.transaction.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		inputIDs = append(inputIDs, input.(*iotago.UTXOInput).OutputID())
 	}
@@ -400,14 +401,14 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	}
 	copy(b.transaction.InputsCommitment[:], commitment)
 
-	txEssenceData, err := b.transaction.SigningMessage(b.api)
+	txEssenceData, err := b.transaction.SigningMessage()
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to calculate tx transaction for signing message")
 	}
 
 	unlockPos := map[string]int{}
 	unlocks := iotago.Unlocks{}
-	for i, inputRef := range b.transaction.Inputs {
+	for i, inputRef := range b.transaction.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
 		addrKey := addr.Key()
