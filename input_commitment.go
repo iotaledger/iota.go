@@ -14,12 +14,16 @@ func (c *CommitmentInput) Clone() Input {
 	}
 }
 
-func (c *CommitmentInput) StateID() Identifier {
+func (c *CommitmentInput) ReferencedStateID() Identifier {
 	return IdentifierFromData(c.CommitmentID[:])
 }
 
 func (c *CommitmentInput) Type() StateType {
 	return InputCommitment
+}
+
+func (c *CommitmentInput) IsReadOnly() bool {
+	return true
 }
 
 func (c *CommitmentInput) Size() int {
