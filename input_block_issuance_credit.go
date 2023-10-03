@@ -15,7 +15,7 @@ func (b *BlockIssuanceCreditInput) Clone() Input {
 }
 
 func (b *BlockIssuanceCreditInput) ReferencedStateID() Identifier {
-	return IdentifierFromData(b.AccountID[:])
+	return b.StateID()
 }
 
 func (b *BlockIssuanceCreditInput) StateID() Identifier {
