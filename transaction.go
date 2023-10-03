@@ -258,5 +258,5 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 
 func (t *Transaction) String() string {
 	// TODO: stringify for debugging purposes
-	return fmt.Sprintf("SignedTransaction[%v %v]", t.TransactionEssence, t.Outputs)
+	return fmt.Sprintf("Transaction[%v %v]", t.TransactionEssence, t.Outputs)
 }
