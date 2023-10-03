@@ -12,6 +12,7 @@ import (
 var (
 	// ErrCanceled gets returned when the context for the PoW was canceled.
 	ErrCanceled = ierrors.New("canceled")
+
 	// ErrDone gets returned when the PoW was done but no valid nonce was found.
 	ErrDone = ierrors.New("done")
 )
