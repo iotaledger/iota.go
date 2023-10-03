@@ -2,12 +2,12 @@ package iotago
 
 import (
 	"context"
-	"fmt"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/hive.go/stringify"
 )
 
 const (
@@ -256,7 +256,10 @@ func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkSco
 	return workscoreTransactionEssence.Add(workScoreOutputs)
 }
 
+// String returns a human readable version of the Transaction.
 func (t *Transaction) String() string {
-	// TODO: stringify for debugging purposes
-	return fmt.Sprintf("Transaction[%v %v]", t.TransactionEssence, t.Outputs)
+	return stringify.Struct("Transaction",
+		stringify.NewStructField("TransactionEssence", t.TransactionEssence),
+		stringify.NewStructField("Outputs", t.Outputs),
+	)
 }

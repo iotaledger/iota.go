@@ -2,11 +2,11 @@ package iotago
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/hive.go/stringify"
 )
 
 var (
@@ -83,9 +83,12 @@ func (t *SignedTransaction) SetDeserializationContext(ctx context.Context) {
 	t.API = APIFromContext(ctx)
 }
 
+// String returns a human readable version of the SignedTransaction.
 func (t *SignedTransaction) String() string {
-	// TODO: stringify for debugging purposes
-	return fmt.Sprintf("SignedTransaction[%v, %v]", t.Transaction, t.Unlocks)
+	return stringify.Struct("SignedTransaction",
+		stringify.NewStructField("Transaction", t.Transaction),
+		stringify.NewStructField("Unlocks", t.Unlocks),
+	)
 }
 
 // syntacticallyValidate syntactically validates the SignedTransaction.
