@@ -56,6 +56,10 @@ func (c *Commitment) StateID() Identifier {
 	return IdentifierFromData(lo.PanicOnErr(c.MustID().Bytes()))
 }
 
+func (b *Commitment) ReadOnly() bool {
+	return true
+}
+
 func (c *Commitment) Type() StateType {
 	return InputCommitment
 }

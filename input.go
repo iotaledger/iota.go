@@ -84,7 +84,7 @@ type Input interface {
 	constraints.Cloneable[Input]
 	ProcessableObject
 
-	StateID() Identifier
+	ReferencedStateID() Identifier
 
 	// Type returns the type of Input.
 	Type() StateType

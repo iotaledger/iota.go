@@ -29,12 +29,16 @@ func (u *UTXOInput) Clone() Input {
 	}
 }
 
-func (u *UTXOInput) StateID() Identifier {
+func (u *UTXOInput) ReferencedStateID() Identifier {
 	return IdentifierFromData(lo.PanicOnErr(u.OutputID().Bytes()))
 }
 
 func (u *UTXOInput) Type() StateType {
 	return InputUTXO
+}
+
+func (u *UTXOInput) ReadOnly() bool {
+	return false
 }
 
 func (u *UTXOInput) OutputID() OutputID {

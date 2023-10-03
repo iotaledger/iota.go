@@ -17,6 +17,12 @@ func (r *RewardInput) Clone() Input {
 	}
 }
 
+func (r *RewardInput) ReferencedStateID() Identifier {
+	buf := make([]byte, 2)
+	binary.LittleEndian.PutUint16(buf, r.Index)
+	return IdentifierFromData(buf)
+}
+
 func (r *RewardInput) StateID() Identifier {
 	buf := make([]byte, 2)
 	binary.LittleEndian.PutUint16(buf, r.Index)
@@ -25,6 +31,10 @@ func (r *RewardInput) StateID() Identifier {
 
 func (r *RewardInput) Type() StateType {
 	return InputReward
+}
+
+func (r *RewardInput) ReadOnly() bool {
+	return true
 }
 
 func (r *RewardInput) Size() int {

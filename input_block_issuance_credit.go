@@ -14,12 +14,20 @@ func (b *BlockIssuanceCreditInput) Clone() Input {
 	}
 }
 
+func (b *BlockIssuanceCreditInput) ReferencedStateID() Identifier {
+	return IdentifierFromData(b.AccountID[:])
+}
+
 func (b *BlockIssuanceCreditInput) StateID() Identifier {
 	return IdentifierFromData(b.AccountID[:])
 }
 
 func (b *BlockIssuanceCreditInput) Type() StateType {
 	return InputBlockIssuanceCredit
+}
+
+func (b *BlockIssuanceCreditInput) ReadOnly() bool {
+	return true
 }
 
 func (b *BlockIssuanceCreditInput) Size() int {
