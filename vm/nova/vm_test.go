@@ -5089,6 +5089,168 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
+		func() *test {
+			_, ident1, ident1Keys := tpkg.RandEd25519Identity()
+			_, ident2, ident2Keys := tpkg.RandEd25519Identity()
+
+			multiAddr := iotago.MultiAddress{
+				Addresses: iotago.AddressesWithWeight{
+					{
+						Address: ident1,
+						Weight:  5,
+					},
+					{
+						Address: ident2,
+						Weight:  10,
+					},
+					{
+						Address: tpkg.RandNFTAddress(),
+						Weight:  1,
+					},
+				},
+				Threshold: 12,
+			}
+
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: &multiAddr},
+					},
+				},
+			}
+
+			transaction := &iotago.Transaction{
+				API: testAPI,
+				TransactionEssence: &iotago.TransactionEssence{
+					Inputs: inputIDs.UTXOInputs(),
+				},
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.BasicOutput{
+						Amount: 100,
+						Conditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+						Features: iotago.BasicOutputFeatures{
+							&iotago.SenderFeature{Address: &multiAddr},
+						},
+					},
+				},
+			}
+
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1Keys, ident2Keys)
+			require.NoError(t, err)
+
+			return &test{
+				name: "ok - multi addr in sender feature",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.SignedTransaction{
+					API:         testAPI,
+					Transaction: transaction,
+					Unlocks: iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: iotago.Unlocks{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+								&iotago.EmptyUnlock{},
+							},
+						},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+		func() *test {
+			_, ident1, ident1Keys := tpkg.RandEd25519Identity()
+			_, ident2, ident2Keys := tpkg.RandEd25519Identity()
+
+			multiAddr := iotago.MultiAddress{
+				Addresses: iotago.AddressesWithWeight{
+					{
+						Address: ident1,
+						Weight:  5,
+					},
+					{
+						Address: ident2,
+						Weight:  10,
+					},
+					{
+						Address: tpkg.RandAccountAddress(),
+						Weight:  1,
+					},
+				},
+				Threshold: 12,
+			}
+
+			restrictedAddr := iotago.RestrictedAddress{
+				Address:             &multiAddr,
+				AllowedCapabilities: iotago.AddressCapabilitiesBitMaskWithCapabilities(iotago.WithAddressCanReceiveMana(true)),
+			}
+
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: &iotago.BasicOutput{
+					Amount: 100,
+					Conditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: &restrictedAddr},
+					},
+				},
+			}
+
+			transaction := &iotago.Transaction{
+				API: testAPI,
+				TransactionEssence: &iotago.TransactionEssence{
+					Inputs: inputIDs.UTXOInputs(),
+				},
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.NFTOutput{
+						Amount: 100,
+						Conditions: iotago.NFTOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+						},
+						Features: iotago.NFTOutputFeatures{
+							// We can use the restricted address...
+							&iotago.SenderFeature{Address: &restrictedAddr},
+						},
+						ImmutableFeatures: iotago.NFTOutputImmFeatures{
+							// ...or the underlying address.
+							&iotago.IssuerFeature{Address: &multiAddr},
+						},
+					},
+				},
+			}
+
+			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1Keys, ident2Keys)
+			require.NoError(t, err)
+
+			return &test{
+				name: "ok - restricted multi addr in sender feature",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.SignedTransaction{
+					API:         testAPI,
+					Transaction: transaction,
+					Unlocks: iotago.Unlocks{
+						&iotago.MultiUnlock{
+							Unlocks: iotago.Unlocks{
+								&iotago.SignatureUnlock{Signature: sigs[0]},
+								&iotago.SignatureUnlock{Signature: sigs[1]},
+								&iotago.EmptyUnlock{},
+							},
+						},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
