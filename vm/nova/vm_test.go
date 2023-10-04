@@ -5144,7 +5144,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return &test{
-				name: "ok - multi addr in sender feature",
+				name: "ok - multi address in sender feature",
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
@@ -5230,7 +5230,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 			require.NoError(t, err)
 
 			return &test{
-				name: "ok - restricted multi addr in sender feature",
+				name: "ok - restricted multi address in sender and issuer feature",
 				vmParams: &vm.Params{
 					API: testAPI,
 				},
