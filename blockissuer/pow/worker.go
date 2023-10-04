@@ -15,6 +15,9 @@ var (
 
 	// ErrDone gets returned when the PoW was done but no valid nonce was found.
 	ErrDone = ierrors.New("done")
+
+	// ErrInvalidTargetTrailingZeroes gets returned when an invalid target trailing zeroes parameter was set.
+	ErrInvalidTargetTrailingZeroes = ierrors.New("invalid target trailing zeros")
 )
 
 // The Worker performs the PoW.
@@ -90,7 +93,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetTrailingZeros int)
 
 func (w *Worker) worker(powDigest []byte, startNonce uint64, targetTrailingZeros int, done *uint32) (uint64, error) {
 	if targetTrailingZeros > MaxTrailingZeros {
-		panic("pow: invalid target trailing zeros")
+		return 0, ErrInvalidTargetTrailingZeroes
 	}
 
 	for nonce := startNonce; atomic.LoadUint32(done) == 0; nonce++ {

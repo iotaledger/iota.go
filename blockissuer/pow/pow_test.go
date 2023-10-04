@@ -4,6 +4,7 @@ package pow_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -45,4 +46,23 @@ func TestWorker_Cancel(t *testing.T) {
 	cancel()
 
 	assert.Eventually(t, func() bool { return ierrors.Is(err, pow.ErrCanceled) }, time.Second, 10*time.Millisecond)
+}
+
+func BenchmarkMine(b *testing.B) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	worker := pow.New(4)
+
+	var err error
+	go func() {
+		b.ResetTimer()
+		_, err = worker.Mine(ctx, []byte("testdata"), 27)
+		require.NoError(b, err)
+		wg.Done()
+	}()
+	wg.Wait()
 }

@@ -108,13 +108,13 @@ func (resultSet *IndexerResultSet) Outputs(ctx context.Context) (iotago.Outputs[
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.core.CurrentAPI().Underlying(), client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, nil, reqObj, resObj)
+	return client.core.Do(ctx, method, route, reqObj, resObj)
 }
 
 // DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *indexerClient) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.core.CurrentAPI().Underlying(), client.core.opts.httpClient, client.core.BaseURL, client.core.opts.userInfo, method, route, client.core.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return client.core.DoWithRequestHeaderHook(ctx, method, route, requestHeaderHook, reqObj, resObj)
 }
 
 func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error) {
