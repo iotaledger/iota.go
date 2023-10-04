@@ -21,7 +21,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 	block, err := builder.NewBasicBlockBuilder(tpkg.TestAPI).
 		Payload(taggedDataPayload).
 		StrongParents(parents).
-		MaxBurnedMana(100).
+		CalculateAndSetMaxBurnedMana(100).
 		Build()
 	require.NoError(t, err)
 
