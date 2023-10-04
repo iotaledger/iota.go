@@ -120,6 +120,10 @@ func (b *TransactionBuilder) WithTransactionCapabilities(capabilities iotago.Tra
 	return b
 }
 
+func (b *TransactionBuilder) CreationSlot() iotago.SlotIndex {
+	return b.transaction.CreationSlot
+}
+
 func (b *TransactionBuilder) SetCreationSlot(creationSlot iotago.SlotIndex) *TransactionBuilder {
 	b.transaction.CreationSlot = creationSlot
 

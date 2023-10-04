@@ -21,6 +21,9 @@ const (
 
 	// MQTTPluginName is the name for the MQTT plugin.
 	MQTTPluginName = "mqtt/v2"
+
+	// BlockIssuerPluginName is the name for the blockissuer plugin.
+	BlockIssuerPluginName = "blockissuer/v1"
 )
 
 const (
@@ -143,6 +146,8 @@ var (
 	ErrIndexerPluginNotAvailable = ierrors.New("indexer plugin not available on the current node")
 	// ErrMQTTPluginNotAvailable is returned when the MQTT plugin is not available on the node.
 	ErrMQTTPluginNotAvailable = ierrors.New("mqtt plugin not available on the current node")
+	// ErrBlockIssuerPluginNotAvailable is returned when the BlockIssuer plugin is not available on the node.
+	ErrBlockIssuerPluginNotAvailable = ierrors.New("blockissuer plugin not available on the current node")
 )
 
 // RequestURLHook is a function to modify the URL before sending a request.
@@ -158,6 +163,8 @@ var (
 	RequestHeaderHookAcceptIOTASerializerV1 = func(header http.Header) { header.Set("Accept", MIMEApplicationVendorIOTASerializerV1) }
 	// RequestHeaderHookAcceptIOTASerializerV2 is used to set the request "Accept" header to MIMEApplicationVendorIOTASerializerV2.
 	RequestHeaderHookAcceptIOTASerializerV2 = func(header http.Header) { header.Set("Accept", MIMEApplicationVendorIOTASerializerV2) }
+	// RequestHeaderHookContentTypeIOTASerializerV2 is used to set the request "Content-Type" header to MIMEApplicationVendorIOTASerializerV2.
+	RequestHeaderHookContentTypeIOTASerializerV2 = func(header http.Header) { header.Set("Content-Type", MIMEApplicationVendorIOTASerializerV2) }
 )
 
 // the default options applied to the Client.
@@ -306,6 +313,20 @@ func (client *Client) EventAPI(ctx context.Context) (*EventAPIClient, error) {
 	}
 
 	return newEventAPIClient(client), nil
+}
+
+// BlockIssuer returns the BlockIssuerClient.
+// Returns ErrBlockIssuerPluginNotAvailable if the current node does not support the plugin.
+func (client *Client) BlockIssuer(ctx context.Context) (BlockIssuerClient, error) {
+	hasPlugin, err := client.NodeSupportsRoute(ctx, BlockIssuerPluginName)
+	if err != nil {
+		return nil, err
+	}
+	if !hasPlugin {
+		return nil, ErrBlockIssuerPluginNotAvailable
+	}
+
+	return &blockIssuerClient{core: client}, nil
 }
 
 // Health returns whether the given node is healthy.
