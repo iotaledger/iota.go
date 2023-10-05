@@ -11,7 +11,7 @@ type basicProtocolParameters struct {
 
 	// RentStructure defines the rent structure used by given node/network.
 	RentParameters RentParameters `serix:"3,mapKey=rentParameters"`
-	// WorkScoreParameters defines the work score structure used by given node/network.
+	// WorkScoreParameters defines the work score parameters used by given node/network.
 	WorkScoreParameters WorkScoreParameters `serix:"4,mapKey=workScoreParameters"`
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply BaseToken `serix:"5,mapKey=tokenSupply"`
