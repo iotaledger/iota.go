@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/lo"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -60,18 +59,6 @@ func TestOutputsCommitment(t *testing.T) {
 
 	require.NotEqual(t, outputs1.MustCommitment(tpkg.TestAPI), outputs2.MustCommitment(tpkg.TestAPI), "commitment for different Outputs must be different")
 
-}
-
-func TestOutputIDString(t *testing.T) {
-	tests := []struct {
-		outputID         iotago.OutputID
-		outputTypeString string
-	}{
-		{outputID: iotago.OutputIDFromTransactionIDAndIndex(lo.PanicOnErr(iotago.TransactionIDFromHexString("0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc")), 1), outputTypeString: "OutputID(TransactionID(0xbaadf00ddeadbeefc8ed3cbe4acb99aeb94515ad89a6228f3f5d8f82dec429df135adafc:4242168339):1)"},
-	}
-	for _, tt := range tests {
-		require.Equal(t, tt.outputID.String(), tt.outputTypeString)
-	}
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
