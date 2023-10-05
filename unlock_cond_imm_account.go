@@ -20,7 +20,7 @@ func (s *ImmutableAccountUnlockCondition) StorageScore(rentStruct *RentStructure
 	return s.Address.StorageScore(rentStruct, nil)
 }
 
-func (s *ImmutableAccountUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *ImmutableAccountUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// ImmutableAccountUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
 }

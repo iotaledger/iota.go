@@ -82,10 +82,10 @@ func (o Unlocks) Size() int {
 	return sum
 }
 
-func (o Unlocks) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (o Unlocks) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreUnlocks WorkScore
 	for _, unlock := range o {
-		workScoreUnlock, err := unlock.WorkScore(workScoreStructure)
+		workScoreUnlock, err := unlock.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}

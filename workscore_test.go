@@ -84,21 +84,21 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 	require.NoError(t, err)
 
-	workScoreStructure := api.ProtocolParameters().WorkScoreStructure()
+	workScoreParameters := api.ProtocolParameters().WorkScoreParameters()
 
-	workScore, err := tx.WorkScore(workScoreStructure)
+	workScore, err := tx.WorkScore(workScoreParameters)
 	require.NoError(t, err)
 
 	// Calculate work score as defined in TIP-45 for verification.
-	expectedWorkScore := workScoreStructure.DataByte*iotago.WorkScore(tx.Size()) +
-		workScoreStructure.Input*2 +
-		workScoreStructure.ContextInput*3 +
+	expectedWorkScore := workScoreParameters.DataByte*iotago.WorkScore(tx.Size()) +
+		workScoreParameters.Input*2 +
+		workScoreParameters.ContextInput*3 +
 		// Accounts for one Signature unlock.
-		workScoreStructure.SignatureEd25519 +
-		workScoreStructure.BlockIssuer +
-		workScoreStructure.Staking +
-		workScoreStructure.NativeToken*2 +
-		workScoreStructure.Allotment*2
+		workScoreParameters.SignatureEd25519 +
+		workScoreParameters.BlockIssuer +
+		workScoreParameters.Staking +
+		workScoreParameters.NativeToken*2 +
+		workScoreParameters.Allotment*2
 
 	require.Equal(t, expectedWorkScore, workScore, "work score expected: %d, actual: %d", expectedWorkScore, workScore)
 }

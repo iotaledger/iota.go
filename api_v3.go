@@ -265,7 +265,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	timeProvider := protoParams.TimeProvider()
 
-	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
+	maxBlockWork, err := protoParams.WorkScoreParameters().MaxBlockWork()
 	must(err)
 
 	initialReward, finalReward, err := calculateRewards(protoParams)

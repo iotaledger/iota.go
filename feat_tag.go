@@ -23,7 +23,7 @@ func (s *TagFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc)
 	return 0
 }
 
-func (s *TagFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *TagFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 

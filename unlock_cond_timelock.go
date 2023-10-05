@@ -22,7 +22,7 @@ func (s *TimelockUnlockCondition) StorageScore(_ *RentStructure, _ StorageScoreF
 	return 0
 }
 
-func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 

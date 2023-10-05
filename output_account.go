@@ -268,18 +268,18 @@ func (a *AccountOutput) syntacticallyValidate() error {
 	return nil
 }
 
-func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := a.Conditions.WorkScore(workScoreStructure)
+func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := a.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := a.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := a.ImmutableFeatures.WorkScore(workScoreStructure)
+	workScoreImmutableFeatures, err := a.ImmutableFeatures.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

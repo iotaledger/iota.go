@@ -65,8 +65,8 @@ func (n *NativeTokenFeature) StorageScore(_ *RentStructure, _ StorageScoreFunc) 
 	return 0
 }
 
-func (n *NativeTokenFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return workScoreStructure.NativeToken, nil
+func (n *NativeTokenFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	return workScoreParameters.NativeToken, nil
 }
 
 // Equal checks whether other is equal to this NativeToken.

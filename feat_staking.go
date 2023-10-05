@@ -54,9 +54,9 @@ func (s *StakingFeature) StorageScore(rentStruct *RentStructure, f StorageScoreF
 	return rentStruct.StorageScoreOffsetStakingFeature()
 }
 
-func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *StakingFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// staking feature changes require invokation of staking managers so require extra work.
-	return workScoreStructure.Staking, nil
+	return workScoreParameters.Staking, nil
 }
 
 func (s *StakingFeature) Equal(other Feature) bool {

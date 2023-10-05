@@ -39,6 +39,6 @@ func (r *ReferenceUnlock) Size() int {
 	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *ReferenceUnlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (r *ReferenceUnlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }

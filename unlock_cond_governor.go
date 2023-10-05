@@ -18,7 +18,7 @@ func (s *GovernorAddressUnlockCondition) StorageScore(rentStruct *RentStructure,
 	return s.Address.StorageScore(rentStruct, nil)
 }
 
-func (s *GovernorAddressUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *GovernorAddressUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// GovernorAddressUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
 }

@@ -20,7 +20,7 @@ func (s *MetadataFeature) StorageScore(_ *RentStructure, _ StorageScoreFunc) Sto
 	return 0
 }
 
-func (s *MetadataFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *MetadataFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 

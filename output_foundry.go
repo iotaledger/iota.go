@@ -187,23 +187,23 @@ func (f *FoundryOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFu
 		f.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
-func (f *FoundryOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreTokenScheme, err := f.TokenScheme.WorkScore(workScoreStructure)
+func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreTokenScheme, err := f.TokenScheme.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreConditions, err := f.Conditions.WorkScore(workScoreStructure)
+	workScoreConditions, err := f.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := f.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := f.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := f.ImmutableFeatures.WorkScore(workScoreStructure)
+	workScoreImmutableFeatures, err := f.ImmutableFeatures.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

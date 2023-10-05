@@ -26,9 +26,9 @@ func (s *BlockIssuerFeature) StorageScore(rentStruct *RentStructure, _ StorageSc
 	return s.BlockIssuerKeys.StorageScore(rentStruct, nil)
 }
 
-func (s *BlockIssuerFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *BlockIssuerFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// block issuer feature requires invocation of account and mana managers, so requires extra work.
-	return workScoreStructure.BlockIssuer, nil
+	return workScoreParameters.BlockIssuer, nil
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {

@@ -62,8 +62,8 @@ func (p *V3ProtocolParameters) RentParameters() *RentParameters {
 	return &p.basicProtocolParameters.RentParameters
 }
 
-func (p *V3ProtocolParameters) WorkScoreStructure() *WorkScoreStructure {
-	return &p.basicProtocolParameters.WorkScoreStructure
+func (p *V3ProtocolParameters) WorkScoreParameters() *WorkScoreParameters {
+	return &p.basicProtocolParameters.WorkScoreParameters
 }
 
 func (p *V3ProtocolParameters) TokenSupply() BaseToken {
@@ -146,7 +146,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,
 		p.basicProtocolParameters.RentParameters,
-		p.basicProtocolParameters.WorkScoreStructure,
+		p.basicProtocolParameters.WorkScoreParameters,
 		p.basicProtocolParameters.TokenSupply,
 		p.basicProtocolParameters.GenesisUnixTimestamp,
 		p.basicProtocolParameters.SlotDurationInSeconds,
@@ -219,7 +219,7 @@ func WithWorkScoreOptions(
 	signatureEd25519 WorkScore,
 ) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.WorkScoreStructure = WorkScoreStructure{
+		p.basicProtocolParameters.WorkScoreParameters = WorkScoreParameters{
 			DataByte:         dataByte,
 			Block:            block,
 			Input:            input,

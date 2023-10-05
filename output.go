@@ -369,10 +369,10 @@ func (outputs Outputs[T]) Size() int {
 	return sum
 }
 
-func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (outputs Outputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreOutputs WorkScore
 	for _, output := range outputs {
-		workScoreOutput, err := output.WorkScore(workScoreStructure)
+		workScoreOutput, err := output.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}

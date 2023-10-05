@@ -24,7 +24,7 @@ func (s *StorageDepositReturnUnlockCondition) StorageScore(rentStruct *RentStruc
 	return s.ReturnAddress.StorageScore(rentStruct, nil)
 }
 
-func (s *StorageDepositReturnUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *StorageDepositReturnUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// StorageDepositReturnUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
 }

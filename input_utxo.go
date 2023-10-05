@@ -77,7 +77,7 @@ func (u *UTXOInput) Size() int {
 	return serializer.SmallTypeDenotationByteSize + TransactionIDLength + OutputIndexLength
 }
 
-func (u *UTXOInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (u *UTXOInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// inputs require lookup of the UTXO, so requires extra work.
-	return workScoreStructure.Input, nil
+	return workScoreParameters.Input, nil
 }

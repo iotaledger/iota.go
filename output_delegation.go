@@ -195,8 +195,8 @@ func (d *DelegationOutput) syntacticallyValidate() error {
 	return nil
 }
 
-func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return d.Conditions.WorkScore(workScoreStructure)
+func (d *DelegationOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	return d.Conditions.WorkScore(workScoreParameters)
 }
 
 func (d *DelegationOutput) ChainID() ChainID {

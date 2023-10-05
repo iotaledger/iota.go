@@ -23,7 +23,7 @@ func (s *SenderFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFu
 	return s.Address.StorageScore(rentStruct, nil)
 }
 
-func (s *SenderFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *SenderFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
 	return 0, nil
 }

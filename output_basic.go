@@ -77,13 +77,13 @@ func (e *BasicOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc
 		e.Features.StorageScore(rentStruct, nil)
 }
 
-func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := e.Conditions.WorkScore(workScoreStructure)
+func (e *BasicOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := e.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := e.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := e.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

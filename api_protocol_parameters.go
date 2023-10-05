@@ -11,8 +11,8 @@ type basicProtocolParameters struct {
 
 	// RentStructure defines the rent structure used by given node/network.
 	RentParameters RentParameters `serix:"3,mapKey=rentParameters"`
-	// WorkScoreStructure defines the work score structure used by given node/network.
-	WorkScoreStructure WorkScoreStructure `serix:"4,mapKey=workScoreStructure"`
+	// WorkScoreParameters defines the work score structure used by given node/network.
+	WorkScoreParameters WorkScoreParameters `serix:"4,mapKey=workScoreParameters"`
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply BaseToken `serix:"5,mapKey=tokenSupply"`
 
@@ -63,7 +63,7 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.NetworkName == other.NetworkName &&
 		b.Bech32HRP == other.Bech32HRP &&
 		b.RentParameters.Equals(other.RentParameters) &&
-		b.WorkScoreStructure.Equals(other.WorkScoreStructure) &&
+		b.WorkScoreParameters.Equals(other.WorkScoreParameters) &&
 		b.TokenSupply == other.TokenSupply &&
 		b.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
 		b.SlotDurationInSeconds == other.SlotDurationInSeconds &&

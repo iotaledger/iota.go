@@ -106,10 +106,10 @@ func (f UnlockConditions[T]) StorageScore(rentStruct *RentStructure, _ StorageSc
 	return sumCost
 }
 
-func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (f UnlockConditions[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreUnlockConds WorkScore
 	for _, unlockCond := range f {
-		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreStructure)
+		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}

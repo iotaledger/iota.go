@@ -112,8 +112,8 @@ type ProtocolParameters interface {
 	Bech32HRP() NetworkPrefix
 	// RentStructure defines the rent structure used by given node/network.
 	RentParameters() *RentParameters
-	// WorkScoreStructure defines the work score structure used by the given network.
-	WorkScoreStructure() *WorkScoreStructure
+	// WorkScoreParameters defines the work score structure used by the given network.
+	WorkScoreParameters() *WorkScoreParameters
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 

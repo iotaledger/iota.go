@@ -169,18 +169,18 @@ func (n *NFTOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) 
 		n.ImmutableFeatures.StorageScore(rentStruct, nil)
 }
 
-func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := n.Conditions.WorkScore(workScoreStructure)
+func (n *NFTOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := n.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := n.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := n.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreStructure)
+	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

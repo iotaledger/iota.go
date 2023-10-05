@@ -672,7 +672,7 @@ func RandBlockID() iotago.BlockID {
 // RandProtocolBlock returns a random block with the given inner payload.
 func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
 	if basicBlock, isBasic := block.(*iotago.BasicBlock); isBasic {
-		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreStructure())
+		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
 		if err != nil {
 			panic(err)
 		}
@@ -983,8 +983,8 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 }
 
 // RandWorkscoreStructure produces random workscore structure.
-func RandWorkscoreStructure() *iotago.WorkScoreStructure {
-	return &iotago.WorkScoreStructure{
+func RandWorkscoreStructure() *iotago.WorkScoreParameters {
+	return &iotago.WorkScoreParameters{
 		DataByte:         RandWorkScore(math.MaxUint32),
 		Block:            RandWorkScore(math.MaxUint32),
 		Input:            RandWorkScore(math.MaxUint32),
