@@ -2,30 +2,30 @@ package iotago
 
 import "golang.org/x/crypto/blake2b"
 
-func (id AccountID) Addressable() bool {
+func (a AccountID) Addressable() bool {
 	return true
 }
 
-func (id AccountID) Key() interface{} {
-	return id.String()
+func (a AccountID) Key() interface{} {
+	return a.String()
 }
 
-func (id AccountID) FromOutputID(in OutputID) ChainID {
+func (a AccountID) FromOutputID(in OutputID) ChainID {
 	return AccountIDFromOutputID(in)
 }
 
-func (id AccountID) Matches(other ChainID) bool {
+func (a AccountID) Matches(other ChainID) bool {
 	otherAccountID, isAccountID := other.(AccountID)
 	if !isAccountID {
 		return false
 	}
 
-	return id == otherAccountID
+	return a == otherAccountID
 }
 
-func (id AccountID) ToAddress() ChainAddress {
+func (a AccountID) ToAddress() ChainAddress {
 	var addr AccountAddress
-	copy(addr[:], id[:])
+	copy(addr[:], a[:])
 
 	return &addr
 }

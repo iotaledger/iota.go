@@ -45,9 +45,9 @@ func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputI
 }
 
 // UTXOInputs converts the OutputIDs slice to Inputs.
-func (o OutputIDs) UTXOInputs() TxEssenceInputs {
+func (ids OutputIDs) UTXOInputs() TxEssenceInputs {
 	inputs := make(TxEssenceInputs, 0)
-	for _, outputID := range o {
+	for _, outputID := range ids {
 		inputs = append(inputs, outputID.UTXOInput())
 	}
 
@@ -55,9 +55,9 @@ func (o OutputIDs) UTXOInputs() TxEssenceInputs {
 }
 
 // OrderedSet returns an Outputs slice ordered by this OutputIDs slice given an OutputSet.
-func (o OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
-	outputs := make(Outputs[Output], len(o))
-	for i, outputID := range o {
+func (ids OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
+	outputs := make(Outputs[Output], len(ids))
+	for i, outputID := range ids {
 		outputs[i] = set[outputID]
 	}
 
