@@ -105,7 +105,7 @@ func RandOutputIDWithCreationSlot(slot iotago.SlotIndex, index uint16) iotago.Ou
 
 	var outputID iotago.OutputID
 	copy(outputID[:], txID[:])
-	binary.LittleEndian.PutUint16(outputID[iotago.SlotIdentifierLength:], index)
+	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], index)
 
 	return outputID
 }
@@ -138,7 +138,7 @@ func RandSignedTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.Signe
 	if err != nil {
 		panic(err)
 	}
-	binary.LittleEndian.PutUint32(signedTransactionID[iotago.IdentifierLength:iotago.SlotIdentifierLength], uint32(slot))
+	binary.LittleEndian.PutUint32(signedTransactionID[iotago.IdentifierLength:iotago.TransactionIDLength], uint32(slot))
 
 	return signedTransactionID
 }
@@ -149,7 +149,7 @@ func RandTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.Transaction
 	if err != nil {
 		panic(err)
 	}
-	binary.LittleEndian.PutUint32(transactionID[iotago.IdentifierLength:iotago.SlotIdentifierLength], uint32(slot))
+	binary.LittleEndian.PutUint32(transactionID[iotago.IdentifierLength:iotago.TransactionIDLength], uint32(slot))
 
 	return transactionID
 }
@@ -804,7 +804,7 @@ func RandBlockIssuanceCreditInput() *iotago.BlockIssuanceCreditInput {
 // RandUTXOInputWithIndex returns a random UTXO input with a specific index.
 func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 	utxoInput := &iotago.UTXOInput{}
-	txID := RandBytes(iotago.SlotIdentifierLength)
+	txID := RandBytes(iotago.TransactionIDLength)
 	copy(utxoInput.TransactionID[:], txID)
 
 	utxoInput.TransactionOutputIndex = index
@@ -863,9 +863,9 @@ func OneInputOutputTransaction() *iotago.SignedTransaction {
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs: iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
-						TransactionID: func() [iotago.SlotIdentifierLength]byte {
-							var b [iotago.SlotIdentifierLength]byte
-							copy(b[:], RandBytes(iotago.SlotIdentifierLength))
+						TransactionID: func() iotago.TransactionID {
+							var b iotago.TransactionID
+							copy(b[:], RandBytes(iotago.TransactionIDLength))
 
 							return b
 						}(),
