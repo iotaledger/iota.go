@@ -18,7 +18,6 @@ func TestOutputTypeString(t *testing.T) {
 		outputTypeString string
 	}{
 		{iotago.OutputNFT, "NFTOutput"},
-		{iotago.OutputTreasury, "TreasuryOutput"},
 		{iotago.OutputBasic, "BasicOutput"},
 		{iotago.OutputAccount, "AccountOutput"},
 		{iotago.OutputFoundry, "FoundryOutput"},
@@ -27,6 +26,7 @@ func TestOutputTypeString(t *testing.T) {
 		require.Equal(t, tt.outputType.String(), tt.outputTypeString)
 	}
 }
+
 func TestOutputsCommitment(t *testing.T) {
 	outputs1 := iotago.Outputs[iotago.Output]{
 		&iotago.BasicOutput{

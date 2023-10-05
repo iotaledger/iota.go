@@ -284,7 +284,7 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
-		serix.TypeSettings{}.WithObjectType(uint32(PayloadTaggedData))),
+		serix.TypeSettings{}.WithObjectType(uint8(PayloadTaggedData))),
 	)
 
 	{
@@ -569,7 +569,7 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(SignedTransaction{}, serix.TypeSettings{}.WithObjectType(uint32(PayloadSignedTransaction))))
+		must(api.RegisterTypeSettings(SignedTransaction{}, serix.TypeSettings{}.WithObjectType(uint8(PayloadSignedTransaction))))
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))

@@ -12,24 +12,14 @@ const (
 	MaxPayloadSize = MaxBlockSize - BlockHeaderLength - BasicBlockSizeEmptyParentsAndEmptyPayload - SlotIdentifierLength - Ed25519SignatureSerializedBytesSize
 )
 
-// PayloadType denotes a type of payload.
-type PayloadType uint32
+// PayloadType denotes the type of a payload.
+type PayloadType uint8
 
 const (
-	// Deprecated payload types
-	// PayloadTransactionTIP7 = 0
-	// PayloadMilestoneTIP8 = 1
-	// PayloadIndexationTIP6 = 2
-	// PayloadReceiptTIP17TIP8 = 3.
-
-	// PayloadTreasuryTransaction denotes a TreasuryTransaction.
-	PayloadTreasuryTransaction PayloadType = 4
 	// PayloadTaggedData denotes a TaggedData payload.
-	PayloadTaggedData PayloadType = 5
-	// PayloadMilestone denotes a Milestone.
-	PayloadMilestone PayloadType = 7
+	PayloadTaggedData PayloadType = iota
 	// PayloadSignedTransaction denotes a SignedTransaction.
-	PayloadSignedTransaction PayloadType = 8
+	PayloadSignedTransaction PayloadType = 1
 )
 
 func (payloadType PayloadType) String() string {
@@ -41,15 +31,9 @@ func (payloadType PayloadType) String() string {
 }
 
 var (
-	payloadNames = [PayloadMilestone + 1]string{
-		"Deprecated-TransactionTIP7",
-		"Deprecated-MilestoneTIP8",
-		"Deprecated-IndexationTIP6",
-		"Deprecated-ReceiptTIP17TIP8",
-		"TreasuryTransaction",
+	payloadNames = [PayloadSignedTransaction + 1]string{
 		"TaggedData",
 		"SignedTransaction",
-		"Milestone",
 	}
 )
 
