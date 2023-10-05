@@ -75,7 +75,7 @@ func TestOutputIDString(t *testing.T) {
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
-	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID())
+	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID)
 
 	tests := []deSerializeTest{
 		{

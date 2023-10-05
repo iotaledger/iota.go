@@ -94,7 +94,7 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
 		Mana:           0,
-		AccountID:      EmptyAccountID(),
+		AccountID:      EmptyAccountID,
 		StateIndex:     0,
 		StateMetadata:  []byte{},
 		FoundryCounter: 0,

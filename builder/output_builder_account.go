@@ -10,7 +10,7 @@ func NewAccountOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, a
 	return &AccountOutputBuilder{output: &iotago.AccountOutput{
 		Amount:         amount,
 		Mana:           0,
-		AccountID:      iotago.EmptyAccountID(),
+		AccountID:      iotago.EmptyAccountID,
 		StateIndex:     0,
 		StateMetadata:  []byte{},
 		FoundryCounter: 0,

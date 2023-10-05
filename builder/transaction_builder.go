@@ -147,16 +147,16 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	// check if the output is locked for a certain time to an account.
 	hasManalockCondition := func(output iotago.Output) (iotago.AccountID, bool) {
 		if !output.UnlockConditionSet().HasTimelockUntil(minManalockedSlot) {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 
 		unlockAddress := output.UnlockConditionSet().Address()
 		if unlockAddress == nil {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 
 		if unlockAddress.Address.Type() != iotago.AddressAccount {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
 		accountAddress := unlockAddress.Address.(*iotago.AccountAddress)
