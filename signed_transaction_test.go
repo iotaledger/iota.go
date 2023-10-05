@@ -207,7 +207,7 @@ func TestTransaction_InputTypes(t *testing.T) {
 	}
 
 	commitmentInput1 := &iotago.CommitmentInput{
-		CommitmentID: iotago.SlotIdentifierRepresentingData(10, tpkg.RandBytes(32)),
+		CommitmentID: iotago.CommitmentIDRepresentingData(10, tpkg.RandBytes(32)),
 	}
 
 	bicInput1 := &iotago.BlockIssuanceCreditInput{

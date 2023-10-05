@@ -176,7 +176,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		LatestFinalizedSlot: iotago.SlotIndex(20),
 	}
 
-	prevID, err := iotago.SlotIdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
+	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
 	require.NoError(t, err)
 	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)
@@ -484,8 +484,8 @@ func TestClient_CommitmentByID(t *testing.T) {
 
 	var slot iotago.SlotIndex = 5
 
-	commitmentID := iotago.NewSlotIdentifier(slot, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitmentID := iotago.NewCommitmentID(slot, tpkg.Rand32ByteArray())
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewCommitmentID(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Slot:                 commitment.Slot,
@@ -505,7 +505,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	defer gock.Off()
 
-	commitmentID := iotago.NewSlotIdentifier(5, tpkg.Rand32ByteArray())
+	commitmentID := iotago.NewCommitmentID(5, tpkg.Rand32ByteArray())
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -533,7 +533,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slot iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewCommitmentID(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Slot:                 commitment.Slot,
