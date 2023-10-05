@@ -62,7 +62,7 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 
 func (t *SignedTransaction) Size() int {
 	// PayloadType
-	return serializer.TypeDenotationByteSize +
+	return serializer.SmallTypeDenotationByteSize +
 		t.Transaction.Size() +
 		t.Unlocks.Size()
 }

@@ -64,18 +64,16 @@ type Output interface {
 type OutputType byte
 
 const (
-	// OutputTreasury denotes the type of the TreasuryOutput.
-	OutputTreasury OutputType = 2
 	// OutputBasic denotes an BasicOutput.
-	OutputBasic OutputType = 3
+	OutputBasic OutputType = iota
 	// OutputAccount denotes an AccountOutput.
-	OutputAccount OutputType = 4
+	OutputAccount
 	// OutputFoundry denotes a FoundryOutput.
-	OutputFoundry OutputType = 5
+	OutputFoundry
 	// OutputNFT denotes an NFTOutput.
-	OutputNFT OutputType = 6
+	OutputNFT
 	// OutputDelegation denotes a DelegationOutput.
-	OutputDelegation OutputType = 7
+	OutputDelegation
 )
 
 func (outputType OutputType) String() string {
@@ -87,9 +85,6 @@ func (outputType OutputType) String() string {
 }
 
 var outputNames = [OutputDelegation + 1]string{
-	"SigLockedSingleOutput",
-	"SigLockedDustAllowanceOutput",
-	"TreasuryOutput",
 	"BasicOutput",
 	"AccountOutput",
 	"FoundryOutput",

@@ -24,17 +24,12 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, 1337), tpkg.TestAPI, 0),
+			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, 255), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
 			name:   "ok - transaction",
 			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadSignedTransaction), tpkg.TestAPI, 0),
-			target: &iotago.ProtocolBlock{},
-		},
-		{
-			name:   "ok - milestone",
-			source: tpkg.RandProtocolBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadMilestone), tpkg.TestAPI, 0),
 			target: &iotago.ProtocolBlock{},
 		},
 		{
