@@ -24,8 +24,8 @@ type basicProtocolParameters struct {
 	// (2**SlotsPerEpochExponent) == slots in an epoch.
 	SlotsPerEpochExponent uint8 `serix:"8,mapKey=slotsPerEpochExponent"`
 
-	// ManaStructure defines the mana parameters used by mana calculation.
-	ManaStructure ManaStructure `serix:"9,mapKey=manaStructure"`
+	// ManaParameters defines the mana parameters used by mana calculation.
+	ManaParameters ManaParameters `serix:"9,mapKey=manaParameters"`
 
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"10,mapKey=stakingUnbondingPeriod"`
@@ -68,7 +68,7 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
 		b.SlotDurationInSeconds == other.SlotDurationInSeconds &&
 		b.SlotsPerEpochExponent == other.SlotsPerEpochExponent &&
-		b.ManaStructure.Equals(other.ManaStructure) &&
+		b.ManaParameters.Equals(other.ManaParameters) &&
 		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
 		b.ValidationBlocksPerSlot == other.ValidationBlocksPerSlot &&
 		b.PunishmentEpochs == other.PunishmentEpochs &&

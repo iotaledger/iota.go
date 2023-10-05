@@ -151,7 +151,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.GenesisUnixTimestamp,
 		p.basicProtocolParameters.SlotDurationInSeconds,
 		p.basicProtocolParameters.SlotsPerEpochExponent,
-		p.basicProtocolParameters.ManaStructure,
+		p.basicProtocolParameters.ManaParameters,
 		p.basicProtocolParameters.StakingUnbondingPeriod,
 		p.basicProtocolParameters.ValidationBlocksPerSlot,
 		p.basicProtocolParameters.PunishmentEpochs,
@@ -167,7 +167,7 @@ func (p *V3ProtocolParameters) String() string {
 }
 
 func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
-	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, &p.basicProtocolParameters.ManaStructure)
+	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, &p.basicProtocolParameters.ManaParameters)
 }
 
 func (p *V3ProtocolParameters) Equals(other ProtocolParameters) bool {
@@ -244,13 +244,13 @@ func WithTimeProviderOptions(genesisTimestamp int64, slotDurationInSeconds uint8
 
 func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.ManaStructure.BitsCount = bitsCount
-		p.basicProtocolParameters.ManaStructure.GenerationRate = generationRate
-		p.basicProtocolParameters.ManaStructure.GenerationRateExponent = generationRateExponent
-		p.basicProtocolParameters.ManaStructure.DecayFactors = decayFactors
-		p.basicProtocolParameters.ManaStructure.DecayFactorsExponent = decayFactorsExponent
-		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSum = decayFactorEpochsSum
-		p.basicProtocolParameters.ManaStructure.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaParameters.BitsCount = bitsCount
+		p.basicProtocolParameters.ManaParameters.GenerationRate = generationRate
+		p.basicProtocolParameters.ManaParameters.GenerationRateExponent = generationRateExponent
+		p.basicProtocolParameters.ManaParameters.DecayFactors = decayFactors
+		p.basicProtocolParameters.ManaParameters.DecayFactorsExponent = decayFactorsExponent
+		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSum = decayFactorEpochsSum
+		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
 	}
 }
 
