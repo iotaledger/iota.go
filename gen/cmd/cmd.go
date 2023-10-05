@@ -28,7 +28,7 @@ func main() {
 
 	funcs := template.FuncMap{
 		"firstLower": func(s string) string {
-			return strings.ToLower(s[0:]) + s[:1]
+			return strings.ToLower(s[0:1]) + s[1:]
 		},
 	}
 

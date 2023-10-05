@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -20,6 +21,8 @@ const (
 )
 
 var (
+    ErrInvalid{{.Name}}Length = ierrors.New("invalid {{firstLower .Name}} length")
+
 	Empty{{.Name}} = {{.Name}}{}
 )
 
@@ -41,23 +44,23 @@ func New{{.Name}}(slot SlotIndex, idBytes Identifier) {{.Name}} {
 
 // {{.Name}}FromHexString converts the hex to a {{.Name}} representation.
 func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
-	bytes, err := hexutil.DecodeHex(hex)
+	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
 		return {{.Name}}{}, err
 	}
 
-	s, _, err := {{.Name}}FromBytes(bytes)
+	s, _, err := {{.Name}}FromBytes(b)
 
 	return s, err
 }
 
 // {{.Name}}FromBytes returns a new {{.Name}} represented by the passed bytes.
-func {{.Name}}FromBytes(bytes []byte) ({{.Name}}, int, error) {
-	if len(bytes) < {{.Name}}Length {
-		return {{.Name}}{}, 0, ErrInvalidIdentifierLength
+func {{.Name}}FromBytes(b []byte) ({{.Name}}, int, error) {
+	if len(b) < {{.Name}}Length {
+		return {{.Name}}{}, 0, ErrInvalid{{.Name}}Length
 	}
 
-	return {{.Name}}(bytes), {{.Name}}Length, nil
+	return {{.Name}}(b), {{.Name}}Length, nil
 }
 
 // Must{{.Name}}FromHexString converts the hex to a {{.Name}} representation.
@@ -98,7 +101,7 @@ func ({{.Receiver}} {{.Name}}) ToHex() string {
 }
 
 func ({{.Receiver}} {{.Name}}) String() string {
-	return fmt.Sprintf("%s:%d", {{.Receiver}}.Alias(), {{.Receiver}}.Slot())
+	return fmt.Sprintf("{{.Name}}(%s:%d)", {{.Receiver}}.Alias(), {{.Receiver}}.Slot())
 }
 
 func ({{.Receiver}} {{.Name}}) Slot() SlotIndex {

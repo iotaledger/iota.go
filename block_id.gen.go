@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -20,6 +21,8 @@ const (
 )
 
 var (
+	ErrInvalidBlockIDLength = ierrors.New("invalid blockID length")
+
 	EmptyBlockID = BlockID{}
 )
 
@@ -41,23 +44,23 @@ func NewBlockID(slot SlotIndex, idBytes Identifier) BlockID {
 
 // BlockIDFromHexString converts the hex to a BlockID representation.
 func BlockIDFromHexString(hex string) (BlockID, error) {
-	bytes, err := hexutil.DecodeHex(hex)
+	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
 		return BlockID{}, err
 	}
 
-	s, _, err := BlockIDFromBytes(bytes)
+	s, _, err := BlockIDFromBytes(b)
 
 	return s, err
 }
 
 // BlockIDFromBytes returns a new BlockID represented by the passed bytes.
-func BlockIDFromBytes(bytes []byte) (BlockID, int, error) {
-	if len(bytes) < BlockIDLength {
-		return BlockID{}, 0, ErrInvalidIdentifierLength
+func BlockIDFromBytes(b []byte) (BlockID, int, error) {
+	if len(b) < BlockIDLength {
+		return BlockID{}, 0, ErrInvalidBlockIDLength
 	}
 
-	return BlockID(bytes), BlockIDLength, nil
+	return BlockID(b), BlockIDLength, nil
 }
 
 // MustBlockIDFromHexString converts the hex to a BlockID representation.
@@ -98,7 +101,7 @@ func (b BlockID) ToHex() string {
 }
 
 func (b BlockID) String() string {
-	return fmt.Sprintf("%s:%d", b.Alias(), b.Slot())
+	return fmt.Sprintf("BlockID(%s:%d)", b.Alias(), b.Slot())
 }
 
 func (b BlockID) Slot() SlotIndex {

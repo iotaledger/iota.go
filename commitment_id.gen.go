@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -19,6 +20,8 @@ const (
 )
 
 var (
+	ErrInvalidCommitmentIDLength = ierrors.New("invalid commitmentID length")
+
 	EmptyCommitmentID = CommitmentID{}
 )
 
@@ -40,23 +43,23 @@ func NewCommitmentID(slot SlotIndex, idBytes Identifier) CommitmentID {
 
 // CommitmentIDFromHexString converts the hex to a CommitmentID representation.
 func CommitmentIDFromHexString(hex string) (CommitmentID, error) {
-	bytes, err := hexutil.DecodeHex(hex)
+	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
 		return CommitmentID{}, err
 	}
 
-	s, _, err := CommitmentIDFromBytes(bytes)
+	s, _, err := CommitmentIDFromBytes(b)
 
 	return s, err
 }
 
 // CommitmentIDFromBytes returns a new CommitmentID represented by the passed bytes.
-func CommitmentIDFromBytes(bytes []byte) (CommitmentID, int, error) {
-	if len(bytes) < CommitmentIDLength {
-		return CommitmentID{}, 0, ErrInvalidIdentifierLength
+func CommitmentIDFromBytes(b []byte) (CommitmentID, int, error) {
+	if len(b) < CommitmentIDLength {
+		return CommitmentID{}, 0, ErrInvalidCommitmentIDLength
 	}
 
-	return CommitmentID(bytes), CommitmentIDLength, nil
+	return CommitmentID(b), CommitmentIDLength, nil
 }
 
 // MustCommitmentIDFromHexString converts the hex to a CommitmentID representation.
@@ -97,7 +100,7 @@ func (c CommitmentID) ToHex() string {
 }
 
 func (c CommitmentID) String() string {
-	return fmt.Sprintf("%s:%d", c.Alias(), c.Slot())
+	return fmt.Sprintf("CommitmentID(%s:%d)", c.Alias(), c.Slot())
 }
 
 func (c CommitmentID) Slot() SlotIndex {
