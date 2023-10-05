@@ -121,23 +121,23 @@ var (
 	// TransactionIDAliases contains a dictionary of identifiers associated to their human-readable alias.
 	TransactionIDAliases = make(map[TransactionID]string)
 
-	// TransactionIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	TransactionIDAliasesMutex = sync.RWMutex{}
+	// transactionIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	transactionIDAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func (t TransactionID) RegisterAlias(alias string) {
-	TransactionIDAliasesMutex.Lock()
-	defer TransactionIDAliasesMutex.Unlock()
+	transactionIDAliasesMutex.Lock()
+	defer transactionIDAliasesMutex.Unlock()
 
 	TransactionIDAliases[t] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
 func (t TransactionID) Alias() (alias string) {
-	TransactionIDAliasesMutex.RLock()
-	defer TransactionIDAliasesMutex.RUnlock()
+	transactionIDAliasesMutex.RLock()
+	defer transactionIDAliasesMutex.RUnlock()
 
 	if existingAlias, exists := TransactionIDAliases[t]; exists {
 		return existingAlias
@@ -148,8 +148,8 @@ func (t TransactionID) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (t TransactionID) UnregisterAlias() {
-	TransactionIDAliasesMutex.Lock()
-	defer TransactionIDAliasesMutex.Unlock()
+	transactionIDAliasesMutex.Lock()
+	defer transactionIDAliasesMutex.Unlock()
 
 	delete(TransactionIDAliases, t)
 }

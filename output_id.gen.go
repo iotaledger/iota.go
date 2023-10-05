@@ -126,23 +126,23 @@ var (
 	// OutputIDAliases contains a dictionary of identifiers associated to their human-readable alias.
 	OutputIDAliases = make(map[OutputID]string)
 
-	// OutputIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	OutputIDAliasesMutex = sync.RWMutex{}
+	// outputIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	outputIDAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func (o OutputID) RegisterAlias(alias string) {
-	OutputIDAliasesMutex.Lock()
-	defer OutputIDAliasesMutex.Unlock()
+	outputIDAliasesMutex.Lock()
+	defer outputIDAliasesMutex.Unlock()
 
 	OutputIDAliases[o] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
 func (o OutputID) Alias() (alias string) {
-	OutputIDAliasesMutex.RLock()
-	defer OutputIDAliasesMutex.RUnlock()
+	outputIDAliasesMutex.RLock()
+	defer outputIDAliasesMutex.RUnlock()
 
 	if existingAlias, exists := OutputIDAliases[o]; exists {
 		return existingAlias
@@ -153,8 +153,8 @@ func (o OutputID) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (o OutputID) UnregisterAlias() {
-	OutputIDAliasesMutex.Lock()
-	defer OutputIDAliasesMutex.Unlock()
+	outputIDAliasesMutex.Lock()
+	defer outputIDAliasesMutex.Unlock()
 
 	delete(OutputIDAliases, o)
 }

@@ -97,28 +97,28 @@ func (i Identifier) String() string {
 }
 
 var (
-	// identifierIAliases contains a dictionary of Identifiers associated to their human-readable alias.
-	identifierIAliases = make(map[Identifier]string)
+	// identifierAliases contains a dictionary of Identifiers associated to their human-readable alias.
+	identifierAliases = make(map[Identifier]string)
 
-	// identifierIAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	identifierIAliasesMutex = sync.RWMutex{}
+	// identifierAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	identifierAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func (i Identifier) RegisterAlias(alias string) {
-	identifierIAliasesMutex.Lock()
-	defer identifierIAliasesMutex.Unlock()
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
 
-	identifierIAliases[i] = alias
+	identifierAliases[i] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the hex encoded bytes if no alias was set).
 func (i Identifier) Alias() (alias string) {
-	identifierIAliasesMutex.RLock()
-	defer identifierIAliasesMutex.RUnlock()
+	identifierAliasesMutex.RLock()
+	defer identifierAliasesMutex.RUnlock()
 
-	if existingAlias, exists := identifierIAliases[i]; exists {
+	if existingAlias, exists := identifierAliases[i]; exists {
 		return existingAlias
 	}
 
@@ -127,16 +127,16 @@ func (i Identifier) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (i Identifier) UnregisterAlias() {
-	identifierIAliasesMutex.Lock()
-	defer identifierIAliasesMutex.Unlock()
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
 
-	delete(identifierIAliases, i)
+	delete(identifierAliases, i)
 }
 
 // UnregisterIdentifierAliases allows to unregister all previously registered aliases.
 func UnregisterIdentifierAliases() {
-	identifierIAliasesMutex.Lock()
-	defer identifierIAliasesMutex.Unlock()
+	identifierAliasesMutex.Lock()
+	defer identifierAliasesMutex.Unlock()
 
-	identifierIAliases = make(map[Identifier]string)
+	identifierAliases = make(map[Identifier]string)
 }

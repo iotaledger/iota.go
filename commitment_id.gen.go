@@ -120,23 +120,23 @@ var (
 	// CommitmentIDAliases contains a dictionary of identifiers associated to their human-readable alias.
 	CommitmentIDAliases = make(map[CommitmentID]string)
 
-	// CommitmentIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	CommitmentIDAliasesMutex = sync.RWMutex{}
+	// commitmentIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	commitmentIDAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func (c CommitmentID) RegisterAlias(alias string) {
-	CommitmentIDAliasesMutex.Lock()
-	defer CommitmentIDAliasesMutex.Unlock()
+	commitmentIDAliasesMutex.Lock()
+	defer commitmentIDAliasesMutex.Unlock()
 
 	CommitmentIDAliases[c] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
 func (c CommitmentID) Alias() (alias string) {
-	CommitmentIDAliasesMutex.RLock()
-	defer CommitmentIDAliasesMutex.RUnlock()
+	commitmentIDAliasesMutex.RLock()
+	defer commitmentIDAliasesMutex.RUnlock()
 
 	if existingAlias, exists := CommitmentIDAliases[c]; exists {
 		return existingAlias
@@ -147,8 +147,8 @@ func (c CommitmentID) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (c CommitmentID) UnregisterAlias() {
-	CommitmentIDAliasesMutex.Lock()
-	defer CommitmentIDAliasesMutex.Unlock()
+	commitmentIDAliasesMutex.Lock()
+	defer commitmentIDAliasesMutex.Unlock()
 
 	delete(CommitmentIDAliases, c)
 }

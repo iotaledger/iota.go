@@ -97,28 +97,28 @@ func (a AccountID) String() string {
 }
 
 var (
-	// accountidAAliases contains a dictionary of AccountIDs associated to their human-readable alias.
-	accountidAAliases = make(map[AccountID]string)
+	// accountIDAliases contains a dictionary of AccountIDs associated to their human-readable alias.
+	accountIDAliases = make(map[AccountID]string)
 
-	// accountidAAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	accountidAAliasesMutex = sync.RWMutex{}
+	// accountIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	accountIDAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the AccountID which will be used as a replacement for
 // the String method.
 func (a AccountID) RegisterAlias(alias string) {
-	accountidAAliasesMutex.Lock()
-	defer accountidAAliasesMutex.Unlock()
+	accountIDAliasesMutex.Lock()
+	defer accountIDAliasesMutex.Unlock()
 
-	accountidAAliases[a] = alias
+	accountIDAliases[a] = alias
 }
 
 // Alias returns the human-readable alias of the AccountID (or the hex encoded bytes if no alias was set).
 func (a AccountID) Alias() (alias string) {
-	accountidAAliasesMutex.RLock()
-	defer accountidAAliasesMutex.RUnlock()
+	accountIDAliasesMutex.RLock()
+	defer accountIDAliasesMutex.RUnlock()
 
-	if existingAlias, exists := accountidAAliases[a]; exists {
+	if existingAlias, exists := accountIDAliases[a]; exists {
 		return existingAlias
 	}
 
@@ -127,16 +127,16 @@ func (a AccountID) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (a AccountID) UnregisterAlias() {
-	accountidAAliasesMutex.Lock()
-	defer accountidAAliasesMutex.Unlock()
+	accountIDAliasesMutex.Lock()
+	defer accountIDAliasesMutex.Unlock()
 
-	delete(accountidAAliases, a)
+	delete(accountIDAliases, a)
 }
 
 // UnregisterAccountIDAliases allows to unregister all previously registered aliases.
 func UnregisterAccountIDAliases() {
-	accountidAAliasesMutex.Lock()
-	defer accountidAAliasesMutex.Unlock()
+	accountIDAliasesMutex.Lock()
+	defer accountIDAliasesMutex.Unlock()
 
-	accountidAAliases = make(map[AccountID]string)
+	accountIDAliases = make(map[AccountID]string)
 }

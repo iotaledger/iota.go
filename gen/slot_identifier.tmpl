@@ -137,23 +137,23 @@ var (
 	// {{.Name}}Aliases contains a dictionary of identifiers associated to their human-readable alias.
 	{{.Name}}Aliases = make(map[{{.Name}}]string)
 
-	// {{.Name}}AliasesMutex is the mutex that is used to synchronize access to the previous map.
-	{{.Name}}AliasesMutex = sync.RWMutex{}
+	// {{firstLower .Name}}AliasesMutex is the mutex that is used to synchronize access to the previous map.
+	{{firstLower .Name}}AliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func ({{.Receiver}} {{.Name}}) RegisterAlias(alias string) {
-	{{.Name}}AliasesMutex.Lock()
-	defer {{.Name}}AliasesMutex.Unlock()
+	{{firstLower .Name}}AliasesMutex.Lock()
+	defer {{firstLower .Name}}AliasesMutex.Unlock()
 
 	{{.Name}}Aliases[{{.Receiver}}] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
 func ({{.Receiver}} {{.Name}}) Alias() (alias string) {
-	{{.Name}}AliasesMutex.RLock()
-	defer {{.Name}}AliasesMutex.RUnlock()
+	{{firstLower .Name}}AliasesMutex.RLock()
+	defer {{firstLower .Name}}AliasesMutex.RUnlock()
 
 	if existingAlias, exists := {{.Name}}Aliases[{{.Receiver}}]; exists {
 		return existingAlias
@@ -164,8 +164,8 @@ func ({{.Receiver}} {{.Name}}) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func ({{.Receiver}} {{.Name}}) UnregisterAlias() {
-	{{.Name}}AliasesMutex.Lock()
-	defer {{.Name}}AliasesMutex.Unlock()
+	{{firstLower .Name}}AliasesMutex.Lock()
+	defer {{firstLower .Name}}AliasesMutex.Unlock()
 
 	delete({{.Name}}Aliases, {{.Receiver}})
 }

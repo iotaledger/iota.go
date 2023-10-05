@@ -121,23 +121,23 @@ var (
 	// BlockIDAliases contains a dictionary of identifiers associated to their human-readable alias.
 	BlockIDAliases = make(map[BlockID]string)
 
-	// BlockIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
-	BlockIDAliasesMutex = sync.RWMutex{}
+	// blockIDAliasesMutex is the mutex that is used to synchronize access to the previous map.
+	blockIDAliasesMutex = sync.RWMutex{}
 )
 
 // RegisterAlias allows to register a human-readable alias for the Identifier which will be used as a replacement for
 // the String method.
 func (b BlockID) RegisterAlias(alias string) {
-	BlockIDAliasesMutex.Lock()
-	defer BlockIDAliasesMutex.Unlock()
+	blockIDAliasesMutex.Lock()
+	defer blockIDAliasesMutex.Unlock()
 
 	BlockIDAliases[b] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
 func (b BlockID) Alias() (alias string) {
-	BlockIDAliasesMutex.RLock()
-	defer BlockIDAliasesMutex.RUnlock()
+	blockIDAliasesMutex.RLock()
+	defer blockIDAliasesMutex.RUnlock()
 
 	if existingAlias, exists := BlockIDAliases[b]; exists {
 		return existingAlias
@@ -148,8 +148,8 @@ func (b BlockID) Alias() (alias string) {
 
 // UnregisterAlias allows to unregister a previously registered alias.
 func (b BlockID) UnregisterAlias() {
-	BlockIDAliasesMutex.Lock()
-	defer BlockIDAliasesMutex.Unlock()
+	blockIDAliasesMutex.Lock()
+	defer blockIDAliasesMutex.Unlock()
 
 	delete(BlockIDAliases, b)
 }
