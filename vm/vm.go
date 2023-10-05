@@ -325,7 +325,9 @@ func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedIdents
 	if issuerFeat == nil {
 		return nil
 	}
-	if _, isUnlocked := unlockedIdents[issuerFeat.Address.Key()]; !isUnlocked {
+
+	issuer := resolveUnderlyingIdent(issuerFeat.Address)
+	if _, isUnlocked := unlockedIdents[issuer.Key()]; !isUnlocked {
 		return iotago.ErrIssuerFeatureNotUnlocked
 	}
 
@@ -570,7 +572,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 			}
 
 			// check unlocked
-			sender := senderFeat.Address
+			sender := resolveUnderlyingIdent(senderFeat.Address)
 			if _, isUnlocked := vmParams.WorkingSet.UnlockedIdents[sender.Key()]; !isUnlocked {
 				return ierrors.Wrapf(iotago.ErrSenderFeatureNotUnlocked, "output %d", outputIndex)
 			}
