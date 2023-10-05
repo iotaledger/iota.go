@@ -443,24 +443,24 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.ProtocolBlock) 
 
 	apiForVersion, err := client.APIForVersion(m.ProtocolVersion)
 	if err != nil {
-		return iotago.EmptyBlockID(), err
+		return iotago.EmptyBlockID, err
 	}
 
 	data, err := apiForVersion.Encode(m)
 	if err != nil {
-		return iotago.EmptyBlockID(), err
+		return iotago.EmptyBlockID, err
 	}
 
 	req := &RawDataEnvelope{Data: data}
 	//nolint:bodyclose
 	res, err := client.Do(ctx, http.MethodPost, RouteBlocks, req, nil)
 	if err != nil {
-		return iotago.EmptyBlockID(), err
+		return iotago.EmptyBlockID, err
 	}
 
-	blockID, err := iotago.SlotIdentifierFromHexString(res.Header.Get(locationHeader))
+	blockID, err := iotago.BlockIDFromHexString(res.Header.Get(locationHeader))
 	if err != nil {
-		return iotago.EmptyBlockID(), err
+		return iotago.EmptyBlockID, err
 	}
 
 	return blockID, nil

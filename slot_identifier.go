@@ -111,8 +111,8 @@ func (id SlotIdentifier) Identifier() Identifier {
 }
 
 var (
-	// slotIidentifierAliases contains a dictionary of identifiers associated to their human-readable alias.
-	slotIidentifierAliases = make(map[SlotIdentifier]string)
+	// slotIdentifierAliases contains a dictionary of identifiers associated to their human-readable alias.
+	slotIdentifierAliases = make(map[SlotIdentifier]string)
 
 	// slotIdentifierAliasesMutex is the mutex that is used to synchronize access to the previous map.
 	slotIdentifierAliasesMutex = sync.RWMutex{}
@@ -124,7 +124,7 @@ func (id SlotIdentifier) RegisterAlias(alias string) {
 	slotIdentifierAliasesMutex.Lock()
 	defer slotIdentifierAliasesMutex.Unlock()
 
-	slotIidentifierAliases[id] = alias
+	slotIdentifierAliases[id] = alias
 }
 
 // Alias returns the human-readable alias of the Identifier (or the base58 encoded bytes of no alias was set).
@@ -132,7 +132,7 @@ func (id SlotIdentifier) Alias() (alias string) {
 	slotIdentifierAliasesMutex.RLock()
 	defer slotIdentifierAliasesMutex.RUnlock()
 
-	if existingAlias, exists := slotIidentifierAliases[id]; exists {
+	if existingAlias, exists := slotIdentifierAliases[id]; exists {
 		return existingAlias
 	}
 
@@ -144,5 +144,5 @@ func (id SlotIdentifier) UnregisterAlias() {
 	slotIdentifierAliasesMutex.Lock()
 	defer slotIdentifierAliasesMutex.Unlock()
 
-	delete(slotIidentifierAliases, id)
+	delete(slotIdentifierAliases, id)
 }
