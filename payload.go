@@ -9,7 +9,7 @@ import (
 const (
 	// MaxPayloadSize defines the maximum size of a basic block payload.
 	// MaxPayloadSize = MaxBlockSize - block header - empty basic block - one strong parent - block signature.
-	MaxPayloadSize = MaxBlockSize - BlockHeaderLength - BasicBlockSizeEmptyParentsAndEmptyPayload - SlotIdentifierLength - Ed25519SignatureSerializedBytesSize
+	MaxPayloadSize = MaxBlockSize - BlockHeaderLength - BasicBlockSizeEmptyParentsAndEmptyPayload - BlockIDLength - Ed25519SignatureSerializedBytesSize
 )
 
 // PayloadType denotes the type of a payload.
