@@ -23,8 +23,6 @@ github.com/holiman/uint256 v1.2.3 h1:K8UWO1HUJpRMXBxbmaY1Y8IAMZC/RsKB+ArEnnK4l5o
 github.com/holiman/uint256 v1.2.3/go.mod h1:SC8Ryt4n+UBbPbIBKaG9zbbDlp4jOru9xFZmPzLUTxw=
 github.com/iancoleman/orderedmap v0.3.0 h1:5cbR2grmZR/DiVt+VJopEhtVs9YGInGIxAoMJn+Ichc=
 github.com/iancoleman/orderedmap v0.3.0/go.mod h1:XuLcCUkdL5owUCQeF2Ue9uuw1EptkJDkXXS7VoV7XGE=
-github.com/iotaledger/hive.go/codegen v0.0.0-20231005142627-86973b2edb3b h1:RpCqfmmxrkTdxPm56UzF1QuHppTo3VtyzhfaUUfzVA0=
-github.com/iotaledger/hive.go/codegen v0.0.0-20231005142627-86973b2edb3b/go.mod h1:zBiQaY4DL7xx/gNgb1MWqMaV62x2o937nBCEaW++ztI=
 github.com/iotaledger/hive.go/constraints v0.0.0-20231005142627-86973b2edb3b h1:8FdKoB755PjCL1aHTi+2rPt9lCUS4B2wg2fNKykw5dc=
 github.com/iotaledger/hive.go/constraints v0.0.0-20231005142627-86973b2edb3b/go.mod h1:dOBOM2s4se3HcWefPe8sQLUalGXJ8yVXw58oK8jke3s=
 github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20231005142627-86973b2edb3b h1:gQ+Wqg8h/LRpgX3CsmaOZYdMIBVL4fAPIrZbmA6Wn3Q=

@@ -199,6 +199,25 @@ func (f UnlockConditionSet) HasExpirationCondition() bool {
 	return f.Expiration() != nil
 }
 
+// CheckExpirationCondition returns the expiration return ident in case an expiration condition was set and
+// the future bound slot is greater than the expiration slot.
+// In case the past bound slot is smaller than the expiration slot, "nil" is returned to indicate that the original owner can unlock the output.
+// The range in between is not unlockable by anyone and an "ErrExpirationConditionUnlockFailed" error will be returned.
+func (f UnlockConditionSet) CheckExpirationCondition(futureBoundedSlotIndex, pastBoundedSlotIndex SlotIndex) (Address, error) {
+	if f.HasExpirationCondition() {
+		if ok, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
+			return returnIdent, nil
+		}
+
+		if !f.OwnerIdentCanUnlock(pastBoundedSlotIndex) {
+			return nil, ErrExpirationConditionUnlockFailed
+		}
+	}
+
+	//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
+	return nil, nil
+}
+
 // HasTimelockCondition tells whether this set has a TimelockUnlockCondition.
 func (f UnlockConditionSet) HasTimelockCondition() bool {
 	return f.Timelock() != nil
