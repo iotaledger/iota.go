@@ -25,7 +25,6 @@ var (
 )
 
 type (
-
 	// BlockIssuerClient is a client which queries the optional blockissuer functionality of a node.
 	BlockIssuerClient interface {
 		// Info returns the info of the block issuer.
