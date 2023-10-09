@@ -33,7 +33,7 @@ type (
 		// SendPayload sends a BlockPayload to the block issuer.
 		SendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
 		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends a BlockPayload to the block issuer.
-		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
+		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.BlockPayload, *apimodels.BlockCreatedResponse, error)
 	}
 
 	blockIssuerClient struct {
@@ -112,31 +112,31 @@ func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago
 	return client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
 }
 
-func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.BlockPayload, *apimodels.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to get the block issuer info")
+		return nil, nil, ierrors.Wrap(err, "failed to get the block issuer info")
 	}
 
 	// parse the block issuer address
 	//nolint:contextcheck // false positive
 	_, blockIssuerAddress, err := iotago.ParseBech32(blockIssuerInfo.BlockIssuerAddress)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to parse the block issuer address")
+		return nil, nil, ierrors.Wrap(err, "failed to parse the block issuer address")
 	}
 
 	// check if the block issuer address is an account address
 	blockIssuerAccountAddress, isAccount := blockIssuerAddress.(*iotago.AccountAddress)
 	if !isAccount {
-		return nil, ierrors.New("failed to parse the block issuer address")
+		return nil, nil, ierrors.New("failed to parse the block issuer address")
 	}
 
 	// get the current commitmentID and reference mana cost to calculate
 	// the correct value for the mana that needs to be alloted to the block issuer.
 	blockIssuance, err := client.core.BlockIssuance(ctx)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to get the latest block issuance infos")
+		return nil, nil, ierrors.Wrap(err, "failed to get the latest block issuance infos")
 	}
 
 	// allot the required mana to the block issuer
@@ -145,14 +145,19 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 	// sign the transaction
 	payload, err := builder.Build(signer)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to build the signed transaction payload")
+		return nil, nil, ierrors.Wrap(err, "failed to build the signed transaction payload")
 	}
 
 	//nolint:contextcheck // false positive
 	commitmentID, err := blockIssuance.Commitment.ID()
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to calculate the commitment ID")
+		return nil, nil, ierrors.Wrap(err, "failed to calculate the commitment ID")
 	}
 
-	return client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
+	blockCreatedResponse, err := client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return payload, blockCreatedResponse, nil
 }
