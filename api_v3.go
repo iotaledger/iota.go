@@ -9,6 +9,7 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/iota.go/v4/merklehasher"
 )
 
 const (
@@ -627,6 +628,10 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Attestations{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte),
 		))
+	}
+
+	{
+		merklehasher.RegisterSerixRules[*APIByter[TxEssenceOutput]](api)
 	}
 
 	return v3
