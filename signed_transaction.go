@@ -49,12 +49,12 @@ type SignedTransaction struct {
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	transactionBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
 	unlocksBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
 	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil

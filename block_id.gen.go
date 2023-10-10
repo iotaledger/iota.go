@@ -46,7 +46,7 @@ func NewBlockID(slot SlotIndex, idBytes Identifier) BlockID {
 func BlockIDFromHexString(hex string) (BlockID, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return BlockID{}, err
+		return EmptyBlockID, err
 	}
 
 	s, _, err := BlockIDFromBytes(b)
@@ -57,7 +57,7 @@ func BlockIDFromHexString(hex string) (BlockID, error) {
 // BlockIDFromBytes returns a new BlockID represented by the passed bytes.
 func BlockIDFromBytes(b []byte) (BlockID, int, error) {
 	if len(b) < BlockIDLength {
-		return BlockID{}, 0, ErrInvalidBlockIDLength
+		return EmptyBlockID, 0, ErrInvalidBlockIDLength
 	}
 
 	return BlockID(b), BlockIDLength, nil
@@ -78,7 +78,7 @@ func (b BlockID) Bytes() ([]byte, error) {
 }
 
 func (b BlockID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(BlockID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyBlockID)))
 	hex.Encode(dst, b[:])
 
 	return dst, nil

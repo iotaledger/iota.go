@@ -46,7 +46,7 @@ func NewCommitmentID(slot SlotIndex, idBytes Identifier) CommitmentID {
 func CommitmentIDFromHexString(hex string) (CommitmentID, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return CommitmentID{}, err
+		return EmptyCommitmentID, err
 	}
 
 	s, _, err := CommitmentIDFromBytes(b)
@@ -57,7 +57,7 @@ func CommitmentIDFromHexString(hex string) (CommitmentID, error) {
 // CommitmentIDFromBytes returns a new CommitmentID represented by the passed bytes.
 func CommitmentIDFromBytes(b []byte) (CommitmentID, int, error) {
 	if len(b) < CommitmentIDLength {
-		return CommitmentID{}, 0, ErrInvalidCommitmentIDLength
+		return EmptyCommitmentID, 0, ErrInvalidCommitmentIDLength
 	}
 
 	return CommitmentID(b), CommitmentIDLength, nil
@@ -78,7 +78,7 @@ func (c CommitmentID) Bytes() ([]byte, error) {
 }
 
 func (c CommitmentID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(CommitmentID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyCommitmentID)))
 	hex.Encode(dst, c[:])
 
 	return dst, nil
