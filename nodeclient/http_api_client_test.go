@@ -101,8 +101,8 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 		Version: "1.0.0",
 		Status: &apimodels.InfoResNodeStatus{
 			IsHealthy:                   true,
-			LatestAcceptedBlockSlot:     tpkg.RandSlotIndex(),
-			LatestConfirmedBlockSlot:    tpkg.RandSlotIndex(),
+			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
+			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
 			LatestFinalizedSlot:         iotago.SlotIndex(142857),
 			AcceptedTangleTime:          ts,
 			RelativeAcceptedTangleTime:  ts,
