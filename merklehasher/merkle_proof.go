@@ -11,17 +11,20 @@ import (
 )
 
 type hashable[V Value] interface {
-	Hash(hasher *Hasher[V]) []byte
+	hashWithHasher(hasher *Hasher[V]) []byte
 }
 
-type leafValue[V Value] struct {
-	Value []byte `serix:"0,mapKey=value,lengthPrefixType=uint8"`
+// valueHash contains the hash of the value for which the proof is being computed.
+type valueHash[V Value] struct {
+	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
 }
 
-type hashValue[V Value] struct {
-	Value []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
+// leafHash contains the hash of a leaf in the tree.
+type leafHash[V Value] struct {
+	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
 }
 
+// Pair contains the hashes of the left and right children of a node in the tree.
 type Pair[V Value] struct {
 	Left  hashable[V] `serix:"0,mapKey=l"`
 	Right hashable[V] `serix:"1,mapKey=r"`
@@ -89,9 +92,9 @@ func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], erro
 
 func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) {
 	if len(data) < 2 {
-		l := data[0]
+		leaf := data[0]
 
-		return &leafValue[V]{l}, nil
+		return &valueHash[V]{t.hashLeaf(leaf)}, nil
 	}
 
 	if len(data) == 2 {
@@ -99,14 +102,14 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		right := data[1]
 		if index == 0 {
 			return &Pair[V]{
-				Left:  &leafValue[V]{left},
-				Right: &hashValue[V]{t.hashLeaf(right)},
+				Left:  &valueHash[V]{t.hashLeaf(left)},
+				Right: &leafHash[V]{t.hashLeaf(right)},
 			}, nil
 		}
 
 		return &Pair[V]{
-			Left:  &hashValue[V]{t.hashLeaf(left)},
-			Right: &leafValue[V]{right},
+			Left:  &leafHash[V]{t.hashLeaf(left)},
+			Right: &valueHash[V]{t.hashLeaf(right)},
 		}, nil
 
 	}
@@ -122,7 +125,7 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 
 		return &Pair[V]{
 			Left:  left,
-			Right: &hashValue[V]{right},
+			Right: &leafHash[V]{right},
 		}, nil
 	}
 
@@ -134,47 +137,47 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 	}
 
 	return &Pair[V]{
-		Left:  &hashValue[V]{left},
+		Left:  &leafHash[V]{left},
 		Right: right,
 	}, nil
 }
 
-func (l *leafValue[V]) Hash(hasher *Hasher[V]) []byte {
-	return hasher.hashLeaf(l.Value)
+func (l *valueHash[V]) hashWithHasher(_ *Hasher[V]) []byte {
+	return l.Hash
 }
 
-func (h *hashValue[V]) Hash(_ *Hasher[V]) []byte {
-	return h.Value
+func (h *leafHash[V]) hashWithHasher(_ *Hasher[V]) []byte {
+	return h.Hash
 }
 
-func (p *Pair[V]) Hash(hasher *Hasher[V]) []byte {
-	return hasher.hashNode(p.Left.Hash(hasher), p.Right.Hash(hasher))
+func (p *Pair[V]) hashWithHasher(hasher *Hasher[V]) []byte {
+	return hasher.hashNode(p.Left.hashWithHasher(hasher), p.Right.hashWithHasher(hasher))
 }
 
 func (p *Proof[V]) Hash(hasher *Hasher[V]) []byte {
-	return p.Pair.Hash(hasher)
+	return p.Pair.hashWithHasher(hasher)
 }
 
-func containsLeafValue[V Value](hasheable hashable[V], value []byte) bool {
+func containsValueHash[V Value](hasheable hashable[V], hashedValue []byte) bool {
 	switch t := hasheable.(type) {
-	case *hashValue[V]:
+	case *leafHash[V]:
 		return false
-	case *leafValue[V]:
-		return bytes.Equal(value, t.Value)
+	case *valueHash[V]:
+		return bytes.Equal(hashedValue, t.Hash)
 	case *Pair[V]:
-		return containsLeafValue[V](t.Right, value) || containsLeafValue[V](t.Left, value)
+		return containsValueHash[V](t.Right, hashedValue) || containsValueHash[V](t.Left, hashedValue)
 	}
 
 	return false
 }
 
-func (p *Proof[V]) ContainsValue(value V) (bool, error) {
+func (p *Proof[V]) ContainsValue(value V, hasher *Hasher[V]) (bool, error) {
 	valueBytes, err := value.Bytes()
 	if err != nil {
 		return false, err
 	}
 
-	return containsLeafValue[V](p.Pair, valueBytes), nil
+	return containsValueHash[V](p.Pair, hasher.hashLeaf(valueBytes)), nil
 }
 
 func serixAPI[V Value]() *serix.API {
@@ -186,11 +189,11 @@ func serixAPI[V Value]() *serix.API {
 
 	api := serix.NewAPI()
 
-	must(api.RegisterTypeSettings(leafValue[V]{},
+	must(api.RegisterTypeSettings(valueHash[V]{},
 		serix.TypeSettings{}.WithObjectType(uint8(2)),
 	))
 
-	must(api.RegisterTypeSettings(hashValue[V]{},
+	must(api.RegisterTypeSettings(leafHash[V]{},
 		serix.TypeSettings{}.WithObjectType(uint8(1)),
 	))
 
@@ -198,8 +201,8 @@ func serixAPI[V Value]() *serix.API {
 		serix.TypeSettings{}.WithObjectType(uint8(0)),
 	))
 
-	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*leafValue[V])(nil)))
-	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*hashValue[V])(nil)))
+	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*valueHash[V])(nil)))
+	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*leafHash[V])(nil)))
 	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*Pair[V])(nil)))
 
 	return api

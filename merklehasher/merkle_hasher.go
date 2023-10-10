@@ -71,7 +71,7 @@ func (t *Hasher[V]) Hash(data [][]byte) []byte {
 	return t.hashNode(l, r)
 }
 
-// hashLeaf returns the Merkle tree leafValue hash of data.
+// hashLeaf returns the Merkle tree valueHash hash of data.
 func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
 	h.Write([]byte{LeafHashPrefix})
