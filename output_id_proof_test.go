@@ -114,7 +114,7 @@ func (p *outputIDProofTest) testOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	for outputID, output := range outputSet {
-		proof, err := iotago.OutputIDProofForOutputAtIndex(p.tx, outputID.Index())
+		proof, err := iotago.OutputIDProofFromTransaction(p.tx, outputID.Index())
 		require.NoError(t, err)
 
 		serializedProof, err := proof.Bytes()

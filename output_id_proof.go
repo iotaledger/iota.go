@@ -17,21 +17,9 @@ type OutputIDProof struct {
 	OutputCommitmentProof *merklehasher.Proof[*APIByter[TxEssenceOutput]] `serix:"3,mapKey=outputCommitmentProof"`
 }
 
-func OutputIDProofForOutputAtIndex(tx *Transaction, index uint16) (*OutputIDProof, error) {
+func OutputIDProofFromTransaction(tx *Transaction, outputIndex uint16) (*OutputIDProof, error) {
 	if tx.API == nil {
 		return nil, ierrors.New("API not set")
-	}
-
-	if int(index) >= len(tx.Outputs) {
-		return nil, ierrors.Errorf("index %d out of bounds len=%d", index, len(tx.Outputs))
-	}
-
-	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
-	wrappedOutputs := lo.Map(tx.Outputs, APIByterFactory[TxEssenceOutput](tx.API))
-
-	proof, err := outputHasher.ComputeProofForIndex(wrappedOutputs, int(index))
-	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to compute proof for index %d", index)
 	}
 
 	transactionCommitment, err := tx.TransactionCommitment()
@@ -39,11 +27,27 @@ func OutputIDProofForOutputAtIndex(tx *Transaction, index uint16) (*OutputIDProo
 		return nil, err
 	}
 
+	return NewOutputIDProof(tx.API, transactionCommitment, tx.CreationSlot, tx.Outputs, outputIndex)
+}
+
+func NewOutputIDProof(api API, txCommitment Identifier, txCreationSlot SlotIndex, outputs TxEssenceOutputs, outputIndex uint16) (*OutputIDProof, error) {
+	if int(outputIndex) >= len(outputs) {
+		return nil, ierrors.Errorf("index %d out of bounds len=%d", outputIndex, len(outputs))
+	}
+
+	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
+	wrappedOutputs := lo.Map(outputs, APIByterFactory[TxEssenceOutput](api))
+
+	proof, err := outputHasher.ComputeProofForIndex(wrappedOutputs, int(outputIndex))
+	if err != nil {
+		return nil, ierrors.Wrapf(err, "failed to compute proof for index %d", outputIndex)
+	}
+
 	return &OutputIDProof{
-		API:                   tx.API,
-		Slot:                  tx.CreationSlot,
-		OutputIndex:           index,
-		TransactionCommitment: transactionCommitment,
+		API:                   api,
+		Slot:                  txCreationSlot,
+		OutputIndex:           outputIndex,
+		TransactionCommitment: txCommitment,
 		OutputCommitmentProof: proof,
 	}, nil
 }
