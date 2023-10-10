@@ -47,7 +47,7 @@ type SignedTransaction struct {
 
 // ID computes the ID of the SignedTransaction.
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
-	transactionBytes, err := t.API.Encode(t.Unlocks)
+	transactionBytes, err := t.API.Encode(t.Transaction)
 	if err != nil {
 		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
