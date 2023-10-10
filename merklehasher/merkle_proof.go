@@ -149,14 +149,17 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (MerkleHashable[V], e
 	}, nil
 }
 
+//nolint:unused // False positive
 func (l *ValueHash[V]) hash(_ *Hasher[V]) []byte {
 	return l.Hash
 }
 
+//nolint:unused // False positive
 func (h *LeafHash[V]) hash(_ *Hasher[V]) []byte {
 	return h.Hash
 }
 
+//nolint:unused // False positive
 func (p *Node[V]) hash(hasher *Hasher[V]) []byte {
 	return hasher.hashNode(p.Left.hash(hasher), p.Right.hash(hasher))
 }

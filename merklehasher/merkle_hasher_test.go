@@ -29,6 +29,7 @@ func TestMerkleHasher(t *testing.T) {
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x0bf5059875921e668a5bdf2c7fc4844592d2572bcd0668d2d6c52f5054e2d08300000000"))
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x6bf84c7174cb7476364cc3dbd968b0f7172ed85794bb358b0c3b525da1786f9f00000000"))
 
+	//nolint:nosnakecase // false positive
 	hasher := merklehasher.NewHasher[iotago.BlockID](crypto.BLAKE2b_256)
 	hash, err := hasher.HashValues(includedBlocks)
 	require.NoError(t, err)

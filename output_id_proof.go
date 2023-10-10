@@ -35,6 +35,7 @@ func NewOutputIDProof(api API, txCommitment Identifier, txCreationSlot SlotIndex
 		return nil, ierrors.Errorf("index %d out of bounds len=%d", outputIndex, len(outputs))
 	}
 
+	//nolint:nosnakecase // false positive
 	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
 	wrappedOutputs := lo.Map(outputs, APIByterFactory[TxEssenceOutput](api))
 
@@ -74,6 +75,7 @@ func (p *OutputIDProof) OutputID(output Output) (OutputID, error) {
 		return EmptyOutputID, ierrors.New("API not set")
 	}
 
+	//nolint:nosnakecase // false positive
 	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
 
 	contains, err := p.OutputCommitmentProof.ContainsValue(APIByterFactory[TxEssenceOutput](p.API)(output), outputHasher)

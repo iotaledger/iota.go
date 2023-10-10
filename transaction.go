@@ -95,6 +95,7 @@ func (t *Transaction) TransactionCommitment() (Identifier, error) {
 
 // OutputCommitment returns the output commitment which is the root of the merkle tree of the outputs.
 func (t *Transaction) OutputCommitment() (Identifier, error) {
+	//nolint:nosnakecase // false positive
 	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
 	wrappedOutputs := lo.Map(t.Outputs, APIByterFactory[TxEssenceOutput](t.API))
 
