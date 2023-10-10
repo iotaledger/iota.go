@@ -10,29 +10,37 @@ import (
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
-type hashable[V Value] interface {
-	hashWithHasher(hasher *Hasher[V]) []byte
+type MerkleHashableType = uint8
+
+const (
+	MerkleHashableTypeNode      MerkleHashableType = iota
+	MerkleHashableTypeLeafHash  MerkleHashableType = 1
+	MerkleHashableTypeValueHash MerkleHashableType = 2
+)
+
+type MerkleHashable[V Value] interface {
+	hash(hasher *Hasher[V]) []byte
 }
 
-// valueHash contains the hash of the value for which the proof is being computed.
-type valueHash[V Value] struct {
+// ValueHash contains the hash of the value for which the proof is being computed.
+type ValueHash[V Value] struct {
 	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
 }
 
-// leafHash contains the hash of a leaf in the tree.
-type leafHash[V Value] struct {
+// LeafHash contains the hash of a leaf in the tree.
+type LeafHash[V Value] struct {
 	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
 }
 
-// Pair contains the hashes of the left and right children of a node in the tree.
-type Pair[V Value] struct {
-	Left  hashable[V] `serix:"0,mapKey=l"`
-	Right hashable[V] `serix:"1,mapKey=r"`
+// Node contains the hashes of the left and right children of a node in the tree.
+type Node[V Value] struct {
+	Left  MerkleHashable[V] `serix:"0,mapKey=l"`
+	Right MerkleHashable[V] `serix:"1,mapKey=r"`
 }
 
 // nolint: tagliatelle // Does not understand generics
 type Proof[V Value] struct {
-	*Pair[V] `serix:"0"`
+	MerkleHashable[V] `serix:"0,nest"`
 }
 
 // ComputeProof computes the audit path given the values and the value we want to create the inclusion proof for.
@@ -65,8 +73,8 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 
 // ComputeProofForIndex computes the audit path given the values and the index of the value we want to create the inclusion proof for.
 func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], error) {
-	if len(values) < 2 {
-		return nil, ierrors.New("you need at lest 2 items to create an inclusion proof")
+	if len(values) < 1 {
+		return nil, ierrors.New("you need at least 1 item to create an inclusion proof")
 	}
 	if index >= len(values) {
 		return nil, ierrors.Errorf("index %d out of bounds len=%d", index, len(values))
@@ -86,30 +94,29 @@ func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], erro
 		return nil, err
 	}
 
-	//nolint:forcetypeassert
-	return &Proof[V]{Pair: p.(*Pair[V])}, nil
+	return &Proof[V]{MerkleHashable: p}, nil
 }
 
-func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) {
+func (t *Hasher[V]) computeProof(data [][]byte, index int) (MerkleHashable[V], error) {
 	if len(data) < 2 {
 		leaf := data[0]
 
-		return &valueHash[V]{t.hashLeaf(leaf)}, nil
+		return &ValueHash[V]{t.hashLeaf(leaf)}, nil
 	}
 
 	if len(data) == 2 {
 		left := data[0]
 		right := data[1]
 		if index == 0 {
-			return &Pair[V]{
-				Left:  &valueHash[V]{t.hashLeaf(left)},
-				Right: &leafHash[V]{t.hashLeaf(right)},
+			return &Node[V]{
+				Left:  &ValueHash[V]{t.hashLeaf(left)},
+				Right: &LeafHash[V]{t.hashLeaf(right)},
 			}, nil
 		}
 
-		return &Pair[V]{
-			Left:  &leafHash[V]{t.hashLeaf(left)},
-			Right: &valueHash[V]{t.hashLeaf(right)},
+		return &Node[V]{
+			Left:  &LeafHash[V]{t.hashLeaf(left)},
+			Right: &ValueHash[V]{t.hashLeaf(right)},
 		}, nil
 
 	}
@@ -123,9 +130,9 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		}
 		right := t.Hash(data[k:])
 
-		return &Pair[V]{
+		return &Node[V]{
 			Left:  left,
-			Right: &leafHash[V]{right},
+			Right: &LeafHash[V]{right},
 		}, nil
 	}
 
@@ -136,35 +143,35 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (hashable[V], error) 
 		return nil, err
 	}
 
-	return &Pair[V]{
-		Left:  &leafHash[V]{left},
+	return &Node[V]{
+		Left:  &LeafHash[V]{left},
 		Right: right,
 	}, nil
 }
 
-func (l *valueHash[V]) hashWithHasher(_ *Hasher[V]) []byte {
+func (l *ValueHash[V]) hash(_ *Hasher[V]) []byte {
 	return l.Hash
 }
 
-func (h *leafHash[V]) hashWithHasher(_ *Hasher[V]) []byte {
+func (h *LeafHash[V]) hash(_ *Hasher[V]) []byte {
 	return h.Hash
 }
 
-func (p *Pair[V]) hashWithHasher(hasher *Hasher[V]) []byte {
-	return hasher.hashNode(p.Left.hashWithHasher(hasher), p.Right.hashWithHasher(hasher))
+func (p *Node[V]) hash(hasher *Hasher[V]) []byte {
+	return hasher.hashNode(p.Left.hash(hasher), p.Right.hash(hasher))
 }
 
 func (p *Proof[V]) Hash(hasher *Hasher[V]) []byte {
-	return p.Pair.hashWithHasher(hasher)
+	return p.MerkleHashable.hash(hasher)
 }
 
-func containsValueHash[V Value](hasheable hashable[V], hashedValue []byte) bool {
-	switch t := hasheable.(type) {
-	case *leafHash[V]:
+func containsValueHash[V Value](hashable MerkleHashable[V], hashedValue []byte) bool {
+	switch t := hashable.(type) {
+	case *LeafHash[V]:
 		return false
-	case *valueHash[V]:
+	case *ValueHash[V]:
 		return bytes.Equal(hashedValue, t.Hash)
-	case *Pair[V]:
+	case *Node[V]:
 		return containsValueHash[V](t.Right, hashedValue) || containsValueHash[V](t.Left, hashedValue)
 	}
 
@@ -177,34 +184,36 @@ func (p *Proof[V]) ContainsValue(value V, hasher *Hasher[V]) (bool, error) {
 		return false, err
 	}
 
-	return containsValueHash[V](p.Pair, hasher.hashLeaf(valueBytes)), nil
+	return containsValueHash[V](p.MerkleHashable, hasher.hashLeaf(valueBytes)), nil
 }
 
-func serixAPI[V Value]() *serix.API {
+func RegisterSerixRules[V Value](api *serix.API) {
 	must := func(err error) {
 		if err != nil {
 			panic(err)
 		}
 	}
 
+	must(api.RegisterTypeSettings(ValueHash[V]{},
+		serix.TypeSettings{}.WithObjectType(MerkleHashableTypeValueHash),
+	))
+
+	must(api.RegisterTypeSettings(LeafHash[V]{},
+		serix.TypeSettings{}.WithObjectType(MerkleHashableTypeLeafHash),
+	))
+
+	must(api.RegisterTypeSettings(Node[V]{},
+		serix.TypeSettings{}.WithObjectType(MerkleHashableTypeNode),
+	))
+
+	must(api.RegisterInterfaceObjects((*MerkleHashable[V])(nil), (*ValueHash[V])(nil)))
+	must(api.RegisterInterfaceObjects((*MerkleHashable[V])(nil), (*LeafHash[V])(nil)))
+	must(api.RegisterInterfaceObjects((*MerkleHashable[V])(nil), (*Node[V])(nil)))
+}
+
+func serixAPI[V Value]() *serix.API {
 	api := serix.NewAPI()
-
-	must(api.RegisterTypeSettings(valueHash[V]{},
-		serix.TypeSettings{}.WithObjectType(uint8(2)),
-	))
-
-	must(api.RegisterTypeSettings(leafHash[V]{},
-		serix.TypeSettings{}.WithObjectType(uint8(1)),
-	))
-
-	must(api.RegisterTypeSettings(Pair[V]{},
-		serix.TypeSettings{}.WithObjectType(uint8(0)),
-	))
-
-	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*valueHash[V])(nil)))
-	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*leafHash[V])(nil)))
-	must(api.RegisterInterfaceObjects((*hashable[V])(nil), (*Pair[V])(nil)))
-
+	RegisterSerixRules[V](api)
 	return api
 }
 

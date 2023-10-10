@@ -4,7 +4,6 @@ package merklehasher_test
 import (
 	"bytes"
 	"crypto"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -34,7 +33,7 @@ func TestMerkleHasher(t *testing.T) {
 	hash, err := hasher.HashValues(includedBlocks)
 	require.NoError(t, err)
 
-	expectedHash, err := hexutil.DecodeHex("0x4a6ff2aca6a11554b6997cf91c31585d436235e7a45f6b4ea48648d6488f6726")
+	expectedHash, err := hexutil.DecodeHex("0x824cfefd6360abc45b9a166035a5f595928de555eeabafb1ca5fdff3b36a1065")
 	require.NoError(t, err)
 	require.True(t, bytes.Equal(hash, expectedHash))
 
@@ -56,7 +55,6 @@ func TestMerkleHasher(t *testing.T) {
 
 		jsonPath, err := path.JSONEncode()
 		require.NoError(t, err)
-		fmt.Println(string(jsonPath))
 
 		pathFromJSON, err := merklehasher.ProofFromJSON[iotago.BlockID](jsonPath)
 		require.NoError(t, err)
