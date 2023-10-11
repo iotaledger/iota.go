@@ -455,6 +455,42 @@ func TestClient_OutputByID(t *testing.T) {
 	require.EqualValues(t, originOutput, responseOutput)
 }
 
+func TestClient_OutputWithMetadataByID(t *testing.T) {
+	defer gock.Off()
+
+	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
+
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	require.NoError(t, err)
+
+	outputID, err := originOutputProof.OutputID(originOutput)
+	require.NoError(t, err)
+
+	originMetadata := &apimodels.OutputMetadata{
+		BlockID:              tpkg.RandBlockID(),
+		TransactionID:        outputID.TransactionID(),
+		OutputIndex:          outputID.Index(),
+		IsSpent:              true,
+		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
+		TransactionIDSpent:   tpkg.Rand36ByteArray(),
+		IncludedCommitmentID: tpkg.Rand36ByteArray(),
+		LatestCommitmentID:   tpkg.Rand36ByteArray(),
+	}
+
+	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
+		Output:        originOutput,
+		OutputIDProof: originOutputProof,
+		Metadata:      originMetadata,
+	})
+
+	nodeAPI := nodeClient(t)
+	responseOutput, responseMetadata, err := nodeAPI.OutputWithMetadataByID(context.Background(), outputID)
+	require.NoError(t, err)
+
+	require.EqualValues(t, originOutput, responseOutput)
+	require.EqualValues(t, originMetadata, responseMetadata)
+}
+
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 

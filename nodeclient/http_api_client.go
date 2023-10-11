@@ -130,6 +130,10 @@ const (
 	// GET returns the output metadata.
 	RouteOutputMetadata = "/api/core/v3/outputs/%s/metadata"
 
+	// RouteOutputWithMetadata is the route for getting output and its metadata by its outputID (transactionHash + outputIndex).
+	// GET returns the output metadata.
+	RouteOutputWithMetadata = "/api/core/v3/outputs/%s/full"
+
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
@@ -578,7 +582,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 
 // OutputWithMetadataByID gets an output by its ID, together with the metadata from the node.
 func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *apimodels.OutputMetadata, error) {
-	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
+	query := fmt.Sprintf(RouteOutputWithMetadata, outputID.ToHex())
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
