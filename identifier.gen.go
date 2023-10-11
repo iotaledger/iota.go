@@ -37,7 +37,7 @@ func IdentifierFromData(data []byte) Identifier {
 func IdentifierFromHexString(hex string) (Identifier, error) {
 	bytes, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return Identifier{}, err
+		return EmptyIdentifier, err
 	}
 
 	i, _, err := IdentifierFromBytes(bytes)
@@ -70,7 +70,7 @@ func (i Identifier) Bytes() ([]byte, error) {
 }
 
 func (i Identifier) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(Identifier{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyIdentifier)))
 	hex.Encode(dst, i[:])
 
 	return dst, nil

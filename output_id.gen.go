@@ -10,8 +10,6 @@ import (
 	"sort"
 	"sync"
 
-	"golang.org/x/crypto/blake2b"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -31,27 +29,14 @@ var (
 	EmptyOutputID = OutputID{}
 )
 
-// OutputID is a 32 byte hash value together with an 4 byte slot index.
+// OutputID is a 32 byte hash value together with an 4 byte slot index and a 2 byte output index.
 type OutputID [OutputIDLength]byte
-
-// OutputIDRepresentingData returns a new OutputID for the given data by hashing it with blake2b and associating it with the given slot index.
-func OutputIDRepresentingData(slot SlotIndex, data []byte) OutputID {
-	return NewOutputID(slot, blake2b.Sum256(data))
-}
-
-func NewOutputID(slot SlotIndex, idBytes Identifier) OutputID {
-	o := OutputID{}
-	copy(o[:], idBytes[:])
-	binary.LittleEndian.PutUint32(o[IdentifierLength:], uint32(slot))
-
-	return o
-}
 
 // OutputIDFromHexString converts the hex to a OutputID representation.
 func OutputIDFromHexString(hex string) (OutputID, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return OutputID{}, err
+		return EmptyOutputID, err
 	}
 
 	s, _, err := OutputIDFromBytes(b)
@@ -62,7 +47,7 @@ func OutputIDFromHexString(hex string) (OutputID, error) {
 // OutputIDFromBytes returns a new OutputID represented by the passed bytes.
 func OutputIDFromBytes(b []byte) (OutputID, int, error) {
 	if len(b) < OutputIDLength {
-		return OutputID{}, 0, ErrInvalidOutputIDLength
+		return EmptyOutputID, 0, ErrInvalidOutputIDLength
 	}
 
 	return OutputID(b), OutputIDLength, nil
@@ -83,7 +68,7 @@ func (o OutputID) Bytes() ([]byte, error) {
 }
 
 func (o OutputID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(OutputID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyOutputID)))
 	hex.Encode(dst, o[:])
 
 	return dst, nil

@@ -127,17 +127,16 @@ const (
 	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
 	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
 	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
-	TxFailureInputsCommitmentInvalid               TransactionFailureReason = 11
-	TxFailureSenderNotUnlocked                     TransactionFailureReason = 12
-	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
-	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
-	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
-	TxFailureBICInputInvalid                       TransactionFailureReason = 16
-	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
-	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
-	TxFailureNoStakingFeature                      TransactionFailureReason = 19
-	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 20
-	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 21
+	TxFailureSenderNotUnlocked                     TransactionFailureReason = 11
+	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 12
+	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 13
+	TxFailureManaAmountInvalid                     TransactionFailureReason = 14
+	TxFailureBICInputInvalid                       TransactionFailureReason = 15
+	TxFailureRewardInputInvalid                    TransactionFailureReason = 16
+	TxFailureCommitmentInputInvalid                TransactionFailureReason = 17
+	TxFailureNoStakingFeature                      TransactionFailureReason = 18
+	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 19
+	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 20
 	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
 )
 
@@ -261,8 +260,21 @@ type (
 		TxFailureReason TransactionFailureReason `serix:"4,mapKey=txFailureReason,omitempty"`
 	}
 
-	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
-	OutputMetadataResponse struct {
+	// OutputResponse defines the response of a GET outputs REST API call.
+	OutputResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+	}
+
+	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
+	OutputWithMetadataResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+		Metadata      *OutputMetadata        `serix:"2,mapKey=metadata"`
+	}
+
+	// OutputMetadata defines the response of a GET outputs metadata REST API call.
+	OutputMetadata struct {
 		// BlockID is the block ID that contains the output.
 		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
 		// TransactionID is the transaction ID that creates the output.

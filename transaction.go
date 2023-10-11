@@ -2,12 +2,15 @@ package iotago
 
 import (
 	"context"
+	"crypto"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/hive.go/stringify"
+	"github.com/iotaledger/iota.go/v4/merklehasher"
 )
 
 const (
@@ -18,8 +21,6 @@ const (
 )
 
 var (
-	// ErrInvalidInputsCommitment gets returned when the inputs commitment is invalid.
-	ErrInvalidInputsCommitment = ierrors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
@@ -63,17 +64,45 @@ type Transaction struct {
 
 // ID returns the TransactionID created without the signatures.
 func (t *Transaction) ID() (TransactionID, error) {
+	transactionCommitment, err := t.TransactionCommitment()
+	if err != nil {
+		return EmptyTransactionID, ierrors.Errorf("can't compute transaction commitment: %w", err)
+	}
+
+	outputCommitment, err := t.OutputCommitment()
+	if err != nil {
+		return TransactionID{}, ierrors.Errorf("can't compute output commitment: %w", err)
+	}
+
+	return TransactionIDFromTransactionCommitmentAndOutputCommitment(t.CreationSlot, transactionCommitment, outputCommitment), nil
+}
+
+func TransactionIDFromTransactionCommitmentAndOutputCommitment(slot SlotIndex, transactionCommitment Identifier, outputCommitment Identifier) TransactionID {
+	return TransactionIDRepresentingData(slot, byteutils.ConcatBytes(transactionCommitment[:], outputCommitment[:]))
+}
+
+// TransactionCommitment returns the transaction commitment hashing the transaction essence.
+func (t *Transaction) TransactionCommitment() (Identifier, error) {
 	essenceBytes, err := t.API.Encode(t.TransactionEssence)
 	if err != nil {
-		return TransactionID{}, ierrors.Errorf("can't compute essence bytes: %w", err)
+		return EmptyIdentifier, ierrors.Errorf("can't compute essence bytes: %w", err)
 	}
 
-	outputBytes, err := t.API.Encode(t.Outputs)
+	return IdentifierFromData(essenceBytes), nil
+}
+
+// OutputCommitment returns the output commitment which is the root of the merkle tree of the outputs.
+func (t *Transaction) OutputCommitment() (Identifier, error) {
+	//nolint:nosnakecase // false positive
+	outputHasher := merklehasher.NewHasher[*APIByter[TxEssenceOutput]](crypto.BLAKE2b_256)
+	wrappedOutputs := lo.Map(t.Outputs, APIByterFactory[TxEssenceOutput](t.API))
+
+	root, err := outputHasher.HashValues(wrappedOutputs)
 	if err != nil {
-		return TransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptyIdentifier, err
 	}
 
-	return TransactionIDRepresentingData(t.CreationSlot, byteutils.ConcatBytes(essenceBytes, outputBytes)), nil
+	return Identifier(root), nil
 }
 
 func (t *Transaction) SetDeserializationContext(ctx context.Context) {
@@ -191,13 +220,7 @@ func (t *Transaction) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (t *Transaction) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
-	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
-		return nil, ErrInvalidInputsCommitment
-	}
-
-	copy(t.InputsCommitment[:], inputsCommitment)
-
+func (t *Transaction) Sign(addrKeys ...AddressKeys) ([]Signature, error) {
 	signMsg, err := t.SigningMessage()
 	if err != nil {
 		return nil, err

@@ -37,7 +37,7 @@ func {{.Name}}FromData(data []byte) {{.Name}} {
 func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
 	bytes, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return {{.Name}}{}, err
+		return Empty{{.Name}}, err
 	}
 
 	{{.Receiver}}, _, err := {{.Name}}FromBytes(bytes)
@@ -70,7 +70,7 @@ func ({{.Receiver}} {{.Name}}) Bytes() ([]byte, error) {
 }
 
 func ({{.Receiver}} {{.Name}}) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len({{.Name}}{})))
+	dst := make([]byte, hex.EncodedLen(len(Empty{{.Name}})))
 	hex.Encode(dst, {{.Receiver}}[:])
 
 	return dst, nil

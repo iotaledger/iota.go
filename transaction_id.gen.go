@@ -46,7 +46,7 @@ func NewTransactionID(slot SlotIndex, idBytes Identifier) TransactionID {
 func TransactionIDFromHexString(hex string) (TransactionID, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return TransactionID{}, err
+		return EmptyTransactionID, err
 	}
 
 	s, _, err := TransactionIDFromBytes(b)
@@ -57,7 +57,7 @@ func TransactionIDFromHexString(hex string) (TransactionID, error) {
 // TransactionIDFromBytes returns a new TransactionID represented by the passed bytes.
 func TransactionIDFromBytes(b []byte) (TransactionID, int, error) {
 	if len(b) < TransactionIDLength {
-		return TransactionID{}, 0, ErrInvalidTransactionIDLength
+		return EmptyTransactionID, 0, ErrInvalidTransactionIDLength
 	}
 
 	return TransactionID(b), TransactionIDLength, nil
@@ -78,7 +78,7 @@ func (t TransactionID) Bytes() ([]byte, error) {
 }
 
 func (t TransactionID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(TransactionID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyTransactionID)))
 	hex.Encode(dst, t[:])
 
 	return dst, nil

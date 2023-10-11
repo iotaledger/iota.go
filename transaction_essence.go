@@ -1,8 +1,6 @@
 package iotago
 
 import (
-	"golang.org/x/crypto/blake2b"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -21,13 +19,7 @@ const (
 	MinAllotmentCount = 0
 	// MaxAllotmentCount defines the maximum amount of allotments within a Transaction.
 	MaxAllotmentCount = 128
-
-	// InputsCommitmentLength defines the length of the inputs commitment hash.
-	InputsCommitmentLength = blake2b.Size256
 )
-
-// InputsCommitment is a commitment to the inputs of a transaction.
-type InputsCommitment = [InputsCommitmentLength]byte
 
 type (
 	txEssenceContextInput  interface{ Input }
@@ -49,14 +41,12 @@ type TransactionEssence struct {
 	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
 	// The inputs of this transaction.
 	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
-	// The commitment to the referenced inputs.
-	InputsCommitment InputsCommitment `serix:"4,mapKey=inputsCommitment"`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"5,mapKey=allotments"`
+	Allotments TxEssenceAllotments `serix:"4,mapKey=allotments"`
 	// The capabilities of the transaction.
-	Capabilities TransactionCapabilitiesBitMask `serix:"6,mapKey=capabilities"`
+	Capabilities TransactionCapabilitiesBitMask `serix:"5,mapKey=capabilities"`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"7,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
 }
 
 func (u *TransactionEssence) Clone() *TransactionEssence {
@@ -66,14 +56,13 @@ func (u *TransactionEssence) Clone() *TransactionEssence {
 	}
 
 	return &TransactionEssence{
-		NetworkID:        u.NetworkID,
-		CreationSlot:     u.CreationSlot,
-		ContextInputs:    u.ContextInputs.Clone(),
-		Inputs:           u.Inputs.Clone(),
-		InputsCommitment: u.InputsCommitment,
-		Allotments:       u.Allotments.Clone(),
-		Capabilities:     u.Capabilities.Clone(),
-		Payload:          payload,
+		NetworkID:     u.NetworkID,
+		CreationSlot:  u.CreationSlot,
+		ContextInputs: u.ContextInputs.Clone(),
+		Inputs:        u.Inputs.Clone(),
+		Allotments:    u.Allotments.Clone(),
+		Capabilities:  u.Capabilities.Clone(),
+		Payload:       payload,
 	}
 }
 
@@ -89,8 +78,6 @@ func (u *TransactionEssence) Size() int {
 		SlotIndexLength +
 		u.ContextInputs.Size() +
 		u.Inputs.Size() +
-		// InputsCommitment
-		InputsCommitmentLength +
 		u.Allotments.Size() +
 		u.Capabilities.Size() +
 		payloadSize

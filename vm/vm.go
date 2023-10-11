@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 	"strings"
@@ -350,16 +349,6 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 	var inputs iotago.Outputs[iotago.Output]
 	for _, input := range utxoInputs {
 		inputs = append(inputs, resolvedInputs.InputSet[input.OutputID()])
-	}
-
-	actualInputCommitment, err := inputs.Commitment(signedTransaction.API)
-	if err != nil {
-		return nil, ierrors.Join(err, iotago.ErrInvalidInputsCommitment)
-	}
-
-	expectedInputCommitment := signedTransaction.Transaction.InputsCommitment[:]
-	if !bytes.Equal(expectedInputCommitment, actualInputCommitment) {
-		return nil, ierrors.Wrapf(iotago.ErrInvalidInputsCommitment, "specified %v but got %v", expectedInputCommitment, actualInputCommitment)
 	}
 
 	txID, err := signedTransaction.Transaction.ID()

@@ -399,11 +399,6 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
-	commitment, err := inputs.Commitment(b.api)
-	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to calculate TX inputs commitment: %s, %s", inputIDs, b.inputs)
-	}
-	copy(b.transaction.InputsCommitment[:], commitment)
 
 	txEssenceData, err := b.transaction.SigningMessage()
 	if err != nil {

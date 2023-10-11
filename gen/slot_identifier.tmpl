@@ -9,8 +9,10 @@ import (
 	"fmt"
 	{{if index .Features "ids"}} "sort" {{end}}
 	"sync"
+{{if eq (index .Features "output") false}}
 
 	"golang.org/x/crypto/blake2b"
+{{end}}
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/iota.go/v4/hexutil"
@@ -34,9 +36,14 @@ var (
 	Empty{{.Name}} = {{.Name}}{}
 )
 
+{{if index .Features "output"}}
+// {{.Name}} is a 32 byte hash value together with an 4 byte slot index and a 2 byte output index.
+{{else}}
 // {{.Name}} is a 32 byte hash value together with an 4 byte slot index.
+{{end -}}
 type {{.Name}} [{{.Name}}Length]byte
 
+{{if eq (index .Features "output") false}}
 // {{.Name}}RepresentingData returns a new {{.Name}} for the given data by hashing it with blake2b and associating it with the given slot index.
 func {{.Name}}RepresentingData(slot SlotIndex, data []byte) {{.Name}} {
 	return New{{.Name}}(slot, blake2b.Sum256(data))
@@ -49,12 +56,13 @@ func New{{.Name}}(slot SlotIndex, idBytes Identifier) {{.Name}} {
 
 	return {{.Receiver}}
 }
+{{end}}
 
 // {{.Name}}FromHexString converts the hex to a {{.Name}} representation.
 func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return {{.Name}}{}, err
+		return Empty{{.Name}}, err
 	}
 
 	s, _, err := {{.Name}}FromBytes(b)
@@ -65,7 +73,7 @@ func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
 // {{.Name}}FromBytes returns a new {{.Name}} represented by the passed bytes.
 func {{.Name}}FromBytes(b []byte) ({{.Name}}, int, error) {
 	if len(b) < {{.Name}}Length {
-		return {{.Name}}{}, 0, ErrInvalid{{.Name}}Length
+		return Empty{{.Name}}, 0, ErrInvalid{{.Name}}Length
 	}
 
 	return {{.Name}}(b), {{.Name}}Length, nil
@@ -86,7 +94,7 @@ func ({{.Receiver}} {{.Name}}) Bytes() ([]byte, error) {
 }
 
 func ({{.Receiver}} {{.Name}}) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len({{.Name}}{})))
+	dst := make([]byte, hex.EncodedLen(len(Empty{{.Name}})))
 	hex.Encode(dst, {{.Receiver}}[:])
 
 	return dst, nil

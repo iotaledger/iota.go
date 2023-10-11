@@ -37,7 +37,7 @@ func AccountIDFromData(data []byte) AccountID {
 func AccountIDFromHexString(hex string) (AccountID, error) {
 	bytes, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return AccountID{}, err
+		return EmptyAccountID, err
 	}
 
 	a, _, err := AccountIDFromBytes(bytes)
@@ -70,7 +70,7 @@ func (a AccountID) Bytes() ([]byte, error) {
 }
 
 func (a AccountID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(AccountID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptyAccountID)))
 	hex.Encode(dst, a[:])
 
 	return dst, nil

@@ -155,11 +155,11 @@ func RandTransactionIDWithCreationSlot(slot iotago.SlotIndex) iotago.Transaction
 }
 
 func RandSignedTransactionID() iotago.SignedTransactionID {
-	return RandSignedTransactionIDWithCreationSlot(RandSlotIndex())
+	return RandSignedTransactionIDWithCreationSlot(RandSlot())
 }
 
 func RandTransactionID() iotago.TransactionID {
-	return RandTransactionIDWithCreationSlot(RandSlotIndex())
+	return RandTransactionIDWithCreationSlot(RandSlot())
 }
 
 func RandNativeTokenID() iotago.NativeTokenID {
@@ -656,8 +656,12 @@ func RandDelegationID() iotago.DelegationID {
 	return delegation
 }
 
-func RandSlotIndex() iotago.SlotIndex {
+func RandSlot() iotago.SlotIndex {
 	return iotago.SlotIndex(RandUint32(uint32(iotago.MaxSlotIndex)))
+}
+
+func RandEpoch() iotago.EpochIndex {
+	return iotago.EpochIndex(RandUint32(uint32(iotago.MaxEpochIndex)))
 }
 
 func RandDuration() time.Duration {
@@ -1027,7 +1031,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 		),
 		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlotIndex(), RandSlotIndex(), RandSlotIndex()),
+		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlot(), RandSlot(), RandSlot()),
 		iotago.WithCongestionControlOptions(
 			RandMana(iotago.MaxMana),
 			RandMana(iotago.MaxMana),

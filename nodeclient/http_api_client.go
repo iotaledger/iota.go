@@ -41,44 +41,44 @@ const (
 	// RouteCongestion is the route for getting congestion details for the account.
 	// GET returns the congestion details for the account.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
 
 	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
 	// Rewards are decayed up to returned epochEnd index.
 	// GET returns the rewards for the output.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteRewards = "/api/core/v3/rewards/%s"
 
 	// RouteValidators is the route for getting the information about current registered validators.
 	// GET returns the paginated information about about registered validators.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteValidators = "/api/core/v3/validators"
 
 	// RouteValidatorsAccount is the route for getting validator by its accountID.
 	// GET returns the account details.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteValidatorsAccount = "/api/core/v3/validators/%s"
 
 	// RouteCommittee is the route for getting the information about the current committee.
 	// GET returns the information about the current committee.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteCommittee = "/api/core/v3/committee"
 
 	// RouteBlockIssuance is the route for getting all needed information for block creation.
 	// GET returns the data needed toa attach block.
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteBlockIssuance = "/api/core/v3/blocks/issuance"
 
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteBlock = "/api/core/v3/blocks/%s"
 
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
@@ -89,19 +89,19 @@ const (
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteBlocks = "/api/core/v3/blocks"
 
 	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteTransactionsIncludedBlock = "/api/core/v3/transactions/%s/included-block"
 
 	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
 	// MIMEApplicationJSON => json.
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteTransactionsIncludedBlockMetadata = "/api/core/v3/transactions/%s/included-block/metadata"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
@@ -123,12 +123,16 @@ const (
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
-	// MIMEVendorIOTASerializer => bytes.
+	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteOutput = "/api/core/v3/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
 	// GET returns the output metadata.
 	RouteOutputMetadata = "/api/core/v3/outputs/%s/metadata"
+
+	// RouteOutputWithMetadata is the route for getting output and its metadata by its outputID (transactionHash + outputIndex).
+	// GET returns the output metadata.
+	RouteOutputWithMetadata = "/api/core/v3/outputs/%s/full"
 
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
@@ -559,19 +563,55 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 		return nil, err
 	}
 
-	var output iotago.TxEssenceOutput
-	if _, err := client.CurrentAPI().Decode(res.Data, &output, serix.WithValidation()); err != nil {
+	var outputResponse apimodels.OutputResponse
+	if _, err := client.CurrentAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
-	return output, nil
+	derivedOutputID, err := outputResponse.OutputIDProof.OutputID(outputResponse.Output)
+	if err != nil {
+		return nil, err
+	}
+
+	if derivedOutputID != outputID {
+		return nil, ierrors.Errorf("output ID mismatch. Expected %s, got %s", outputID.ToHex(), derivedOutputID.ToHex())
+	}
+
+	return outputResponse.Output, nil
+}
+
+// OutputWithMetadataByID gets an output by its ID, together with the metadata from the node.
+func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *apimodels.OutputMetadata, error) {
+	query := fmt.Sprintf(RouteOutputWithMetadata, outputID.ToHex())
+
+	res := new(RawDataEnvelope)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
+		return nil, nil, err
+	}
+
+	var outputResponse apimodels.OutputWithMetadataResponse
+	if _, err := client.CurrentAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
+		return nil, nil, err
+	}
+
+	derivedOutputID, err := outputResponse.OutputIDProof.OutputID(outputResponse.Output)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if derivedOutputID != outputID {
+		return nil, nil, ierrors.Errorf("output ID mismatch. Expected %s, got %s", outputID.ToHex(), derivedOutputID.ToHex())
+	}
+
+	return outputResponse.Output, outputResponse.Metadata, nil
 }
 
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
-func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadataResponse, error) {
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadata, error) {
 	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
 
-	res := new(apimodels.OutputMetadataResponse)
+	res := new(apimodels.OutputMetadata)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err

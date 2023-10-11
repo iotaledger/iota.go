@@ -46,7 +46,7 @@ func NewSignedTransactionID(slot SlotIndex, idBytes Identifier) SignedTransactio
 func SignedTransactionIDFromHexString(hex string) (SignedTransactionID, error) {
 	b, err := hexutil.DecodeHex(hex)
 	if err != nil {
-		return SignedTransactionID{}, err
+		return EmptySignedTransactionID, err
 	}
 
 	s, _, err := SignedTransactionIDFromBytes(b)
@@ -57,7 +57,7 @@ func SignedTransactionIDFromHexString(hex string) (SignedTransactionID, error) {
 // SignedTransactionIDFromBytes returns a new SignedTransactionID represented by the passed bytes.
 func SignedTransactionIDFromBytes(b []byte) (SignedTransactionID, int, error) {
 	if len(b) < SignedTransactionIDLength {
-		return SignedTransactionID{}, 0, ErrInvalidSignedTransactionIDLength
+		return EmptySignedTransactionID, 0, ErrInvalidSignedTransactionIDLength
 	}
 
 	return SignedTransactionID(b), SignedTransactionIDLength, nil
@@ -78,7 +78,7 @@ func (t SignedTransactionID) Bytes() ([]byte, error) {
 }
 
 func (t SignedTransactionID) MarshalText() (text []byte, err error) {
-	dst := make([]byte, hex.EncodedLen(len(SignedTransactionID{})))
+	dst := make([]byte, hex.EncodedLen(len(EmptySignedTransactionID)))
 	hex.Encode(dst, t[:])
 
 	return dst, nil
