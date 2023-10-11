@@ -709,7 +709,7 @@ func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iot
 }
 
 func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlock {
-	var payload iotago.Payload
+	var payload iotago.BlockPayload
 
 	//nolint:exhaustive
 	switch withPayloadType {
