@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -191,37 +190,6 @@ func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (Wor
 	}
 
 	return workScoreOutputs, nil
-}
-
-// MustCommitment works like Commitment but panics if there's an error.
-func (outputs Outputs[T]) MustCommitment(api API) []byte {
-	comm, err := outputs.Commitment(api)
-	if err != nil {
-		panic(err)
-	}
-
-	return comm
-}
-
-// Commitment computes a hash of the outputs slice to be used as a commitment.
-func (outputs Outputs[T]) Commitment(api API) ([]byte, error) {
-	h, err := blake2b.New256(nil)
-	if err != nil {
-		return nil, err
-	}
-	for _, output := range outputs {
-		outputBytes, err := api.Encode(output)
-		if err != nil {
-			return nil, ierrors.Errorf("unable to compute commitment hash: %w", err)
-		}
-
-		outputHash := blake2b.Sum256(outputBytes)
-		if _, err := h.Write(outputHash[:]); err != nil {
-			return nil, ierrors.Errorf("unable to write output bytes for commitment hash: %w", err)
-		}
-	}
-
-	return h.Sum(nil), nil
 }
 
 // ChainOutputSet returns a ChainOutputSet for all ChainOutputs in Outputs.

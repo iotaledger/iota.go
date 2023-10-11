@@ -127,17 +127,16 @@ const (
 	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
 	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
 	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
-	TxFailureInputsCommitmentInvalid               TransactionFailureReason = 11
-	TxFailureSenderNotUnlocked                     TransactionFailureReason = 12
-	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
-	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
-	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
-	TxFailureBICInputInvalid                       TransactionFailureReason = 16
-	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
-	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
-	TxFailureNoStakingFeature                      TransactionFailureReason = 19
-	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 20
-	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 21
+	TxFailureSenderNotUnlocked                     TransactionFailureReason = 11
+	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 12
+	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 13
+	TxFailureManaAmountInvalid                     TransactionFailureReason = 14
+	TxFailureBICInputInvalid                       TransactionFailureReason = 15
+	TxFailureRewardInputInvalid                    TransactionFailureReason = 16
+	TxFailureCommitmentInputInvalid                TransactionFailureReason = 17
+	TxFailureNoStakingFeature                      TransactionFailureReason = 18
+	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 19
+	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 20
 	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
 )
 

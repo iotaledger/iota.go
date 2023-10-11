@@ -161,7 +161,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":21}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":20}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.BlockMetadataResponse)

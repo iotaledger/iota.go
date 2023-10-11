@@ -21,8 +21,6 @@ const (
 )
 
 var (
-	// ErrInvalidInputsCommitment gets returned when the inputs commitment is invalid.
-	ErrInvalidInputsCommitment = ierrors.New("invalid inputs commitment")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
@@ -222,13 +220,7 @@ func (t *Transaction) SigningMessage() ([]byte, error) {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (t *Transaction) Sign(inputsCommitment []byte, addrKeys ...AddressKeys) ([]Signature, error) {
-	if inputsCommitment == nil || len(inputsCommitment) != InputsCommitmentLength {
-		return nil, ErrInvalidInputsCommitment
-	}
-
-	copy(t.InputsCommitment[:], inputsCommitment)
-
+func (t *Transaction) Sign(addrKeys ...AddressKeys) ([]Signature, error) {
 	signMsg, err := t.SigningMessage()
 	if err != nil {
 		return nil, err

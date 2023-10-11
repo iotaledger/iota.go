@@ -26,41 +26,6 @@ func TestOutputTypeString(t *testing.T) {
 	}
 }
 
-func TestOutputsCommitment(t *testing.T) {
-	outputs1 := iotago.Outputs[iotago.Output]{
-		&iotago.BasicOutput{
-			Amount: 10,
-			Conditions: iotago.BasicOutputUnlockConditions{
-				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-			},
-		},
-		&iotago.BasicOutput{
-			Amount: 10,
-			Conditions: iotago.BasicOutputUnlockConditions{
-				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-			},
-		},
-	}
-
-	outputs2 := iotago.Outputs[iotago.Output]{
-		&iotago.BasicOutput{
-			Amount: 11,
-			Conditions: iotago.BasicOutputUnlockConditions{
-				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-			},
-		},
-		&iotago.BasicOutput{
-			Amount: 11,
-			Conditions: iotago.BasicOutputUnlockConditions{
-				&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-			},
-		},
-	}
-
-	require.NotEqual(t, outputs1.MustCommitment(tpkg.TestAPI), outputs2.MustCommitment(tpkg.TestAPI), "commitment for different Outputs must be different")
-
-}
-
 func TestOutputsDeSerialize(t *testing.T) {
 	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID)
 
