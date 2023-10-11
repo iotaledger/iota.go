@@ -25,6 +25,8 @@ const (
 	UnlockMulti
 	// UnlockEmpty denotes an EmptyUnlock.
 	UnlockEmpty
+	// UnlockAnchor denotes an AnchorUnlock.
+	UnlockAnchor
 )
 
 func (unlockType UnlockType) String() string {
@@ -36,13 +38,14 @@ func (unlockType UnlockType) String() string {
 }
 
 var (
-	unlockNames = [UnlockEmpty + 1]string{
+	unlockNames = [UnlockAnchor + 1]string{
 		"SignatureUnlock",
 		"ReferenceUnlock",
 		"AccountUnlock",
 		"NFTUnlock",
 		"MultiUnlock",
 		"EmptyUnlock",
+		"AnchorUnlock",
 	}
 )
 
@@ -139,7 +142,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
 //     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock or MultiUnlock
-//  3. Following through AccountUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
+//  3. Following through AccountUnlock(s), NFTUnlock(s), AnchorUnlock(s),  refs results to a SignatureUnlock
 //  4. EmptyUnlock(s) are only used inside of MultiUnlock(s)
 //  5. MultiUnlock(s) are not nested
 //  6. MultiUnlock(s) are unique

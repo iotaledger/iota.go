@@ -32,10 +32,14 @@ var (
 	ErrInputRewardInvalid = ierrors.New("invalid reward input")
 	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
 	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
-	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
+	// ErrAnchorOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
-	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
-	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
+	// ErrNFTOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the address field within the output.
+	ErrAccountOutputCyclicAddress = ierrors.New("account output's ID corresponds to address field")
+	// ErrAnchorOutputNonEmptyState gets returned if an AnchorOutput with zeroed AnchorID contains state (counters non-zero etc.).
+	ErrAnchorOutputNonEmptyState = ierrors.New("anchor output is not empty state")
+	// ErrAnchorOutputCyclicAddress gets returned if an AnchorOutput's AnchorID results into the same address as the State/Governance controller.
+	ErrAnchorOutputCyclicAddress = ierrors.New("anchor output's AnchorID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
 	// ErrDelegationValidatorAddressZeroed gets returned if a Delegation Output's Validator address is zeroed out.
@@ -261,6 +265,7 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 		OutputsSyntacticalAccount(),
 		OutputsSyntacticalNFT(),
 		OutputsSyntacticalDelegation(),
+		OutputsSyntacticalAnchor(),
 	)
 }
 

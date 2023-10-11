@@ -17,6 +17,7 @@ const (
 	canReceiveAccountOutputsBitIndex
 	canReceiveNFTOutputsBitIndex
 	canReceiveDelegationOutputsBitIndex
+	canReceiveAnchorOutputsBitIndex
 )
 
 // AddressCapabilitiesOptions defines the possible capabilities of an AddressCapabilitiesBitMask.
@@ -29,6 +30,7 @@ type AddressCapabilitiesOptions struct {
 	canReceiveAccountOutputs                                 bool
 	canReceiveNFTOutputs                                     bool
 	canReceiveDelegationOutputs                              bool
+	canReceiveAnchorOutputs                                  bool
 }
 
 func WithAddressCanReceiveAnything() options.Option[AddressCapabilitiesOptions] {
@@ -41,6 +43,7 @@ func WithAddressCanReceiveAnything() options.Option[AddressCapabilitiesOptions] 
 		o.canReceiveAccountOutputs = true
 		o.canReceiveNFTOutputs = true
 		o.canReceiveDelegationOutputs = true
+		o.canReceiveAnchorOutputs = true
 	}
 }
 
@@ -92,6 +95,12 @@ func WithAddressCanReceiveDelegationOutputs(canReceiveDelegationOutputs bool) op
 	}
 }
 
+func WithAddressCanReceiveAnchorOutputs(canReceiveAnchorOutputs bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveAnchorOutputs = canReceiveAnchorOutputs
+	}
+}
+
 type AddressCapabilitiesBitMask []byte
 
 func AddressCapabilitiesBitMaskFromBytes(bytes []byte) (AddressCapabilitiesBitMask, int, error) {
@@ -137,6 +146,10 @@ func AddressCapabilitiesBitMaskWithCapabilities(opts ...options.Option[AddressCa
 		bm = BitMaskSetBit(bm, canReceiveDelegationOutputsBitIndex)
 	}
 
+	if options.canReceiveAnchorOutputs {
+		bm = BitMaskSetBit(bm, canReceiveAnchorOutputsBitIndex)
+	}
+
 	return bm
 }
 
@@ -178,4 +191,8 @@ func (bm AddressCapabilitiesBitMask) CannotReceiveNFTOutputs() bool {
 
 func (bm AddressCapabilitiesBitMask) CannotReceiveDelegationOutputs() bool {
 	return !BitMaskHasBit(bm, canReceiveDelegationOutputsBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveAnchorOutputs() bool {
+	return !BitMaskHasBit(bm, canReceiveAnchorOutputsBitIndex)
 }

@@ -1,8 +1,6 @@
 package iotago
 
 import (
-	"bytes"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -12,8 +10,6 @@ var (
 	ErrNonUniqueAccountOutputs = ierrors.New("non unique accounts within outputs")
 	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
 	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
-	// ErrInvalidAccountGovernanceTransition gets returned when an account is doing an invalid governance transition.
-	ErrInvalidAccountGovernanceTransition = ierrors.New("invalid account governance transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
 	// ErrAccountLocked gets returned when an account has negative block issuance credits.
@@ -110,10 +106,6 @@ type AccountOutput struct {
 	Mana Mana `serix:"1,mapKey=mana"`
 	// The identifier for this account.
 	AccountID AccountID `serix:"3,mapKey=accountId"`
-	// The index of the state.
-	StateIndex uint32 `serix:"4,mapKey=stateIndex"`
-	// The state of the account which can only be mutated by the state controller.
-	StateMetadata []byte `serix:"5,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
 	// The counter that denotes the number of foundries created by this account.
 	FoundryCounter uint32 `serix:"6,mapKey=foundryCounter"`
 	// The unlock conditions on this output.
@@ -124,21 +116,11 @@ type AccountOutput struct {
 	ImmutableFeatures AccountOutputImmFeatures `serix:"9,mapKey=immutableFeatures,omitempty"`
 }
 
-func (a *AccountOutput) GovernorAddress() Address {
-	return a.Conditions.MustSet().GovernorAddress().Address
-}
-
-func (a *AccountOutput) StateController() Address {
-	return a.Conditions.MustSet().StateControllerAddress().Address
-}
-
 func (a *AccountOutput) Clone() Output {
 	return &AccountOutput{
 		Amount:            a.Amount,
 		Mana:              a.Mana,
 		AccountID:         a.AccountID,
-		StateIndex:        a.StateIndex,
-		StateMetadata:     append([]byte(nil), a.StateMetadata...),
 		FoundryCounter:    a.FoundryCounter,
 		Conditions:        a.Conditions.Clone(),
 		Features:          a.Features.Clone(),
@@ -161,14 +143,6 @@ func (a *AccountOutput) Equal(other Output) bool {
 	}
 
 	if a.AccountID != otherOutput.AccountID {
-		return false
-	}
-
-	if a.StateIndex != otherOutput.StateIndex {
-		return false
-	}
-
-	if !bytes.Equal(a.StateMetadata, otherOutput.StateMetadata) {
 		return false
 	}
 
@@ -205,10 +179,7 @@ func (a *AccountOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFu
 
 func (a *AccountOutput) syntacticallyValidate() error {
 	// Address should never be nil.
-	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
-	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
-
-	if (stateControllerAddress.Type() == AddressImplicitAccountCreation) || (governorAddress.Type() == AddressImplicitAccountCreation) {
+	if a.Conditions.MustSet().Address().Address.Type() == AddressImplicitAccountCreation {
 		return ErrImplicitAccountCreationAddressInInvalidOutput
 	}
 
@@ -234,23 +205,8 @@ func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkS
 	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (a *AccountOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
-	// if there isn't a next state, then only the governance address can destroy the account
-	if nextState == nil {
-		return a.GovernorAddress(), nil
-	}
-	otherAccountOutput, isAccountOutput := nextState.(*AccountOutput)
-	if !isAccountOutput {
-		return nil, ierrors.Wrapf(ErrTransDepIdentOutputNextInvalid, "expected AccountOutput but got %s for ident computation", nextState.Type())
-	}
-	switch {
-	case a.StateIndex == otherAccountOutput.StateIndex:
-		return a.GovernorAddress(), nil
-	case a.StateIndex+1 == otherAccountOutput.StateIndex:
-		return a.StateController(), nil
-	default:
-		return nil, ierrors.Wrap(ErrTransDepIdentOutputNextInvalid, "can not compute right ident for account output as state index delta is invalid")
-	}
+func (a *AccountOutput) Ident() Address {
+	return a.Conditions.MustSet().Address().Address
 }
 
 func (a *AccountOutput) ChainID() ChainID {
@@ -298,10 +254,6 @@ func (a *AccountOutput) Size() int {
 		BaseTokenSize +
 		ManaSize +
 		AccountIDLength +
-		// StateIndex
-		serializer.UInt32ByteSize +
-		serializer.UInt16ByteSize +
-		len(a.StateMetadata) +
 		// FoundryCounter
 		serializer.UInt32ByteSize +
 		a.Conditions.Size() +

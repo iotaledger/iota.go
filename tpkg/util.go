@@ -397,9 +397,18 @@ func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) 
 	}
 }
 
-// RandAddress returns a random address (Ed25519, Acount, NFT).
+// RandAnchorAddress returns a random AnchorAddress.
+func RandAnchorAddress() *iotago.AnchorAddress {
+	addr := &iotago.AnchorAddress{}
+	anchorID := RandBytes(iotago.AnchorAddressBytesLength)
+	copy(addr[:], anchorID)
+
+	return addr
+}
+
+// RandAddress returns a random address (Ed25519, Account, NFT, Anchor).
 func RandAddress() iotago.Address {
-	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT}
+	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT, iotago.AddressAnchor}
 
 	addressType := addressTypes[RandInt(len(addressTypes))]
 
@@ -411,6 +420,8 @@ func RandAddress() iotago.Address {
 		return RandAccountAddress()
 	case iotago.AddressNFT:
 		return RandNFTAddress()
+	case iotago.AddressAnchor:
+		return RandAnchorAddress()
 	default:
 		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
 	}
@@ -449,6 +460,8 @@ func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
 		return RandNFTUnlock()
 	case iotago.UnlockEmpty:
 		return &iotago.EmptyUnlock{}
+	case iotago.UnlockAnchor:
+		return RandAnchorUnlock()
 	default:
 		panic(ierrors.Wrapf(iotago.ErrUnknownUnlockType, "type %d", unlockType))
 	}
@@ -486,6 +499,11 @@ func RandMultiUnlock() *iotago.MultiUnlock {
 	return &iotago.MultiUnlock{
 		Unlocks: unlocks,
 	}
+}
+
+// RandAnchorUnlock returns a random anchor unlock.
+func RandAnchorUnlock() *iotago.AnchorUnlock {
+	return &iotago.AnchorUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
 // ReferenceUnlock returns a reference unlock with the given index.

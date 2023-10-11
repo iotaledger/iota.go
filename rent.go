@@ -95,8 +95,6 @@ func NewRentStructure(rentParameters *RentParameters) *RentStructure {
 		Amount:         0,
 		Mana:           0,
 		AccountID:      EmptyAccountID,
-		StateIndex:     0,
-		StateMetadata:  []byte{},
 		FoundryCounter: 0,
 		Conditions: AccountOutputUnlockConditions{
 			&GovernorAddressUnlockCondition{

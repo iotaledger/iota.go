@@ -20,6 +20,8 @@ var (
 	ErrTxCapabilitiesFoundryDestructionNotAllowed = ierrors.New("foundry destruction is not allowed by the transaction capabilities")
 	// ErrTxCapabilitiesNFTDestructionNotAllowed gets returned when a NFT is destroyed in a transaction but it was not allowed by the capabilities.
 	ErrTxCapabilitiesNFTDestructionNotAllowed = ierrors.New("NFT destruction is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesAnchorDestructionNotAllowed gets returned when an anchor is destroyed in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesAnchorDestructionNotAllowed = ierrors.New("anchor destruction is not allowed by the transaction capabilities")
 )
 
 const (
@@ -28,6 +30,7 @@ const (
 	canDestroyAccountOutputsBitIndex
 	canDestroyFoundryOutputsBitIndex
 	canDestroyNFTOutputsBitIndex
+	canDestroyAnchorOutputsBitIndex
 )
 
 // TransactionCapabilitiesOptions defines the possible capabilities of a TransactionCapabilitiesBitMask.
@@ -37,6 +40,7 @@ type TransactionCapabilitiesOptions struct {
 	canDestroyAccountOutputs bool
 	canDestroyFoundryOutputs bool
 	canDestroyNFTOutputs     bool
+	canDestroyAnchorOutputs  bool
 }
 
 func WithTransactionCanDoAnything() options.Option[TransactionCapabilitiesOptions] {
@@ -46,6 +50,7 @@ func WithTransactionCanDoAnything() options.Option[TransactionCapabilitiesOption
 		o.canDestroyAccountOutputs = true
 		o.canDestroyFoundryOutputs = true
 		o.canDestroyNFTOutputs = true
+		o.canDestroyAnchorOutputs = true
 	}
 }
 
@@ -76,6 +81,12 @@ func WithTransactionCanDestroyFoundryOutputs(canDestroyFoundryOutputs bool) opti
 func WithTransactionCanDestroyNFTOutputs(canDestroyNFTOutputs bool) options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
 		o.canDestroyNFTOutputs = canDestroyNFTOutputs
+	}
+}
+
+func WithTransactionCanDestroyAnchorOutputs(canDestroyAnchorOutputs bool) options.Option[TransactionCapabilitiesOptions] {
+	return func(o *TransactionCapabilitiesOptions) {
+		o.canDestroyAnchorOutputs = canDestroyAnchorOutputs
 	}
 }
 
@@ -112,6 +123,10 @@ func TransactionCapabilitiesBitMaskWithCapabilities(opts ...options.Option[Trans
 		bm = BitMaskSetBit(bm, canDestroyNFTOutputsBitIndex)
 	}
 
+	if options.canDestroyAnchorOutputs {
+		bm = BitMaskSetBit(bm, canDestroyAnchorOutputsBitIndex)
+	}
+
 	return bm
 }
 
@@ -141,4 +156,8 @@ func (bm TransactionCapabilitiesBitMask) CannotDestroyFoundryOutputs() bool {
 
 func (bm TransactionCapabilitiesBitMask) CannotDestroyNFTOutputs() bool {
 	return !BitMaskHasBit(bm, canDestroyNFTOutputsBitIndex)
+}
+
+func (bm TransactionCapabilitiesBitMask) CannotDestroyAnchorOutputs() bool {
+	return !BitMaskHasBit(bm, canDestroyAnchorOutputsBitIndex)
 }

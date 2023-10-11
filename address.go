@@ -60,6 +60,8 @@ const (
 	AddressMulti AddressType = 32
 	// AddressRestricted denotes a restricted address that has a capability bitmask.
 	AddressRestricted AddressType = 40
+	// AddressAnchor denotes an Anchor address.
+	AddressAnchor AddressType = 48
 )
 
 func (addrType AddressType) String() string {
@@ -180,6 +182,8 @@ func newAddress(addressType AddressType) (address Address, err error) {
 		return &MultiAddress{}, nil
 	case AddressRestricted:
 		return &RestrictedAddress{}, nil
+	case AddressAnchor:
+		return &AnchorAddress{}, nil
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
 	}
