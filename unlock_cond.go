@@ -224,7 +224,7 @@ func (f UnlockConditionSet) HasTimelockCondition() bool {
 }
 
 // HasManalockCondition tells whether the set has both an account address unlock
-// and a timelock that is still locked at slotIndex.
+// and a timelock that is still locked at slot index.
 func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slot SlotIndex) bool {
 	if !f.HasTimelockUntil(slot) {
 		return false
@@ -243,11 +243,11 @@ func (f UnlockConditionSet) HasManalockCondition(accountID AccountID, slot SlotI
 	return true
 }
 
-// HasTimelockUntil tells us whether the set has a timelock that is still locked at slotIndex.
+// HasTimelockUntil tells us whether the set has a timelock that is still locked at slot.
 func (f UnlockConditionSet) HasTimelockUntil(slot SlotIndex) bool {
 	// TODO: Test this.
 	timelock := f.Timelock()
-	return timelock != nil && slot < timelock.SlotIndex
+	return timelock != nil && slot < timelock.Slot
 }
 
 // tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
@@ -281,7 +281,7 @@ func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlot SlotIndex) bool 
 		return true
 	}
 
-	if pastBoundedSlot < expUnlockCond.SlotIndex {
+	if pastBoundedSlot < expUnlockCond.Slot {
 		return true
 	}
 
@@ -298,7 +298,7 @@ func (f UnlockConditionSet) ReturnIdentCanUnlock(futureBoundedSlotIndex SlotInde
 		return false, nil
 	}
 
-	if futureBoundedSlotIndex >= expUnlockCond.SlotIndex {
+	if futureBoundedSlotIndex >= expUnlockCond.Slot {
 		return true, expUnlockCond.ReturnAddress
 	}
 
@@ -315,8 +315,8 @@ func (f UnlockConditionSet) TimelocksExpired(futureBoundedSlot SlotIndex) error 
 		return nil
 	}
 
-	if futureBoundedSlot < timelock.SlotIndex {
-		return ierrors.Wrapf(ErrTimelockNotExpired, "slotIndex cond is %d, while tx creation slot could be up to %d", timelock.SlotIndex, futureBoundedSlot)
+	if futureBoundedSlot < timelock.Slot {
+		return ierrors.Wrapf(ErrTimelockNotExpired, "slot cond is %d, while tx creation slot could be up to %d", timelock.Slot, futureBoundedSlot)
 	}
 
 	return nil

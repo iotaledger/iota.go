@@ -8,7 +8,7 @@ import (
 var (
 	// ErrInvalidStakingStartEpoch gets returned when a new Staking Feature's start epoch
 	// is not set to the epoch of the transaction.
-	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch index of the transaction")
+	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch of the transaction")
 	// ErrInvalidStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
 	// is not at least set to the transaction epoch plus the unbonding period.
 	ErrInvalidStakingEndEpochTooEarly = ierrors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")

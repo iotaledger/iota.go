@@ -405,13 +405,13 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 		unlockConditionSet := output.UnlockConditionSet()
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
-			if expiration.SlotIndex == 0 {
+			if expiration.Slot == 0 {
 				return ErrExpirationConditionZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
-			if timelock.SlotIndex == 0 {
+			if timelock.Slot == 0 {
 				return ErrTimelockConditionZero
 			}
 		}

@@ -49,11 +49,11 @@ type (
 	//	- the node performed pruning of data
 	GossipHeartbeat struct {
 		// The solid slot of the node.
-		SolidSlotIndex iotago.SlotIndex `serix:"0,mapKey=solidSlotIndex"`
+		SolidSlot iotago.SlotIndex `serix:"0,mapKey=solidSlot"`
 		// The oldest known slot index by the node.
-		PrunedSlotIndex iotago.SlotIndex `serix:"1,mapKey=prunedSlotIndex"`
+		PrunedSlot iotago.SlotIndex `serix:"1,mapKey=prunedSlot"`
 		// The latest known slot index by the node.
-		LatestSlotIndex iotago.SlotIndex `serix:"2,mapKey=latestSlotIndex"`
+		LatestSlot iotago.SlotIndex `serix:"2,mapKey=latestSlot"`
 		// The amount of currently connected peers.
 		ConnectedPeers uint32 `serix:"3,mapKey=connectedPeers"`
 		// The amount of currently connected peers who also
@@ -89,7 +89,7 @@ type (
 
 	// PruneDatabaseRequest defines the request of a prune database REST API call.
 	PruneDatabaseRequest struct {
-		// The pruning target epoch index.
+		// The pruning target epoch.
 		Index iotago.EpochIndex `serix:"0,mapKey=index,omitempty"`
 		// The pruning depth.
 		Depth iotago.EpochIndex `serix:"1,mapKey=depth,omitempty"`

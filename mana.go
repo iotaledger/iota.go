@@ -14,7 +14,7 @@ type ManaStructure struct {
 	GenerationRate uint8 `serix:"1,mapKey=generationRate"`
 	// GenerationRateExponent is the scaling of GenerationRate expressed as an exponent of 2.
 	GenerationRateExponent uint8 `serix:"2,mapKey=generationRateExponent"`
-	// DecayFactors is a lookup table of epoch index diff to mana decay factor (slice index 0 = 1 epoch).
+	// DecayFactors is a lookup table of epoch diff to mana decay factor (slice index 0 = 1 epoch).
 	DecayFactors []uint32 `serix:"3,lengthPrefixType=uint16,mapKey=decayFactors"`
 	// DecayFactorsExponent is the scaling of DecayFactors expressed as an exponent of 2.
 	DecayFactorsExponent uint8 `serix:"4,mapKey=decayFactorsExponent"`

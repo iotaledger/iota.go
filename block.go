@@ -51,7 +51,7 @@ type BlockPayload interface {
 	Payload
 }
 
-// version + networkID + time + commitmentID + slotIndex + accountID.
+// version + networkID + time + commitmentID + slot + accountID.
 const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {

@@ -41,10 +41,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
+					&iotago.TimelockUnlockCondition{Slot: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						SlotIndex:     4000,
+						Slot:          4000,
 					},
 				},
 				Features: iotago.BasicOutputFeatures{
@@ -111,10 +111,10 @@ func TestOutputsDeSerialize(t *testing.T) {
 						ReturnAddress: tpkg.RandEd25519Address(),
 						Amount:        1000,
 					},
-					&iotago.TimelockUnlockCondition{SlotIndex: 1337},
+					&iotago.TimelockUnlockCondition{Slot: 1337},
 					&iotago.ExpirationUnlockCondition{
 						ReturnAddress: tpkg.RandEd25519Address(),
-						SlotIndex:     4000,
+						Slot:          4000,
 					},
 				},
 				Features: iotago.NFTOutputFeatures{
@@ -389,7 +389,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							SlotIndex:     1337,
+							Slot:          1337,
 						},
 					},
 				},
@@ -398,7 +398,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1337,
+							Slot: 1337,
 						},
 					},
 				},
@@ -414,7 +414,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							SlotIndex:     0,
+							Slot:          0,
 						},
 					},
 				},
@@ -429,7 +429,7 @@ func TestOutputsSyntacticalExpirationAndTimelock(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 0,
+							Slot: 0,
 						},
 					},
 				},
@@ -919,7 +919,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
-							SlotIndex:     26,
+							Slot:          26,
 						},
 					},
 				},
@@ -941,7 +941,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: returnIdent,
-							SlotIndex:     25,
+							Slot:          25,
 						},
 					},
 				},
@@ -963,7 +963,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: returnIdent,
-							SlotIndex:     15,
+							Slot:          15,
 						},
 					},
 				},
@@ -985,7 +985,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: returnIdent,
-							SlotIndex:     16,
+							Slot:          16,
 						},
 					},
 				},
@@ -1004,7 +1004,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 15},
+						&iotago.TimelockUnlockCondition{Slot: 15},
 					},
 				},
 				targetIdent:         receiverIdent,
@@ -1022,7 +1022,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 					Amount: OneMi,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: receiverIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 16},
+						&iotago.TimelockUnlockCondition{Slot: 16},
 					},
 				},
 				targetIdent:         receiverIdent,

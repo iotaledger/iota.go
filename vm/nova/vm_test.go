@@ -268,7 +268,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     500,
+							Slot:          500,
 						},
 					},
 				},
@@ -277,7 +277,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				},
@@ -290,11 +290,11 @@ func TestNovaTransactionExecution(t *testing.T) {
 							Amount:        storageDepositReturn,
 						},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     900,
+							Slot:          900,
 						},
 					},
 				},
@@ -3201,7 +3201,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     5,
+							Slot:          5,
 						},
 					},
 				},
@@ -3212,7 +3212,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3513,7 +3513,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     20,
+							Slot:          20,
 						},
 					},
 				},
@@ -3558,7 +3558,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     10,
+							Slot:          10,
 						},
 					},
 				},
@@ -3838,7 +3838,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3853,7 +3853,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     2,
+							Slot:          2,
 						},
 					},
 				},
@@ -4085,7 +4085,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						// not yet expired, so ident1 needs to unlock
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -4224,7 +4224,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								SlotIndex:     10,
+								Slot:          10,
 							},
 						},
 					},
@@ -5602,7 +5602,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 5,
+							Slot: 5,
 						},
 					},
 				},
@@ -5644,7 +5644,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 25,
+							Slot: 25,
 						},
 					},
 				},
@@ -5686,7 +5686,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1337,
+							Slot: 1337,
 						},
 					},
 				},
@@ -5728,7 +5728,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1000,
+							Slot: 1000,
 						},
 					},
 				},
@@ -6365,7 +6365,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				}
@@ -6393,7 +6393,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.ExpirationUnlockCondition{
-							SlotIndex:     500,
+							Slot:          500,
 							ReturnAddress: ident,
 						},
 					},
@@ -6729,7 +6729,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					Amount: exampleAmount,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 500},
+						&iotago.TimelockUnlockCondition{Slot: 500},
 					},
 				},
 			},

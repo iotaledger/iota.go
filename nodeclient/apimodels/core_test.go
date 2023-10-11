@@ -264,7 +264,7 @@ func Test_CongestionResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.CongestionResponse{
-		SlotIndex:            12,
+		Slot:                 12,
 		Ready:                true,
 		ReferenceManaCost:    100,
 		BlockIssuanceCredits: 80,
@@ -273,7 +273,7 @@ func Test_CongestionResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"slotIndex\":12,\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
+	expected := "{\"slot\":12,\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.CongestionResponse)
