@@ -437,15 +437,19 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand36ByteArray()
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	require.NoError(t, err)
 
-	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputID := utxoInput.OutputID()
+	outputID, err := originOutputProof.OutputID(originOutput)
+	require.NoError(t, err)
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex()), 200, originOutput)
+	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
+		Output:        originOutput,
+		OutputIDProof: originOutputProof,
+	})
 
 	nodeAPI := nodeClient(t)
-	responseOutput, err := nodeAPI.OutputByID(context.Background(), utxoInputID)
+	responseOutput, err := nodeAPI.OutputByID(context.Background(), outputID)
 	require.NoError(t, err)
 
 	require.EqualValues(t, originOutput, responseOutput)
@@ -455,7 +459,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand36ByteArray()
-	originRes := &apimodels.OutputMetadataResponse{
+	originRes := &apimodels.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,

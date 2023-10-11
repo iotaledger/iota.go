@@ -261,8 +261,21 @@ type (
 		TxFailureReason TransactionFailureReason `serix:"4,mapKey=txFailureReason,omitempty"`
 	}
 
-	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
-	OutputMetadataResponse struct {
+	// OutputResponse defines the response of a GET outputs REST API call.
+	OutputResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+	}
+
+	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
+	OutputWithMetadataResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+		Metadata      *OutputMetadata        `serix:"2,mapKey=metadata"`
+	}
+
+	// OutputMetadata defines the response of a GET outputs metadata REST API call.
+	OutputMetadata struct {
 		// BlockID is the block ID that contains the output.
 		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
 		// TransactionID is the transaction ID that creates the output.
