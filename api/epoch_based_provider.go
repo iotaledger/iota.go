@@ -25,10 +25,10 @@ type EpochBasedProvider struct {
 	currentSlotMutex sync.RWMutex
 	currentSlot      iotago.SlotIndex
 
-	optsAPIForMissingVersionCallback func(version iotago.Version) (iotago.API, error)
+	optsAPIForMissingVersionCallback func(protocolParameters iotago.ProtocolParameters) (iotago.API, error)
 }
 
-func WithAPIForMissingVersionCallback(callback func(version iotago.Version) (iotago.API, error)) options.Option[EpochBasedProvider] {
+func WithAPIForMissingVersionCallback(callback func(protocolParameters iotago.ProtocolParameters) (iotago.API, error)) options.Option[EpochBasedProvider] {
 	return func(provider *EpochBasedProvider) {
 		provider.optsAPIForMissingVersionCallback = callback
 	}
@@ -118,7 +118,7 @@ func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, 
 	}
 
 	if e.optsAPIForMissingVersionCallback != nil {
-		return e.optsAPIForMissingVersionCallback(version)
+		return e.optsAPIForMissingVersionCallback(protocolParams)
 	}
 
 	return nil, ierrors.Errorf("no api available for parameters with version %d", protocolParams.Version())
