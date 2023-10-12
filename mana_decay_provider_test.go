@@ -284,13 +284,27 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
-			if tt.wantErr != nil {
-				require.ErrorIs(t, err, tt.wantErr)
-
-				return
+			if tt.result != 0 {
+				upperBoundExactResult := testManaDecayProvider.UpperBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
+				lowerBoundExactResult := testManaDecayProvider.LowerBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
+				exactResult := testManaDecayProvider.ExactResultPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
+				result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
+				if tt.wantErr != nil {
+					require.ErrorIs(t, err, tt.wantErr)
+					return
+				}
+				require.LessOrEqual(t, float64(result), upperBoundExactResult)
+				require.LessOrEqual(t, lowerBoundExactResult, float64(result))
+				require.InEpsilon(t, float64(exactResult), float64(result), float64(0.001))
+			} else {
+				result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
+				if tt.wantErr != nil {
+					require.ErrorIs(t, err, tt.wantErr)
+					return
+				}
+				require.Equal(t, tt.result, result)
 			}
-			require.Equal(t, tt.result, result)
+
 		})
 	}
 }
