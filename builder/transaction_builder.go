@@ -146,42 +146,66 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		return b
 	}
 
-	minManalockedSlot := b.transaction.CreationSlot + 2*b.api.ProtocolParameters().MaxCommittableAge()
-
-	// check if the output is locked for a certain time to an account.
-	hasManalockCondition := func(output iotago.Output) (iotago.AccountID, bool) {
-		if !output.UnlockConditionSet().HasTimelockUntil(minManalockedSlot) {
-			return iotago.EmptyAccountID, false
-		}
-
-		unlockAddress := output.UnlockConditionSet().Address()
-		if unlockAddress == nil {
-			return iotago.EmptyAccountID, false
-		}
-
-		if unlockAddress.Address.Type() != iotago.AddressAccount {
-			return iotago.EmptyAccountID, false
-		}
-		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-		accountAddress := unlockAddress.Address.(*iotago.AccountAddress)
-
-		return accountAddress.AccountID(), true
+	if storedManaOutputIndex >= len(b.transaction.Outputs) {
+		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
 	}
 
+	// calculate the minimum required mana to issue the block
+	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
+	}
+
+	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, minRequiredMana, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(err)
+	}
+
+	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
+	b.IncreaseAllotment(blockIssuerAccountID, minRequiredMana)
+
+	// move the remaining mana to stored mana on the specified output index
+	switch output := b.transaction.Outputs[storedManaOutputIndex].(type) {
+	case *iotago.BasicOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	case *iotago.AccountOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	case *iotago.NFTOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	default:
+		return setBuildError(ierrors.Wrapf(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output))
+	}
+
+	return b
+}
+
+func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
+	setBuildError := func(err error) *TransactionBuilder {
+		b.occurredBuildErr = err
+		return b
+	}
+	// calculate the minimum required mana to issue the block
+	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
+	}
+
+	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, minRequiredMana, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(err)
+	}
+
+	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
+	b.IncreaseAllotment(blockIssuerAccountID, unboundManaInputsLeftoverBalance+minRequiredMana)
+
+	return b
+}
+
+func (b *TransactionBuilder) calculateMaximumPossibleAllotment(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// calculate the available mana on input side
 	_, unboundManaInputs, accountBoundManaInputs, err := CalculateAvailableMana(b.api.ProtocolParameters(), b.inputs, targetSlot)
 	if err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to calculate the available mana on input side"))
-	}
-
-	// update the unbound mana balance
-	updateUnboundManaBalance := func(manaOut iotago.Mana) error {
-		if unboundManaInputs < manaOut {
-			return ierrors.New("not enough unbound mana available on the input side")
-		}
-		unboundManaInputs -= manaOut
-
-		return nil
+		return 0, ierrors.Wrap(err, "failed to calculate the available mana on input side")
 	}
 
 	// update the account bound mana balances if they exist and/or the onbound mana balance
@@ -195,7 +219,12 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 				accountBoundManaInputs[accountID] = 0
 
 				// subtract the remainder from the unbound mana
-				return updateUnboundManaBalance(accountBoundManaOut - accountBalance)
+				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, accountBoundManaOut-accountBalance)
+				if err != nil {
+					return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s", accountID.String())
+				}
+
+				return nil
 			}
 
 			// there is enough account bound mana for this account, subtract it from there
@@ -205,11 +234,12 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		}
 
 		// no account bound mana available for the given account, subtract it from the unbounded mana
-		return updateUnboundManaBalance(accountBoundManaOut)
-	}
+		unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, accountBoundManaOut)
+		if err != nil {
+			return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s", accountID.String())
+		}
 
-	if storedManaOutputIndex >= len(b.transaction.Outputs) {
-		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
+		return nil
 	}
 
 	// subtract the stored mana on the outputs side
@@ -217,19 +247,20 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		switch output := o.(type) {
 		case *iotago.AccountOutput:
 			// mana on account outputs is locked to this account
-			if err := updateUnboundAndAccountBoundManaBalances(output.AccountID, output.StoredMana()); err != nil {
-				return setBuildError(ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side"))
+			if err = updateUnboundAndAccountBoundManaBalances(output.AccountID, output.StoredMana()); err != nil {
+				return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
 			}
 
 		default:
 			// check if the output locked mana to a certain account
-			if accountID, isManaLocked := hasManalockCondition(output); isManaLocked {
-				if err := updateUnboundAndAccountBoundManaBalances(accountID, output.StoredMana()); err != nil {
-					return setBuildError(ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side"))
+			if accountID, isManaLocked := b.hasManalockCondition(output); isManaLocked {
+				if err = updateUnboundAndAccountBoundManaBalances(accountID, output.StoredMana()); err != nil {
+					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
 				}
 			} else {
-				if err := updateUnboundManaBalance(output.StoredMana()); err != nil {
-					return setBuildError(ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side"))
+				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, output.StoredMana())
+				if err != nil {
+					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
 				}
 			}
 		}
@@ -237,38 +268,39 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 
 	// subtract the already alloted mana
 	for _, allotment := range b.transaction.Allotments {
-		if err := updateUnboundAndAccountBoundManaBalances(allotment.AccountID, allotment.Value); err != nil {
-			return setBuildError(ierrors.Wrap(err, "failed to subtract the already alloted mana"))
+		if err = updateUnboundAndAccountBoundManaBalances(allotment.AccountID, allotment.Value); err != nil {
+			return 0, ierrors.Wrap(err, "failed to subtract the already alloted mana")
 		}
 	}
 
-	// calculate the minimum required mana to issue the block
-	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
-	if err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
-	}
-
 	// subtract the minimum required mana to issue the block
-	if err := updateUnboundAndAccountBoundManaBalances(blockIssuerAccountID, minRequiredMana); err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to subtract the minimum required mana to issue the block"))
+	if err = updateUnboundAndAccountBoundManaBalances(blockIssuerAccountID, minRequiredMana); err != nil {
+		return 0, ierrors.Wrap(err, "failed to subtract the minimum required mana to issue the block")
 	}
 
-	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
-	b.IncreaseAllotment(blockIssuerAccountID, minRequiredMana)
+	return unboundManaInputs, nil
+}
 
-	// move the remaining mana to stored mana on the specified output index
-	switch output := b.transaction.Outputs[storedManaOutputIndex].(type) {
-	case *iotago.BasicOutput:
-		output.Mana += unboundManaInputs
-	case *iotago.AccountOutput:
-		output.Mana += unboundManaInputs
-	case *iotago.NFTOutput:
-		output.Mana += unboundManaInputs
-	default:
-		return setBuildError(ierrors.Wrapf(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output))
+// hasManalockCondition checks if the output is locked for a certain time to an account.
+func (b *TransactionBuilder) hasManalockCondition(output iotago.Output) (iotago.AccountID, bool) {
+	minManalockedSlot := b.transaction.CreationSlot + 2*b.api.ProtocolParameters().MaxCommittableAge()
+
+	if !output.UnlockConditionSet().HasTimelockUntil(minManalockedSlot) {
+		return iotago.EmptyAccountID, false
 	}
 
-	return b
+	unlockAddress := output.UnlockConditionSet().Address()
+	if unlockAddress == nil {
+		return iotago.EmptyAccountID, false
+	}
+
+	if unlockAddress.Address.Type() != iotago.AddressAccount {
+		return iotago.EmptyAccountID, false
+	}
+	//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
+	accountAddress := unlockAddress.Address.(*iotago.AccountAddress)
+
+	return accountAddress.AccountID(), true
 }
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
