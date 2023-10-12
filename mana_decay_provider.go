@@ -160,8 +160,8 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
-	if creationEpoch > targetEpoch {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
+	if creationSlot > targetSlot {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created slot index was bigger than the target slot index: %d > %d", creationSlot, targetSlot)
 	}
 
 	epochDiff := targetEpoch - creationEpoch
