@@ -717,6 +717,8 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = RandSignedTransaction(api)
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
+	case iotago.PayloadCandidacyAnnouncement:
+		payload = &iotago.CandidacyAnnouncement{}
 	}
 
 	return &iotago.BasicBlock{

@@ -288,6 +288,10 @@ func V3API(protoParams ProtocolParameters) API {
 		serix.TypeSettings{}.WithObjectType(uint8(PayloadTaggedData))),
 	)
 
+	must(api.RegisterTypeSettings(CandidacyAnnouncement{},
+		serix.TypeSettings{}.WithObjectType(uint8(PayloadCandidacyAnnouncement))),
+	)
+
 	{
 		must(api.RegisterTypeSettings(Ed25519Signature{},
 			serix.TypeSettings{}.WithObjectType(uint8(SignatureEd25519))),
@@ -561,7 +565,6 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
 		))
 
-		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*BasicOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*AccountOutput)(nil)))
 		must(api.RegisterInterfaceObjects((*TxEssenceOutput)(nil), (*DelegationOutput)(nil)))
@@ -578,6 +581,7 @@ func V3API(protoParams ProtocolParameters) API {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
+
 	}
 
 	{
@@ -610,6 +614,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*SignedTransaction)(nil)))
 		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
 		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
 		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
