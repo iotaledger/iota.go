@@ -179,24 +179,20 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	return b
 }
 
-func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
+// AllotAllMana allots all loose mana to the provided account, even if alloted value is less than required paymnet.
+func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
 	}
-	// calculate the minimum required mana to issue the block
-	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
-	if err != nil {
-		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
-	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, minRequiredMana, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, 0, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(err)
 	}
 
 	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
-	b.IncreaseAllotment(blockIssuerAccountID, unboundManaInputsLeftoverBalance+minRequiredMana)
+	b.IncreaseAllotment(blockIssuerAccountID, unboundManaInputsLeftoverBalance)
 
 	return b
 }
@@ -221,7 +217,7 @@ func (b *TransactionBuilder) calculateMaximumPossibleAllotment(targetSlot iotago
 				// subtract the remainder from the unbound mana
 				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, accountBoundManaOut-accountBalance)
 				if err != nil {
-					return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s", accountID.String())
+					return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s while subtracting remainder", accountID.String())
 				}
 
 				return nil
@@ -248,14 +244,14 @@ func (b *TransactionBuilder) calculateMaximumPossibleAllotment(targetSlot iotago
 		case *iotago.AccountOutput:
 			// mana on account outputs is locked to this account
 			if err = updateUnboundAndAccountBoundManaBalances(output.AccountID, output.StoredMana()); err != nil {
-				return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
+				return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side for account output")
 			}
 
 		default:
 			// check if the output locked mana to a certain account
 			if accountID, isManaLocked := b.hasManalockCondition(output); isManaLocked {
 				if err = updateUnboundAndAccountBoundManaBalances(accountID, output.StoredMana()); err != nil {
-					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
+					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side because of lock")
 				}
 			} else {
 				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, output.StoredMana())
