@@ -156,7 +156,7 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, minRequiredMana, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, minRequiredMana, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -179,14 +179,14 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	return b
 }
 
-// AllotAllMana allots all loose mana to the provided account, even if alloted value is less than required paymnet.
+// AllotAllMana allots all available mana to the provided account, even if the alloted value is less than the minimum required mana value to issue the block.
 func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateMaximumPossibleAllotment(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -197,7 +197,7 @@ func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssu
 	return b
 }
 
-func (b *TransactionBuilder) calculateMaximumPossibleAllotment(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// calculate the available mana on input side
 	_, unboundManaInputs, accountBoundManaInputs, err := CalculateAvailableMana(b.api.ProtocolParameters(), b.inputs, targetSlot)
 	if err != nil {
@@ -251,7 +251,7 @@ func (b *TransactionBuilder) calculateMaximumPossibleAllotment(targetSlot iotago
 			// check if the output locked mana to a certain account
 			if accountID, isManaLocked := b.hasManalockCondition(output); isManaLocked {
 				if err = updateUnboundAndAccountBoundManaBalances(accountID, output.StoredMana()); err != nil {
-					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side because of lock")
+					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side, while checking locked mana")
 				}
 			} else {
 				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, output.StoredMana())
