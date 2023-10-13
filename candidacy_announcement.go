@@ -14,7 +14,7 @@ func (u *CandidacyAnnouncement) PayloadType() PayloadType {
 
 func (u *CandidacyAnnouncement) Size() int {
 	// PayloadType
-	return 0
+	return 1
 }
 
 func (u *CandidacyAnnouncement) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
