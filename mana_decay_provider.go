@@ -177,7 +177,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 		return safemath.SafeAdd(manaDecayed, manaGenerated)
 
 	default:
-		c := Mana(fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
+		c := Mana(fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent))
 
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
 		potentialMana_n := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot)), epochDiff)
