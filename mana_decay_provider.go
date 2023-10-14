@@ -44,9 +44,14 @@ func fixedPointMultiplication32Splitted(valueHi uint64, valueLo uint64, factor u
 // fixedPointMultiplication32 does a fixed point multiplication.
 // ATTENTION: do not pass factor that use more than 32bits, otherwise this function overflows.
 func fixedPointMultiplication32(value uint64, factor uint64, scale uint64) uint64 {
+	extraShift := uint64(0)
+	if scale > 32 {
+		extraShift = scale - 32
+		scale = 32
+	}
 	valueHi, valueLo := splitUint64(value)
 
-	return mergeUint64(fixedPointMultiplication32Splitted(valueHi, valueLo, factor, scale))
+	return mergeUint64(fixedPointMultiplication32Splitted(valueHi, valueLo, factor, scale)) >> extraShift
 }
 
 // ManaDecayProvider calculates the mana decay and mana generation
