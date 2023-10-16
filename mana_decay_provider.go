@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/iotaledger/hive.go/core/safemath"
@@ -207,9 +206,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 		if err != nil {
 			return 0, err
 		}
-		printVar, _ := safemath.SafeAdd(result, potentialMana_n)
 		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		fmt.Println(p.LowerBoundPotentialMana(amount, creationSlot, targetSlot), printVar, p.UpperBoundPotentialMana(amount, creationSlot, targetSlot))
 		return safemath.SafeAdd(result, potentialMana_n)
 	}
 }
