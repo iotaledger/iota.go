@@ -10,7 +10,7 @@ type APIProvider interface {
 	// APIForEpoch returns the API for the given epoch.
 	APIForEpoch(EpochIndex) API
 
-	// CurrentAPI returns the API for the current slot.
+	// CurrentAPI returns the API for the last committed slot.
 	CurrentAPI() API
 
 	// LatestAPI returns the API for the latest supported protocol version.
