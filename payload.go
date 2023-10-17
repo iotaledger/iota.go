@@ -20,6 +20,8 @@ const (
 	PayloadTaggedData PayloadType = iota
 	// PayloadSignedTransaction denotes a SignedTransaction.
 	PayloadSignedTransaction PayloadType = 1
+	// PayloadCandidacyAnnouncement denotes a CandidacyAnnouncement.
+	PayloadCandidacyAnnouncement PayloadType = 2
 )
 
 func (payloadType PayloadType) String() string {
