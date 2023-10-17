@@ -124,7 +124,7 @@ func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
 
-	timeProvider := apiProvider.CurrentAPI().TimeProvider()
+	timeProvider := apiProvider.CommittedAPI().TimeProvider()
 
 	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(1), 2, apiProvider), iotago.ErrInvalidBlockVersion)
 
