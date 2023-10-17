@@ -9,14 +9,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const (
-	CommitmentIDLength = SlotIdentifierLength
-)
-
-type CommitmentID = SlotIdentifier
-
-var EmptyCommitmentID = CommitmentID{}
-
 type Commitment struct {
 	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
 	Slot                 SlotIndex    `serix:"1,mapKey=slot"`
@@ -49,7 +41,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 		return CommitmentID{}, ierrors.Errorf("failed to serialize commitment: %w", err)
 	}
 
-	return SlotIdentifierRepresentingData(c.Slot, data), nil
+	return CommitmentIDRepresentingData(c.Slot, data), nil
 }
 
 func (c *Commitment) StateID() Identifier {

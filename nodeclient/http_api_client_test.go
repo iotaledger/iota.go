@@ -101,8 +101,8 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 		Version: "1.0.0",
 		Status: &apimodels.InfoResNodeStatus{
 			IsHealthy:                   true,
-			LatestAcceptedBlockSlot:     tpkg.RandSlotIndex(),
-			LatestConfirmedBlockSlot:    tpkg.RandSlotIndex(),
+			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
+			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
 			LatestFinalizedSlot:         iotago.SlotIndex(142857),
 			AcceptedTangleTime:          ts,
 			RelativeAcceptedTangleTime:  ts,
@@ -176,7 +176,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		LatestFinalizedSlot: iotago.SlotIndex(20),
 	}
 
-	prevID, err := iotago.SlotIdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
+	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
 	require.NoError(t, err)
 	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)
@@ -203,7 +203,7 @@ func TestClient_Congestion(t *testing.T) {
 	accID := tpkg.RandAccountID()
 
 	originRes := &apimodels.CongestionResponse{
-		SlotIndex:            iotago.SlotIndex(20),
+		Slot:                 iotago.SlotIndex(20),
 		Ready:                true,
 		ReferenceManaCost:    iotago.Mana(1000),
 		BlockIssuanceCredits: iotago.BlockIssuanceCredits(1000),
@@ -437,25 +437,65 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	txID := tpkg.Rand36ByteArray()
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	require.NoError(t, err)
 
-	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
-	utxoInputID := utxoInput.OutputID()
+	outputID, err := originOutputProof.OutputID(originOutput)
+	require.NoError(t, err)
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, utxoInputID.ToHex()), 200, originOutput)
+	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
+		Output:        originOutput,
+		OutputIDProof: originOutputProof,
+	})
 
 	nodeAPI := nodeClient(t)
-	responseOutput, err := nodeAPI.OutputByID(context.Background(), utxoInputID)
+	responseOutput, err := nodeAPI.OutputByID(context.Background(), outputID)
 	require.NoError(t, err)
 
 	require.EqualValues(t, originOutput, responseOutput)
+}
+
+func TestClient_OutputWithMetadataByID(t *testing.T) {
+	defer gock.Off()
+
+	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
+
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	require.NoError(t, err)
+
+	outputID, err := originOutputProof.OutputID(originOutput)
+	require.NoError(t, err)
+
+	originMetadata := &apimodels.OutputMetadata{
+		BlockID:              tpkg.RandBlockID(),
+		TransactionID:        outputID.TransactionID(),
+		OutputIndex:          outputID.Index(),
+		IsSpent:              true,
+		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
+		TransactionIDSpent:   tpkg.Rand36ByteArray(),
+		IncludedCommitmentID: tpkg.Rand36ByteArray(),
+		LatestCommitmentID:   tpkg.Rand36ByteArray(),
+	}
+
+	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
+		Output:        originOutput,
+		OutputIDProof: originOutputProof,
+		Metadata:      originMetadata,
+	})
+
+	nodeAPI := nodeClient(t)
+	responseOutput, responseMetadata, err := nodeAPI.OutputWithMetadataByID(context.Background(), outputID)
+	require.NoError(t, err)
+
+	require.EqualValues(t, originOutput, responseOutput)
+	require.EqualValues(t, originMetadata, responseMetadata)
 }
 
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand36ByteArray()
-	originRes := &apimodels.OutputMetadataResponse{
+	originRes := &apimodels.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
@@ -484,8 +524,8 @@ func TestClient_CommitmentByID(t *testing.T) {
 
 	var slot iotago.SlotIndex = 5
 
-	commitmentID := iotago.NewSlotIdentifier(slot, tpkg.Rand32ByteArray())
-	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitmentID := iotago.NewCommitmentID(slot, tpkg.Rand32ByteArray())
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewCommitmentID(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Slot:                 commitment.Slot,
@@ -505,7 +545,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	defer gock.Off()
 
-	commitmentID := iotago.NewSlotIdentifier(5, tpkg.Rand32ByteArray())
+	commitmentID := iotago.NewCommitmentID(5, tpkg.Rand32ByteArray())
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
@@ -533,7 +573,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 
 	var slot iotago.SlotIndex = 1337
 
-	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewSlotIdentifier(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
+	commitment := iotago.NewCommitment(mockAPI.Version(), slot, iotago.NewCommitmentID(slot-1, tpkg.Rand32ByteArray()), tpkg.Rand32ByteArray(), tpkg.RandUint64(math.MaxUint64), tpkg.RandMana(iotago.MaxMana))
 
 	originRes := &iotago.Commitment{
 		Slot:                 commitment.Slot,
@@ -578,11 +618,11 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 
 var sampleGossipInfo = &apimodels.GossipInfo{
 	Heartbeat: &apimodels.GossipHeartbeat{
-		SolidSlotIndex:  234,
-		PrunedSlotIndex: 5872,
-		LatestSlotIndex: 1294,
-		ConnectedPeers:  2392,
-		SyncedPeers:     1234,
+		SolidSlot:      234,
+		PrunedSlot:     5872,
+		LatestSlot:     1294,
+		ConnectedPeers: 2392,
+		SyncedPeers:    1234,
 	},
 	Metrics: &apimodels.PeerGossipMetrics{
 		NewBlocks:             40,

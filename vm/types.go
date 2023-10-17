@@ -77,5 +77,5 @@ type ImplicitAccountOutput struct {
 }
 
 func (o *ImplicitAccountOutput) ChainID() iotago.ChainID {
-	return iotago.EmptyAccountID()
+	return iotago.EmptyAccountID
 }

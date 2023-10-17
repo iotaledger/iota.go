@@ -43,8 +43,8 @@ func (u *UTXOInput) IsReadOnly() bool {
 
 func (u *UTXOInput) OutputID() OutputID {
 	var id OutputID
-	copy(id[:SlotIdentifierLength], u.TransactionID[:])
-	binary.LittleEndian.PutUint16(id[SlotIdentifierLength:], u.TransactionOutputIndex)
+	copy(id[:TransactionIDLength], u.TransactionID[:])
+	binary.LittleEndian.PutUint16(id[TransactionIDLength:], u.TransactionOutputIndex)
 
 	return id
 }

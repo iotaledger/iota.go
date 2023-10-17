@@ -368,11 +368,11 @@ func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan iotago.Outpu
 }
 
 // OutputMetadata returns a channel which immediately returns the output metadata with the given ID and afterward when its state changes.
-func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *apimodels.OutputMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *apimodels.OutputMetadata, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputMetadata, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
 
-	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.OutputMetadataResponse, error) {
-		response := new(apimodels.OutputMetadataResponse)
+	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.OutputMetadata, error) {
+		response := new(apimodels.OutputMetadata)
 		if err := eac.Client.CurrentAPI().JSONDecode(payload, response); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err

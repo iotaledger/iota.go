@@ -64,14 +64,14 @@ func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Addres
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
 func (builder *BasicOutputBuilder) Timelock(untilSlot iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{SlotIndex: untilSlot})
+	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{Slot: untilSlot})
 
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
 func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlot iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, SlotIndex: expiredAfterSlot})
+	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, Slot: expiredAfterSlot})
 
 	return builder
 }

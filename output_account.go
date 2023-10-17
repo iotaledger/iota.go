@@ -3,15 +3,8 @@ package iotago
 import (
 	"bytes"
 
-	"golang.org/x/crypto/blake2b"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
-)
-
-const (
-	// AccountIDLength is the byte length of an AccountID.
-	AccountIDLength = IdentifierLength
 )
 
 var (
@@ -37,53 +30,7 @@ var (
 	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one
 	// Implicit Account Creation Address on the input side of a transaction.
 	ErrMultipleImplicitAccountCreationAddresses = ierrors.New("multiple implicit account creation addresses on the input side")
-
-	emptyAccountID = [AccountIDLength]byte{}
 )
-
-func EmptyAccountID() AccountID {
-	return emptyAccountID
-}
-
-// AccountID is the identifier for an account.
-// It is computed as the Blake2b-256 hash of the OutputID of the output which created the account.
-type AccountID = Identifier
-
-// AccountIDs are IDs of accounts.
-type AccountIDs []AccountID
-
-func (id AccountID) Addressable() bool {
-	return true
-}
-
-func (id AccountID) Key() interface{} {
-	return id.String()
-}
-
-func (id AccountID) FromOutputID(in OutputID) ChainID {
-	return AccountIDFromOutputID(in)
-}
-
-func (id AccountID) Matches(other ChainID) bool {
-	otherAccountID, isAccountID := other.(AccountID)
-	if !isAccountID {
-		return false
-	}
-
-	return id == otherAccountID
-}
-
-func (id AccountID) ToAddress() ChainAddress {
-	var addr AccountAddress
-	copy(addr[:], id[:])
-
-	return &addr
-}
-
-// AccountIDFromOutputID returns the AccountID computed from a given OutputID.
-func AccountIDFromOutputID(outputID OutputID) AccountID {
-	return blake2b.Sum256(outputID[:])
-}
 
 // AccountOutputs is a slice of AccountOutput(s).
 type AccountOutputs []*AccountOutput
@@ -311,7 +258,7 @@ func (a *AccountOutput) ChainID() ChainID {
 }
 
 func (a *AccountOutput) AccountEmpty() bool {
-	return a.AccountID == emptyAccountID
+	return a.AccountID == EmptyAccountID
 }
 
 func (a *AccountOutput) FeatureSet() FeatureSet {

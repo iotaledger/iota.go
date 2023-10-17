@@ -1,11 +1,9 @@
 package iotago
 
 import (
-	"bytes"
 	"context"
 	"crypto/ed25519"
 	"fmt"
-	"sort"
 	"time"
 
 	"golang.org/x/crypto/blake2b"
@@ -16,12 +14,9 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
-	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 const (
-	// BlockIDLength defines the length of a block ID.
-	BlockIDLength = SlotIdentifierLength
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
 	// BlockMaxParents defines the maximum amount of parents in a block.
@@ -52,66 +47,11 @@ const (
 	BlockTypeValidation BlockType = 1
 )
 
-// EmptyBlockID returns an empty BlockID.
-func EmptyBlockID() BlockID {
-	return emptySlotIdentifier
-}
-
-// BlockID is the ID of a Block.
-type BlockID = SlotIdentifier
-
-// BlockIDs are IDs of blocks.
-type BlockIDs []BlockID
-
-// ToHex converts the BlockIDs to their hex representation.
-func (ids BlockIDs) ToHex() []string {
-	hexIDs := make([]string, len(ids))
-	for i, id := range ids {
-		hexIDs[i] = hexutil.EncodeHex(id[:])
-	}
-
-	return hexIDs
-}
-
-// RemoveDupsAndSort removes duplicated BlockIDs and sorts the slice by the lexical ordering.
-func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
-	sorted := append(BlockIDs{}, ids...)
-	sort.Slice(sorted, func(i, j int) bool {
-		return bytes.Compare(sorted[i][:], sorted[j][:]) == -1
-	})
-
-	var result BlockIDs
-	var prev BlockID
-	for i, id := range sorted {
-		if i == 0 || !bytes.Equal(prev[:], id[:]) {
-			result = append(result, id)
-		}
-		prev = id
-	}
-
-	return result
-}
-
-// BlockIDsFromHexString converts the given block IDs from their hex to BlockID representation.
-func BlockIDsFromHexString(blockIDsHex []string) (BlockIDs, error) {
-	result := make(BlockIDs, len(blockIDsHex))
-
-	for i, hexString := range blockIDsHex {
-		blockID, err := SlotIdentifierFromHexString(hexString)
-		if err != nil {
-			return nil, err
-		}
-		result[i] = blockID
-	}
-
-	return result, nil
-}
-
 type BlockPayload interface {
 	Payload
 }
 
-// version + networkID + time + commitmentID + slotIndex + accountID.
+// version + networkID + time + commitmentID + slot + accountID.
 const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
@@ -255,7 +195,7 @@ func (b *ProtocolBlock) ID() (BlockID, error) {
 
 	slot := b.API.TimeProvider().SlotFromTime(b.IssuingTime)
 
-	return NewSlotIdentifier(slot, id), nil
+	return NewBlockID(slot, id), nil
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
@@ -461,9 +401,9 @@ func (b *BasicBlock) Size() int {
 	}
 
 	return BasicBlockSizeEmptyParentsAndEmptyPayload +
-		len(b.StrongParents)*SlotIdentifierLength +
-		len(b.WeakParents)*SlotIdentifierLength +
-		len(b.ShallowLikeParents)*SlotIdentifierLength +
+		len(b.StrongParents)*BlockIDLength +
+		len(b.WeakParents)*BlockIDLength +
+		len(b.ShallowLikeParents)*BlockIDLength +
 		payloadSize
 }
 
@@ -556,9 +496,9 @@ func (b *ValidationBlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 
 func (b *ValidationBlock) Size() int {
 	return serializer.OneByte + // block type
-		serializer.OneByte + len(b.StrongParents)*SlotIdentifierLength + // StrongParents count
-		serializer.OneByte + len(b.WeakParents)*SlotIdentifierLength + // WeakParents count
-		serializer.OneByte + len(b.ShallowLikeParents)*SlotIdentifierLength + // ShallowLikeParents count
+		serializer.OneByte + len(b.StrongParents)*BlockIDLength + // StrongParents count
+		serializer.OneByte + len(b.WeakParents)*BlockIDLength + // WeakParents count
+		serializer.OneByte + len(b.ShallowLikeParents)*BlockIDLength + // ShallowLikeParents count
 		serializer.OneByte + // highest supported version
 		IdentifierLength // protocol parameters hash
 }

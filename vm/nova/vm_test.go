@@ -94,7 +94,7 @@ func TestNFTTransition(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+	sigs, err := transaction.Sign(ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -189,7 +189,7 @@ func TestCirculatingSupplyMelting(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+	sigs, err := transaction.Sign(ident1AddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -268,7 +268,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     500,
+							Slot:          500,
 						},
 					},
 				},
@@ -277,7 +277,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				},
@@ -290,11 +290,11 @@ func TestNovaTransactionExecution(t *testing.T) {
 							Amount:        storageDepositReturn,
 						},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     900,
+							Slot:          900,
 						},
 					},
 				},
@@ -645,7 +645,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys, ident2AddrKeys, ident3AddrKeys, ident4AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -744,7 +744,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -833,7 +833,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(ident2AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -917,7 +917,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(ident2AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -991,7 +991,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -1066,7 +1066,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -1131,7 +1131,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				Slot: 110,
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -1201,7 +1201,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -1324,7 +1324,7 @@ func runNovaTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		}
 
 		// sign the transaction essence
-		sigs, err := tx.Sign(inputIDs.OrderedSet(inputSet.OutputSet()).MustCommitment(testAPI), ed25519AddressesWithKeys...)
+		sigs, err := tx.Sign(ed25519AddressesWithKeys...)
 		require.NoError(t, err)
 
 		// pass the signatures and get the unlock conditions
@@ -3201,7 +3201,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     5,
+							Slot:          5,
 						},
 					},
 				},
@@ -3212,7 +3212,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3251,7 +3251,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3301,7 +3301,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs()},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddrKeys)
+			sigs, err := transaction.Sign(ident2AddrKeys)
 			require.NoError(t, err)
 
 			copy(sigs[0].(*iotago.Ed25519Signature).PublicKey[:], ident1Sk.Public().(ed25519.PublicKey))
@@ -3345,7 +3345,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3391,7 +3391,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3436,7 +3436,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3482,7 +3482,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{
 				Inputs: inputIDs.UTXOInputs(),
 			}}
-			_, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI))
+			_, err := transaction.Sign()
 			require.NoError(t, err)
 			return &test{
 				name: "fail - circular NFT unlock",
@@ -3513,7 +3513,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     20,
+							Slot:          20,
 						},
 					},
 				},
@@ -3522,7 +3522,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			creationSlot := iotago.SlotIndex(5)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(ident2AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3558,7 +3558,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     10,
+							Slot:          10,
 						},
 					},
 				},
@@ -3567,7 +3567,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3635,7 +3635,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				Inputs: inputIDs.UTXOInputs(),
 			}}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3698,7 +3698,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident2AddressKeys)
+			sigs, err := transaction.Sign(ident2AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3770,7 +3770,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddressKeys)
+			sigs, err := transaction.Sign(ident1AddressKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3838,7 +3838,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3853,7 +3853,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     2,
+							Slot:          2,
 						},
 					},
 				},
@@ -3882,7 +3882,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys, ident2AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys, ident2AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -3955,7 +3955,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4002,7 +4002,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4049,7 +4049,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4085,7 +4085,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						// not yet expired, so ident1 needs to unlock
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -4107,7 +4107,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4169,7 +4169,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4224,13 +4224,13 @@ func TestTxSemanticDeposit(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								SlotIndex:     10,
+								Slot:          10,
 							},
 						},
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4290,7 +4290,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4360,7 +4360,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4849,7 +4849,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4899,7 +4899,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -4955,7 +4955,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
+			sigs, err := transaction.Sign(governorAddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5014,7 +5014,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys)
+			sigs, err := transaction.Sign(stateControllerAddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5070,7 +5070,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys)
+			sigs, err := transaction.Sign(governorAddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5140,7 +5140,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1Keys, ident2Keys)
+			sigs, err := transaction.Sign(ident1Keys, ident2Keys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5226,7 +5226,7 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				},
 			}
 
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1Keys, ident2Keys)
+			sigs, err := transaction.Sign(ident1Keys, ident2Keys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5324,7 +5324,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5480,7 +5480,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), stateControllerAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(stateControllerAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5550,7 +5550,7 @@ func TestTxSemanticOutputsIssuer(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), governorAddrKeys, ident1AddrKeys)
+			sigs, err := transaction.Sign(governorAddrKeys, ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5602,7 +5602,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 5,
+							Slot: 5,
 						},
 					},
 				},
@@ -5610,7 +5610,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5644,7 +5644,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 25,
+							Slot: 25,
 						},
 					},
 				},
@@ -5652,7 +5652,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(10)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: 10}}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5686,7 +5686,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1337,
+							Slot: 1337,
 						},
 					},
 				},
@@ -5694,7 +5694,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(666)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5728,7 +5728,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1000,
+							Slot: 1000,
 						},
 					},
 				},
@@ -5736,7 +5736,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 
 			creationSlot := iotago.SlotIndex(1005)
 			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{Inputs: inputIDs.UTXOInputs(), CreationSlot: creationSlot}}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5828,7 +5828,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5898,7 +5898,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5947,7 +5947,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -5996,7 +5996,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -6052,7 +6052,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -6109,7 +6109,7 @@ func TestTxSemanticMana(t *testing.T) {
 					},
 				},
 			}
-			sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), ident1AddrKeys)
+			sigs, err := transaction.Sign(ident1AddrKeys)
 			require.NoError(t, err)
 
 			return &test{
@@ -6203,7 +6203,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+	sigs, err := transaction.Sign(identAddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -6268,7 +6268,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 		},
 	}
 
-	sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+	sigs, err := transaction.Sign(identAddrKeys)
 	require.NoError(t, err)
 
 	tx := &iotago.SignedTransaction{
@@ -6365,7 +6365,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				}
@@ -6393,7 +6393,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.ExpirationUnlockCondition{
-							SlotIndex:     500,
+							Slot:          500,
 							ReturnAddress: ident,
 						},
 					},
@@ -6599,7 +6599,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 				output,
 			},
 		}
-		sigs, err := transaction.Sign(inputIDs.OrderedSet(inputs.OutputSet()).MustCommitment(testAPI), identAddrKeys)
+		sigs, err := transaction.Sign(identAddrKeys)
 		require.NoError(t, err)
 
 		return inputs, sigs[0], transaction
@@ -6729,7 +6729,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					Amount: exampleAmount,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 500},
+						&iotago.TimelockUnlockCondition{Slot: 500},
 					},
 				},
 			},

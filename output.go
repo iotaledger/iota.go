@@ -1,23 +1,18 @@
 package iotago
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"math"
 	"math/big"
-	"sort"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // BaseToken defines the unit of the base token of the network.
@@ -64,18 +59,16 @@ type Output interface {
 type OutputType byte
 
 const (
-	// OutputTreasury denotes the type of the TreasuryOutput.
-	OutputTreasury OutputType = 2
 	// OutputBasic denotes an BasicOutput.
-	OutputBasic OutputType = 3
+	OutputBasic OutputType = iota
 	// OutputAccount denotes an AccountOutput.
-	OutputAccount OutputType = 4
+	OutputAccount
 	// OutputFoundry denotes a FoundryOutput.
-	OutputFoundry OutputType = 5
+	OutputFoundry
 	// OutputNFT denotes an NFTOutput.
-	OutputNFT OutputType = 6
+	OutputNFT
 	// OutputDelegation denotes a DelegationOutput.
-	OutputDelegation OutputType = 7
+	OutputDelegation
 )
 
 func (outputType OutputType) String() string {
@@ -87,9 +80,6 @@ func (outputType OutputType) String() string {
 }
 
 var outputNames = [OutputDelegation + 1]string{
-	"SigLockedSingleOutput",
-	"SigLockedDustAllowanceOutput",
-	"TreasuryOutput",
 	"BasicOutput",
 	"AccountOutput",
 	"FoundryOutput",
@@ -97,16 +87,7 @@ var outputNames = [OutputDelegation + 1]string{
 	"DelegationOutput",
 }
 
-const (
-	// OutputIndexLength defines the length of an OutputIndex.
-	OutputIndexLength = serializer.UInt16ByteSize
-	// OutputIDLength defines the length of an OutputID.
-	OutputIDLength = SlotIdentifierLength + OutputIndexLength
-)
-
 var (
-	ErrInvalidOutputIDLength = ierrors.New("Invalid outputID length")
-
 	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
 	ErrTransDepIdentOutputNonUTXOChainID = ierrors.New("transition dependable ident outputs must have UTXO chain IDs")
 	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
@@ -118,129 +99,6 @@ func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
 	return rentStruct.StorageScoreOffsetOutput() +
 		// included output id, block id, and slot booked data size
 		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
-}
-
-// OutputID defines the identifier for an UTXO which consists
-// out of the referenced TransactionID and the output's index.
-type OutputID [OutputIDLength]byte
-
-// EmptyOutputID is an empty OutputID.
-var EmptyOutputID = OutputID{}
-
-func EmptyOutputIDWithCreationSlot(slot SlotIndex) OutputID {
-	var outputID OutputID
-	binary.LittleEndian.PutUint32(outputID[IdentifierLength:SlotIdentifierLength], uint32(slot))
-	return outputID
-}
-
-// ToHex converts the OutputID to its hex representation.
-func (outputID OutputID) ToHex() string {
-	return hexutil.EncodeHex(outputID[:])
-}
-
-// String converts the OutputID to its human-readable string representation.
-func (outputID OutputID) String() string {
-	return fmt.Sprintf("OutputID(%s:%d)", outputID.TransactionID().String(), outputID.Index())
-}
-
-// TransactionID returns the TransactionID of the Output this OutputID references.
-func (outputID OutputID) TransactionID() TransactionID {
-	var txID TransactionID
-	copy(txID[:], outputID[:SlotIdentifierLength])
-
-	return txID
-}
-
-// Index returns the index of the Output this OutputID references.
-func (outputID OutputID) Index() uint16 {
-	return binary.LittleEndian.Uint16(outputID[SlotIdentifierLength:])
-}
-
-// CreationSlot returns the slot the Output was created in.
-func (outputID OutputID) CreationSlot() SlotIndex {
-	return outputID.TransactionID().Slot()
-}
-
-// UTXOInput creates a UTXOInput from this OutputID.
-func (outputID OutputID) UTXOInput() *UTXOInput {
-	return &UTXOInput{
-		TransactionID:          outputID.TransactionID(),
-		TransactionOutputIndex: outputID.Index(),
-	}
-}
-
-func (outputID OutputID) Bytes() ([]byte, error) {
-	return outputID[:], nil
-}
-
-// HexOutputIDs is a slice of hex encoded OutputID strings.
-type HexOutputIDs []string
-
-// MustOutputIDs converts the hex strings into OutputIDs.
-func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
-	vals, err := ids.OutputIDs()
-	if err != nil {
-		panic(err)
-	}
-
-	return vals
-}
-
-// OutputIDs converts the hex strings into OutputIDs.
-func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
-	vals := make(OutputIDs, len(ids))
-	for i, v := range ids {
-		val, err := hexutil.DecodeHex(v)
-		if err != nil {
-			return nil, err
-		}
-		copy(vals[i][:], val)
-	}
-
-	return vals, nil
-}
-
-// OutputIDFromTransactionIDAndIndex creates a OutputID from the given TransactionID and output index.
-func OutputIDFromTransactionIDAndIndex(txID TransactionID, index uint16) OutputID {
-	utxo := &UTXOInput{
-		TransactionID:          txID,
-		TransactionOutputIndex: index,
-	}
-
-	return utxo.OutputID()
-}
-
-// OutputIDFromBytes creates a OutputID from the given bytes.
-func OutputIDFromBytes(bytes []byte) (OutputID, int, error) {
-	if len(bytes) < OutputIDLength {
-		return OutputID{}, 0, ErrInvalidOutputIDLength
-	}
-
-	return OutputID(bytes), OutputIDLength, nil
-}
-
-// OutputIDFromHex creates a OutputID from the given hex encoded OutputID data.
-func OutputIDFromHex(hexStr string) (OutputID, error) {
-	outputIDData, err := hexutil.DecodeHex(hexStr)
-	if err != nil {
-		return OutputID{}, err
-	}
-
-	o, _, err := OutputIDFromBytes(outputIDData)
-
-	return o, err
-}
-
-// MustOutputIDFromHex works like OutputIDFromHex but panics if an error is encountered.
-func MustOutputIDFromHex(hexStr string) OutputID {
-	var outputID OutputID
-	outputIDData, err := hexutil.DecodeHex(hexStr)
-	if err != nil {
-		panic(err)
-	}
-	copy(outputID[:], outputIDData)
-
-	return outputID
 }
 
 // OutputSet is a map of the OutputID to Output.
@@ -261,58 +119,6 @@ func (outputSet OutputSet) Filter(f func(outputID OutputID, output Output) bool)
 	}
 
 	return m
-}
-
-// OutputIDs is a slice of OutputID.
-type OutputIDs []OutputID
-
-// ToHex converts all UTXOInput to their hex string representation.
-func (outputIDs OutputIDs) ToHex() []string {
-	ids := make([]string, len(outputIDs))
-	for i := range outputIDs {
-		ids[i] = hexutil.EncodeHex(outputIDs[i][:])
-	}
-
-	return ids
-}
-
-// RemoveDupsAndSort removes duplicated OutputIDs and sorts the slice by the lexical ordering.
-func (outputIDs OutputIDs) RemoveDupsAndSort() OutputIDs {
-	sorted := append(OutputIDs{}, outputIDs...)
-	sort.Slice(sorted, func(i, j int) bool {
-		return bytes.Compare(sorted[i][:], sorted[j][:]) == -1
-	})
-
-	var result OutputIDs
-	var prev OutputID
-	for i, id := range sorted {
-		if i == 0 || !bytes.Equal(prev[:], id[:]) {
-			result = append(result, id)
-		}
-		prev = id
-	}
-
-	return result
-}
-
-// UTXOInputs converts the OutputIDs slice to Inputs.
-func (outputIDs OutputIDs) UTXOInputs() TxEssenceInputs {
-	inputs := make(TxEssenceInputs, 0)
-	for _, outputID := range outputIDs {
-		inputs = append(inputs, outputID.UTXOInput())
-	}
-
-	return inputs
-}
-
-// OrderedSet returns an Outputs slice ordered by this OutputIDs slice given an OutputSet.
-func (outputIDs OutputIDs) OrderedSet(set OutputSet) Outputs[Output] {
-	outputs := make(Outputs[Output], len(outputIDs))
-	for i, outputID := range outputIDs {
-		outputs[i] = set[outputID]
-	}
-
-	return outputs
 }
 
 var (
@@ -384,37 +190,6 @@ func (outputs Outputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (W
 	}
 
 	return workScoreOutputs, nil
-}
-
-// MustCommitment works like Commitment but panics if there's an error.
-func (outputs Outputs[T]) MustCommitment(api API) []byte {
-	comm, err := outputs.Commitment(api)
-	if err != nil {
-		panic(err)
-	}
-
-	return comm
-}
-
-// Commitment computes a hash of the outputs slice to be used as a commitment.
-func (outputs Outputs[T]) Commitment(api API) ([]byte, error) {
-	h, err := blake2b.New256(nil)
-	if err != nil {
-		return nil, err
-	}
-	for _, output := range outputs {
-		outputBytes, err := api.Encode(output)
-		if err != nil {
-			return nil, ierrors.Errorf("unable to compute commitment hash: %w", err)
-		}
-
-		outputHash := blake2b.Sum256(outputBytes)
-		if _, err := h.Write(outputHash[:]); err != nil {
-			return nil, ierrors.Errorf("unable to write output bytes for commitment hash: %w", err)
-		}
-	}
-
-	return h.Sum(nil), nil
 }
 
 // ChainOutputSet returns a ChainOutputSet for all ChainOutputs in Outputs.
@@ -556,57 +331,6 @@ type TransDepIdentOutput interface {
 	UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error)
 }
 
-// OutputIDHex is the hex representation of an output ID.
-type OutputIDHex string
-
-// MustSplitParts returns the transaction ID and output index parts of the hex output ID.
-// It panics if the hex output ID is invalid.
-func (oih OutputIDHex) MustSplitParts() (*TransactionID, uint16) {
-	txID, outputIndex, err := oih.SplitParts()
-	if err != nil {
-		panic(err)
-	}
-
-	return txID, outputIndex
-}
-
-// SplitParts returns the transaction ID and output index parts of the hex output ID.
-func (oih OutputIDHex) SplitParts() (*TransactionID, uint16, error) {
-	outputIDBytes, err := hexutil.DecodeHex(string(oih))
-	if err != nil {
-		return nil, 0, err
-	}
-	var txID TransactionID
-	copy(txID[:], outputIDBytes[:SlotIdentifierLength])
-	outputIndex := binary.LittleEndian.Uint16(outputIDBytes[SlotIdentifierLength : SlotIdentifierLength+serializer.UInt16ByteSize])
-
-	return &txID, outputIndex, nil
-}
-
-// MustAsUTXOInput converts the hex output ID to a UTXOInput.
-// It panics if the hex output ID is invalid.
-func (oih OutputIDHex) MustAsUTXOInput() *UTXOInput {
-	utxoInput, err := oih.AsUTXOInput()
-	if err != nil {
-		panic(err)
-	}
-
-	return utxoInput
-}
-
-// AsUTXOInput converts the hex output ID to a UTXOInput.
-func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
-	var utxoInput UTXOInput
-	txID, outputIndex, err := oih.SplitParts()
-	if err != nil {
-		return nil, err
-	}
-	copy(utxoInput.TransactionID[:], txID[:])
-	utxoInput.TransactionOutputIndex = outputIndex
-
-	return &utxoInput, nil
-}
-
 // OutputsSyntacticalValidationFunc which given the index of an output and the output itself, runs syntactical validations and returns an error if any should fail.
 type OutputsSyntacticalValidationFunc func(index int, output Output) error
 
@@ -681,13 +405,13 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 		unlockConditionSet := output.UnlockConditionSet()
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
-			if expiration.SlotIndex == 0 {
+			if expiration.Slot == 0 {
 				return ErrExpirationConditionZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
-			if timelock.SlotIndex == 0 {
+			if timelock.Slot == 0 {
 				return ErrTimelockConditionZero
 			}
 		}

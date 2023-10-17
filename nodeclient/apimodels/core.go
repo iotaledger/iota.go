@@ -127,17 +127,16 @@ const (
 	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
 	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
 	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
-	TxFailureInputsCommitmentInvalid               TransactionFailureReason = 11
-	TxFailureSenderNotUnlocked                     TransactionFailureReason = 12
-	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 13
-	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 14
-	TxFailureManaAmountInvalid                     TransactionFailureReason = 15
-	TxFailureBICInputInvalid                       TransactionFailureReason = 16
-	TxFailureRewardInputInvalid                    TransactionFailureReason = 17
-	TxFailureCommitmentInputInvalid                TransactionFailureReason = 18
-	TxFailureNoStakingFeature                      TransactionFailureReason = 19
-	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 20
-	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 21
+	TxFailureSenderNotUnlocked                     TransactionFailureReason = 11
+	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 12
+	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 13
+	TxFailureManaAmountInvalid                     TransactionFailureReason = 14
+	TxFailureBICInputInvalid                       TransactionFailureReason = 15
+	TxFailureRewardInputInvalid                    TransactionFailureReason = 16
+	TxFailureCommitmentInputInvalid                TransactionFailureReason = 17
+	TxFailureNoStakingFeature                      TransactionFailureReason = 18
+	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 19
+	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 20
 	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
 )
 
@@ -261,8 +260,21 @@ type (
 		TxFailureReason TransactionFailureReason `serix:"4,mapKey=txFailureReason,omitempty"`
 	}
 
-	// OutputMetadataResponse defines the response of a GET outputs metadata REST API call.
-	OutputMetadataResponse struct {
+	// OutputResponse defines the response of a GET outputs REST API call.
+	OutputResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+	}
+
+	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
+	OutputWithMetadataResponse struct {
+		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
+		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+		Metadata      *OutputMetadata        `serix:"2,mapKey=metadata"`
+	}
+
+	// OutputMetadata defines the response of a GET outputs metadata REST API call.
+	OutputMetadata struct {
 		// BlockID is the block ID that contains the output.
 		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
 		// TransactionID is the transaction ID that creates the output.
@@ -293,13 +305,13 @@ type (
 
 	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
-		// SlotIndex is the index of the slot for which the estimate is provided
-		SlotIndex iotago.SlotIndex `serix:"0,mapKey=slotIndex"`
+		// Slot is the index of the slot for which the estimate is provided
+		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
 		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
 		Ready bool `serix:"1,mapKey=ready"`
-		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in SlotIndex slot.
+		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in Slot slot.
 		ReferenceManaCost iotago.Mana `serix:"2,mapKey=referenceManaCost"`
-		// BlockIssuanceCredits (BIC) is the mana a user has on its BIC account exactly slotIndex - MaxCommittableASge in the past.
+		// BlockIssuanceCredits (BIC) is the mana a user has on its BIC account exactly slot - MaxCommittableASge in the past.
 		// This balance needs to be > 0 zero, otherwise account is locked
 		BlockIssuanceCredits iotago.BlockIssuanceCredits `serix:"3,mapKey=blockIssuanceCredits"`
 	}

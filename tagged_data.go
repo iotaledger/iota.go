@@ -26,7 +26,7 @@ func (u *TaggedData) PayloadType() PayloadType {
 
 func (u *TaggedData) Size() int {
 	// PayloadType
-	return serializer.TypeDenotationByteSize +
+	return serializer.SmallTypeDenotationByteSize +
 		serializer.OneByte + len(u.Tag) +
 		serializer.UInt32ByteSize + len(u.Data)
 }

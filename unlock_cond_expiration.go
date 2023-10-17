@@ -12,13 +12,13 @@ type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
 	ReturnAddress Address `serix:"0,mapKey=returnAddress"`
 	// The slot index at which the expiration happens.
-	SlotIndex `serix:"1,mapKey=slotIndex,omitempty"`
+	Slot SlotIndex `serix:"1,mapKey=slot,omitempty"`
 }
 
 func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	return &ExpirationUnlockCondition{
 		ReturnAddress: s.ReturnAddress.Clone(),
-		SlotIndex:     s.SlotIndex,
+		Slot:          s.Slot,
 	}
 }
 
@@ -40,7 +40,7 @@ func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 	switch {
 	case !s.ReturnAddress.Equal(otherCond.ReturnAddress):
 		return false
-	case s.SlotIndex != otherCond.SlotIndex:
+	case s.Slot != otherCond.Slot:
 		return false
 	}
 

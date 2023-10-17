@@ -74,18 +74,18 @@ func (a *Attestation) Compare(other *Attestation) int {
 func (a *Attestation) BlockID() (BlockID, error) {
 	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
-		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	headerHash, err := a.BlockHeader.Hash(a.API)
 	if err != nil {
-		return EmptyBlockID(), ierrors.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
 	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
-	return NewSlotIdentifier(slot, id), nil
+	return NewBlockID(slot, id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {

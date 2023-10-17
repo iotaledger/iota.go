@@ -58,7 +58,7 @@ func (featType FeatureType) String() string {
 }
 
 var featNames = [FeatureStaking + 1]string{
-	"SenderFeature", "Issuer", "MetadataFeature", "TagFeature", "NativeTokenFeature", "BlockIssuerFeature", "StakingFeature",
+	"SenderFeature", "IssuerFeature", "MetadataFeature", "TagFeature", "NativeTokenFeature", "BlockIssuerFeature", "StakingFeature",
 }
 
 // Features is a slice of Feature(s).

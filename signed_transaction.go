@@ -47,14 +47,14 @@ type SignedTransaction struct {
 
 // ID computes the ID of the SignedTransaction.
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
-	transactionBytes, err := t.API.Encode(t.Unlocks)
+	transactionBytes, err := t.API.Encode(t.Transaction)
 	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
 	unlocksBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
-		return SignedTransactionID{}, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
 	}
 
 	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
@@ -62,7 +62,7 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 
 func (t *SignedTransaction) Size() int {
 	// PayloadType
-	return serializer.TypeDenotationByteSize +
+	return serializer.SmallTypeDenotationByteSize +
 		t.Transaction.Size() +
 		t.Unlocks.Size()
 }

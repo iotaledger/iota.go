@@ -7,12 +7,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// Domain separation prefixes.
-const (
-	LeafHashPrefix = 0
-	NodeHashPrefix = 1
-)
-
 type Value interface {
 	serializer.Byter
 }
@@ -36,6 +30,10 @@ func (t *Hasher[V]) Size() int {
 // EmptyRoot returns a special case for an empty tree.
 // This is equivalent to Hash(nil).
 func (t *Hasher[V]) EmptyRoot() []byte {
+	return t.emptyLeaf()
+}
+
+func (t *Hasher[V]) emptyLeaf() []byte {
 	return t.hash.New().Sum(nil)
 }
 
@@ -56,7 +54,7 @@ func (t *Hasher[V]) HashValues(values []V) ([]byte, error) {
 // Hash computes the Merkle tree hash of the provided data.
 func (t *Hasher[V]) Hash(data [][]byte) []byte {
 	if len(data) == 0 {
-		return t.EmptyRoot()
+		return t.emptyLeaf()
 	}
 	if len(data) == 1 {
 		l := data[0]
@@ -71,10 +69,9 @@ func (t *Hasher[V]) Hash(data [][]byte) []byte {
 	return t.hashNode(l, r)
 }
 
-// hashLeaf returns the Merkle tree leafValue hash of data.
+// hashLeaf returns the Merkle tree ValueHash hash of data.
 func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
-	h.Write([]byte{LeafHashPrefix})
 	h.Write(l)
 
 	return h.Sum(nil)
@@ -83,7 +80,6 @@ func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 // hashNode returns the inner Merkle tree node hash of the two child nodes l and r.
 func (t *Hasher[V]) hashNode(l, r []byte) []byte {
 	h := t.hash.New()
-	h.Write([]byte{NodeHashPrefix})
 	h.Write(l)
 	h.Write(r)
 

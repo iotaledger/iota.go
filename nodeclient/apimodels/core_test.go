@@ -161,7 +161,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":21}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":20}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.BlockMetadataResponse)
@@ -192,7 +192,7 @@ func Test_OutputMetadataResponse(t *testing.T) {
 	api := testAPI()
 
 	{
-		response := &apimodels.OutputMetadataResponse{
+		response := &apimodels.OutputMetadata{
 			BlockID:              iotago.BlockID{0x8},
 			TransactionID:        iotago.TransactionID{0x9},
 			OutputIndex:          3,
@@ -209,14 +209,14 @@ func Test_OutputMetadataResponse(t *testing.T) {
 		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":true,\"commitmentIdSpent\":\"0x060000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionIdSpent\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"includedCommitmentId\":\"0x030000000000000000000000000000000000000000000000000000000000000000000000\",\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
-		decoded := new(apimodels.OutputMetadataResponse)
+		decoded := new(apimodels.OutputMetadata)
 		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
 		require.EqualValues(t, response, decoded)
 	}
 
 	// Test omitempty
 	{
-		response := &apimodels.OutputMetadataResponse{
+		response := &apimodels.OutputMetadata{
 			BlockID:            iotago.BlockID{0x8},
 			TransactionID:      iotago.TransactionID{0x9},
 			OutputIndex:        3,
@@ -230,7 +230,7 @@ func Test_OutputMetadataResponse(t *testing.T) {
 		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":false,\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
-		decoded := new(apimodels.OutputMetadataResponse)
+		decoded := new(apimodels.OutputMetadata)
 		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
 		require.EqualValues(t, response, decoded)
 	}
@@ -264,7 +264,7 @@ func Test_CongestionResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.CongestionResponse{
-		SlotIndex:            12,
+		Slot:                 12,
 		Ready:                true,
 		ReferenceManaCost:    100,
 		BlockIssuanceCredits: 80,
@@ -273,7 +273,7 @@ func Test_CongestionResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"slotIndex\":12,\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
+	expected := "{\"slot\":12,\"ready\":true,\"referenceManaCost\":\"100\",\"blockIssuanceCredits\":\"80\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.CongestionResponse)

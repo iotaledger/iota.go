@@ -151,16 +151,16 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	// check if the output is locked for a certain time to an account.
 	hasManalockCondition := func(output iotago.Output) (iotago.AccountID, bool) {
 		if !output.UnlockConditionSet().HasTimelockUntil(minManalockedSlot) {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 
 		unlockAddress := output.UnlockConditionSet().Address()
 		if unlockAddress == nil {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 
 		if unlockAddress.Address.Type() != iotago.AddressAccount {
-			return iotago.EmptyAccountID(), false
+			return iotago.EmptyAccountID, false
 		}
 		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
 		accountAddress := unlockAddress.Address.(*iotago.AccountAddress)
@@ -399,11 +399,6 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	}
 
 	inputs := inputIDs.OrderedSet(b.inputs)
-	commitment, err := inputs.Commitment(b.api)
-	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to calculate TX inputs commitment: %s, %s", inputIDs, b.inputs)
-	}
-	copy(b.transaction.InputsCommitment[:], commitment)
 
 	txEssenceData, err := b.transaction.SigningMessage()
 	if err != nil {

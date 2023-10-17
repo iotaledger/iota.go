@@ -85,9 +85,11 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	require.NoError(t, err)
 
-	txID := tpkg.Rand36ByteArray()
-	fakeOutputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 1).ToHex()
+	fakeOutputID, err := originOutputProof.OutputID(originOutput)
+	require.NoError(t, err)
 
 	originRoutes := &apimodels.RoutesResponse{
 		Routes: []string{"indexer/v2"},
@@ -98,7 +100,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
 		LedgerIndex: 1337,
 		PageSize:    1,
-		Items:       iotago.HexOutputIDs{fakeOutputID},
+		Items:       iotago.HexOutputIDs{fakeOutputID.ToHex()},
 		Cursor:      "some-offset-key",
 	}, map[string]string{
 		"tag": "some-tag",
@@ -107,14 +109,17 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
 		LedgerIndex: 1338,
 		PageSize:    1,
-		Items:       iotago.HexOutputIDs{fakeOutputID},
+		Items:       iotago.HexOutputIDs{fakeOutputID.ToHex()},
 	}, map[string]string{
 		"cursor": "some-offset-key",
 		"tag":    "some-tag",
 	})
 
-	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID)
-	mockGetBinary(outputRoute, 200, originOutput, true)
+	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID.ToHex())
+	mockGetBinary(outputRoute, 200, &apimodels.OutputResponse{
+		Output:        originOutput,
+		OutputIDProof: originOutputProof,
+	}, true)
 
 	client := nodeClient(t)
 

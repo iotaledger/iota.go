@@ -36,8 +36,8 @@ func TestBasicOutputBuilder(t *testing.T) {
 		Amount: 1337,
 		Conditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
-			&iotago.TimelockUnlockCondition{SlotIndex: timelock},
-			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, SlotIndex: expiration},
+			&iotago.TimelockUnlockCondition{Slot: timelock},
+			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, Slot: expiration},
 		},
 		Features: iotago.BasicOutputFeatures{
 			&iotago.MetadataFeature{Data: metadata},
