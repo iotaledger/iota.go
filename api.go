@@ -123,7 +123,7 @@ type ProtocolParameters interface {
 
 	StakingUnbondingPeriod() EpochIndex
 
-	ValidationBlocksPerSlot() uint16
+	ValidationBlocksPerSlot() uint8
 
 	PunishmentEpochs() EpochIndex
 

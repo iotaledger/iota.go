@@ -37,7 +37,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(10, 8, 8, 31, 1154, 2, 1),
+			WithRewardsOptions(8, 8, 31, 1154, 2, 1),
 		},
 			opts...,
 		),
@@ -87,7 +87,7 @@ func (p *V3ProtocolParameters) StakingUnbondingPeriod() EpochIndex {
 	return p.basicProtocolParameters.StakingUnbondingPeriod
 }
 
-func (p *V3ProtocolParameters) ValidationBlocksPerSlot() uint16 {
+func (p *V3ProtocolParameters) ValidationBlocksPerSlot() uint8 {
 	return p.basicProtocolParameters.ValidationBlocksPerSlot
 }
 
@@ -277,7 +277,7 @@ func WithCongestionControlOptions(minReferenceManaCost Mana, rmcIncrease Mana, r
 	}
 }
 
-func WithStakingOptions(unbondingPeriod EpochIndex, validationBlocksPerSlot uint16, punishmentEpochs EpochIndex) options.Option[V3ProtocolParameters] {
+func WithStakingOptions(unbondingPeriod EpochIndex, validationBlocksPerSlot uint8, punishmentEpochs EpochIndex) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.StakingUnbondingPeriod = unbondingPeriod
 		p.basicProtocolParameters.ValidationBlocksPerSlot = validationBlocksPerSlot
@@ -295,9 +295,8 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(validatorBlocksPerSlot, profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, manaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, bootstrappingDuration EpochIndex, manaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.RewardsParameters.ValidatorBlocksPerSlot = validatorBlocksPerSlot
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
 		p.basicProtocolParameters.RewardsParameters.BootstrappingDuration = bootstrappingDuration
 		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient

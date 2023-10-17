@@ -30,7 +30,7 @@ type basicProtocolParameters struct {
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"10,mapKey=stakingUnbondingPeriod"`
 	// ValidationBlocksPerSlot is the number of validation blocks that each validator should issue each slot.
-	ValidationBlocksPerSlot uint16 `serix:"11,mapKey=validationBlocksPerSlot"`
+	ValidationBlocksPerSlot uint8 `serix:"11,mapKey=validationBlocksPerSlot"`
 	// PunishmentEpochs is the number of epochs worth of Mana that a node is punished with for each additional validation block it issues.
 	PunishmentEpochs EpochIndex `serix:"12,mapKey=punishmentEpochs"`
 

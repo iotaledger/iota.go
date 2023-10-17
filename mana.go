@@ -35,25 +35,22 @@ func (m ManaParameters) Equals(other ManaParameters) bool {
 }
 
 type RewardsParameters struct {
-	// ValidatorBlocksPerSlot is the number of validation blocks that should be issued by a selected validator per slot during its epoch duties.
-	ValidatorBlocksPerSlot uint8 `serix:"0,mapKey=validatorBlocksPerSlot"`
 	// ProfitMarginExponent is used for shift operation for calculation of profit margin.
-	ProfitMarginExponent uint8 `serix:"1,mapKey=profitMarginExponent"`
+	ProfitMarginExponent uint8 `serix:"0,mapKey=profitMarginExponent"`
 	// BootstrappingDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
-	BootstrappingDuration EpochIndex `serix:"2,mapKey=bootstrappingDuration"`
+	BootstrappingDuration EpochIndex `serix:"1,mapKey=bootstrappingDuration"`
 	// ManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
-	ManaShareCoefficient uint64 `serix:"3,mapKey=manaShareCoefficient"`
+	ManaShareCoefficient uint64 `serix:"2,mapKey=manaShareCoefficient"`
 	// DecayBalancingConstantExponent is the exponent used for calculation of the initial reward.
-	DecayBalancingConstantExponent uint8 `serix:"4,mapKey=decayBalancingConstantExponent"`
+	DecayBalancingConstantExponent uint8 `serix:"3,mapKey=decayBalancingConstantExponent"`
 	// DecayBalancingConstant needs to be an integer approximation calculated based on chosen DecayBalancingConstantExponent.
-	DecayBalancingConstant uint64 `serix:"5,mapKey=decayBalancingConstant"`
+	DecayBalancingConstant uint64 `serix:"4,mapKey=decayBalancingConstant"`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
-	PoolCoefficientExponent uint8 `serix:"6,mapKey=poolCoefficientExponent"`
+	PoolCoefficientExponent uint8 `serix:"5,mapKey=poolCoefficientExponent"`
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
-	return r.ValidatorBlocksPerSlot == other.ValidatorBlocksPerSlot &&
-		r.ProfitMarginExponent == other.ProfitMarginExponent && r.BootstrappingDuration == other.BootstrappingDuration &&
+	return r.ProfitMarginExponent == other.ProfitMarginExponent && r.BootstrappingDuration == other.BootstrappingDuration &&
 		r.ManaShareCoefficient == other.ManaShareCoefficient &&
 		r.DecayBalancingConstantExponent == other.DecayBalancingConstantExponent &&
 		r.DecayBalancingConstant == other.DecayBalancingConstant &&
