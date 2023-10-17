@@ -988,8 +988,8 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 	return iotago.WorkScore(RandUint32(max))
 }
 
-// RandWorkscoreStructure produces random workscore structure.
-func RandWorkscoreStructure() *iotago.WorkScoreParameters {
+// RandWorkScoreParameters produces random workscore structure.
+func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 	return &iotago.WorkScoreParameters{
 		DataByte:         RandWorkScore(math.MaxUint32),
 		Block:            RandWorkScore(math.MaxUint32),
