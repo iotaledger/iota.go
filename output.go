@@ -96,9 +96,9 @@ var (
 
 // defines the default storage score offset for an output.
 func offsetOutput(storageScoreStruct *StorageScoreStructure) StorageScore {
-	return storageScoreStruct.StorageScoreOffsetOutput() +
+	return storageScoreStruct.OffsetOutput() +
 		// included output id, block id, and slot booked data size
-		storageScoreStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
+		storageScoreStruct.FactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
 }
 
 // OutputSet is a map of the OutputID to Output.

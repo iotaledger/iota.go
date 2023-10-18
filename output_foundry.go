@@ -180,7 +180,7 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 
 func (f *FoundryOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return offsetOutput(storageScoreStruct) +
-		storageScoreStruct.StorageScoreFactorData().Multiply(StorageScore(f.Size())) +
+		storageScoreStruct.FactorData().Multiply(StorageScore(f.Size())) +
 		f.TokenScheme.StorageScore(storageScoreStruct, nil) +
 		f.Conditions.StorageScore(storageScoreStruct, nil) +
 		f.Features.StorageScore(storageScoreStruct, nil) +

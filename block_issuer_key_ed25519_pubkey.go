@@ -59,5 +59,5 @@ func (key *Ed25519PublicKeyBlockIssuerKey) Size() int {
 }
 
 func (key *Ed25519PublicKeyBlockIssuerKey) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreStruct.StorageScoreOffsetEd25519BlockIssuerKey()
+	return storageScoreStruct.OffsetEd25519BlockIssuerKey()
 }

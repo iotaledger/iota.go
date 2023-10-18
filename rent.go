@@ -63,33 +63,33 @@ func (r *StorageScoreStructure) StorageCost() BaseToken {
 	return r.StorageScoreParameters.StorageCost
 }
 
-// StorageScoreFactorData returns the factor to be used for data only fields.
-func (r *StorageScoreStructure) StorageScoreFactorData() StorageScoreFactor {
+// FactorData returns the factor to be used for data only fields.
+func (r *StorageScoreStructure) FactorData() StorageScoreFactor {
 	return r.StorageScoreParameters.FactorData
 }
 
-// StorageScoreOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
-func (r *StorageScoreStructure) StorageScoreOffsetOutput() StorageScore {
+// OffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
+func (r *StorageScoreStructure) OffsetOutput() StorageScore {
 	return r.StorageScoreParameters.OffsetOutput
 }
 
-// StorageScoreOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
-func (r *StorageScoreStructure) StorageScoreOffsetEd25519BlockIssuerKey() StorageScore {
+// OffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
+func (r *StorageScoreStructure) OffsetEd25519BlockIssuerKey() StorageScore {
 	return r.StorageScoreParameters.OffsetEd25519BlockIssuerKey
 }
 
-// StorageScoreOffsetStakingFeature returns the offset to be used for staking feature.
-func (r *StorageScoreStructure) StorageScoreOffsetStakingFeature() StorageScore {
+// OffsetStakingFeature returns the offset to be used for staking feature.
+func (r *StorageScoreStructure) OffsetStakingFeature() StorageScore {
 	return r.StorageScoreParameters.OffsetStakingFeature
 }
 
-// StorageScoreOffsetDelegation returns the offset to be used for delegation output.
-func (r *StorageScoreStructure) StorageScoreOffsetDelegation() StorageScore {
+// OffsetDelegation returns the offset to be used for delegation output.
+func (r *StorageScoreStructure) OffsetDelegation() StorageScore {
 	return r.StorageScoreParameters.OffsetDelegation
 }
 
-// NewRentStructure creates a new RentStructure.
-func NewRentStructure(rentParameters *StorageScoreParameters) *StorageScoreStructure {
+// NewStorageScoreStructure creates a new RentStructure.
+func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageScoreStructure {
 	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,

@@ -51,7 +51,7 @@ func (s *StakingFeature) StorageScore(storageScoreStruct *StorageScoreStructure,
 		return f(storageScoreStruct)
 	}
 
-	return storageScoreStruct.StorageScoreOffsetStakingFeature()
+	return storageScoreStruct.OffsetStakingFeature()
 }
 
 func (s *StakingFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {

@@ -175,8 +175,8 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex
 
 func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return offsetOutput(storageScoreStruct) +
-		storageScoreStruct.StorageScoreFactorData().Multiply(StorageScore(d.Size())) +
-		storageScoreStruct.StorageScoreOffsetDelegation() +
+		storageScoreStruct.FactorData().Multiply(StorageScore(d.Size())) +
+		storageScoreStruct.OffsetDelegation() +
 		d.Conditions.StorageScore(storageScoreStruct, nil)
 }
 

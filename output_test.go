@@ -362,7 +362,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParams, iotago.NewRentStructure(tt.protoParams.RentParameters()))
+			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParams, iotago.NewStorageScoreStructure(tt.protoParams.RentParameters()))
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {

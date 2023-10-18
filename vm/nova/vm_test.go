@@ -5809,7 +5809,7 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							storageScoreStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
+							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.RentParameters())
 							minDeposit, err := storageScoreStructure.MinDeposit(input)
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
@@ -5878,7 +5878,7 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							storageScoreStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
+							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.RentParameters())
 							minDeposit, err := storageScoreStructure.MinDeposit(input)
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)

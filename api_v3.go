@@ -276,7 +276,7 @@ func V3API(protoParams ProtocolParameters) API {
 	v3 := &v3api{
 		serixAPI:              api,
 		protocolParameters:    protoParams.(*V3ProtocolParameters),
-		storageScoreStructure: NewRentStructure(protoParams.RentParameters()),
+		storageScoreStructure: NewStorageScoreStructure(protoParams.RentParameters()),
 		timeProvider:          timeProvider,
 		manaDecayProvider:     protoParams.ManaDecayProvider(),
 		maxBlockWork:          maxBlockWork,
