@@ -545,7 +545,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 	return block, nil
 }
 
-// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
+// TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
 func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
