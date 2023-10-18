@@ -10,7 +10,7 @@ type basicProtocolParameters struct {
 	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 
 	// StorageScoreParameters defines the Storage Score Parameters used by given node/network.
-	StorageScoreParameters StorageScoreParameters `serix:"3,mapKey=rentParameters"`
+	StorageScoreParameters StorageScoreParameters `serix:"3,mapKey=storageScoreParameters"`
 	// WorkScoreParameters defines the work score parameters used by given node/network.
 	WorkScoreParameters WorkScoreParameters `serix:"4,mapKey=workScoreParameters"`
 	// TokenSupply defines the current token supply on the network.

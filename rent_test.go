@@ -9,7 +9,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
-func TestRentParameters_DeSerialize(t *testing.T) {
+func TestStorageScoreParameters_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
@@ -23,8 +23,8 @@ func TestRentParameters_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestRentParamtersJSONMarshalling(t *testing.T) {
-	rentParameters := &iotago.StorageScoreParameters{
+func TestStorageScoreParamtersJSONMarshalling(t *testing.T) {
+	storageScoreParameters := &iotago.StorageScoreParameters{
 		StorageCost:                 500,
 		FactorData:                  1,
 		OffsetOutput:                10,
@@ -32,16 +32,16 @@ func TestRentParamtersJSONMarshalling(t *testing.T) {
 		OffsetStakingFeature:        100,
 		OffsetDelegation:            100,
 	}
-	rentParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutput":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
+	storageScoreParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutput":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
 
-	j, err := tpkg.TestAPI.JSONEncode(rentParameters)
+	j, err := tpkg.TestAPI.JSONEncode(storageScoreParameters)
 	require.NoError(t, err)
 
-	require.Equal(t, rentParametersJSON, string(j))
+	require.Equal(t, storageScoreParametersJSON, string(j))
 
-	decodedRentStructure := &iotago.StorageScoreParameters{}
-	err = tpkg.TestAPI.JSONDecode([]byte(rentParametersJSON), decodedRentStructure)
+	decodedStorageScoreStructure := &iotago.StorageScoreParameters{}
+	err = tpkg.TestAPI.JSONDecode([]byte(storageScoreParametersJSON), decodedStorageScoreStructure)
 	require.NoError(t, err)
 
-	require.Equal(t, rentParameters, decodedRentStructure)
+	require.Equal(t, storageScoreParameters, decodedStorageScoreStructure)
 }

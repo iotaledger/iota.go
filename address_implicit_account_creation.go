@@ -54,7 +54,7 @@ func (addr *ImplicitAccountCreationAddress) Clone() Address {
 }
 
 func (addr *ImplicitAccountCreationAddress) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreStruct.StorageScoreOffsetImplicitAccountCreationAddress
+	return storageScoreStruct.OffsetImplicitAccountCreationAddress
 }
 
 func (addr *ImplicitAccountCreationAddress) ID() []byte {

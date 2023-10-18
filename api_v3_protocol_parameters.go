@@ -141,7 +141,7 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tRent Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tStorageScore Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
 		p.basicProtocolParameters.Version,
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,

@@ -16,8 +16,8 @@ var (
 	// ErrStorageDepositNotCovered gets returned when a NonEphemeralObject does not cover the minimum deposit
 	// which is calculated from its storage score.
 	ErrStorageDepositNotCovered = ierrors.New("minimum storage deposit not covered")
-	// ErrTypeIsNotSupportedRentStructure gets returned when a serializable was found to not be a supported RentStructure.
-	ErrTypeIsNotSupportedRentStructure = ierrors.New("serializable is not a supported rent structure")
+	// ErrTypeIsNotSupportedStorageScoreStructure gets returned when a serializable was found to not be a supported StorageScoreStructure.
+	ErrTypeIsNotSupportedStorageScoreStructure = ierrors.New("serializable is not a supported storage score structure")
 )
 
 // Multiply multiplies in with this factor.
@@ -30,7 +30,7 @@ func (factor StorageScoreFactor) With(other StorageScoreFactor) StorageScoreFact
 	return factor + other
 }
 
-// StorageScoreParameters defines the parameters of rent cost calculations on objects which take node resources.
+// StorageScoreParameters defines the parameters of storage cost calculations on objects which take node resources.
 // This structure defines the minimum base token deposit required on an object. This deposit does not
 // generate Mana, which serves as a rent payment in Mana for storing the object.
 type StorageScoreParameters struct {
@@ -48,14 +48,14 @@ type StorageScoreParameters struct {
 	OffsetDelegation StorageScore `serix:"5,mapKey=offsetDelegation"`
 }
 
-// StorageScoreStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
+// StorageScoreStructure includes the storage score parameters and the additional factors/offsets computed from these parameters.
 type StorageScoreStructure struct {
 	StorageScoreParameters *StorageScoreParameters
 	// The storage score that a minimal block issuer account needs to have minus the wrapping Basic Output.
 	// Since this value is used for implicit account creation addresses, this value plus the wrapping
 	// Basic Output (the Implicit Account Creation Address is contained in) results in the
 	// minimum storage score of a block issuer account.
-	StorageScoreOffsetImplicitAccountCreationAddress StorageScore
+	OffsetImplicitAccountCreationAddress StorageScore
 }
 
 // StorageCost returns the cost of a single unit of storage score denoted in base tokens.
@@ -88,8 +88,8 @@ func (r *StorageScoreStructure) OffsetDelegation() StorageScore {
 	return r.StorageScoreParameters.OffsetDelegation
 }
 
-// NewStorageScoreStructure creates a new RentStructure.
-func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageScoreStructure {
+// NewStorageScoreStructure creates a new StorageScoreStructure.
+func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *StorageScoreStructure {
 	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
@@ -125,9 +125,9 @@ func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageSc
 		},
 	}
 
-	// create a rent structure with the provided rent parameters.
+	// create a storage score structure with the provided storage score parameters.
 	storageScoreStructure := &StorageScoreStructure{
-		StorageScoreParameters: rentParameters,
+		StorageScoreParameters: storageScoreParameters,
 	}
 
 	// Set the storage score offset for implicit account creation addresses as
@@ -135,7 +135,7 @@ func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageSc
 	// score of the dummy basic output minus the storage score of the dummy address.
 	storageScoreAccountOutput := dummyAccountOutput.StorageScore(storageScoreStructure, nil)
 	storageScoreBasicOutputWithoutAddress := dummyBasicOutput.StorageScore(storageScoreStructure, nil) - dummyAddress.StorageScore(storageScoreStructure, nil)
-	storageScoreStructure.StorageScoreOffsetImplicitAccountCreationAddress = lo.PanicOnErr(
+	storageScoreStructure.OffsetImplicitAccountCreationAddress = lo.PanicOnErr(
 		safemath.SafeSub(storageScoreAccountOutput, storageScoreBasicOutputWithoutAddress),
 	)
 
@@ -162,7 +162,7 @@ func (r *StorageScoreStructure) MinDeposit(object NonEphemeralObject) (BaseToken
 	return safemath.SafeMul(r.StorageCost(), BaseToken(object.StorageScore(r, nil)))
 }
 
-// MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
+// MinStorageDepositForReturnOutput returns the minimum storage costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *StorageScoreStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
 	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))

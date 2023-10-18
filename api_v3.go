@@ -224,7 +224,7 @@ func (v *v3api) ProtocolParameters() ProtocolParameters {
 	return v.protocolParameters
 }
 
-func (v *v3api) RentStructure() *StorageScoreStructure {
+func (v *v3api) StorageScoreStructure() *StorageScoreStructure {
 	return v.storageScoreStructure
 }
 
