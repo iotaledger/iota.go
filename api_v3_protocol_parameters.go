@@ -58,7 +58,7 @@ func (p *V3ProtocolParameters) NetworkName() string {
 	return p.basicProtocolParameters.NetworkName
 }
 
-func (p *V3ProtocolParameters) RentParameters() *StorageScoreParameters {
+func (p *V3ProtocolParameters) StorageScoreParameters() *StorageScoreParameters {
 	return &p.basicProtocolParameters.StorageScoreParameters
 }
 

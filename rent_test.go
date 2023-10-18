@@ -13,7 +13,7 @@ func TestRentParameters_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandRentParameters(),
+			source: tpkg.RandStorageScoreParameters(),
 			target: &iotago.StorageScoreParameters{},
 		},
 	}

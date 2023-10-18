@@ -298,7 +298,7 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 		var potentialMana iotago.Mana
 
 		// we need to ignore the storage deposit, because it doesn't generate mana
-		minDeposit, err := iotago.NewStorageScoreStructure(protoParams.RentParameters()).MinDeposit(input)
+		minDeposit, err := iotago.NewStorageScoreStructure(protoParams.StorageScoreParameters()).MinDeposit(input)
 		if err != nil {
 			return 0, 0, nil, ierrors.Wrap(err, "failed to calculate min deposit")
 		}
