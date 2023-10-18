@@ -151,7 +151,7 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	}
 
 	// calculate the minimum required mana to issue the block
-	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreStructure(), rmc, blockIssuerAccountID)
+	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreParameters(), rmc, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
 	}
@@ -326,7 +326,7 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 		var potentialMana iotago.Mana
 
 		// we need to ignore the storage deposit, because it doesn't generate mana
-		minDeposit, err := iotago.NewRentStructure(protoParams.RentParameters()).MinDeposit(input)
+		minDeposit, err := iotago.NewStorageScoreStructure(protoParams.StorageScoreParameters()).MinDeposit(input)
 		if err != nil {
 			return 0, 0, nil, ierrors.Wrap(err, "failed to calculate min deposit")
 		}
@@ -373,7 +373,7 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 
 // MinRequiredAllotedMana returns the minimum alloted mana required to issue a ProtocolBlock
 // with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
-func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreStructure *iotago.WorkScoreStructure, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.WorkScoreParameters, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction
 	allotmentsCpy := b.transaction.Allotments.Clone()
 
@@ -392,12 +392,12 @@ func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreStructure *iotago.W
 		return 0, ierrors.Wrap(err, "failed to build the transaction payload")
 	}
 
-	payloadWorkScore, err := dummyTxPayload.WorkScore(workScoreStructure)
+	payloadWorkScore, err := dummyTxPayload.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to calculate the transaction payload workscore")
 	}
 
-	workScore, err := workScoreStructure.Block.Add(payloadWorkScore)
+	workScore, err := workScoreParameters.Block.Add(payloadWorkScore)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to add the block workscore")
 	}

@@ -74,7 +74,7 @@ func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(headerBytes), nil
 }
 
-func (b *BlockHeader) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (b *BlockHeader) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 
@@ -244,19 +244,19 @@ func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
-	workScoreStructure := b.API.ProtocolParameters().WorkScoreStructure()
+	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
 
-	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreStructure)
+	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreBlock, err := b.Block.WorkScore(workScoreStructure)
+	workScoreBlock, err := b.Block.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreSignature, err := b.Signature.WorkScore(workScoreStructure)
+	workScoreSignature, err := b.Signature.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -371,22 +371,22 @@ func (b *BasicBlock) Hash() (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
-func (b *BasicBlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (b *BasicBlock) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var err error
 	var workScorePayload WorkScore
 	if b.Payload != nil {
-		workScorePayload, err = b.Payload.WorkScore(workScoreStructure)
+		workScorePayload, err = b.Payload.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}
 	}
 
 	// offset for block plus payload.
-	return workScoreStructure.Block.Add(workScorePayload)
+	return workScoreParameters.Block.Add(workScorePayload)
 }
 
-func (b *BasicBlock) ManaCost(rmc Mana, workScoreStructure *WorkScoreStructure) (Mana, error) {
-	workScore, err := b.WorkScore(workScoreStructure)
+func (b *BasicBlock) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters) (Mana, error) {
+	workScore, err := b.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -489,7 +489,7 @@ func (b *ValidationBlock) Hash() (Identifier, error) {
 	return IdentifierFromData(blockBytes), nil
 }
 
-func (b *ValidationBlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (b *ValidationBlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
 	return 0, nil
 }

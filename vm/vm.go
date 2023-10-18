@@ -71,7 +71,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iotago.RentStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStructure *iotago.StorageScoreStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
@@ -86,7 +86,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, rentStructure *iot
 
 		// potential Mana
 		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-		minDeposit, err := rentStructure.MinDeposit(input)
+		minDeposit, err := storageScoreStructure.MinDeposit(input)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s min deposit calculation failed", outputID)
 		}

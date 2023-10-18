@@ -58,7 +58,7 @@ func (s *SimpleTokenScheme) Equal(other TokenScheme) bool {
 	return true
 }
 
-func (s *SimpleTokenScheme) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *SimpleTokenScheme) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 
@@ -184,7 +184,7 @@ func (s *SimpleTokenScheme) Size() int {
 	return serializer.OneByte + serializer.UInt256ByteSize + serializer.UInt256ByteSize + serializer.UInt256ByteSize
 }
 
-func (s *SimpleTokenScheme) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *SimpleTokenScheme) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// we add the offset for a native token here, since the simple token scheme requires extra work for big.Int calculations
-	return workScoreStructure.NativeToken, nil
+	return workScoreParameters.NativeToken, nil
 }

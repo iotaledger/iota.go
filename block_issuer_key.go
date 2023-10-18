@@ -124,10 +124,10 @@ func (keys BlockIssuerKeys) Size() int {
 	return size
 }
 
-func (keys BlockIssuerKeys) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+func (keys BlockIssuerKeys) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	var storageScore StorageScore
 	for _, key := range keys {
-		storageScore += key.StorageScore(rentStruct, nil)
+		storageScore += key.StorageScore(storageScoreStruct, nil)
 	}
 
 	return storageScore

@@ -33,10 +33,10 @@ func (in ContextInputs[T]) Clone() ContextInputs[T] {
 	return cpy
 }
 
-func (in ContextInputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (in ContextInputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreContextInputs WorkScore
 	for _, input := range in {
-		workScoreInput, err := input.WorkScore(workScoreStructure)
+		workScoreInput, err := input.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}

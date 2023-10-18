@@ -23,7 +23,7 @@ func (addr *RestrictedAddress) Clone() Address {
 	}
 }
 
-func (addr *RestrictedAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (addr *RestrictedAddress) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

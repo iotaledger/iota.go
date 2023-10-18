@@ -15,15 +15,15 @@ func (s *SenderFeature) Clone() Feature {
 	return &SenderFeature{Address: s.Address.Clone()}
 }
 
-func (s *SenderFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
+func (s *SenderFeature) StorageScore(storageScoreStruct *StorageScoreStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
-		return f(rentStruct)
+		return f(storageScoreStruct)
 	}
 
-	return s.Address.StorageScore(rentStruct, nil)
+	return s.Address.StorageScore(storageScoreStruct, nil)
 }
 
-func (s *SenderFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *SenderFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
 	return 0, nil
 }

@@ -35,7 +35,7 @@ func (b *BlockIssuanceCreditInput) Size() int {
 	return serializer.OneByte + AccountIDLength
 }
 
-func (b *BlockIssuanceCreditInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (b *BlockIssuanceCreditInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
-	return workScoreStructure.ContextInput, nil
+	return workScoreParameters.ContextInput, nil
 }
