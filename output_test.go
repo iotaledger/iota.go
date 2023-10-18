@@ -236,7 +236,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:        "ok - state rent covered",
+			name:        "ok - storage deposit covered",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
@@ -301,7 +301,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputAmount,
 		},
 		{
-			name:        "fail - state rent not covered",
+			name:        "fail - storage deposit not covered",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{

@@ -58,8 +58,8 @@ type API interface {
 	Version() Version
 	// ProtocolParameters returns the protocol parameters this API is used with.
 	ProtocolParameters() ProtocolParameters
-	// RentStructure returns the rent structure used by the protocol.
-	RentStructure() *StorageScoreStructure
+	// StorageScoreStructure returns the storage score structure used by the protocol.
+	StorageScoreStructure() *StorageScoreStructure
 	// TimeProvider returns the underlying time provider used.
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.
@@ -110,7 +110,7 @@ type ProtocolParameters interface {
 	NetworkID() NetworkID
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
-	// RentStructure defines the rent structure used by given node/network.
+	// StorageScoreStructure defines the storage score structure used by given node/network.
 	StorageScoreParameters() *StorageScoreParameters
 	// WorkScoreParameters defines the work score parameters used by the given network.
 	WorkScoreParameters() *WorkScoreParameters

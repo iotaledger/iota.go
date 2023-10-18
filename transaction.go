@@ -253,7 +253,7 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
-		OutputsSyntacticalDepositAmount(protoParams, api.RentStructure()),
+		OutputsSyntacticalDepositAmount(protoParams, api.StorageScoreStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),

@@ -1288,7 +1288,7 @@ func runNovaTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		// HINT: all outputs are created at slot 0 and the transaction is executed at slot 10000
 		var txCreationSlot iotago.SlotIndex = 10000
 
-		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.RentStructure(), txCreationSlot, inputSet)
+		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.StorageScoreStructure(), txCreationSlot, inputSet)
 		require.NoError(t, err)
 
 		outputs := iotago.TxEssenceOutputs{
@@ -6669,8 +6669,8 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	storageScore := dummyImplicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmountImplicitAccount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
+	storageScore := dummyImplicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
+	minAmountImplicitAccount := testAPI.StorageScoreStructure().StorageCost() * iotago.BaseToken(storageScore)
 
 	exampleInputs := []TestInput{
 		{
@@ -6859,7 +6859,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
 		},
 		{
-			name: "ok - implicit account with StorageScoreOffsetImplicitAccountCreationAddress can be transitioned",
+			name: "ok - implicit account with OffsetImplicitAccountCreationAddress can be transitioned",
 			inputs: []TestInput{
 				{
 					inputID: outputID1,
@@ -7154,10 +7154,10 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	storageScore := implicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
+	storageScore := implicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
+	minAmount := testAPI.StorageScoreStructure().StorageCost() * iotago.BaseToken(storageScore)
 	implicitAccount.Amount = minAmount
-	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.RentStructure())
+	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.StorageScoreStructure())
 	require.NoError(t, depositValidationFunc(0, implicitAccount))
 
 	convertedAccount := &iotago.AccountOutput{

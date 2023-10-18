@@ -972,7 +972,7 @@ func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago
 	return addresses, addressKeys
 }
 
-// RandRentParameters produces random set of rent parameters.
+// RandStorageScoreParameters produces random set of  parameters.
 func RandStorageScoreParameters() *iotago.StorageScoreParameters {
 	return &iotago.StorageScoreParameters{
 		StorageCost:                 RandBaseToken(iotago.MaxBaseToken),

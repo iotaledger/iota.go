@@ -3664,7 +3664,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 				tt.svCtx.WorkingSet.UTXOInputsSet[tpkg.RandOutputID(0)] = tt.input.Output
 				totalManaIn, err := vm.TotalManaIn(
 					tpkg.TestAPI.ManaDecayProvider(),
-					tpkg.TestAPI.RentStructure(),
+					tpkg.TestAPI.StorageScoreStructure(),
 					tt.svCtx.WorkingSet.Tx.CreationSlot,
 					tt.svCtx.WorkingSet.UTXOInputsSet,
 				)
