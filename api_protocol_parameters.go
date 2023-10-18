@@ -9,8 +9,8 @@ type basicProtocolParameters struct {
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 
-	// RentStructure defines the rent structure used by given node/network.
-	RentParameters RentParameters `serix:"3,mapKey=rentParameters"`
+	// StorageScoreParameters defines the Storage Score Parameters used by given node/network.
+	StorageScoreParameters StorageScoreParameters `serix:"3,mapKey=rentParameters"`
 	// WorkScoreParameters defines the work score parameters used by given node/network.
 	WorkScoreParameters WorkScoreParameters `serix:"4,mapKey=workScoreParameters"`
 	// TokenSupply defines the current token supply on the network.
@@ -62,7 +62,7 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 	return b.Version == other.Version &&
 		b.NetworkName == other.NetworkName &&
 		b.Bech32HRP == other.Bech32HRP &&
-		b.RentParameters.Equals(other.RentParameters) &&
+		b.StorageScoreParameters.Equals(other.StorageScoreParameters) &&
 		b.WorkScoreParameters.Equals(other.WorkScoreParameters) &&
 		b.TokenSupply == other.TokenSupply &&
 		b.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&

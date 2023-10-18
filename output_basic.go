@@ -71,7 +71,7 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 }
 
 func (e *BasicOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreOffsetOutput(rentStruct) +
+	return offsetOutput(rentStruct) +
 		rentStruct.StorageScoreFactorData().Multiply(StorageScore(e.Size())) +
 		e.Conditions.StorageScore(rentStruct, nil) +
 		e.Features.StorageScore(rentStruct, nil)

@@ -14,7 +14,7 @@ func TestRentParameters_DeSerialize(t *testing.T) {
 		{
 			name:   "ok",
 			source: tpkg.RandRentParameters(),
-			target: &iotago.RentParameters{},
+			target: &iotago.StorageScoreParameters{},
 		},
 	}
 
@@ -24,22 +24,22 @@ func TestRentParameters_DeSerialize(t *testing.T) {
 }
 
 func TestRentParamtersJSONMarshalling(t *testing.T) {
-	rentParameters := &iotago.RentParameters{
-		StorageCost:                             500,
-		StorageScoreFactorData:                  1,
-		StorageScoreOffsetOutput:                10,
-		StorageScoreOffsetEd25519BlockIssuerKey: 50,
-		StorageScoreOffsetStakingFeature:        100,
-		StorageScoreOffsetDelegation:            100,
+	rentParameters := &iotago.StorageScoreParameters{
+		StorageCost:                 500,
+		FactorData:                  1,
+		OffsetOutput:                10,
+		OffsetEd25519BlockIssuerKey: 50,
+		OffsetStakingFeature:        100,
+		OffsetDelegation:            100,
 	}
-	rentParametersJSON := `{"storageCost":"500","storageScoreFactorData":1,"storageScoreOffsetOutput":"10","storageScoreOffsetEd25519BlockIssuerKey":"50","storageScoreOffsetStakingFeature":"100","storageScoreOffsetDelegation":"100"}`
+	rentParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutput":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
 
 	j, err := tpkg.TestAPI.JSONEncode(rentParameters)
 	require.NoError(t, err)
 
 	require.Equal(t, rentParametersJSON, string(j))
 
-	decodedRentStructure := &iotago.RentParameters{}
+	decodedRentStructure := &iotago.StorageScoreParameters{}
 	err = tpkg.TestAPI.JSONDecode([]byte(rentParametersJSON), decodedRentStructure)
 	require.NoError(t, err)
 

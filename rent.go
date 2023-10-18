@@ -30,27 +30,27 @@ func (factor StorageScoreFactor) With(other StorageScoreFactor) StorageScoreFact
 	return factor + other
 }
 
-// RentParameters defines the parameters of rent cost calculations on objects which take node resources.
+// StorageScoreParameters defines the parameters of rent cost calculations on objects which take node resources.
 // This structure defines the minimum base token deposit required on an object. This deposit does not
 // generate Mana, which serves as a rent payment in Mana for storing the object.
-type RentParameters struct {
+type StorageScoreParameters struct {
 	// Defines the number of IOTA tokens required per unit of storage score.
 	StorageCost BaseToken `serix:"0,mapKey=storageCost"`
 	// Defines the factor to be used for data only fields.
-	StorageScoreFactorData StorageScoreFactor `serix:"1,mapKey=storageScoreFactorData"`
+	FactorData StorageScoreFactor `serix:"1,mapKey=factorData"`
 	// Defines the offset to be used for key/lookup generating fields.
-	StorageScoreOffsetOutput StorageScore `serix:"2,mapKey=storageScoreOffsetOutput"`
+	OffsetOutput StorageScore `serix:"2,mapKey=offsetOutput"`
 	// Defines the offset to be used for block issuer feature public keys.
-	StorageScoreOffsetEd25519BlockIssuerKey StorageScore `serix:"3,mapKey=storageScoreOffsetEd25519BlockIssuerKey"`
+	OffsetEd25519BlockIssuerKey StorageScore `serix:"3,mapKey=offsetEd25519BlockIssuerKey"`
 	// Defines the offset to be used for staking feature.
-	StorageScoreOffsetStakingFeature StorageScore `serix:"4,mapKey=storageScoreOffsetStakingFeature"`
+	OffsetStakingFeature StorageScore `serix:"4,mapKey=offsetStakingFeature"`
 	// Defines the offset to be used for delegation output.
-	StorageScoreOffsetDelegation StorageScore `serix:"5,mapKey=storageScoreOffsetDelegation"`
+	OffsetDelegation StorageScore `serix:"5,mapKey=offsetDelegation"`
 }
 
 // RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
 type RentStructure struct {
-	RentParameters *RentParameters
+	RentParameters *StorageScoreParameters
 	// The storage score that a minimal block issuer account needs to have minus the wrapping Basic Output.
 	// Since this value is used for implicit account creation addresses, this value plus the wrapping
 	// Basic Output (the Implicit Account Creation Address is contained in) results in the
@@ -65,31 +65,31 @@ func (r *RentStructure) StorageCost() BaseToken {
 
 // StorageScoreFactorData returns the factor to be used for data only fields.
 func (r *RentStructure) StorageScoreFactorData() StorageScoreFactor {
-	return r.RentParameters.StorageScoreFactorData
+	return r.RentParameters.FactorData
 }
 
 // StorageScoreOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
 func (r *RentStructure) StorageScoreOffsetOutput() StorageScore {
-	return r.RentParameters.StorageScoreOffsetOutput
+	return r.RentParameters.OffsetOutput
 }
 
 // StorageScoreOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
 func (r *RentStructure) StorageScoreOffsetEd25519BlockIssuerKey() StorageScore {
-	return r.RentParameters.StorageScoreOffsetEd25519BlockIssuerKey
+	return r.RentParameters.OffsetEd25519BlockIssuerKey
 }
 
 // StorageScoreOffsetStakingFeature returns the offset to be used for staking feature.
 func (r *RentStructure) StorageScoreOffsetStakingFeature() StorageScore {
-	return r.RentParameters.StorageScoreOffsetStakingFeature
+	return r.RentParameters.OffsetStakingFeature
 }
 
 // StorageScoreOffsetDelegation returns the offset to be used for delegation output.
 func (r *RentStructure) StorageScoreOffsetDelegation() StorageScore {
-	return r.RentParameters.StorageScoreOffsetDelegation
+	return r.RentParameters.OffsetDelegation
 }
 
 // NewRentStructure creates a new RentStructure.
-func NewRentStructure(rentParameters *RentParameters) *RentStructure {
+func NewRentStructure(rentParameters *StorageScoreParameters) *RentStructure {
 	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
@@ -169,13 +169,13 @@ func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) (BaseTo
 
 }
 
-func (r RentParameters) Equals(other RentParameters) bool {
+func (r StorageScoreParameters) Equals(other StorageScoreParameters) bool {
 	return r.StorageCost == other.StorageCost &&
-		r.StorageScoreFactorData == other.StorageScoreFactorData &&
-		r.StorageScoreOffsetOutput == other.StorageScoreOffsetOutput &&
-		r.StorageScoreOffsetEd25519BlockIssuerKey == other.StorageScoreOffsetEd25519BlockIssuerKey &&
-		r.StorageScoreOffsetStakingFeature == other.StorageScoreOffsetStakingFeature &&
-		r.StorageScoreOffsetDelegation == other.StorageScoreOffsetDelegation
+		r.FactorData == other.FactorData &&
+		r.OffsetOutput == other.OffsetOutput &&
+		r.OffsetEd25519BlockIssuerKey == other.OffsetEd25519BlockIssuerKey &&
+		r.OffsetStakingFeature == other.OffsetStakingFeature &&
+		r.OffsetDelegation == other.OffsetDelegation
 }
 
 // NonEphemeralObject is an object which can not be pruned by nodes as it

@@ -95,7 +95,7 @@ var (
 )
 
 // defines the default storage score offset for an output.
-func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
+func offsetOutput(rentStruct *RentStructure) StorageScore {
 	return rentStruct.StorageScoreOffsetOutput() +
 		// included output id, block id, and slot booked data size
 		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)

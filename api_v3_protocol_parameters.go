@@ -58,8 +58,8 @@ func (p *V3ProtocolParameters) NetworkName() string {
 	return p.basicProtocolParameters.NetworkName
 }
 
-func (p *V3ProtocolParameters) RentParameters() *RentParameters {
-	return &p.basicProtocolParameters.RentParameters
+func (p *V3ProtocolParameters) RentParameters() *StorageScoreParameters {
+	return &p.basicProtocolParameters.StorageScoreParameters
 }
 
 func (p *V3ProtocolParameters) WorkScoreParameters() *WorkScoreParameters {
@@ -145,7 +145,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.Version,
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,
-		p.basicProtocolParameters.RentParameters,
+		p.basicProtocolParameters.StorageScoreParameters,
 		p.basicProtocolParameters.WorkScoreParameters,
 		p.basicProtocolParameters.TokenSupply,
 		p.basicProtocolParameters.GenesisUnixTimestamp,
@@ -192,16 +192,16 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, storageScoreFactorData StorageScoreFactor, storageScoreOffsetOutput, storageScoreOffsetEd25519BlockIssuerKey, storageScoreOffsetStakingFeature, storageScoreOffsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, factorData StorageScoreFactor, offsetOutput, offsetEd25519BlockIssuerKey, offsetStakingFeature, offsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
-		p.basicProtocolParameters.RentParameters = RentParameters{
-			StorageCost:                             storageCost,
-			StorageScoreFactorData:                  storageScoreFactorData,
-			StorageScoreOffsetOutput:                storageScoreOffsetOutput,
-			StorageScoreOffsetEd25519BlockIssuerKey: storageScoreOffsetEd25519BlockIssuerKey,
-			StorageScoreOffsetStakingFeature:        storageScoreOffsetStakingFeature,
-			StorageScoreOffsetDelegation:            storageScoreOffsetDelegation,
+		p.basicProtocolParameters.StorageScoreParameters = StorageScoreParameters{
+			StorageCost:                 storageCost,
+			FactorData:                  factorData,
+			OffsetOutput:                offsetOutput,
+			OffsetEd25519BlockIssuerKey: offsetEd25519BlockIssuerKey,
+			OffsetStakingFeature:        offsetStakingFeature,
+			OffsetDelegation:            offsetDelegation,
 		}
 	}
 }
