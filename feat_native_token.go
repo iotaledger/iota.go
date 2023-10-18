@@ -61,7 +61,7 @@ func (n *NativeTokenFeature) Type() FeatureType {
 	return FeatureNativeToken
 }
 
-func (n *NativeTokenFeature) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (n *NativeTokenFeature) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

@@ -15,9 +15,9 @@ func (s *TagFeature) Clone() Feature {
 	return &TagFeature{Tag: append([]byte(nil), s.Tag...)}
 }
 
-func (s *TagFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
+func (s *TagFeature) StorageScore(storageScoreStruct *StorageScoreStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
-		return f(rentStruct)
+		return f(storageScoreStruct)
 	}
 
 	return 0

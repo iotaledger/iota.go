@@ -95,10 +95,10 @@ var (
 )
 
 // defines the default storage score offset for an output.
-func offsetOutput(rentStruct *RentStructure) StorageScore {
-	return rentStruct.StorageScoreOffsetOutput() +
+func offsetOutput(storageScoreStruct *StorageScoreStructure) StorageScore {
+	return storageScoreStruct.StorageScoreOffsetOutput() +
 		// included output id, block id, and slot booked data size
-		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
+		storageScoreStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
 }
 
 // OutputSet is a map of the OutputID to Output.
@@ -341,7 +341,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructure *RentStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScoreStructure *StorageScoreStructure) OutputsSyntacticalValidationFunc {
 	var sum BaseToken
 
 	return func(index int, output Output) error {
@@ -357,13 +357,13 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 		}
 
 		// check whether base token amount fulfills the storage deposit cost
-		if _, err := rentStructure.CoversMinDeposit(output, amount); err != nil {
+		if _, err := storageScoreStructure.CoversMinDeposit(output, amount); err != nil {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput, err := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput, err := storageScoreStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			if err != nil {
 				return ierrors.Wrapf(err, "failed to calculate storage deposit for output index %d", index)
 			}

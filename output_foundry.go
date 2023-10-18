@@ -178,13 +178,13 @@ func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 	return ok
 }
 
-func (f *FoundryOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return offsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(f.Size())) +
-		f.TokenScheme.StorageScore(rentStruct, nil) +
-		f.Conditions.StorageScore(rentStruct, nil) +
-		f.Features.StorageScore(rentStruct, nil) +
-		f.ImmutableFeatures.StorageScore(rentStruct, nil)
+func (f *FoundryOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return offsetOutput(storageScoreStruct) +
+		storageScoreStruct.StorageScoreFactorData().Multiply(StorageScore(f.Size())) +
+		f.TokenScheme.StorageScore(storageScoreStruct, nil) +
+		f.Conditions.StorageScore(storageScoreStruct, nil) +
+		f.Features.StorageScore(storageScoreStruct, nil) +
+		f.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {

@@ -48,9 +48,9 @@ type StorageScoreParameters struct {
 	OffsetDelegation StorageScore `serix:"5,mapKey=offsetDelegation"`
 }
 
-// RentStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
-type RentStructure struct {
-	RentParameters *StorageScoreParameters
+// StorageScoreStructure includes the rent parameters and the additional factors/offsets computed from these parameters.
+type StorageScoreStructure struct {
+	StorageScoreParameters *StorageScoreParameters
 	// The storage score that a minimal block issuer account needs to have minus the wrapping Basic Output.
 	// Since this value is used for implicit account creation addresses, this value plus the wrapping
 	// Basic Output (the Implicit Account Creation Address is contained in) results in the
@@ -59,37 +59,37 @@ type RentStructure struct {
 }
 
 // StorageCost returns the cost of a single unit of storage score denoted in base tokens.
-func (r *RentStructure) StorageCost() BaseToken {
-	return r.RentParameters.StorageCost
+func (r *StorageScoreStructure) StorageCost() BaseToken {
+	return r.StorageScoreParameters.StorageCost
 }
 
 // StorageScoreFactorData returns the factor to be used for data only fields.
-func (r *RentStructure) StorageScoreFactorData() StorageScoreFactor {
-	return r.RentParameters.FactorData
+func (r *StorageScoreStructure) StorageScoreFactorData() StorageScoreFactor {
+	return r.StorageScoreParameters.FactorData
 }
 
 // StorageScoreOffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
-func (r *RentStructure) StorageScoreOffsetOutput() StorageScore {
-	return r.RentParameters.OffsetOutput
+func (r *StorageScoreStructure) StorageScoreOffsetOutput() StorageScore {
+	return r.StorageScoreParameters.OffsetOutput
 }
 
 // StorageScoreOffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
-func (r *RentStructure) StorageScoreOffsetEd25519BlockIssuerKey() StorageScore {
-	return r.RentParameters.OffsetEd25519BlockIssuerKey
+func (r *StorageScoreStructure) StorageScoreOffsetEd25519BlockIssuerKey() StorageScore {
+	return r.StorageScoreParameters.OffsetEd25519BlockIssuerKey
 }
 
 // StorageScoreOffsetStakingFeature returns the offset to be used for staking feature.
-func (r *RentStructure) StorageScoreOffsetStakingFeature() StorageScore {
-	return r.RentParameters.OffsetStakingFeature
+func (r *StorageScoreStructure) StorageScoreOffsetStakingFeature() StorageScore {
+	return r.StorageScoreParameters.OffsetStakingFeature
 }
 
 // StorageScoreOffsetDelegation returns the offset to be used for delegation output.
-func (r *RentStructure) StorageScoreOffsetDelegation() StorageScore {
-	return r.RentParameters.OffsetDelegation
+func (r *StorageScoreStructure) StorageScoreOffsetDelegation() StorageScore {
+	return r.StorageScoreParameters.OffsetDelegation
 }
 
 // NewRentStructure creates a new RentStructure.
-func NewRentStructure(rentParameters *StorageScoreParameters) *RentStructure {
+func NewRentStructure(rentParameters *StorageScoreParameters) *StorageScoreStructure {
 	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
@@ -126,26 +126,26 @@ func NewRentStructure(rentParameters *StorageScoreParameters) *RentStructure {
 	}
 
 	// create a rent structure with the provided rent parameters.
-	rentStructure := &RentStructure{
-		RentParameters: rentParameters,
+	storageScoreStructure := &StorageScoreStructure{
+		StorageScoreParameters: rentParameters,
 	}
 
 	// Set the storage score offset for implicit account creation addresses as
 	// the difference between the storage score of the dummy account and the storage
 	// score of the dummy basic output minus the storage score of the dummy address.
-	storageScoreAccountOutput := dummyAccountOutput.StorageScore(rentStructure, nil)
-	storageScoreBasicOutputWithoutAddress := dummyBasicOutput.StorageScore(rentStructure, nil) - dummyAddress.StorageScore(rentStructure, nil)
-	rentStructure.StorageScoreOffsetImplicitAccountCreationAddress = lo.PanicOnErr(
+	storageScoreAccountOutput := dummyAccountOutput.StorageScore(storageScoreStructure, nil)
+	storageScoreBasicOutputWithoutAddress := dummyBasicOutput.StorageScore(storageScoreStructure, nil) - dummyAddress.StorageScore(storageScoreStructure, nil)
+	storageScoreStructure.StorageScoreOffsetImplicitAccountCreationAddress = lo.PanicOnErr(
 		safemath.SafeSub(storageScoreAccountOutput, storageScoreBasicOutputWithoutAddress),
 	)
 
-	return rentStructure
+	return storageScoreStructure
 }
 
 // CoversMinDeposit tells whether given this NonEphemeralObject, the base token amount fulfills the deposit requirements
 // by examining the storage score of the object.
 // Returns the minimum deposit computed and an error if it is not covered by the base token amount of the object.
-func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
+func (r *StorageScoreStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseToken) (BaseToken, error) {
 	minDeposit, err := r.MinDeposit(object)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to compute min deposit")
@@ -158,13 +158,13 @@ func (r *RentStructure) CoversMinDeposit(object NonEphemeralObject, amount BaseT
 }
 
 // MinDeposit returns the minimum deposit to cover a given object.
-func (r *RentStructure) MinDeposit(object NonEphemeralObject) (BaseToken, error) {
+func (r *StorageScoreStructure) MinDeposit(object NonEphemeralObject) (BaseToken, error) {
 	return safemath.SafeMul(r.StorageCost(), BaseToken(object.StorageScore(r, nil)))
 }
 
 // MinStorageDepositForReturnOutput returns the minimum renting costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
-func (r *RentStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
+func (r *StorageScoreStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
 	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
 
 }
@@ -186,8 +186,8 @@ type NonEphemeralObject interface {
 	// virtual and physical space within the data set needed to implement the protocol.
 	// The override parameter acts as an escape hatch in case the cost needs to be adjusted
 	// according to some external properties outside the NonEphemeralObject.
-	StorageScore(rentStruct *RentStructure, override StorageScoreFunc) StorageScore
+	StorageScore(storageScoreStruct *StorageScoreStructure, override StorageScoreFunc) StorageScore
 }
 
 // StorageScoreFunc is a function which computes the storage score of a NonEphemeralObject.
-type StorageScoreFunc func(rentStruct *RentStructure) StorageScore
+type StorageScoreFunc func(storageScoreStruct *StorageScoreStructure) StorageScore

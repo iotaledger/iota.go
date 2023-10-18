@@ -123,7 +123,7 @@ func CommonSerixAPI() *serix.API {
 
 		// All versions of the protocol need to be able to parse older protocol parameter versions.
 		{
-			must(api.RegisterTypeSettings(RentStructure{}, serix.TypeSettings{}))
+			must(api.RegisterTypeSettings(StorageScoreStructure{}, serix.TypeSettings{}))
 
 			must(api.RegisterTypeSettings(V3ProtocolParameters{},
 				serix.TypeSettings{}.WithObjectType(uint8(ProtocolParametersV3))),

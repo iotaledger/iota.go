@@ -70,6 +70,6 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Size() int {
 	return serializer.SmallTypeDenotationByteSize + Ed25519PublicKeyHashBytesLength
 }
 
-func (key *Ed25519PublicKeyHashBlockIssuerKey) StorageScore(rentStructure *RentStructure, _ StorageScoreFunc) StorageScore {
-	return rentStructure.StorageScoreOffsetEd25519BlockIssuerKey()
+func (key *Ed25519PublicKeyHashBlockIssuerKey) StorageScore(storageScoreStructure *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreStructure.StorageScoreOffsetEd25519BlockIssuerKey()
 }

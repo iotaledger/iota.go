@@ -195,12 +195,12 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 	return outputUnlockableBy(a, next, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 }
 
-func (a *AccountOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return offsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(a.Size())) +
-		a.Conditions.StorageScore(rentStruct, nil) +
-		a.Features.StorageScore(rentStruct, nil) +
-		a.ImmutableFeatures.StorageScore(rentStruct, nil)
+func (a *AccountOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return offsetOutput(storageScoreStruct) +
+		storageScoreStruct.StorageScoreFactorData().Multiply(StorageScore(a.Size())) +
+		a.Conditions.StorageScore(storageScoreStruct, nil) +
+		a.Features.StorageScore(storageScoreStruct, nil) +
+		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (a *AccountOutput) syntacticallyValidate() error {

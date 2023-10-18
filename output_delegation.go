@@ -173,11 +173,11 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex
 	return ok
 }
 
-func (d *DelegationOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return offsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(d.Size())) +
-		rentStruct.StorageScoreOffsetDelegation() +
-		d.Conditions.StorageScore(rentStruct, nil)
+func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return offsetOutput(storageScoreStruct) +
+		storageScoreStruct.StorageScoreFactorData().Multiply(StorageScore(d.Size())) +
+		storageScoreStruct.StorageScoreOffsetDelegation() +
+		d.Conditions.StorageScore(storageScoreStruct, nil)
 }
 
 func (d *DelegationOutput) syntacticallyValidate() error {

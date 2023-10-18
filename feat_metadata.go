@@ -16,7 +16,7 @@ func (s *MetadataFeature) Clone() Feature {
 	return &MetadataFeature{Data: append([]byte(nil), s.Data...)}
 }
 
-func (s *MetadataFeature) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *MetadataFeature) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

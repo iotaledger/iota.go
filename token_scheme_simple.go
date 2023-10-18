@@ -58,7 +58,7 @@ func (s *SimpleTokenScheme) Equal(other TokenScheme) bool {
 	return true
 }
 
-func (s *SimpleTokenScheme) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *SimpleTokenScheme) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

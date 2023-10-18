@@ -46,12 +46,12 @@ func (s *StakingFeature) Clone() Feature {
 	return &StakingFeature{StakedAmount: s.StakedAmount, FixedCost: s.FixedCost, StartEpoch: s.StartEpoch, EndEpoch: s.EndEpoch}
 }
 
-func (s *StakingFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
+func (s *StakingFeature) StorageScore(storageScoreStruct *StorageScoreStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
-		return f(rentStruct)
+		return f(storageScoreStruct)
 	}
 
-	return rentStruct.StorageScoreOffsetStakingFeature()
+	return storageScoreStruct.StorageScoreOffsetStakingFeature()
 }
 
 func (s *StakingFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {

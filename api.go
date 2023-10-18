@@ -59,7 +59,7 @@ type API interface {
 	// ProtocolParameters returns the protocol parameters this API is used with.
 	ProtocolParameters() ProtocolParameters
 	// RentStructure returns the rent structure used by the protocol.
-	RentStructure() *RentStructure
+	RentStructure() *StorageScoreStructure
 	// TimeProvider returns the underlying time provider used.
 	TimeProvider() *TimeProvider
 	// ManaDecayProvider returns the underlying mana decay provider used.

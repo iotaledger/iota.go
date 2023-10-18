@@ -22,8 +22,8 @@ func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *ExpirationUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return s.ReturnAddress.StorageScore(rentStruct, nil)
+func (s *ExpirationUnlockCondition) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return s.ReturnAddress.StorageScore(storageScoreStruct, nil)
 }
 
 func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {

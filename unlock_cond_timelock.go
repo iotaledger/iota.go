@@ -18,7 +18,7 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *TimelockUnlockCondition) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *TimelockUnlockCondition) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

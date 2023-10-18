@@ -20,8 +20,8 @@ func (s *StorageDepositReturnUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *StorageDepositReturnUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return s.ReturnAddress.StorageScore(rentStruct, nil)
+func (s *StorageDepositReturnUnlockCondition) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return s.ReturnAddress.StorageScore(storageScoreStruct, nil)
 }
 
 func (s *StorageDepositReturnUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
