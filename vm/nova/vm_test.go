@@ -6859,7 +6859,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
 		},
 		{
-			name: "ok - implicit account with StorageScoreOffsetImplicitAccountCreationAddress can be transitioned",
+			name: "ok - implicit account with OffsetImplicitAccountCreationAddress can be transitioned",
 			inputs: []TestInput{
 				{
 					inputID: outputID1,
