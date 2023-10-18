@@ -38,8 +38,8 @@ type StorageScoreParameters struct {
 	StorageCost BaseToken `serix:"0,mapKey=storageCost"`
 	// Defines the factor to be used for data only fields.
 	FactorData StorageScoreFactor `serix:"1,mapKey=factorData"`
-	// Defines the offset to be used for key/lookup generating fields.
-	OffsetOutput StorageScore `serix:"2,mapKey=offsetOutput"`
+	// Defines the offset to be applied to all outputs for the overhead of handling them in storage.
+	OffsetOutputOverhead StorageScore `serix:"2,mapKey=offsetOutputOverhead"`
 	// Defines the offset to be used for block issuer feature public keys.
 	OffsetEd25519BlockIssuerKey StorageScore `serix:"3,mapKey=offsetEd25519BlockIssuerKey"`
 	// Defines the offset to be used for staking feature.
@@ -55,7 +55,8 @@ type StorageScoreStructure struct {
 	// Since this value is used for implicit account creation addresses, this value plus the wrapping
 	// Basic Output (the Implicit Account Creation Address is contained in) results in the
 	// minimum storage score of a block issuer account.
-	StorageScoreOffsetImplicitAccountCreationAddress StorageScore
+	OffsetImplicitAccountCreationAddress StorageScore
+	OffsetOutput                         StorageScore
 }
 
 // StorageCost returns the cost of a single unit of storage score denoted in base tokens.
@@ -66,11 +67,6 @@ func (r *StorageScoreStructure) StorageCost() BaseToken {
 // FactorData returns the factor to be used for data only fields.
 func (r *StorageScoreStructure) FactorData() StorageScoreFactor {
 	return r.StorageScoreParameters.FactorData
-}
-
-// OffsetOutput returns the offset to be used for all outputs to account for metadata created for the output.
-func (r *StorageScoreStructure) OffsetOutput() StorageScore {
-	return r.StorageScoreParameters.OffsetOutput
 }
 
 // OffsetEd25519BlockIssuerKey returns the offset to be used for block issuer feature public keys.
@@ -90,6 +86,7 @@ func (r *StorageScoreStructure) OffsetDelegation() StorageScore {
 
 // NewStorageScoreStructure creates a new RentStructure.
 func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageScoreStructure {
+	// Compute the OffsetImplicitAccountCreationAddress.
 	// create a dummy account with a block issuer feature to calculate the storage score.
 	dummyAccountOutput := &AccountOutput{
 		Amount:         0,
@@ -135,9 +132,13 @@ func NewStorageScoreStructure(rentParameters *StorageScoreParameters) *StorageSc
 	// score of the dummy basic output minus the storage score of the dummy address.
 	storageScoreAccountOutput := dummyAccountOutput.StorageScore(storageScoreStructure, nil)
 	storageScoreBasicOutputWithoutAddress := dummyBasicOutput.StorageScore(storageScoreStructure, nil) - dummyAddress.StorageScore(storageScoreStructure, nil)
-	storageScoreStructure.StorageScoreOffsetImplicitAccountCreationAddress = lo.PanicOnErr(
+	storageScoreStructure.OffsetImplicitAccountCreationAddress = lo.PanicOnErr(
 		safemath.SafeSub(storageScoreAccountOutput, storageScoreBasicOutputWithoutAddress),
 	)
+
+	// Compute the OffsetOutput
+	metadataOffset := storageScoreStructure.FactorData().Multiply(OutputIDLength + BlockIDLength + SlotIndexLength)
+	storageScoreStructure.OffsetOutput = rentParameters.OffsetOutputOverhead + metadataOffset
 
 	return storageScoreStructure
 }
@@ -172,7 +173,7 @@ func (r *StorageScoreStructure) MinStorageDepositForReturnOutput(sender Address)
 func (r StorageScoreParameters) Equals(other StorageScoreParameters) bool {
 	return r.StorageCost == other.StorageCost &&
 		r.FactorData == other.FactorData &&
-		r.OffsetOutput == other.OffsetOutput &&
+		r.OffsetOutputOverhead == other.OffsetOutputOverhead &&
 		r.OffsetEd25519BlockIssuerKey == other.OffsetEd25519BlockIssuerKey &&
 		r.OffsetStakingFeature == other.OffsetStakingFeature &&
 		r.OffsetDelegation == other.OffsetDelegation
