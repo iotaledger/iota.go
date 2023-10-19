@@ -243,7 +243,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
 			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
-			result:      183827294847826527,
+			result:      183827295065703076,
 			wantErr:     nil,
 		},
 		{
@@ -251,7 +251,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
 			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
-			result:      410192222442040018,
+			result:      410192223115924783,
 			wantErr:     nil,
 		},
 		{
@@ -275,7 +275,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
 			targetSlot:  testTimeProvider.EpochEnd(3),
-			result:      1687319975062367,
+			result:      1687319824887185,
 			wantErr:     nil,
 		},
 		{
@@ -283,7 +283,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
 			targetSlot:  testTimeProvider.EpochStart(401),
-			result:      190239292158065300,
+			result:      190239292388858706,
 			wantErr:     nil,
 		},
 	}
