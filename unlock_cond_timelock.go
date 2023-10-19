@@ -9,20 +9,20 @@ import (
 //   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
 	// The slot index until which the timelock applies (inclusive).
-	SlotIndex `serix:"0,mapKey=slotIndex,omitempty"`
+	Slot SlotIndex `serix:"0,mapKey=slot,omitempty"`
 }
 
 func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	return &TimelockUnlockCondition{
-		SlotIndex: s.SlotIndex,
+		Slot: s.Slot,
 	}
 }
 
-func (s *TimelockUnlockCondition) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *TimelockUnlockCondition) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 
-func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 
@@ -32,7 +32,7 @@ func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {
 		return false
 	}
 
-	if s.SlotIndex != otherCond.SlotIndex {
+	if s.Slot != otherCond.Slot {
 		return false
 	}
 

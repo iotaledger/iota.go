@@ -12,21 +12,21 @@ type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
 	ReturnAddress Address `serix:"0,mapKey=returnAddress"`
 	// The slot index at which the expiration happens.
-	SlotIndex `serix:"1,mapKey=slotIndex,omitempty"`
+	Slot SlotIndex `serix:"1,mapKey=slot,omitempty"`
 }
 
 func (s *ExpirationUnlockCondition) Clone() UnlockCondition {
 	return &ExpirationUnlockCondition{
 		ReturnAddress: s.ReturnAddress.Clone(),
-		SlotIndex:     s.SlotIndex,
+		Slot:          s.Slot,
 	}
 }
 
-func (s *ExpirationUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return s.ReturnAddress.StorageScore(rentStruct, nil)
+func (s *ExpirationUnlockCondition) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return s.ReturnAddress.StorageScore(storageScoreStruct, nil)
 }
 
-func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// ExpirationUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
 }
@@ -40,7 +40,7 @@ func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
 	switch {
 	case !s.ReturnAddress.Equal(otherCond.ReturnAddress):
 		return false
-	case s.SlotIndex != otherCond.SlotIndex:
+	case s.Slot != otherCond.Slot:
 		return false
 	}
 

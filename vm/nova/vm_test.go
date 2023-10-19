@@ -268,7 +268,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     500,
+							Slot:          500,
 						},
 					},
 				},
@@ -277,7 +277,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident2},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				},
@@ -290,11 +290,11 @@ func TestNovaTransactionExecution(t *testing.T) {
 							Amount:        storageDepositReturn,
 						},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident1,
-							SlotIndex:     900,
+							Slot:          900,
 						},
 					},
 				},
@@ -1288,7 +1288,7 @@ func runNovaTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		// HINT: all outputs are created at slot 0 and the transaction is executed at slot 10000
 		var txCreationSlot iotago.SlotIndex = 10000
 
-		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.RentStructure(), txCreationSlot, inputSet)
+		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.StorageScoreStructure(), txCreationSlot, inputSet)
 		require.NoError(t, err)
 
 		outputs := iotago.TxEssenceOutputs{
@@ -3201,7 +3201,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     5,
+							Slot:          5,
 						},
 					},
 				},
@@ -3212,7 +3212,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3513,7 +3513,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     20,
+							Slot:          20,
 						},
 					},
 				},
@@ -3558,7 +3558,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     10,
+							Slot:          10,
 						},
 					},
 				},
@@ -3838,7 +3838,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -3853,7 +3853,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     2,
+							Slot:          2,
 						},
 					},
 				},
@@ -4085,7 +4085,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						// not yet expired, so ident1 needs to unlock
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: ident2,
-							SlotIndex:     30,
+							Slot:          30,
 						},
 					},
 				},
@@ -4224,7 +4224,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 							&iotago.ExpirationUnlockCondition{
 								ReturnAddress: ident1,
-								SlotIndex:     10,
+								Slot:          10,
 							},
 						},
 					},
@@ -5602,7 +5602,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 5,
+							Slot: 5,
 						},
 					},
 				},
@@ -5644,7 +5644,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 25,
+							Slot: 25,
 						},
 					},
 				},
@@ -5686,7 +5686,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1337,
+							Slot: 1337,
 						},
 					},
 				},
@@ -5728,7 +5728,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident1},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 1000,
+							Slot: 1000,
 						},
 					},
 				},
@@ -5809,8 +5809,8 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							minDeposit, err := rentStructure.MinDeposit(input)
+							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.StorageScoreParameters())
+							minDeposit, err := storageScoreStructure.MinDeposit(input)
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
 							require.NoError(t, err)
@@ -5878,8 +5878,8 @@ func TestTxSemanticMana(t *testing.T) {
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
-							rentStructure := iotago.NewRentStructure(testProtoParams.RentParameters())
-							minDeposit, err := rentStructure.MinDeposit(input)
+							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.StorageScoreParameters())
+							minDeposit, err := storageScoreStructure.MinDeposit(input)
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
 							require.NoError(t, err)
@@ -6365,7 +6365,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.TimelockUnlockCondition{
-							SlotIndex: 500,
+							Slot: 500,
 						},
 					},
 				}
@@ -6393,7 +6393,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: address},
 						&iotago.ExpirationUnlockCondition{
-							SlotIndex:     500,
+							Slot:          500,
 							ReturnAddress: ident,
 						},
 					},
@@ -6669,8 +6669,8 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	storageScore := dummyImplicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmountImplicitAccount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
+	storageScore := dummyImplicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
+	minAmountImplicitAccount := testAPI.StorageScoreStructure().StorageCost() * iotago.BaseToken(storageScore)
 
 	exampleInputs := []TestInput{
 		{
@@ -6729,7 +6729,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 					Amount: exampleAmount,
 					Conditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-						&iotago.TimelockUnlockCondition{SlotIndex: 500},
+						&iotago.TimelockUnlockCondition{Slot: 500},
 					},
 				},
 			},
@@ -6859,7 +6859,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: iotago.ErrImplicitAccountDestructionDisallowed,
 		},
 		{
-			name: "ok - implicit account with StorageScoreOffsetImplicitAccountCreationAddress can be transitioned",
+			name: "ok - implicit account with OffsetImplicitAccountCreationAddress can be transitioned",
 			inputs: []TestInput{
 				{
 					inputID: outputID1,
@@ -7154,10 +7154,10 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	storageScore := implicitAccount.StorageScore(testAPI.RentStructure(), nil)
-	minAmount := testAPI.RentStructure().StorageCost() * iotago.BaseToken(storageScore)
+	storageScore := implicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
+	minAmount := testAPI.StorageScoreStructure().StorageCost() * iotago.BaseToken(storageScore)
 	implicitAccount.Amount = minAmount
-	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.RentStructure())
+	depositValidationFunc := iotago.OutputsSyntacticalDepositAmount(testAPI.ProtocolParameters(), testAPI.StorageScoreStructure())
 	require.NoError(t, depositValidationFunc(0, implicitAccount))
 
 	convertedAccount := &iotago.AccountOutput{

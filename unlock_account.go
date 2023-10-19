@@ -39,6 +39,6 @@ func (r *AccountUnlock) Size() int {
 	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
 }
 
-func (r *AccountUnlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (r *AccountUnlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }

@@ -14,11 +14,11 @@ func (s *AddressUnlockCondition) Clone() UnlockCondition {
 	return &AddressUnlockCondition{Address: s.Address.Clone()}
 }
 
-func (s *AddressUnlockCondition) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return s.Address.StorageScore(rentStruct, nil)
+func (s *AddressUnlockCondition) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return s.Address.StorageScore(storageScoreStruct, nil)
 }
 
-func (s *AddressUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *AddressUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// AddressUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
 }

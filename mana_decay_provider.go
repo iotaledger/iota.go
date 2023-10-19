@@ -24,7 +24,7 @@ type ManaDecayProvider struct {
 	// generationRateExponent is the scaling of generationRate expressed as an exponent of 2.
 	generationRateExponent uint64
 
-	// decayFactors is a lookup table of epoch index diff to mana decay factor (slice index 0 = 1 epoch).
+	// decayFactors is a lookup table of epoch diff to mana decay factor (slice index 0 = 1 epoch).
 	decayFactors []uint64 // the factors need to be scaled by 2^-decayFactorsExponent
 
 	// decayFactorsLength is the length of the decayFactors lookup table.
@@ -43,36 +43,36 @@ type ManaDecayProvider struct {
 func NewManaDecayProvider(
 	timeProvider *TimeProvider,
 	slotsPerEpochExponent uint8,
-	manaStructure *ManaStructure,
+	manaParameters *ManaParameters,
 ) *ManaDecayProvider {
 	return &ManaDecayProvider{
 		timeProvider:                 timeProvider,
 		slotsPerEpochExponent:        uint64(slotsPerEpochExponent),
-		bitsCount:                    uint64(manaStructure.BitsCount),
-		generationRate:               uint64(manaStructure.GenerationRate),
-		generationRateExponent:       uint64(manaStructure.GenerationRateExponent),
-		decayFactors:                 lo.Map(manaStructure.DecayFactors, func(factor uint32) uint64 { return uint64(factor) }),
-		decayFactorsLength:           uint64(len(manaStructure.DecayFactors)),
-		decayFactorsExponent:         uint64(manaStructure.DecayFactorsExponent),
-		decayFactorEpochsSum:         uint64(manaStructure.DecayFactorEpochsSum),
-		decayFactorEpochsSumExponent: uint64(manaStructure.DecayFactorEpochsSumExponent),
+		bitsCount:                    uint64(manaParameters.BitsCount),
+		generationRate:               uint64(manaParameters.GenerationRate),
+		generationRateExponent:       uint64(manaParameters.GenerationRateExponent),
+		decayFactors:                 lo.Map(manaParameters.DecayFactors, func(factor uint32) uint64 { return uint64(factor) }),
+		decayFactorsLength:           uint64(len(manaParameters.DecayFactors)),
+		decayFactorsExponent:         uint64(manaParameters.DecayFactorsExponent),
+		decayFactorEpochsSum:         uint64(manaParameters.DecayFactorEpochsSum),
+		decayFactorEpochsSumExponent: uint64(manaParameters.DecayFactorEpochsSumExponent),
 	}
 }
 
 // decay performs mana decay without mana generation.
 func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) (Mana, error) {
 	if value == 0 || epochDiff == 0 || p.decayFactorsLength == 0 {
-		// no need to decay if the epoch index didn't change or no decay factors were given
+		// no need to decay if the epoch didn't change or no decay factors were given
 		return value, nil
 	}
 
 	result := uint64(value)
 	var err error
 
-	// we keep applying the decay as long as epoch index diffs are left
+	// we keep applying the decay as long as epoch diffs are left
 	remainingEpochDiff := epochDiff
 	for remainingEpochDiff > 0 {
-		// we can't decay more than the available epoch index diffs
+		// we can't decay more than the available epoch diffs
 		// in the lookup table in this iteration
 		diffsToDecay := remainingEpochDiff
 		if diffsToDecay > EpochIndex(p.decayFactorsLength) {
@@ -80,7 +80,7 @@ func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) (Mana, error
 		}
 		remainingEpochDiff -= diffsToDecay
 
-		// slice index 0 equals epoch index diff 1
+		// slice index 0 equals epoch diff 1
 		decayFactor := p.decayFactors[diffsToDecay-1]
 
 		// apply the decay and scale the resulting value (fixed-point arithmetics)
@@ -113,7 +113,7 @@ func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotInde
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
 	if creationEpoch > targetEpoch {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch was bigger than the target epoch: %d > %d", creationEpoch, targetEpoch)
 	}
 
 	return p.decay(storedMana, targetEpoch-creationEpoch)
@@ -121,12 +121,12 @@ func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotInde
 
 // ManaGenerationWithDecay calculates the generated mana and applies the decay to the result.
 func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
+	if creationSlot > targetSlot {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created slot was bigger than the target slot: %d > %d", creationSlot, targetSlot)
+	}
+
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
-
-	if creationSlot > targetSlot {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created slot index was bigger than the target slot index: %d > %d", creationSlot, targetSlot)
-	}
 
 	epochDiff := targetEpoch - creationEpoch
 
@@ -217,7 +217,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 // RewardsWithDecay applies the decay to the given stored mana.
 func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochIndex, claimedEpoch EpochIndex) (Mana, error) {
 	if rewardEpoch > claimedEpoch {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", rewardEpoch, claimedEpoch)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch was bigger than the claiming epoch: %d > %d", rewardEpoch, claimedEpoch)
 	}
 
 	return p.decay(rewards, claimedEpoch-rewardEpoch)

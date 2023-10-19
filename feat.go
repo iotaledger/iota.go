@@ -69,19 +69,19 @@ func (f Features[T]) Clone() Features[T] {
 	return lo.CloneSlice(f)
 }
 
-func (f Features[T]) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+func (f Features[T]) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	var sumCost StorageScore
 	for _, feat := range f {
-		sumCost += feat.StorageScore(rentStruct, nil)
+		sumCost += feat.StorageScore(storageScoreStruct, nil)
 	}
 
 	return sumCost
 }
 
-func (f Features[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (f Features[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreFeats WorkScore
 	for _, feat := range f {
-		workScoreFeat, err := feat.WorkScore(workScoreStructure)
+		workScoreFeat, err := feat.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}

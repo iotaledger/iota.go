@@ -25,6 +25,6 @@ func (s *SignatureUnlock) Size() int {
 	return serializer.OneByte + s.Signature.Size()
 }
 
-func (s *SignatureUnlock) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return s.Signature.WorkScore(workScoreStructure)
+func (s *SignatureUnlock) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	return s.Signature.WorkScore(workScoreParameters)
 }

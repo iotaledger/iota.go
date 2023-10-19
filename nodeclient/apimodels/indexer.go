@@ -67,11 +67,9 @@ type IndexerStorageDepositParams struct {
 // IndexerNativeTokenParams define native token based query parameters.
 type IndexerNativeTokenParams struct {
 	// Filters outputs based on the presence of native tokens in the output.
-	HasNativeTokens *bool `qs:"hasNativeTokens,omitempty"`
-	// Filter outputs that have at least an amount of native tokens.
-	MinNativeTokenCount *uint32 `qs:"minNativeTokenCount,omitempty"`
-	// Filter outputs that have at the most an amount of native tokens.
-	MaxNativeTokenCount *uint32 `qs:"maxNativeTokenCount,omitempty"`
+	HasNativeToken *bool `qs:"hasNativeToken,omitempty"`
+	// Filters outputs based on the presence of a specific native token in the output.
+	NativeToken string `qs:"nativeToken,omitempty"`
 }
 
 // IndexerUnlockableByAddressParams define address unlock related query parameters.
@@ -110,7 +108,6 @@ func (query *BasicOutputsQuery) URLParams() (string, error) {
 type AccountsQuery struct {
 	IndexerCursorParams
 	IndexerCreationParams
-	IndexerNativeTokenParams
 	IndexerUnlockableByAddressParams
 
 	// Bech32-encoded state controller address that should be searched for.
@@ -155,7 +152,6 @@ type NFTsQuery struct {
 	IndexerTimelockParams
 	IndexerExpirationParams
 	IndexerStorageDepositParams
-	IndexerNativeTokenParams
 	IndexerCreationParams
 	IndexerUnlockableByAddressParams
 

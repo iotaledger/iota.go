@@ -221,7 +221,7 @@ func subscribeToTopic[T any](eac *EventAPIClient, topic string, deseriFunc func(
 func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan iotago.Output, *EventAPIClientSubscription) {
 	return subscribeToTopic(eac, topic, func(payload []byte) (iotago.Output, error) {
 		var output iotago.TxEssenceOutput
-		if err := eac.Client.CurrentAPI().JSONDecode(payload, &output); err != nil {
+		if err := eac.Client.CommittedAPI().JSONDecode(payload, &output); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan iotago.
 func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *apimodels.BlockMetadataResponse, *EventAPIClientSubscription) {
 	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.BlockMetadataResponse, error) {
 		response := new(apimodels.BlockMetadataResponse)
-		if err := eac.Client.CurrentAPI().JSONDecode(payload, response); err != nil {
+		if err := eac.Client.CommittedAPI().JSONDecode(payload, response); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err
 		}
@@ -373,7 +373,7 @@ func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *api
 
 	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.OutputMetadata, error) {
 		response := new(apimodels.OutputMetadata)
-		if err := eac.Client.CurrentAPI().JSONDecode(payload, response); err != nil {
+		if err := eac.Client.CommittedAPI().JSONDecode(payload, response); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err
 		}

@@ -8,7 +8,7 @@ import (
 var (
 	// ErrInvalidStakingStartEpoch gets returned when a new Staking Feature's start epoch
 	// is not set to the epoch of the transaction.
-	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch index of the transaction")
+	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch of the transaction")
 	// ErrInvalidStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
 	// is not at least set to the transaction epoch plus the unbonding period.
 	ErrInvalidStakingEndEpochTooEarly = ierrors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")
@@ -46,17 +46,17 @@ func (s *StakingFeature) Clone() Feature {
 	return &StakingFeature{StakedAmount: s.StakedAmount, FixedCost: s.FixedCost, StartEpoch: s.StartEpoch, EndEpoch: s.EndEpoch}
 }
 
-func (s *StakingFeature) StorageScore(rentStruct *RentStructure, f StorageScoreFunc) StorageScore {
+func (s *StakingFeature) StorageScore(storageScoreStruct *StorageScoreStructure, f StorageScoreFunc) StorageScore {
 	if f != nil {
-		return f(rentStruct)
+		return f(storageScoreStruct)
 	}
 
-	return rentStruct.StorageScoreOffsetStakingFeature()
+	return storageScoreStruct.OffsetStakingFeature()
 }
 
-func (s *StakingFeature) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (s *StakingFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// staking feature changes require invokation of staking managers so require extra work.
-	return workScoreStructure.Staking, nil
+	return workScoreParameters.Staking, nil
 }
 
 func (s *StakingFeature) Equal(other Feature) bool {

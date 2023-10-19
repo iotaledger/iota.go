@@ -116,9 +116,20 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 type EmptyAddressSigner struct{}
 
 func (s *EmptyAddressSigner) Sign(addr Address, _ []byte) (signature Signature, err error) {
-	switch addr.(type) {
+	switch address := addr.(type) {
 	case *Ed25519Address:
 		return &Ed25519Signature{}, nil
+
+	case *RestrictedAddress:
+		switch address.Address.(type) {
+		case *Ed25519Address:
+			return &Ed25519Signature{}, nil
+		default:
+			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+		}
+	case *ImplicitAccountCreationAddress:
+		return &Ed25519Signature{}, nil
+
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}

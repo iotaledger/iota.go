@@ -31,7 +31,7 @@ func (c *CommitmentInput) Size() int {
 	return serializer.OneByte + CommitmentIDLength
 }
 
-func (c *CommitmentInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (c *CommitmentInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
-	return workScoreStructure.ContextInput, nil
+	return workScoreParameters.ContextInput, nil
 }

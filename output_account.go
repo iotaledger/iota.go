@@ -195,12 +195,12 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 	return outputUnlockableBy(a, next, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
 }
 
-func (a *AccountOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreOffsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(a.Size())) +
-		a.Conditions.StorageScore(rentStruct, nil) +
-		a.Features.StorageScore(rentStruct, nil) +
-		a.ImmutableFeatures.StorageScore(rentStruct, nil)
+func (a *AccountOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreStruct.OffsetOutput +
+		storageScoreStruct.FactorData().Multiply(StorageScore(a.Size())) +
+		a.Conditions.StorageScore(storageScoreStruct, nil) +
+		a.Features.StorageScore(storageScoreStruct, nil) +
+		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (a *AccountOutput) syntacticallyValidate() error {
@@ -215,18 +215,18 @@ func (a *AccountOutput) syntacticallyValidate() error {
 	return nil
 }
 
-func (a *AccountOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := a.Conditions.WorkScore(workScoreStructure)
+func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := a.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := a.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := a.ImmutableFeatures.WorkScore(workScoreStructure)
+	workScoreImmutableFeatures, err := a.ImmutableFeatures.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

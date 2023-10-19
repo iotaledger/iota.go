@@ -173,11 +173,11 @@ func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex
 	return ok
 }
 
-func (d *DelegationOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreOffsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(d.Size())) +
-		rentStruct.StorageScoreOffsetDelegation() +
-		d.Conditions.StorageScore(rentStruct, nil)
+func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return storageScoreStruct.OffsetOutput +
+		storageScoreStruct.FactorData().Multiply(StorageScore(d.Size())) +
+		storageScoreStruct.OffsetDelegation() +
+		d.Conditions.StorageScore(storageScoreStruct, nil)
 }
 
 func (d *DelegationOutput) syntacticallyValidate() error {
@@ -195,8 +195,8 @@ func (d *DelegationOutput) syntacticallyValidate() error {
 	return nil
 }
 
-func (d *DelegationOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	return d.Conditions.WorkScore(workScoreStructure)
+func (d *DelegationOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	return d.Conditions.WorkScore(workScoreParameters)
 }
 
 func (d *DelegationOutput) ChainID() ChainID {

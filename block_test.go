@@ -97,7 +97,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 }
 
 //nolint:unparam // in the test we always issue at blockIndex=100, but let's keep this flexibility.
-func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.Payload, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.BlockPayload, apiProvider *api.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -116,15 +116,15 @@ func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iota
 func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider(
 		api.WithAPIForMissingVersionCallback(
-			func(version iotago.Version) (iotago.API, error) {
-				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(version))), nil
+			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
+				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
 		),
 	)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
 
-	timeProvider := apiProvider.CurrentAPI().TimeProvider()
+	timeProvider := apiProvider.CommittedAPI().TimeProvider()
 
 	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(1), 2, apiProvider), iotago.ErrInvalidBlockVersion)
 

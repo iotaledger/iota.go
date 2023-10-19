@@ -203,7 +203,7 @@ func TestClient_Congestion(t *testing.T) {
 	accID := tpkg.RandAccountID()
 
 	originRes := &apimodels.CongestionResponse{
-		SlotIndex:            iotago.SlotIndex(20),
+		Slot:                 iotago.SlotIndex(20),
 		Ready:                true,
 		ReferenceManaCost:    iotago.Mana(1000),
 		BlockIssuanceCredits: iotago.BlockIssuanceCredits(1000),
@@ -618,11 +618,11 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 
 var sampleGossipInfo = &apimodels.GossipInfo{
 	Heartbeat: &apimodels.GossipHeartbeat{
-		SolidSlotIndex:  234,
-		PrunedSlotIndex: 5872,
-		LatestSlotIndex: 1294,
-		ConnectedPeers:  2392,
-		SyncedPeers:     1234,
+		SolidSlot:      234,
+		PrunedSlot:     5872,
+		LatestSlot:     1294,
+		ConnectedPeers: 2392,
+		SyncedPeers:    1234,
 	},
 	Metrics: &apimodels.PeerGossipMetrics{
 		NewBlocks:             40,

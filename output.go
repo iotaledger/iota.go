@@ -94,13 +94,6 @@ var (
 	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
 )
 
-// defines the default storage score offset for an output.
-func storageScoreOffsetOutput(rentStruct *RentStructure) StorageScore {
-	return rentStruct.StorageScoreOffsetOutput() +
-		// included output id, block id, and slot booked data size
-		rentStruct.StorageScoreFactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
-}
-
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 
@@ -175,10 +168,10 @@ func (outputs Outputs[T]) Size() int {
 	return sum
 }
 
-func (outputs Outputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (outputs Outputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreOutputs WorkScore
 	for _, output := range outputs {
-		workScoreOutput, err := output.WorkScore(workScoreStructure)
+		workScoreOutput, err := output.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}
@@ -341,7 +334,7 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 //   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructure *RentStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScoreStructure *StorageScoreStructure) OutputsSyntacticalValidationFunc {
 	var sum BaseToken
 
 	return func(index int, output Output) error {
@@ -357,13 +350,13 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, rentStructu
 		}
 
 		// check whether base token amount fulfills the storage deposit cost
-		if _, err := rentStructure.CoversMinDeposit(output, amount); err != nil {
+		if _, err := storageScoreStructure.CoversMinDeposit(output, amount); err != nil {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
-			minStorageDepositForReturnOutput, err := rentStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
+			minStorageDepositForReturnOutput, err := storageScoreStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			if err != nil {
 				return ierrors.Wrapf(err, "failed to calculate storage deposit for output index %d", index)
 			}
@@ -405,13 +398,13 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 		unlockConditionSet := output.UnlockConditionSet()
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
-			if expiration.SlotIndex == 0 {
+			if expiration.Slot == 0 {
 				return ErrExpirationConditionZero
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
-			if timelock.SlotIndex == 0 {
+			if timelock.Slot == 0 {
 				return ErrTimelockConditionZero
 			}
 		}

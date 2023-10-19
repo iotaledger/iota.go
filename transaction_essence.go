@@ -87,18 +87,18 @@ func (u *TransactionEssence) Size() int {
 //
 // Does not specifically include the work score of the optional payload because that is already
 // included in the Work Score of the SignedTransaction.
-func (u *TransactionEssence) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreStructure)
+func (u *TransactionEssence) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreContextInputs, err := u.ContextInputs.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreInputs, err := u.Inputs.WorkScore(workScoreStructure)
+	workScoreInputs, err := u.Inputs.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreAllotments, err := u.Allotments.WorkScore(workScoreStructure)
+	workScoreAllotments, err := u.Allotments.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

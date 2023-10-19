@@ -61,10 +61,10 @@ func (in Inputs[T]) Size() int {
 	return sum
 }
 
-func (in Inputs[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (in Inputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreInputs WorkScore
 	for _, input := range in {
-		workScoreInput, err := input.WorkScore(workScoreStructure)
+		workScoreInput, err := input.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}
