@@ -107,6 +107,14 @@ func (e *EpochBasedProvider) AddFutureVersion(version iotago.Version, protocolPa
 }
 
 func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, error) {
+	if latestAPI := e.LatestAPI(); latestAPI != nil && latestAPI.Version() == version {
+		return latestAPI, nil
+	}
+
+	if committedAPI := e.CommittedAPI(); committedAPI != nil && committedAPI.Version() == version {
+		return committedAPI, nil
+	}
+
 	protocolParams, exists := e.protocolParametersByVersion[version]
 	if !exists {
 		return nil, ierrors.Errorf("protocol parameters for version %d are not set", version)
