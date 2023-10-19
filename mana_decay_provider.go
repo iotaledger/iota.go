@@ -60,11 +60,14 @@ func NewManaDecayProvider(
 }
 
 // decay performs mana decay without mana generation.
-func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) Mana {
+func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) (Mana, error) {
 	if value == 0 || epochDiff == 0 || p.decayFactorsLength == 0 {
 		// no need to decay if the epoch index didn't change or no decay factors were given
-		return value
+		return value, nil
 	}
+
+	result := uint64(value)
+	var err error
 
 	// we keep applying the decay as long as epoch index diffs are left
 	remainingEpochDiff := epochDiff
@@ -81,19 +84,27 @@ func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) Mana {
 		decayFactor := p.decayFactors[diffsToDecay-1]
 
 		// apply the decay and scale the resulting value (fixed-point arithmetics)
-		aux, _ := safemath.Safe64MulShift(uint64(value), decayFactor, p.decayFactorsExponent)
-		value = Mana(aux)
+		result, err = safemath.Safe64MulShift(result, decayFactor, p.decayFactorsExponent)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate mana decay")
+		}
 	}
-	return value
+
+	return Mana(result), nil
 }
 
 // generateMana calculates the generated mana.
-func (p *ManaDecayProvider) generateMana(value BaseToken, slotDiff SlotIndex) Mana {
+func (p *ManaDecayProvider) generateMana(value BaseToken, slotDiff SlotIndex) (Mana, error) {
 	if slotDiff == 0 || p.generationRate == 0 {
-		return 0
+		return 0, nil
 	}
-	aux, _ := safemath.Safe64MulShift(uint64(value), uint64(slotDiff)*p.generationRate, p.generationRateExponent)
-	return Mana(aux)
+
+	result, err := safemath.Safe64MulShift(uint64(value), uint64(slotDiff)*p.generationRate, p.generationRateExponent)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate mana generation")
+	}
+
+	return Mana(result), nil
 }
 
 // ManaWithDecay applies the decay to the given mana.
@@ -105,7 +116,7 @@ func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotInde
 		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch index was bigger than the target epoch index: %d > %d", creationEpoch, targetEpoch)
 	}
 
-	return p.decay(storedMana, targetEpoch-creationEpoch), nil
+	return p.decay(storedMana, targetEpoch-creationEpoch)
 }
 
 // ManaGenerationWithDecay calculates the generated mana and applies the decay to the result.
@@ -122,42 +133,84 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 	//nolint:exhaustive // false-positive, we have a default case
 	switch epochDiff {
 	case 0:
-		return p.generateMana(amount, targetSlot-creationSlot), nil
+		result, err := p.generateMana(amount, targetSlot-creationSlot)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate generated mana")
+		}
+
+		return result, nil
 
 	case 1:
-		manaDecayed := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot)), 1)
-		manaGenerated := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot))
-		return safemath.SafeAdd(manaDecayed, manaGenerated)
+		manaGeneratedFirstEpoch, err := p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot))
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the first epoch")
+		}
+
+		manaDecayedFirstEpoch, err := p.decay(manaGeneratedFirstEpoch, 1)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to decay generated mana in the first epoch")
+		}
+
+		manaGeneratedSecondEpoch, err := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot))
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the second epoch")
+		}
+
+		result, err := safemath.SafeAdd(manaDecayedFirstEpoch, manaGeneratedSecondEpoch)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana")
+		}
+
+		return result, nil
 
 	default:
-		aux, _ := safemath.Safe64MulShift(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
+		aux, err := safemath.Safe64MulShift(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate auxiliary value")
+		}
 		c := Mana(aux)
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n := p.decay(p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot)), epochDiff)
 
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_n_1 := p.decay(c, epochDiff-1)
-
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_0, err := safemath.SafeAdd(c, p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot)))
+		manaGeneratedFirstEpoch, err := p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot))
 		if err != nil {
-			return 0, err
+			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the first epoch")
 		}
 
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		potentialMana_0, err = safemath.SafeSub(potentialMana_0, c>>p.decayFactorsExponent)
+		manaDecayedFirstEpoch, err := p.decay(manaGeneratedFirstEpoch, epochDiff)
 		if err != nil {
-			return 0, err
+			return 0, ierrors.Wrap(err, "failed to decay generated mana in the first epoch")
 		}
 
-		// result = potentialMana_0 - potentialMana_n_1 + potentialMana_n
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		result, err := safemath.SafeSub(potentialMana_0, potentialMana_n_1)
+		manaDecayedIntermediateEpochs, err := p.decay(c, epochDiff-1)
 		if err != nil {
-			return 0, err
+			return 0, ierrors.Wrap(err, "failed to decay generated mana in the intermediate epochs")
 		}
 
-		return safemath.SafeAdd(result, potentialMana_n)
+		manaGeneratedLastEpoch, err := p.generateMana(amount, p.timeProvider.SlotsSinceEpochStart(targetSlot))
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the last epoch")
+		}
+
+		result, err := safemath.SafeAdd(c, manaGeneratedLastEpoch)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana of the last epoch")
+		}
+
+		result, err = safemath.SafeSub(result, c>>p.decayFactorsExponent)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate subtraction of generated mana from the rounding term")
+		}
+
+		result, err = safemath.SafeSub(result, manaDecayedIntermediateEpochs)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate subtraction of generated mana of intermediate epochs")
+		}
+
+		result, err = safemath.SafeAdd(result, manaDecayedFirstEpoch)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana of the first epoch")
+		}
+
+		return result, nil
 	}
 }
 
@@ -167,5 +220,5 @@ func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochInde
 		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch index was bigger than the claiming epoch index: %d > %d", rewardEpoch, claimedEpoch)
 	}
 
-	return p.decay(rewards, claimedEpoch-rewardEpoch), nil
+	return p.decay(rewards, claimedEpoch-rewardEpoch)
 }
