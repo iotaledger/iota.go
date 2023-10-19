@@ -17,11 +17,9 @@ type EpochBasedProvider struct {
 	futureProtocolParametersByVersion map[iotago.Version]iotago.Identifier
 	protocolVersions                  *ProtocolEpochVersions
 
-	latestAPIMutex sync.RWMutex
-	latestAPI      iotago.API
+	latestAPI iotago.API
 
-	committedAPIMutex sync.RWMutex
-	committedAPI      iotago.API
+	committedAPI iotago.API
 
 	committedSlotMutex sync.RWMutex
 	committedSlot      iotago.SlotIndex
@@ -44,28 +42,14 @@ func NewEpochBasedProvider(opts ...options.Option[EpochBasedProvider]) *EpochBas
 }
 
 func (e *EpochBasedProvider) SetCommittedSlot(slot iotago.SlotIndex) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	e.committedSlotMutex.Lock()
 	e.committedSlot = slot
 	e.committedSlotMutex.Unlock()
 
 	e.updateCommittedAPI(slot)
-}
-
-func (e *EpochBasedProvider) updateCommittedAPI(slot iotago.SlotIndex) {
-	e.committedAPIMutex.Lock()
-	defer e.committedAPIMutex.Unlock()
-
-	latestAPI := e.LatestAPI()
-	if latestAPI == nil {
-		return
-	}
-
-	epoch := latestAPI.TimeProvider().EpochFromSlot(slot)
-	version := e.VersionForEpoch(epoch)
-
-	if e.committedAPI == nil || version > e.committedAPI.ProtocolParameters().Version() {
-		e.committedAPI = lo.PanicOnErr(e.apiForVersion(version))
-	}
 }
 
 func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters iotago.ProtocolParameters, epoch iotago.EpochIndex) {
@@ -75,12 +59,10 @@ func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters iot
 
 func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters iotago.ProtocolParameters) {
 	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	e.protocolParametersByVersion[protocolParameters.Version()] = protocolParameters
 	delete(e.futureProtocolParametersByVersion, protocolParameters.Version())
-	e.mutex.Unlock()
-
-	e.latestAPIMutex.Lock()
-	defer e.latestAPIMutex.Unlock()
 
 	if e.latestAPI == nil || e.latestAPI.Version() < protocolParameters.Version() {
 		e.latestAPI = lo.PanicOnErr(e.apiForVersion(protocolParameters.Version()))
@@ -89,8 +71,9 @@ func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters iotago.Pro
 
 func (e *EpochBasedProvider) AddVersion(version iotago.Version, epoch iotago.EpochIndex) {
 	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	e.protocolVersions.Add(version, epoch)
-	e.mutex.Unlock()
 
 	e.committedSlotMutex.Lock()
 	defer e.committedSlotMutex.Unlock()
@@ -107,6 +90,14 @@ func (e *EpochBasedProvider) AddFutureVersion(version iotago.Version, protocolPa
 }
 
 func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, error) {
+	if e.latestAPI != nil && e.latestAPI.Version() == version {
+		return e.latestAPI, nil
+	}
+
+	if e.committedAPI != nil && e.committedAPI.Version() == version {
+		return e.committedAPI, nil
+	}
+
 	protocolParams, exists := e.protocolParametersByVersion[version]
 	if !exists {
 		return nil, ierrors.Errorf("protocol parameters for version %d are not set", version)
@@ -159,15 +150,15 @@ func (e *EpochBasedProvider) APIForEpoch(epoch iotago.EpochIndex) iotago.API {
 }
 
 func (e *EpochBasedProvider) LatestAPI() iotago.API {
-	e.latestAPIMutex.RLock()
-	defer e.latestAPIMutex.RUnlock()
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
 
 	return e.latestAPI
 }
 
 func (e *EpochBasedProvider) CommittedAPI() iotago.API {
-	e.committedAPIMutex.RLock()
-	defer e.committedAPIMutex.RUnlock()
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
 
 	return e.committedAPI
 }
@@ -234,18 +225,28 @@ func (e *EpochBasedProvider) EpochForVersion(version iotago.Version) (iotago.Epo
 	return e.protocolVersions.EpochForVersion(version)
 }
 
-func (e *EpochBasedProvider) VersionForEpoch(epoch iotago.EpochIndex) iotago.Version {
-	e.mutex.RLock()
-	defer e.mutex.RUnlock()
-
-	return e.protocolVersions.VersionForEpoch(epoch)
-}
-
 func (e *EpochBasedProvider) VersionForSlot(slot iotago.SlotIndex) iotago.Version {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	epoch := e.latestAPI.TimeProvider().EpochFromSlot(slot)
 
+	return e.protocolVersions.VersionForEpoch(epoch)
+}
+
+func (e *EpochBasedProvider) updateCommittedAPI(slot iotago.SlotIndex) {
+	if e.latestAPI == nil {
+		return
+	}
+
+	epoch := e.latestAPI.TimeProvider().EpochFromSlot(slot)
+	version := e.versionForEpoch(epoch)
+
+	if e.committedAPI == nil || version > e.committedAPI.ProtocolParameters().Version() {
+		e.committedAPI = lo.PanicOnErr(e.apiForVersion(version))
+	}
+}
+
+func (e *EpochBasedProvider) versionForEpoch(epoch iotago.EpochIndex) iotago.Version {
 	return e.protocolVersions.VersionForEpoch(epoch)
 }
