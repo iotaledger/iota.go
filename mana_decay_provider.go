@@ -87,8 +87,6 @@ func (p *ManaDecayProvider) decay(value Mana, epochDiff EpochIndex) Mana {
 		aux, _ := safemath.Safe64MulShift(uint64(value), decayFactor, p.decayFactorsExponent)
 		value = Mana(aux)
 	}
-
-	// combine both uint64 variables to get the actual value
 	return value
 }
 
