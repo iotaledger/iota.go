@@ -77,7 +77,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
-		StateIndex:     1,
+		StateIndex:     0,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
 		Conditions: iotago.AccountOutputUnlockConditions{
@@ -130,7 +130,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
-		StateIndex:     1,
+		StateIndex:     0,
 		StateMetadata:  metadata,
 		FoundryCounter: 5,
 		Conditions: iotago.AccountOutputUnlockConditions{
