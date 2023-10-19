@@ -1,9 +1,6 @@
 package iotago
 
 import (
-	"fmt"
-	"math"
-
 	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
@@ -122,7 +119,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 
 	epochDiff := targetEpoch - creationEpoch
 
-	//nolint:exhaustive // false-positive, we have default case
+	//nolint:exhaustive // false-positive, we have a default case
 	switch epochDiff {
 	case 0:
 		return p.generateMana(amount, targetSlot-creationSlot), nil
@@ -147,6 +144,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 			return 0, err
 		}
 
+		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
 		potentialMana_0, err = safemath.SafeSub(potentialMana_0, c>>p.decayFactorsExponent)
 		if err != nil {
 			return 0, err
@@ -158,9 +156,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 		if err != nil {
 			return 0, err
 		}
-		printVar, _ := safemath.SafeAdd(result, potentialMana_n)
-		//nolint:golint,revive,nosnakecase,stylecheck // taken from the formula, lets keep it that way
-		fmt.Println(p.LowerBoundPotentialMana(amount, creationSlot, targetSlot), printVar, p.UpperBoundPotentialMana(amount, creationSlot, targetSlot))
+
 		return safemath.SafeAdd(result, potentialMana_n)
 	}
 }
@@ -172,45 +168,4 @@ func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochInde
 	}
 
 	return p.decay(rewards, claimedEpoch-rewardEpoch), nil
-}
-
-func (p *ManaDecayProvider) ExactResultPotentialMana(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) float64 {
-	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
-	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
-	floatAmount := float64(amount)
-	floatGenRate := float64(p.generationRate) * math.Pow(2, -float64(p.generationRateExponent))
-	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(10)
-	epochDiff := targetEpoch - creationEpoch
-
-	switch epochDiff {
-	case 0:
-		floatSlotDiff := float64(targetSlot - creationSlot)
-		return floatSlotDiff * floatAmount * floatGenRate
-	case 1:
-		slotsBeforeNextEpoch := p.timeProvider.SlotsBeforeNextEpoch(creationSlot)
-		slotsSinceEpochStart := p.timeProvider.SlotsSinceEpochStart(targetSlot)
-		manaDecayed := float64(slotsBeforeNextEpoch) * floatAmount * floatGenRate * math.Exp(-delta/3)
-		manaGenerated := float64(slotsSinceEpochStart) * floatAmount * floatGenRate
-		return manaDecayed + manaGenerated
-	default:
-		slotsBeforeNextEpoch := p.timeProvider.SlotsBeforeNextEpoch(creationSlot)
-		slotsSinceEpochStart := p.timeProvider.SlotsSinceEpochStart(targetSlot)
-		epochDiffFloat := float64(epochDiff)
-		slotsPerEpochFloat := math.Pow(2, 13)
-		constant := math.Exp(-delta/3) * (1 - math.Exp(-(epochDiffFloat-1)*delta/3)) / (1 - math.Exp(-delta/3))
-		potentialMana_n := float64(slotsBeforeNextEpoch) * floatAmount * floatGenRate * math.Exp(-epochDiffFloat*delta/3)
-		potentialMana_n_1 := constant * floatAmount * floatGenRate * slotsPerEpochFloat
-		potentialMana_0 := float64(slotsSinceEpochStart) * floatAmount * floatGenRate
-		return potentialMana_n + potentialMana_n_1 + potentialMana_0
-	}
-}
-
-func (p *ManaDecayProvider) LowerBoundPotentialMana(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) float64 {
-	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(10)
-	constant := math.Exp(-delta/3) / (1 - math.Exp(-delta/3))
-	return p.ExactResultPotentialMana(amount, creationSlot, targetSlot) - (4 + float64(amount)*math.Pow(2, float64(13-27))*(1+constant*math.Pow(2, -float64(32))))
-}
-
-func (p *ManaDecayProvider) UpperBoundPotentialMana(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) float64 {
-	return p.ExactResultPotentialMana(amount, creationSlot, targetSlot) + 2 - math.Pow(2, -float64(32-1))
 }
