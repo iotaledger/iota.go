@@ -27,12 +27,12 @@ func TestStorageScoreParamtersJSONMarshalling(t *testing.T) {
 	storageScoreParameters := &iotago.StorageScoreParameters{
 		StorageCost:                 500,
 		FactorData:                  1,
-		OffsetOutput:                10,
+		OffsetOutputOverhead:        10,
 		OffsetEd25519BlockIssuerKey: 50,
 		OffsetStakingFeature:        100,
 		OffsetDelegation:            100,
 	}
-	storageScoreParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutput":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
+	storageScoreParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutputOverhead":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
 
 	j, err := tpkg.TestAPI.JSONEncode(storageScoreParameters)
 	require.NoError(t, err)

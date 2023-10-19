@@ -116,15 +116,15 @@ func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iota
 func TestProtocolBlock_ProtocolVersionSyntactical(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider(
 		api.WithAPIForMissingVersionCallback(
-			func(version iotago.Version) (iotago.API, error) {
-				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(version))), nil
+			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
+				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
 		),
 	)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
 	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
 
-	timeProvider := apiProvider.CurrentAPI().TimeProvider()
+	timeProvider := apiProvider.CommittedAPI().TimeProvider()
 
 	require.ErrorIs(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(1), 2, apiProvider), iotago.ErrInvalidBlockVersion)
 

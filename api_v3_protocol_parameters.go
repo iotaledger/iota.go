@@ -192,13 +192,13 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, factorData StorageScoreFactor, offsetOutput, offsetEd25519BlockIssuerKey, offsetStakingFeature, offsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, factorData StorageScoreFactor, offsetOutputOverhead, offsetEd25519BlockIssuerKey, offsetStakingFeature, offsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = totalSupply
 		p.basicProtocolParameters.StorageScoreParameters = StorageScoreParameters{
 			StorageCost:                 storageCost,
 			FactorData:                  factorData,
-			OffsetOutput:                offsetOutput,
+			OffsetOutputOverhead:        offsetOutputOverhead,
 			OffsetEd25519BlockIssuerKey: offsetEd25519BlockIssuerKey,
 			OffsetStakingFeature:        offsetStakingFeature,
 			OffsetDelegation:            offsetDelegation,

@@ -977,7 +977,7 @@ func RandStorageScoreParameters() *iotago.StorageScoreParameters {
 	return &iotago.StorageScoreParameters{
 		StorageCost:                 RandBaseToken(iotago.MaxBaseToken),
 		FactorData:                  iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
-		OffsetOutput:                iotago.StorageScore(RandUint64(math.MaxUint64)),
+		OffsetOutputOverhead:        iotago.StorageScore(RandUint64(math.MaxUint64)),
 		OffsetEd25519BlockIssuerKey: iotago.StorageScore(RandUint64(math.MaxUint64)),
 		OffsetStakingFeature:        iotago.StorageScore(RandUint64(math.MaxUint64)),
 	}
