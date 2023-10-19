@@ -162,11 +162,10 @@ func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 		return nil, ierrors.New("builder calls require both state and governor transitions which is not possible")
 	}
 
-	if builder.stateCtrlReq {
-		builder.output.StateIndex++
-	}
-
 	if builder.prev != nil {
+		if builder.stateCtrlReq {
+			builder.output.StateIndex++
+		}
 		if !builder.prev.ImmutableFeatures.Equal(builder.output.ImmutableFeatures) {
 			return nil, ierrors.New("immutable features are not allowed to be changed")
 		}
