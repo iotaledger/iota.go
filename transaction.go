@@ -253,7 +253,7 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
-		OutputsSyntacticalDepositAmount(protoParams, api.RentStructure()),
+		OutputsSyntacticalDepositAmount(protoParams, api.StorageScoreStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
@@ -265,13 +265,13 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 }
 
 // WorkScore calculates the Work Score of the Transaction.
-func (t *Transaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workscoreTransactionEssence, err := t.TransactionEssence.WorkScore(workScoreStructure)
+func (t *Transaction) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workscoreTransactionEssence, err := t.TransactionEssence.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreOutputs, err := t.Outputs.WorkScore(workScoreStructure)
+	workScoreOutputs, err := t.Outputs.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

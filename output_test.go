@@ -236,7 +236,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:        "ok - state rent covered",
+			name:        "ok - storage deposit covered",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
@@ -301,7 +301,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 			wantErr: iotago.ErrStorageDepositExceedsTargetOutputAmount,
 		},
 		{
-			name:        "fail - state rent not covered",
+			name:        "fail - storage deposit not covered",
 			protoParams: nonZeroCostParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
@@ -362,7 +362,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParams, iotago.NewRentStructure(tt.protoParams.RentParameters()))
+			valFunc := iotago.OutputsSyntacticalDepositAmount(tt.protoParams, iotago.NewStorageScoreStructure(tt.protoParams.StorageScoreParameters()))
 			var runErr error
 			for index, output := range tt.outputs {
 				if err := valFunc(index, output); err != nil {

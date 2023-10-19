@@ -40,7 +40,7 @@ func (r *RewardInput) Size() int {
 	return serializer.OneByte + serializer.UInt16ByteSize
 }
 
-func (r *RewardInput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (r *RewardInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
-	return workScoreStructure.ContextInput, nil
+	return workScoreParameters.ContextInput, nil
 }

@@ -46,9 +46,9 @@ func (a Allotments) Size() int {
 	return serializer.UInt16ByteSize + len(a)*(AccountIDLength+ManaSize)
 }
 
-func (a Allotments) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (a Allotments) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// Allotments requires invocation of account managers, so requires extra work.
-	workScoreAllotments, err := workScoreStructure.Allotment.Multiply(len(a))
+	workScoreAllotments, err := workScoreParameters.Allotment.Multiply(len(a))
 	if err != nil {
 		return 0, err
 	}

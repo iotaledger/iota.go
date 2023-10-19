@@ -29,7 +29,7 @@ func (addr *AccountAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *AccountAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (addr *AccountAddress) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

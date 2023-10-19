@@ -161,26 +161,26 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 	return ok
 }
 
-func (n *NFTOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreOffsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(n.Size())) +
-		n.Conditions.StorageScore(rentStruct, nil) +
-		n.Features.StorageScore(rentStruct, nil) +
-		n.ImmutableFeatures.StorageScore(rentStruct, nil)
+func (n *NFTOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return offsetOutput(storageScoreStruct) +
+		storageScoreStruct.FactorData().Multiply(StorageScore(n.Size())) +
+		n.Conditions.StorageScore(storageScoreStruct, nil) +
+		n.Features.StorageScore(storageScoreStruct, nil) +
+		n.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
-func (n *NFTOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := n.Conditions.WorkScore(workScoreStructure)
+func (n *NFTOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := n.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := n.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := n.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreStructure)
+	workScoreImmutableFeatures, err := n.ImmutableFeatures.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

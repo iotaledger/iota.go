@@ -183,7 +183,7 @@ type v3api struct {
 	timeProvider              *TimeProvider
 	manaDecayProvider         *ManaDecayProvider
 	livenessThresholdDuration time.Duration
-	rentStructure             *RentStructure
+	storageScoreStructure     *StorageScoreStructure
 	maxBlockWork              WorkScore
 	computedInitialReward     uint64
 	computedFinalReward       uint64
@@ -224,8 +224,8 @@ func (v *v3api) ProtocolParameters() ProtocolParameters {
 	return v.protocolParameters
 }
 
-func (v *v3api) RentStructure() *RentStructure {
-	return v.rentStructure
+func (v *v3api) StorageScoreStructure() *StorageScoreStructure {
+	return v.storageScoreStructure
 }
 
 func (v *v3api) TimeProvider() *TimeProvider {
@@ -266,7 +266,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	timeProvider := protoParams.TimeProvider()
 
-	maxBlockWork, err := protoParams.WorkScoreStructure().MaxBlockWork()
+	maxBlockWork, err := protoParams.WorkScoreParameters().MaxBlockWork()
 	must(err)
 
 	initialReward, finalReward, err := calculateRewards(protoParams)
@@ -276,7 +276,7 @@ func V3API(protoParams ProtocolParameters) API {
 	v3 := &v3api{
 		serixAPI:              api,
 		protocolParameters:    protoParams.(*V3ProtocolParameters),
-		rentStructure:         NewRentStructure(protoParams.RentParameters()),
+		storageScoreStructure: NewStorageScoreStructure(protoParams.StorageScoreParameters()),
 		timeProvider:          timeProvider,
 		manaDecayProvider:     protoParams.ManaDecayProvider(),
 		maxBlockWork:          maxBlockWork,
@@ -643,7 +643,7 @@ func V3API(protoParams ProtocolParameters) API {
 }
 
 func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards uint64, err error) {
-	manaStructure := protoParams.ManaDecayProvider()
+	manaParameters := protoParams.ManaDecayProvider()
 
 	// final reward, after bootstrapping phase
 	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
@@ -651,12 +651,12 @@ func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewa
 		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
 	}
 
-	result, err = safemath.SafeMul(result, manaStructure.generationRate)
+	result, err = safemath.SafeMul(result, manaParameters.generationRate)
 	if err != nil {
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
 	}
 
-	subExponent, err := safemath.SafeSub(manaStructure.generationRateExponent, uint64(protoParams.TimeProvider().SlotsPerEpochExponent()))
+	subExponent, err := safemath.SafeSub(manaParameters.generationRateExponent, uint64(protoParams.TimeProvider().SlotsPerEpochExponent()))
 	if err != nil {
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
 	}

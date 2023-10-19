@@ -18,11 +18,11 @@ func (s *IssuerFeature) Clone() Feature {
 	return &IssuerFeature{Address: s.Address.Clone()}
 }
 
-func (s *IssuerFeature) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return s.Address.StorageScore(rentStruct, nil)
+func (s *IssuerFeature) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return s.Address.StorageScore(storageScoreStruct, nil)
 }
 
-func (s *IssuerFeature) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *IssuerFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
 	return 0, nil
 }

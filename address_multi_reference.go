@@ -21,7 +21,7 @@ func (addr *MultiAddressReference) Clone() Address {
 	}
 }
 
-func (addr *MultiAddressReference) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (addr *MultiAddressReference) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	panic("not used")
 }
 
