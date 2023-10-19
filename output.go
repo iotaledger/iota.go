@@ -94,13 +94,6 @@ var (
 	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
 )
 
-// defines the default storage score offset for an output.
-func offsetOutput(storageScoreStruct *StorageScoreStructure) StorageScore {
-	return storageScoreStruct.OffsetOutput() +
-		// included output id, block id, and slot booked data size
-		storageScoreStruct.FactorData().Multiply(OutputIDLength+BlockIDLength+SlotIndexLength)
-}
-
 // OutputSet is a map of the OutputID to Output.
 type OutputSet map[OutputID]Output
 

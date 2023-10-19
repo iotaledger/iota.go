@@ -196,7 +196,7 @@ func (a *AccountOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pa
 }
 
 func (a *AccountOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
-	return offsetOutput(storageScoreStruct) +
+	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(a.Size())) +
 		a.Conditions.StorageScore(storageScoreStruct, nil) +
 		a.Features.StorageScore(storageScoreStruct, nil) +
