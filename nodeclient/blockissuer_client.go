@@ -72,7 +72,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*BlockIssuerInfo, er
 }
 
 func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, powTargetTrailingZeros uint8, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
-	payloadBytes, err := client.core.CurrentAPI().Encode(payload, serix.WithValidation())
+	payloadBytes, err := client.core.CommittedAPI().Encode(payload, serix.WithValidation())
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to encode the payload")
 	}

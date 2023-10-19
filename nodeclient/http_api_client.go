@@ -282,13 +282,13 @@ func (client *Client) HTTPClient() *http.Client {
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) Do(ctx context.Context, method string, route string, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.CurrentAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
+	return do(ctx, client.CommittedAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, nil, reqObj, resObj)
 }
 
 // DoWithRequestHeaderHook executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
 func (client *Client) DoWithRequestHeaderHook(ctx context.Context, method string, route string, requestHeaderHook RequestHeaderHook, reqObj interface{}, resObj interface{}) (*http.Response, error) {
-	return do(ctx, client.CurrentAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
+	return do(ctx, client.CommittedAPI().Underlying(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, method, route, client.opts.requestURLHook, requestHeaderHook, reqObj, resObj)
 }
 
 // Indexer returns the IndexerClient.
@@ -367,7 +367,7 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 		return nil, err
 	}
 
-	client.apiProvider.SetCurrentSlot(res.Status.LatestCommitmentID.Slot())
+	client.apiProvider.SetCommittedSlot(res.Status.LatestCommitmentID.Slot())
 
 	return res, nil
 }
@@ -564,7 +564,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	}
 
 	var outputResponse apimodels.OutputResponse
-	if _, err := client.CurrentAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
+	if _, err := client.CommittedAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
 		return nil, err
 	}
 
@@ -591,7 +591,7 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 	}
 
 	var outputResponse apimodels.OutputWithMetadataResponse
-	if _, err := client.CurrentAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
+	if _, err := client.CommittedAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
 		return nil, nil, err
 	}
 
@@ -735,12 +735,16 @@ func (client *Client) APIForEpoch(epoch iotago.EpochIndex) iotago.API {
 	return client.apiProvider.APIForEpoch(epoch)
 }
 
+func (client *Client) APIForTime(t time.Time) iotago.API {
+	return client.apiProvider.APIForTime(t)
+}
+
 func (client *Client) APIForSlot(slot iotago.SlotIndex) iotago.API {
 	return client.apiProvider.APIForSlot(slot)
 }
 
-func (client *Client) CurrentAPI() iotago.API {
-	return client.apiProvider.CurrentAPI()
+func (client *Client) CommittedAPI() iotago.API {
+	return client.apiProvider.CommittedAPI()
 }
 
 func (client *Client) LatestAPI() iotago.API {
