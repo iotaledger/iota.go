@@ -33,7 +33,7 @@ func (w WorkScore) Multiply(in int) (WorkScore, error) {
 	return result, nil
 }
 
-type WorkScoreStructure struct {
+type WorkScoreParameters struct {
 	// DataByte accounts for the network traffic per byte.
 	DataByte WorkScore `serix:"0,mapKey=dataByte"`
 	// Block accounts for work done to process a block in the node software.
@@ -58,7 +58,7 @@ type WorkScoreStructure struct {
 	SignatureEd25519 WorkScore `serix:"9,mapKey=signatureEd25519"`
 }
 
-func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
+func (w WorkScoreParameters) Equals(other WorkScoreParameters) bool {
 	return w.DataByte == other.DataByte &&
 		w.Block == other.Block &&
 		w.Input == other.Input &&
@@ -72,7 +72,7 @@ func (w WorkScoreStructure) Equals(other WorkScoreStructure) bool {
 }
 
 // MaxBlockWork is the maximum work score a block can have.
-func (w WorkScoreStructure) MaxBlockWork() (WorkScore, error) {
+func (w WorkScoreParameters) MaxBlockWork() (WorkScore, error) {
 	var maxBlockWork WorkScore
 	// max basic block payload size data factor
 	dataFactorBytes, err := w.DataByte.Multiply(MaxPayloadSize)
@@ -138,5 +138,5 @@ type ProcessableObject interface {
 	// WorkScore returns the cost this object has in terms of computation
 	// requirements for a node to process it. These costs attempt to encapsulate all processing steps
 	// carried out on this object throughout its life in the node.
-	WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error)
+	WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error)
 }

@@ -60,7 +60,7 @@ func (addr *MultiAddress) Clone() Address {
 	return cpy
 }
 
-func (addr *MultiAddress) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (addr *MultiAddress) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 

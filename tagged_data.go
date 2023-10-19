@@ -31,7 +31,7 @@ func (u *TaggedData) Size() int {
 		serializer.UInt32ByteSize + len(u.Data)
 }
 
-func (u *TaggedData) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (u *TaggedData) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// we account for the network traffic only on "Payload" level
-	return workScoreStructure.DataByte.Multiply(u.Size())
+	return workScoreParameters.DataByte.Multiply(u.Size())
 }

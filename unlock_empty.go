@@ -20,6 +20,6 @@ func (u *EmptyUnlock) Size() int {
 	return serializer.SmallTypeDenotationByteSize
 }
 
-func (u *EmptyUnlock) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (u *EmptyUnlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }

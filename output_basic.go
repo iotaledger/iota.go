@@ -70,20 +70,20 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 	return ok
 }
 
-func (e *BasicOutput) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
-	return storageScoreOffsetOutput(rentStruct) +
-		rentStruct.StorageScoreFactorData().Multiply(StorageScore(e.Size())) +
-		e.Conditions.StorageScore(rentStruct, nil) +
-		e.Features.StorageScore(rentStruct, nil)
+func (e *BasicOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+	return offsetOutput(storageScoreStruct) +
+		storageScoreStruct.FactorData().Multiply(StorageScore(e.Size())) +
+		e.Conditions.StorageScore(storageScoreStruct, nil) +
+		e.Features.StorageScore(storageScoreStruct, nil)
 }
 
-func (e *BasicOutput) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
-	workScoreConditions, err := e.Conditions.WorkScore(workScoreStructure)
+func (e *BasicOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+	workScoreConditions, err := e.Conditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreFeatures, err := e.Features.WorkScore(workScoreStructure)
+	workScoreFeatures, err := e.Features.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

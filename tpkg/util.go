@@ -676,7 +676,7 @@ func RandBlockID() iotago.BlockID {
 // RandProtocolBlock returns a random block with the given inner payload.
 func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
 	if basicBlock, isBasic := block.(*iotago.BasicBlock); isBasic {
-		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreStructure())
+		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
 		if err != nil {
 			panic(err)
 		}
@@ -717,6 +717,8 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = RandSignedTransaction(api)
 	case iotago.PayloadTaggedData:
 		payload = RandTaggedData([]byte("tag"))
+	case iotago.PayloadCandidacyAnnouncement:
+		payload = &iotago.CandidacyAnnouncement{}
 	}
 
 	return &iotago.BasicBlock{
@@ -970,14 +972,14 @@ func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago
 	return addresses, addressKeys
 }
 
-// RandRentParameters produces random set of rent parameters.
-func RandRentParameters() *iotago.RentParameters {
-	return &iotago.RentParameters{
-		StorageCost:                             RandBaseToken(iotago.MaxBaseToken),
-		StorageScoreFactorData:                  iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
-		StorageScoreOffsetOutput:                iotago.StorageScore(RandUint64(math.MaxUint64)),
-		StorageScoreOffsetEd25519BlockIssuerKey: iotago.StorageScore(RandUint64(math.MaxUint64)),
-		StorageScoreOffsetStakingFeature:        iotago.StorageScore(RandUint64(math.MaxUint64)),
+// RandStorageScoreParameters produces random set of  parameters.
+func RandStorageScoreParameters() *iotago.StorageScoreParameters {
+	return &iotago.StorageScoreParameters{
+		StorageCost:                 RandBaseToken(iotago.MaxBaseToken),
+		FactorData:                  iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
+		OffsetOutput:                iotago.StorageScore(RandUint64(math.MaxUint64)),
+		OffsetEd25519BlockIssuerKey: iotago.StorageScore(RandUint64(math.MaxUint64)),
+		OffsetStakingFeature:        iotago.StorageScore(RandUint64(math.MaxUint64)),
 	}
 }
 
@@ -986,9 +988,9 @@ func RandWorkScore(max uint32) iotago.WorkScore {
 	return iotago.WorkScore(RandUint32(max))
 }
 
-// RandWorkscoreStructure produces random workscore structure.
-func RandWorkscoreStructure() *iotago.WorkScoreStructure {
-	return &iotago.WorkScoreStructure{
+// RandWorkScoreParameters produces random workscore structure.
+func RandWorkScoreParameters() *iotago.WorkScoreParameters {
+	return &iotago.WorkScoreParameters{
 		DataByte:         RandWorkScore(math.MaxUint32),
 		Block:            RandWorkScore(math.MaxUint32),
 		Input:            RandWorkScore(math.MaxUint32),

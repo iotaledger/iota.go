@@ -18,11 +18,11 @@ func (s *TimelockUnlockCondition) Clone() UnlockCondition {
 	}
 }
 
-func (s *TimelockUnlockCondition) StorageScore(_ *RentStructure, _ StorageScoreFunc) StorageScore {
+func (s *TimelockUnlockCondition) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 
-func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreStructure) (WorkScore, error) {
+func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 

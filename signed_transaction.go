@@ -116,19 +116,19 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 	return nil
 }
 
-func (t *SignedTransaction) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (t *SignedTransaction) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// we account for the network traffic only on "Payload" level
-	workScoreSignedTransactionData, err := workScoreStructure.DataByte.Multiply(t.Size())
+	workScoreSignedTransactionData, err := workScoreParameters.DataByte.Multiply(t.Size())
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreTransaction, err := t.Transaction.WorkScore(workScoreStructure)
+	workScoreTransaction, err := t.Transaction.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
 
-	workScoreUnlocks, err := t.Unlocks.WorkScore(workScoreStructure)
+	workScoreUnlocks, err := t.Unlocks.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}

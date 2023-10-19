@@ -97,19 +97,19 @@ func (f UnlockConditions[T]) Equal(other UnlockConditions[T]) bool {
 	return true
 }
 
-func (f UnlockConditions[T]) StorageScore(rentStruct *RentStructure, _ StorageScoreFunc) StorageScore {
+func (f UnlockConditions[T]) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	var sumCost StorageScore
 	for _, unlockCond := range f {
-		sumCost += unlockCond.StorageScore(rentStruct, nil)
+		sumCost += unlockCond.StorageScore(storageScoreStruct, nil)
 	}
 
 	return sumCost
 }
 
-func (f UnlockConditions[T]) WorkScore(workScoreStructure *WorkScoreStructure) (WorkScore, error) {
+func (f UnlockConditions[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var workScoreUnlockConds WorkScore
 	for _, unlockCond := range f {
-		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreStructure)
+		workScoreUnlockCond, err := unlockCond.WorkScore(workScoreParameters)
 		if err != nil {
 			return 0, err
 		}
