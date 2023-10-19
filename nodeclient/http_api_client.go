@@ -373,10 +373,15 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 }
 
 // BlockIssuance gets the info to issue a block.
-func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlockHeaderResponse, error) {
+func (client *Client) BlockIssuance(ctx context.Context, optSlotIndex ...iotago.SlotIndex) (*apimodels.IssuanceBlockHeaderResponse, error) {
+	query := RouteBlockIssuance
+	if len(optSlotIndex) > 0 {
+		query += fmt.Sprintf("?slotIndex=%d", optSlotIndex[0])
+	}
 	res := new(apimodels.IssuanceBlockHeaderResponse)
+
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -540,7 +545,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 	return block, nil
 }
 
-// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
+// TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
 func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 

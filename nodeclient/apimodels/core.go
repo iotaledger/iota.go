@@ -51,16 +51,23 @@ func BlockStateFromBytes(b []byte) (BlockState, int, error) {
 }
 
 const (
-	BlockFailureNone                   BlockFailureReason = 0
-	BlockFailureIsTooOld               BlockFailureReason = 1
-	BlockFailureParentIsTooOld         BlockFailureReason = 2
-	BlockFailureParentNotFound         BlockFailureReason = 3
-	BlockFailureParentInvalid          BlockFailureReason = 4
-	BlockFailureDroppedDueToCongestion BlockFailureReason = 5
-	BlockFailurePayloadInvalid         BlockFailureReason = 6
+	BlockFailureNone                      BlockFailureReason = 0
+	BlockFailureIsTooOld                  BlockFailureReason = 1
+	BlockFailureParentIsTooOld            BlockFailureReason = 2
+	BlockFailureParentNotFound            BlockFailureReason = 3
+	BlockFailureParentInvalid             BlockFailureReason = 4
+	BlockFailureIssuerAccountNotFound     BlockFailureReason = 5
+	BlockFailureVersionInvalid            BlockFailureReason = 6
+	BlockFailureManaCostCalculationFailed BlockFailureReason = 7
+	BlockFailurBurnedInsufficientMana     BlockFailureReason = 8
+	BlockFailureAccountInvalid            BlockFailureReason = 9
+	BlockFailureSignatureInvalid          BlockFailureReason = 10
+	BlockFailureDroppedDueToCongestion    BlockFailureReason = 11
+	BlockFailurePayloadInvalid            BlockFailureReason = 12
+	BlockFailureInvalid                   BlockFailureReason = 255
 
 	// TODO: see if needed after congestion PR is done.
-	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 6
+	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 13
 )
 
 func (t BlockFailureReason) Bytes() ([]byte, error) {
