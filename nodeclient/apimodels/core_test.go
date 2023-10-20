@@ -151,17 +151,17 @@ func Test_BlockMetadataResponse(t *testing.T) {
 
 	{
 		response := &apimodels.BlockMetadataResponse{
-			BlockID:            iotago.BlockID{0x9},
-			BlockState:         apimodels.BlockStateFailed.String(),
-			BlockFailureReason: apimodels.BlockFailureParentNotFound,
-			TxState:            apimodels.TransactionStateFailed.String(),
-			TxFailureReason:    apimodels.TxFailureFailedToClaimDelegationReward,
+			BlockID:                  iotago.BlockID{0x9},
+			BlockState:               apimodels.BlockStateFailed.String(),
+			BlockFailureReason:       apimodels.BlockFailureParentNotFound,
+			TransactionState:         apimodels.TransactionStateFailed.String(),
+			TransactionFailureReason: apimodels.TxFailureFailedToClaimDelegationReward,
 		}
 
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"txState\":\"failed\",\"txFailureReason\":20}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"transactionState\":\"failed\",\"transactionFailureReason\":20}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.BlockMetadataResponse)

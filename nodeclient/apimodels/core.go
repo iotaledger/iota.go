@@ -261,10 +261,10 @@ type (
 		BlockState string `serix:"1,mapKey=blockState"`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:"2,mapKey=blockFailureReason,omitempty"`
-		// TxState might be pending, conflicting, confirmed, finalized, rejected.
-		TxState string `serix:"3,mapKey=txState,omitempty"`
-		// TxFailureReason if applicable indicates the error that occurred during the transaction processing.
-		TxFailureReason TransactionFailureReason `serix:"4,mapKey=txFailureReason,omitempty"`
+		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
+		TransactionState string `serix:"3,mapKey=transactionState,omitempty"`
+		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
+		TransactionFailureReason TransactionFailureReason `serix:"4,mapKey=transactionFailureReason,omitempty"`
 	}
 
 	// OutputResponse defines the response of a GET outputs REST API call.

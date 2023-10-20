@@ -357,9 +357,9 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	identifier := tpkg.RandBlockID()
 
 	originRes := &apimodels.BlockMetadataResponse{
-		BlockID:    identifier,
-		BlockState: apimodels.BlockStateConfirmed.String(),
-		TxState:    apimodels.TransactionStateConfirmed.String(),
+		BlockID:          identifier,
+		BlockState:       apimodels.BlockStateConfirmed.String(),
+		TransactionState: apimodels.TransactionStateConfirmed.String(),
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.RouteBlockMetadata, identifier.ToHex()), 200, originRes)
