@@ -98,18 +98,18 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
 	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
-		LedgerIndex: 1337,
-		PageSize:    1,
-		Items:       iotago.HexOutputIDs{fakeOutputID.ToHex()},
-		Cursor:      "some-offset-key",
+		CommittedSlot: 1337,
+		PageSize:      1,
+		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		Cursor:        "some-offset-key",
 	}, map[string]string{
 		"tag": "some-tag",
 	})
 
 	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
-		LedgerIndex: 1338,
-		PageSize:    1,
-		Items:       iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		CommittedSlot: 1338,
+		PageSize:      1,
+		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
 	}, map[string]string{
 		"cursor": "some-offset-key",
 		"tag":    "some-tag",

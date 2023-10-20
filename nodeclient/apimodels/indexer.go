@@ -8,8 +8,8 @@ import (
 
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
-	// The ledger index at which these outputs where available at.
-	LedgerIndex iotago.SlotIndex `serix:"0,mapKey=ledgerIndex"`
+	// The committed slot at which these outputs where available at.
+	CommittedSlot iotago.SlotIndex `serix:"0,mapKey=committedSlot"`
 	// The maximum count of results that are returned by the node.
 	PageSize uint32 `serix:"1,mapKey=pageSize"`
 	// The output IDs (transaction hash + output index) of the found outputs.
@@ -30,30 +30,30 @@ type IndexerCursorParams struct {
 type IndexerTimelockParams struct {
 	// Filters outputs based on the presence of timelock unlock condition.
 	HasTimelock *bool `qs:"hasTimelock,omitempty"`
-	// Return outputs that are timelocked before a certain Unix timestamp.
-	TimelockedBefore uint32 `qs:"timelockedBefore,omitempty"`
-	// Return outputs that are timelocked after a certain Unix timestamp.
-	TimelockedAfter uint32 `qs:"timelockedAfter,omitempty"`
+	// Return outputs that are timelocked before a certain slot.
+	TimelockedBefore iotago.SlotIndex `qs:"timelockedBefore,omitempty"`
+	// Return outputs that are timelocked after a certain slot.
+	TimelockedAfter iotago.SlotIndex `qs:"timelockedAfter,omitempty"`
 }
 
 // IndexerExpirationParams define expiration query parameters.
 type IndexerExpirationParams struct {
 	// Filters outputs based on the presence of expiration unlock condition.
 	HasExpiration *bool `qs:"hasExpiration,omitempty"`
-	// Return outputs that expire before a certain Unix timestamp.
-	ExpiresBefore uint32 `qs:"expiresBefore,omitempty"`
-	// Return outputs that expire after a certain Unix timestamp.
-	ExpiresAfter uint32 `qs:"expiresAfter,omitempty"`
+	// Return outputs that expire before a certain slot.
+	ExpiresBefore iotago.SlotIndex `qs:"expiresBefore,omitempty"`
+	// Return outputs that expire after a certain slot.
+	ExpiresAfter iotago.SlotIndex `qs:"expiresAfter,omitempty"`
 	// Filter outputs based on the presence of a specific return address in the expiration unlock condition.
 	ExpirationReturnAddressBech32 string `qs:"expirationReturnAddress,omitempty"`
 }
 
 // IndexerCreationParams define creation time query parameters.
 type IndexerCreationParams struct {
-	// Return outputs that were created before a certain Unix timestamp.
-	CreatedBefore uint32 `qs:"createdBefore,omitempty"`
-	// Return outputs that were created after a certain Unix timestamp.
-	CreatedAfter uint32 `qs:"createdAfter,omitempty"`
+	// Return outputs that were created before a certain slot.
+	CreatedBefore iotago.SlotIndex `qs:"createdBefore,omitempty"`
+	// Return outputs that were created after a certain slot.
+	CreatedAfter iotago.SlotIndex `qs:"createdAfter,omitempty"`
 }
 
 // IndexerStorageDepositParams define storage deposit based query parameters.

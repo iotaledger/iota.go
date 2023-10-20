@@ -169,16 +169,16 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	}
 
 	if len(res.Items) == 0 {
-		return nil, nil, res.LedgerIndex, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
+		return nil, nil, res.CommittedSlot, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
 	}
 
 	outputID := res.Items.MustOutputIDs()[0]
 	output, err := client.core.OutputByID(ctx, outputID)
 	if err != nil {
-		return nil, nil, res.LedgerIndex, err
+		return nil, nil, res.CommittedSlot, err
 	}
 
-	return &outputID, output, res.LedgerIndex, err
+	return &outputID, output, res.CommittedSlot, err
 }
 
 func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {

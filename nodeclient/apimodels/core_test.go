@@ -240,7 +240,7 @@ func Test_UTXOChangesResponse(t *testing.T) {
 	api := testAPI()
 
 	response := &apimodels.UTXOChangesResponse{
-		Index: 42,
+		Slot: 42,
 		CreatedOutputs: iotago.OutputIDs{
 			iotago.OutputID{0x1},
 		},
@@ -344,7 +344,7 @@ func Test_CommitteeResponse(t *testing.T) {
 		},
 		TotalStake:          456,
 		TotalValidatorStake: 123,
-		EpochIndex:          872,
+		Epoch:               872,
 	}
 
 	jsonResponse, err := api.JSONEncode(response)

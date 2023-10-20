@@ -294,7 +294,7 @@ func TestClient_Committee(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &apimodels.CommitteeResponse{
-		EpochIndex:          iotago.EpochIndex(123),
+		Epoch:               iotago.EpochIndex(123),
 		TotalStake:          1000_1000,
 		TotalValidatorStake: 100_000,
 		Committee: []*apimodels.CommitteeMemberResponse{
@@ -551,7 +551,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Index: 1337,
+		Slot: 1337,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},
@@ -599,7 +599,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Index: slot,
+		Slot: slot,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},

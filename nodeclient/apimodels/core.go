@@ -197,13 +197,13 @@ type (
 		RelativeConfirmedTangleTime time.Time `serix:"4,mapKey=relativeConfirmedTangleTime"`
 		// The id of the latest known commitment.
 		LatestCommitmentID iotago.CommitmentID `serix:"5,mapKey=latestCommitmentId"`
-		// The index of the latest finalized slot.
+		// The latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:"6,mapKey=latestFinalizedSlot"`
-		// The slot index of the latest accepted block.
+		// The slot of the latest accepted block.
 		LatestAcceptedBlockSlot iotago.SlotIndex `serix:"7,mapKey=latestAcceptedBlockSlot"`
-		// The slot index of the latest confirmed block.
+		// The slot of the latest confirmed block.
 		LatestConfirmedBlockSlot iotago.SlotIndex `serix:"8,mapKey=latestConfirmedBlockSlot"`
-		// The index of the epoch at which the tangle data was pruned.
+		// The epoch at which the tangle data was pruned.
 		PruningEpoch iotago.EpochIndex `serix:"9,mapKey=pruningEpoch"`
 	}
 
@@ -241,7 +241,7 @@ type (
 		WeakParents iotago.BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
 		// ShallowLikeParents are the shallow like parents of the block.
 		ShallowLikeParents iotago.BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
-		// LatestFinalizedSlot is the index of the latest finalized slot.
+		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:"3,mapKey=latestFinalizedSlot"`
 		// Commitment is the commitment of the block.
 		Commitment *iotago.Commitment `serix:"4,mapKey=commitment"`
@@ -302,8 +302,8 @@ type (
 
 	// UTXOChangesResponse defines the response for UTXO slot REST API call.
 	UTXOChangesResponse struct {
-		// The index of the requested commitment.
-		Index iotago.SlotIndex `serix:"0,mapKey=index"`
+		// The slot of the requested commitment.
+		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
 		// The outputs that are created in this slot.
 		CreatedOutputs iotago.OutputIDs `serix:"1,mapKey=createdOutputs"`
 		// The outputs that are consumed in this slot.
@@ -312,7 +312,7 @@ type (
 
 	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
-		// Slot is the index of the slot for which the estimate is provided
+		// Slot is the slot for which the estimate is provided
 		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
 		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
 		Ready bool `serix:"1,mapKey=ready"`
@@ -352,9 +352,9 @@ type (
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
 		// EpochStart is the starting epoch for the range for which the mana rewards are returned.
-		EpochStart iotago.EpochIndex `serix:"0,mapKey=epochIndexStart"`
+		EpochStart iotago.EpochIndex `serix:"0,mapKey=epochStart"`
 		// EpochEnd is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
-		EpochEnd iotago.EpochIndex `serix:"1,mapKey=epochIndexEnd"`
+		EpochEnd iotago.EpochIndex `serix:"1,mapKey=epochEnd"`
 		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
 		Rewards iotago.Mana `serix:"2,mapKey=rewards"`
 	}
@@ -376,6 +376,6 @@ type (
 		Committee           []*CommitteeMemberResponse `serix:"0,mapKey=committee"`
 		TotalStake          iotago.BaseToken           `serix:"1,mapKey=totalStake"`
 		TotalValidatorStake iotago.BaseToken           `serix:"2,mapKey=totalValidatorStake"`
-		EpochIndex          iotago.EpochIndex          `serix:"3,mapKey=epochIndex"`
+		Epoch               iotago.EpochIndex          `serix:"3,mapKey=epoch"`
 	}
 )

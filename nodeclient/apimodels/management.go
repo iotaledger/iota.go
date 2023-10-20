@@ -50,9 +50,9 @@ type (
 	GossipHeartbeat struct {
 		// The solid slot of the node.
 		SolidSlot iotago.SlotIndex `serix:"0,mapKey=solidSlot"`
-		// The oldest known slot index by the node.
+		// The oldest known slot by the node.
 		PrunedSlot iotago.SlotIndex `serix:"1,mapKey=prunedSlot"`
-		// The latest known slot index by the node.
+		// The latest known slot by the node.
 		LatestSlot iotago.SlotIndex `serix:"2,mapKey=latestSlot"`
 		// The amount of currently connected peers.
 		ConnectedPeers uint32 `serix:"3,mapKey=connectedPeers"`
@@ -90,7 +90,7 @@ type (
 	// PruneDatabaseRequest defines the request of a prune database REST API call.
 	PruneDatabaseRequest struct {
 		// The pruning target epoch.
-		Index iotago.EpochIndex `serix:"0,mapKey=index,omitempty"`
+		Epoch iotago.EpochIndex `serix:"0,mapKey=epoch,omitempty"`
 		// The pruning depth.
 		Depth iotago.EpochIndex `serix:"1,mapKey=depth,omitempty"`
 		// The target size of the database.
@@ -99,20 +99,20 @@ type (
 
 	// PruneDatabaseResponse defines the response of a prune database REST API call.
 	PruneDatabaseResponse struct {
-		// The index of the current oldest epoch in the database.
-		Index iotago.EpochIndex `serix:"0,mapKey=index"`
+		// The current oldest epoch in the database.
+		Epoch iotago.EpochIndex `serix:"0,mapKey=epoch"`
 	}
 
 	// CreateSnapshotsRequest defines the request of a create snapshots REST API call.
 	CreateSnapshotsRequest struct {
-		// The index of the snapshot.
-		Index iotago.SlotIndex `serix:"0,mapKey=index"`
+		// The slot of the snapshot.
+		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
 	}
 
 	// CreateSnapshotsResponse defines the response of a create snapshots REST API call.
 	CreateSnapshotsResponse struct {
-		// The index of the snapshot.
-		Index iotago.SlotIndex `serix:"0,mapKey=index"`
+		// The slot of the snapshot.
+		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
 		// The file path of the snapshot file.
 		FilePath string `serix:"1,mapKey=filePath"`
 	}

@@ -13,8 +13,8 @@ func Test_IndexerResponse(t *testing.T) {
 	api := testAPI()
 	{
 		response := &apimodels.IndexerResponse{
-			LedgerIndex: 281,
-			PageSize:    1000,
+			CommittedSlot: 281,
+			PageSize:      1000,
 			Items: iotago.OutputIDs{
 				iotago.OutputID{0xff},
 				iotago.OutputID{0xfa},
@@ -36,8 +36,8 @@ func Test_IndexerResponse(t *testing.T) {
 	// Test omitempty
 	{
 		response := &apimodels.IndexerResponse{
-			LedgerIndex: 281,
-			PageSize:    1000,
+			CommittedSlot: 281,
+			PageSize:      1000,
 			Items: iotago.OutputIDs{
 				iotago.OutputID{0xff},
 				iotago.OutputID{0xfa},
