@@ -22,7 +22,7 @@ const (
 )
 
 // ImplicitAccountCreationAddress defines an ImplicitAccountCreationAddress.
-// An ImplicitAccountCreationAddress is an address with capabilities than can be used if the certain bits are set.
+// An ImplicitAccountCreationAddress is an address that is used to create implicit accounts by sending basic outputs to it.
 type ImplicitAccountCreationAddress [ImplicitAccountCreationAddressBytesLength]byte
 
 func (addr *ImplicitAccountCreationAddress) Clone() Address {
@@ -43,7 +43,7 @@ func (addr *ImplicitAccountCreationAddress) Key() string {
 func (addr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {
 	edSig, isEdSig := sig.(*Ed25519Signature)
 	if !isEdSig {
-		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock ImplicitAccountCreationAddress address with signature of type %s", sig.Type())
+		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock ImplicitAccountCreationAddress with signature of type %s", sig.Type())
 	}
 
 	return edSig.Valid(msg, (*Ed25519Address)(addr))
