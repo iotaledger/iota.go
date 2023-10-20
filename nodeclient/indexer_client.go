@@ -13,16 +13,16 @@ import (
 
 // Indexer plugin routes.
 var (
-	IndexerAPIRouteOutputs           = "/api/" + IndexerPluginName + "/outputs"
-	IndexerAPIRouteBasicOutputs      = "/api/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAccounts          = "/api/" + IndexerPluginName + "/outputs/account"
-	IndexerAPIRouteAccount           = "/api/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerAPIRouteFoundries         = "/api/" + IndexerPluginName + "/outputs/foundry"
-	IndexerAPIRouteFoundry           = "/api/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerAPIRouteNFTs              = "/api/" + IndexerPluginName + "/outputs/nft"
-	IndexerAPIRouteNFT               = "/api/" + IndexerPluginName + "/outputs/nft/%s"
-	IndexerAPIRouteDelegationOutputs = "/api/" + IndexerPluginName + "/outputs/delegation"
-	IndexerAPIRouteDelegationOutput  = "/api/" + IndexerPluginName + "/outputs/delegation/%s"
+	IndexerAPIRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
+	IndexerAPIRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
+	IndexerAPIRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
+	IndexerAPIRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
+	IndexerAPIRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
+	IndexerAPIRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
+	IndexerAPIRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
+	IndexerAPIRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
+	IndexerAPIRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
+	IndexerAPIRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
 )
 
 var (
@@ -169,16 +169,16 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	}
 
 	if len(res.Items) == 0 {
-		return nil, nil, res.LedgerIndex, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
+		return nil, nil, res.CommittedSlot, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
 	}
 
 	outputID := res.Items.MustOutputIDs()[0]
 	output, err := client.core.OutputByID(ctx, outputID)
 	if err != nil {
-		return nil, nil, res.LedgerIndex, err
+		return nil, nil, res.CommittedSlot, err
 	}
 
-	return &outputID, output, res.LedgerIndex, err
+	return &outputID, output, res.CommittedSlot, err
 }
 
 func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {

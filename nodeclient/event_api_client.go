@@ -91,7 +91,7 @@ func brokerURLFromClient(nc *Client) string {
 	baseURL = strings.Replace(baseURL, "https://", "wss://", 1)
 	baseURL = strings.Replace(baseURL, "http://", "ws://", 1)
 
-	return fmt.Sprintf("%s/api/%s", baseURL, MQTTPluginName)
+	return fmt.Sprintf("%s%s/%s", baseURL, RootAPI, MQTTPluginName)
 }
 
 func newEventAPIClient(nc *Client) *EventAPIClient {

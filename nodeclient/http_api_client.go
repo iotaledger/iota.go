@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	RootAPI = "/api"
+
 	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v2"
 
@@ -32,117 +34,117 @@ const (
 
 	// RouteRoutes is the route for getting the routes the node supports.
 	// GET returns the nodes routes.
-	RouteRoutes = "/api/routes"
+	RouteRoutes = RootAPI + "/routes"
 
 	// RouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	RouteInfo = "/api/core/v3/info"
+	RouteInfo = RootAPI + "/core/v3/info"
 
 	// RouteCongestion is the route for getting congestion details for the account.
 	// GET returns the congestion details for the account.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteCongestion = "/api/core/v3/accounts/%s/congestion"
+	RouteCongestion = RootAPI + "/core/v3/accounts/%s/congestion"
 
 	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
 	// Rewards are decayed up to returned epochEnd index.
 	// GET returns the rewards for the output.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteRewards = "/api/core/v3/rewards/%s"
+	RouteRewards = RootAPI + "/core/v3/rewards/%s"
 
 	// RouteValidators is the route for getting the information about current registered validators.
 	// GET returns the paginated information about about registered validators.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteValidators = "/api/core/v3/validators"
+	RouteValidators = RootAPI + "/core/v3/validators"
 
 	// RouteValidatorsAccount is the route for getting validator by its accountID.
 	// GET returns the account details.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteValidatorsAccount = "/api/core/v3/validators/%s"
+	RouteValidatorsAccount = RootAPI + "/core/v3/validators/%s"
 
 	// RouteCommittee is the route for getting the information about the current committee.
 	// GET returns the information about the current committee.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteCommittee = "/api/core/v3/committee"
+	RouteCommittee = RootAPI + "/core/v3/committee"
 
 	// RouteBlockIssuance is the route for getting all needed information for block creation.
 	// GET returns the data needed toa attach block.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlockIssuance = "/api/core/v3/blocks/issuance"
+	RouteBlockIssuance = RootAPI + "/core/v3/blocks/issuance"
 
 	// RouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlock = "/api/core/v3/blocks/%s"
+	RouteBlock = RootAPI + "/core/v3/blocks/%s"
 
 	// RouteBlockMetadata is the route for getting block metadata by its ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
-	RouteBlockMetadata = "/api/core/v3/blocks/%s/metadata"
+	RouteBlockMetadata = RootAPI + "/core/v3/blocks/%s/metadata"
 
 	// RouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlocks = "/api/core/v3/blocks"
+	RouteBlocks = RootAPI + "/core/v3/blocks"
 
 	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteTransactionsIncludedBlock = "/api/core/v3/transactions/%s/included-block"
+	RouteTransactionsIncludedBlock = RootAPI + "/core/v3/transactions/%s/included-block"
 
 	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteTransactionsIncludedBlockMetadata = "/api/core/v3/transactions/%s/included-block/metadata"
+	RouteTransactionsIncludedBlockMetadata = RootAPI + "/core/v3/transactions/%s/included-block/metadata"
 
 	// RouteCommitmentByID is the route for getting a commitment by its ID.
 	// GET returns the commitment.
-	RouteCommitmentByID = "/api/core/v3/commitments/%s"
+	RouteCommitmentByID = RootAPI + "/core/v3/commitments/%s"
 
 	// RouteCommitmentByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
 	// GET returns the output IDs of all UTXO changes.
-	RouteCommitmentByIDUTXOChanges = "/api/core/v3/commitments/%s/utxo-changes"
+	RouteCommitmentByIDUTXOChanges = RootAPI + "/core/v3/commitments/%s/utxo-changes"
 
 	// RouteCommitmentByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteCommitmentByIndex = "/api/core/v3/commitments/by-index/%d"
+	RouteCommitmentByIndex = RootAPI + "/core/v3/commitments/by-index/%d"
 
 	// RouteCommitmentByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteCommitmentByIndexUTXOChanges = "/api/core/v3/commitments/by-index/%d/utxo-changes"
+	RouteCommitmentByIndexUTXOChanges = RootAPI + "/core/v3/commitments/by-index/%d/utxo-changes"
 
 	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteOutput = "/api/core/v3/outputs/%s"
+	RouteOutput = RootAPI + "/core/v3/outputs/%s"
 
 	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
 	// GET returns the output metadata.
-	RouteOutputMetadata = "/api/core/v3/outputs/%s/metadata"
+	RouteOutputMetadata = RootAPI + "/core/v3/outputs/%s/metadata"
 
 	// RouteOutputWithMetadata is the route for getting output and its metadata by its outputID (transactionHash + outputIndex).
 	// GET returns the output metadata.
-	RouteOutputWithMetadata = "/api/core/v3/outputs/%s/full"
+	RouteOutputWithMetadata = RootAPI + "/core/v3/outputs/%s/full"
 
 	// RoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	RoutePeer = "/api/core/v3/peers/%s"
+	RoutePeer = RootAPI + "/core/v3/peers/%s"
 
 	// RoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	RoutePeers = "/api/core/v3/peers"
+	RoutePeers = RootAPI + "/core/v3/peers"
 )
 
 var (

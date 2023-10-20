@@ -13,8 +13,8 @@ func Test_IndexerResponse(t *testing.T) {
 	api := testAPI()
 	{
 		response := &apimodels.IndexerResponse{
-			LedgerIndex: 281,
-			PageSize:    1000,
+			CommittedSlot: 281,
+			PageSize:      1000,
 			Items: iotago.OutputIDs{
 				iotago.OutputID{0xff},
 				iotago.OutputID{0xfa},
@@ -25,7 +25,7 @@ func Test_IndexerResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"ledgerIndex\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"],\"cursor\":\"cursor-value\"}"
+		expected := "{\"committedSlot\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"],\"cursor\":\"cursor-value\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.IndexerResponse)
@@ -36,8 +36,8 @@ func Test_IndexerResponse(t *testing.T) {
 	// Test omitempty
 	{
 		response := &apimodels.IndexerResponse{
-			LedgerIndex: 281,
-			PageSize:    1000,
+			CommittedSlot: 281,
+			PageSize:      1000,
 			Items: iotago.OutputIDs{
 				iotago.OutputID{0xff},
 				iotago.OutputID{0xfa},
@@ -47,7 +47,7 @@ func Test_IndexerResponse(t *testing.T) {
 		jsonResponse, err := api.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"ledgerIndex\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
+		expected := "{\"committedSlot\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(apimodels.IndexerResponse)
