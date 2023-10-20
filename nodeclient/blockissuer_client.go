@@ -20,8 +20,8 @@ const (
 
 // BlockIssuer plugin routes.
 var (
-	BlockIssuerAPIRouteInfo         = "/api/" + BlockIssuerPluginName + "/info"
-	BlockIssuerAPIRouteIssuePayload = "/api/" + BlockIssuerPluginName + "/issue"
+	BlockIssuerAPIRouteInfo         = RootAPI + "/" + BlockIssuerPluginName + "/info"
+	BlockIssuerAPIRouteIssuePayload = RootAPI + "/" + BlockIssuerPluginName + "/issue"
 )
 
 type (

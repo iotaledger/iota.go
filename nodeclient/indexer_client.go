@@ -13,16 +13,16 @@ import (
 
 // Indexer plugin routes.
 var (
-	IndexerAPIRouteOutputs           = "/api/" + IndexerPluginName + "/outputs"
-	IndexerAPIRouteBasicOutputs      = "/api/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAccounts          = "/api/" + IndexerPluginName + "/outputs/account"
-	IndexerAPIRouteAccount           = "/api/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerAPIRouteFoundries         = "/api/" + IndexerPluginName + "/outputs/foundry"
-	IndexerAPIRouteFoundry           = "/api/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerAPIRouteNFTs              = "/api/" + IndexerPluginName + "/outputs/nft"
-	IndexerAPIRouteNFT               = "/api/" + IndexerPluginName + "/outputs/nft/%s"
-	IndexerAPIRouteDelegationOutputs = "/api/" + IndexerPluginName + "/outputs/delegation"
-	IndexerAPIRouteDelegationOutput  = "/api/" + IndexerPluginName + "/outputs/delegation/%s"
+	IndexerAPIRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
+	IndexerAPIRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
+	IndexerAPIRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
+	IndexerAPIRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
+	IndexerAPIRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
+	IndexerAPIRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
+	IndexerAPIRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
+	IndexerAPIRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
+	IndexerAPIRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
+	IndexerAPIRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
 )
 
 var (
