@@ -252,7 +252,7 @@ func Test_UTXOChangesResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"index\":42,\"createdOutputs\":[\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
+	expected := "{\"slot\":42,\"createdOutputs\":[\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.UTXOChangesResponse)
@@ -322,7 +322,7 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"epochIndexStart\":123,\"epochIndexEnd\":133,\"rewards\":\"456\"}"
+	expected := "{\"epochStart\":123,\"epochEnd\":133,\"rewards\":\"456\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.ManaRewardsResponse)
@@ -350,7 +350,7 @@ func Test_CommitteeResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"committee\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"poolStake\":\"456\",\"validatorStake\":\"123\",\"fixedCost\":\"789\"}],\"totalStake\":\"456\",\"totalValidatorStake\":\"123\",\"epochIndex\":872}"
+	expected := "{\"committee\":[{\"accountId\":\"0xff00000000000000000000000000000000000000000000000000000000000000\",\"poolStake\":\"456\",\"validatorStake\":\"123\",\"fixedCost\":\"789\"}],\"totalStake\":\"456\",\"totalValidatorStake\":\"123\",\"epoch\":872}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.CommitteeResponse)
