@@ -1,6 +1,6 @@
 // #nosec G404
 //
-//nolint:dupl
+//nolint:dupl,gosec
 package nodeclient_test
 
 import (
