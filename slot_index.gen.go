@@ -10,12 +10,17 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+var (
+	// ErrWrongSlotIndex gets returned when a wrong slot index was passed.
+	ErrWrongSlotIndex = ierrors.New("wrong slot index")
+)
+
 const (
 	SlotIndexLength = serializer.UInt32ByteSize
 	MaxSlotIndex    = SlotIndex(math.MaxUint32)
 )
 
-// SlotIndex is the ID of a slot.
+// SlotIndex is the index of a slot.
 type SlotIndex uint32
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
