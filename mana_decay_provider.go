@@ -195,8 +195,8 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 		}
 
 		return result, nil
-		
-	// case 0 means that the creationSlot and targetSlot belong to subsequent epochs. 
+
+	// case 0 means that the creationSlot and targetSlot belong to subsequent epochs.
 	// In that case, we generate the mana for the slots belonging to the first epoch and decay it, later we add it to the undecayed mana of the second epoch
 	case 1:
 		manaGeneratedFirstEpoch, err := p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot))
@@ -221,7 +221,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 
 		return result, nil
 
-	// the default case means that the creationSlot and targetSlot belong to separated epochs. 
+	// the default case means that the creationSlot and targetSlot belong to separated epochs.
 	// Parts of the generated mana are decayed by epochDiff epochs, other parts by epochDiff-1, and other parts are not decayed at all
 	default:
 		aux, err := fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
