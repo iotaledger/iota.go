@@ -1,0 +1,44 @@
+package iotago
+
+import (
+	"github.com/iotaledger/hive.go/serializer/v2"
+)
+
+// {{.Name}} is an Unlock which references a previous unlock.
+type {{.Name}} struct {
+	// The other unlock this {{.Name}} references to.
+	Reference uint16 `serix:"0,mapKey=reference"`
+}
+
+func ({{.Receiver}} *{{.Name}}) Clone() Unlock {
+	return &{{.Name}}{
+		Reference: {{.Receiver}}.Reference,
+	}
+}
+
+func ({{.Receiver}} *{{.Name}}) SourceAllowed(address Address) bool {
+	_, ok := address.({{.SourceAddressType}})
+
+    {{if index .Features "chainable"}} return ok {{else}} return !ok {{end}}
+}
+
+func ({{.Receiver}} *{{.Name}}) Chainable() bool {
+    {{if index .Features "chainable"}} return true {{else}}	return false {{end}}
+}
+
+func ({{.Receiver}} *{{.Name}}) Ref() uint16 {
+	return {{.Receiver}}.Reference
+}
+
+func ({{.Receiver}} *{{.Name}}) Type() UnlockType {
+	return {{.UnlockType}}
+}
+
+func ({{.Receiver}} *{{.Name}}) Size() int {
+	// UnlockType + Reference
+	return serializer.SmallTypeDenotationByteSize + serializer.UInt16ByteSize
+}
+
+func ({{.Receiver}} *{{.Name}}) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
+	return 0, nil
+}

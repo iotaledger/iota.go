@@ -1,0 +1,47 @@
+package iotago
+
+import (
+	"encoding/binary"
+	"fmt"
+	"math"
+
+	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
+	"github.com/iotaledger/hive.go/serializer/v2"
+)
+
+var (
+	// ErrWrong{{.Name}}Index gets returned when a wrong {{firstLower .Name}} index was passed.
+	ErrWrong{{.Name}}Index = ierrors.New("wrong {{firstLower .Name}} index")
+)
+
+const (
+	{{.Name}}IndexLength = serializer.UInt32ByteSize
+	Max{{.Name}}Index    = {{.Name}}Index(math.MaxUint32)
+)
+
+// {{.Name}}Index {{.Description}} {{firstLower .Name}}.
+type {{.Name}}Index uint32
+
+func {{.Name}}IndexFromBytes(b []byte) ({{.Name}}Index, int, error) {
+	if len(b) < {{.Name}}IndexLength {
+		return 0, 0, ierrors.New("invalid {{firstLower .Name}} index size")
+	}
+
+	return {{.Name}}Index(binary.LittleEndian.Uint32(b)), {{.Name}}IndexLength, nil
+}
+
+func ({{.Receiver}} {{.Name}}Index) Bytes() ([]byte, error) {
+	bytes := make([]byte, {{.Name}}IndexLength)
+	binary.LittleEndian.PutUint32(bytes, uint32({{.Receiver}}))
+
+	return bytes, nil
+}
+
+func ({{.Receiver}} {{.Name}}Index) MustBytes() []byte {
+	return lo.PanicOnErr({{.Receiver}}.Bytes())
+}
+
+func ({{.Receiver}} {{.Name}}Index) String() string {
+	return fmt.Sprintf("{{.Name}}Index(%d)", {{.Receiver}})
+}

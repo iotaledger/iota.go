@@ -140,3 +140,42 @@ func Unregister{{.Name}}Aliases() {
 
 	{{firstLower .Name}}Aliases = make(map[{{.Name}}]string)
 }
+
+{{if index .Features "chainid"}}
+// Matches checks whether other matches this ChainID.
+func ({{.Receiver}} {{.Name}}) Matches(other ChainID) bool {
+	other{{.Name}}, is{{.Name}} := other.({{.Name}})
+	if !is{{.Name}} {
+		return false
+	}
+
+	return a == other{{.Name}}
+}
+
+// Addressable tells whether this ChainID can be converted into a ChainAddress.
+func ({{.Receiver}} {{.Name}}) Addressable() bool {
+	return true
+}
+
+// ToAddress converts this ChainID into an ChainAddress.
+func ({{.Receiver}} {{.Name}}) ToAddress() ChainAddress {
+	var addr {{.AddressType}}
+	copy(addr[:], a[:])
+
+	return &addr
+}
+
+// Key returns a key to use to index this ChainID.
+func ({{.Receiver}} {{.Name}}) Key() interface{} {
+	return a.String()
+}
+
+// FromOutputID returns the ChainID computed from a given OutputID.
+func ({{.Receiver}} {{.Name}}) FromOutputID(in OutputID) ChainID {
+	return {{.Name}}FromOutputID(in)
+}
+
+// {{.Name}}FromOutputID returns the {{.Name}} computed from a given OutputID.
+func {{.Name}}FromOutputID(outputID OutputID) {{.Name}} {
+	return blake2b.Sum256(outputID[:])
+}{{end}}
