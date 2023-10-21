@@ -382,8 +382,8 @@ func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.
 		b.transaction.Allotments = allotmentsCpy
 	}()
 
-	// add an empty allotment to account for the later added allotment for the block issuer in case it does not exist yet
-	b.IncreaseAllotment(blockIssuerAccountID, 0)
+	// add a dummy allotment to account for the later added allotment for the block issuer in case it does not exist yet
+	b.IncreaseAllotment(blockIssuerAccountID, 1074)
 
 	// create a signed transaction with a empty signer to get the correct workscore.
 	// later the transaction needs to be signed with the correct signer, after the alloted mana was set correctly.
