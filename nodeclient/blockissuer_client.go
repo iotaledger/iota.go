@@ -28,7 +28,7 @@ type (
 	// BlockIssuerClient is a client which queries the optional blockissuer functionality of a node.
 	BlockIssuerClient interface {
 		// Info returns the info of the block issuer.
-		Info(ctx context.Context) (*BlockIssuerInfo, error)
+		Info(ctx context.Context) (*apimodels.BlockIssuerInfo, error)
 		// SendPayload sends a BlockPayload to the block issuer.
 		SendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
 		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends a BlockPayload to the block issuer.
@@ -39,14 +39,6 @@ type (
 		core *Client
 	}
 )
-
-// BlockIssuerInfo is the response to the BlockIssuerAPIRouteInfo endpoint.
-type BlockIssuerInfo struct {
-	// The account address of the block issuer.
-	BlockIssuerAddress string `serix:"0,mapKey=blockIssuerAddress"`
-	// The number of trailing zeroes required for the proof of work to be valid.
-	PowTargetTrailingZeros uint8 `serix:"1,mapKey=powTargetTrailingZeros"`
-}
 
 // Do executes a request against the endpoint.
 // This function is only meant to be used for special routes not covered through the standard API.
@@ -60,8 +52,8 @@ func (client *blockIssuerClient) DoWithRequestHeaderHook(ctx context.Context, me
 	return client.core.DoWithRequestHeaderHook(ctx, method, route, requestHeaderHook, reqObj, resObj)
 }
 
-func (client *blockIssuerClient) Info(ctx context.Context) (*BlockIssuerInfo, error) {
-	res := new(BlockIssuerInfo)
+func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssuerInfo, error) {
+	res := new(apimodels.BlockIssuerInfo)
 
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerAPIRouteInfo, nil, res); err != nil {

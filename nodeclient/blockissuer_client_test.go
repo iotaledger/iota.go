@@ -46,7 +46,7 @@ func TestBlockIssuerClient_Disabled(t *testing.T) {
 func TestBlockIssuerClient_Info(t *testing.T) {
 	defer gock.Off()
 
-	infoResponse := &nodeclient.BlockIssuerInfo{
+	infoResponse := &apimodels.BlockIssuerInfo{
 		BlockIssuerAddress:     tpkg.RandAccountAddress().Bech32(iotago.PrefixTestnet),
 		PowTargetTrailingZeros: 25,
 	}
