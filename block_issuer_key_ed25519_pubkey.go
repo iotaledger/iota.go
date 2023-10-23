@@ -11,7 +11,7 @@ import (
 
 // A Ed25519 public key Block Issuer Key.
 type Ed25519PublicKeyBlockIssuerKey struct {
-	PublicKey ed25519.PublicKey `serix:"0"`
+	PublicKey ed25519.PublicKey `serix:"0,mapKey=publicKey"`
 }
 
 // Ed25519PublicKeyBlockIssuerKeyFromPublicKey creates a block issuer key from an Ed25519 public key.
