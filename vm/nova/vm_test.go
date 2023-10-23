@@ -5814,10 +5814,10 @@ func TestTxSemanticMana(t *testing.T) {
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
 							require.NoError(t, err)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
+							potentialMana, err := testAPI.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
+							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -5883,10 +5883,10 @@ func TestTxSemanticMana(t *testing.T) {
 							require.NoError(t, err)
 							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
 							require.NoError(t, err)
-							potentialMana, err := testProtoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
+							potentialMana, err := testAPI.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testProtoParams.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, createdSlot, targetSlot)
+							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, createdSlot, targetSlot)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -6148,7 +6148,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 
 	var manaRewardAmount iotago.Mana = 200
 	currentEpoch := iotago.EpochIndex(20)
-	currentSlot := testProtoParams.TimeProvider().EpochStart(currentEpoch)
+	currentSlot := testAPI.TimeProvider().EpochStart(currentEpoch)
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{
@@ -6231,7 +6231,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 
 	const manaRewardAmount iotago.Mana = 200
 	currentSlot := 20 * testProtoParams.ParamEpochDurationInSlots()
-	currentEpoch := testProtoParams.TimeProvider().EpochFromSlot(currentSlot)
+	currentEpoch := testAPI.TimeProvider().EpochFromSlot(currentSlot)
 
 	inputIDs := tpkg.RandOutputIDs(1)
 	inputs := vm.InputSet{

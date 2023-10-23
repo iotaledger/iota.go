@@ -66,16 +66,32 @@ func (p *V3ProtocolParameters) WorkScoreParameters() *WorkScoreParameters {
 	return &p.basicProtocolParameters.WorkScoreParameters
 }
 
+func (p *V3ProtocolParameters) ManaParameters() *ManaParameters {
+	return &p.basicProtocolParameters.ManaParameters
+}
+
 func (p *V3ProtocolParameters) TokenSupply() BaseToken {
 	return p.basicProtocolParameters.TokenSupply
 }
 
 func (p *V3ProtocolParameters) NetworkID() NetworkID {
+	// TODO: add sync.Once here?
 	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
 }
 
-func (p *V3ProtocolParameters) TimeProvider() *TimeProvider {
-	return NewTimeProvider(p.basicProtocolParameters.GenesisUnixTimestamp, int64(p.basicProtocolParameters.SlotDurationInSeconds), p.basicProtocolParameters.SlotsPerEpochExponent)
+// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
+func (p *V3ProtocolParameters) GenesisUnixTimestamp() int64 {
+	return p.basicProtocolParameters.GenesisUnixTimestamp
+}
+
+// SlotDurationInSeconds defines the duration of each slot in seconds.
+func (p *V3ProtocolParameters) SlotDurationInSeconds() uint8 {
+	return p.basicProtocolParameters.SlotDurationInSeconds
+}
+
+// SlotsPerEpochExponent is the number of slots in an epoch expressed as an exponent of 2.
+func (p *V3ProtocolParameters) SlotsPerEpochExponent() uint8 {
+	return p.basicProtocolParameters.SlotsPerEpochExponent
 }
 
 // ParamEpochDurationInSlots defines the amount of slots in an epoch.
@@ -128,6 +144,7 @@ func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
+	// TODO: add sync.Once here?
 	return CommonSerixAPI().Encode(context.TODO(), p)
 }
 
@@ -137,21 +154,22 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 		return Identifier{}, err
 	}
 
+	// TODO: add sync.Once here?
 	return IdentifierFromData(bytes), nil
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tStorageScore Structure: %v\n\tWorkScore Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tMana Structure: %v\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tStorageScore Structure: %v\n\tWorkScore Structure: %v\n\tMana Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
 		p.basicProtocolParameters.Version,
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,
 		p.basicProtocolParameters.StorageScoreParameters,
 		p.basicProtocolParameters.WorkScoreParameters,
+		p.basicProtocolParameters.ManaParameters,
 		p.basicProtocolParameters.TokenSupply,
 		p.basicProtocolParameters.GenesisUnixTimestamp,
 		p.basicProtocolParameters.SlotDurationInSeconds,
 		p.basicProtocolParameters.SlotsPerEpochExponent,
-		p.basicProtocolParameters.ManaParameters,
 		p.basicProtocolParameters.StakingUnbondingPeriod,
 		p.basicProtocolParameters.ValidationBlocksPerSlot,
 		p.basicProtocolParameters.PunishmentEpochs,
@@ -164,10 +182,6 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.VersionSignaling,
 		p.basicProtocolParameters.RewardsParameters,
 	)
-}
-
-func (p *V3ProtocolParameters) ManaDecayProvider() *ManaDecayProvider {
-	return NewManaDecayProvider(p.TimeProvider(), p.basicProtocolParameters.SlotsPerEpochExponent, &p.basicProtocolParameters.ManaParameters)
 }
 
 func (p *V3ProtocolParameters) Equals(other ProtocolParameters) bool {
@@ -234,14 +248,6 @@ func WithWorkScoreOptions(
 	}
 }
 
-func WithTimeProviderOptions(genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
-	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
-		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
-		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
-	}
-}
-
 func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.ManaParameters.BitsCount = bitsCount
@@ -251,6 +257,14 @@ func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExpone
 		p.basicProtocolParameters.ManaParameters.DecayFactorsExponent = decayFactorsExponent
 		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSum = decayFactorEpochsSum
 		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
+	}
+}
+
+func WithTimeProviderOptions(genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
+		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
+		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
 	}
 }
 

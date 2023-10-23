@@ -199,7 +199,7 @@ func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssu
 
 func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// calculate the available mana on input side
-	_, unboundManaInputs, accountBoundManaInputs, err := CalculateAvailableMana(b.api.ProtocolParameters(), b.inputs, targetSlot)
+	_, unboundManaInputs, accountBoundManaInputs, err := CalculateAvailableMana(b.api, b.inputs, targetSlot)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to calculate the available mana on input side")
 	}
@@ -316,7 +316,7 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 	return blockBuilder.Payload(tx)
 }
 
-func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iotago.OutputSet, targetSlot iotago.SlotIndex) (iotago.Mana, iotago.Mana, map[iotago.AccountID]iotago.Mana, error) {
+func CalculateAvailableMana(api iotago.API, inputSet iotago.OutputSet, targetSlot iotago.SlotIndex) (iotago.Mana, iotago.Mana, map[iotago.AccountID]iotago.Mana, error) {
 	var totalMana iotago.Mana
 	var unboundMana iotago.Mana
 	accountBoundMana := make(map[iotago.AccountID]iotago.Mana)
@@ -326,7 +326,7 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 		var potentialMana iotago.Mana
 
 		// we need to ignore the storage deposit, because it doesn't generate mana
-		minDeposit, err := iotago.NewStorageScoreStructure(protoParams.StorageScoreParameters()).MinDeposit(input)
+		minDeposit, err := api.StorageScoreStructure().MinDeposit(input)
 		if err != nil {
 			return 0, 0, nil, ierrors.Wrap(err, "failed to calculate min deposit")
 		}
@@ -336,14 +336,14 @@ func CalculateAvailableMana(protoParams iotago.ProtocolParameters, inputSet iota
 				return 0, 0, nil, ierrors.Wrap(err, "failed to calculate excessBaseTokens of the input")
 			}
 
-			potentialMana, err = protoParams.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
+			potentialMana, err = api.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
 			if err != nil {
 				return 0, 0, nil, ierrors.Wrap(err, "failed to calculate potential mana generation and decay")
 			}
 		}
 
 		// calculate the decayed stored mana of the input
-		storedMana, err := protoParams.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
+		storedMana, err := api.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
 			return 0, 0, nil, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}

@@ -110,16 +110,21 @@ type ProtocolParameters interface {
 	NetworkID() NetworkID
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
-	// StorageScoreStructure defines the storage score structure used by given node/network.
+	// StorageScoreStructure defines the storage score structure used by the given network.
 	StorageScoreParameters() *StorageScoreParameters
 	// WorkScoreParameters defines the work score parameters used by the given network.
 	WorkScoreParameters() *WorkScoreParameters
+	// ManaParameters defines the mana parameters used by the given network.
+	ManaParameters() *ManaParameters
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
-	TimeProvider() *TimeProvider
-
-	ManaDecayProvider() *ManaDecayProvider
+	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
+	GenesisUnixTimestamp() int64
+	// SlotDurationInSeconds defines the duration of each slot in seconds.
+	SlotDurationInSeconds() uint8
+	// SlotsPerEpochExponent is the number of slots in an epoch expressed as an exponent of 2.
+	SlotsPerEpochExponent() uint8
 
 	StakingUnbondingPeriod() EpochIndex
 
