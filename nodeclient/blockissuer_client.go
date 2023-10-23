@@ -130,6 +130,11 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 		return nil, nil, ierrors.Wrap(err, "failed to get the latest block issuance infos")
 	}
 
+	// set the commitment slot as the creation slot of the transaction if no slot was set yet.
+	if builder.CreationSlot() == 0 {
+		builder.SetCreationSlot(blockIssuance.Commitment.Slot)
+	}
+
 	// allot the required mana to the block issuer
 	builder.AllotRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.Commitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
 
