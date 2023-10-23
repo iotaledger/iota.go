@@ -66,7 +66,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 	workingSet.Rewards = inputs.RewardsInputSet
 
 	workingSet.TotalManaIn, err = vm.TotalManaIn(
-		api.ProtocolParameters().ManaDecayProvider(),
+		api.ManaDecayProvider(),
 		api.StorageScoreStructure(),
 		workingSet.Tx.CreationSlot,
 		workingSet.UTXOInputsSet,
@@ -436,7 +436,7 @@ func accountBlockIssuerSTVF(input *vm.ChainOutputWithIDs, currentBlockIssuerFeat
 	}
 
 	// the Mana on the account on the input side must not be moved to any other outputs or accounts.
-	manaDecayProvider := vmParams.API.ProtocolParameters().ManaDecayProvider()
+	manaDecayProvider := vmParams.API.ManaDecayProvider()
 	storageScoreStructure := vmParams.API.StorageScoreStructure()
 
 	manaIn := vmParams.WorkingSet.TotalManaIn

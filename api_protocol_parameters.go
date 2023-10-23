@@ -9,23 +9,23 @@ type basicProtocolParameters struct {
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP NetworkPrefix `serix:"2,lengthPrefixType=uint8,mapKey=bech32Hrp"`
 
-	// StorageScoreParameters defines the Storage Score Parameters used by given node/network.
+	// StorageScoreParameters defines the Storage Score Parameters used by the given network.
 	StorageScoreParameters StorageScoreParameters `serix:"3,mapKey=storageScoreParameters"`
-	// WorkScoreParameters defines the work score parameters used by given node/network.
+	// WorkScoreParameters defines the work score parameters used by by the given network.
 	WorkScoreParameters WorkScoreParameters `serix:"4,mapKey=workScoreParameters"`
+	// ManaParameters defines the mana parameters used by the given network.
+	ManaParameters ManaParameters `serix:"5,mapKey=manaParameters"`
+
 	// TokenSupply defines the current token supply on the network.
-	TokenSupply BaseToken `serix:"5,mapKey=tokenSupply"`
+	TokenSupply BaseToken `serix:"6,mapKey=tokenSupply"`
 
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
-	GenesisUnixTimestamp int64 `serix:"6,mapKey=genesisUnixTimestamp"`
+	GenesisUnixTimestamp int64 `serix:"7,mapKey=genesisUnixTimestamp"`
 	// SlotDurationInSeconds defines the duration of each slot in seconds.
-	SlotDurationInSeconds uint8 `serix:"7,mapKey=slotDurationInSeconds"`
+	SlotDurationInSeconds uint8 `serix:"8,mapKey=slotDurationInSeconds"`
 	// SlotsPerEpochExponent is the number of slots in an epoch expressed as an exponent of 2.
 	// (2**SlotsPerEpochExponent) == slots in an epoch.
-	SlotsPerEpochExponent uint8 `serix:"8,mapKey=slotsPerEpochExponent"`
-
-	// ManaParameters defines the mana parameters used by mana calculation.
-	ManaParameters ManaParameters `serix:"9,mapKey=manaParameters"`
+	SlotsPerEpochExponent uint8 `serix:"9,mapKey=slotsPerEpochExponent"`
 
 	// StakingUnbondingPeriod defines the unbonding period in epochs before an account can stop staking.
 	StakingUnbondingPeriod EpochIndex `serix:"10,mapKey=stakingUnbondingPeriod"`
@@ -64,11 +64,11 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.Bech32HRP == other.Bech32HRP &&
 		b.StorageScoreParameters.Equals(other.StorageScoreParameters) &&
 		b.WorkScoreParameters.Equals(other.WorkScoreParameters) &&
+		b.ManaParameters.Equals(other.ManaParameters) &&
 		b.TokenSupply == other.TokenSupply &&
 		b.GenesisUnixTimestamp == other.GenesisUnixTimestamp &&
 		b.SlotDurationInSeconds == other.SlotDurationInSeconds &&
 		b.SlotsPerEpochExponent == other.SlotsPerEpochExponent &&
-		b.ManaParameters.Equals(other.ManaParameters) &&
 		b.StakingUnbondingPeriod == other.StakingUnbondingPeriod &&
 		b.ValidationBlocksPerSlot == other.ValidationBlocksPerSlot &&
 		b.PunishmentEpochs == other.PunishmentEpochs &&
