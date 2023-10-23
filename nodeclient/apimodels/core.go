@@ -59,7 +59,7 @@ const (
 	BlockFailureIssuerAccountNotFound     BlockFailureReason = 5
 	BlockFailureVersionInvalid            BlockFailureReason = 6
 	BlockFailureManaCostCalculationFailed BlockFailureReason = 7
-	BlockFailurBurnedInsufficientMana     BlockFailureReason = 8
+	BlockFailureBurnedInsufficientMana    BlockFailureReason = 8
 	BlockFailureAccountInvalid            BlockFailureReason = 9
 	BlockFailureSignatureInvalid          BlockFailureReason = 10
 	BlockFailureDroppedDueToCongestion    BlockFailureReason = 11

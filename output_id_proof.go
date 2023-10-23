@@ -103,7 +103,7 @@ func (p *OutputIDProof) OutputID(output Output) (OutputID, error) {
 
 type APIByter[T any] struct {
 	API   API
-	Value T `serix:"0"`
+	Value T `serix:"0,nest"`
 }
 
 func APIByterFactory[T any](api API) func(value T) *APIByter[T] {

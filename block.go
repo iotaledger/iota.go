@@ -84,7 +84,7 @@ func (b *BlockHeader) Size() int {
 
 type ProtocolBlock struct {
 	API         API
-	BlockHeader `serix:"0"`
+	BlockHeader `serix:"0,nest"`
 	Block       Block     `serix:"1,mapKey=block"`
 	Signature   Signature `serix:"2,mapKey=signature"`
 }

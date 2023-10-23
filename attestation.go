@@ -15,7 +15,7 @@ type Attestations = []*Attestation
 
 type Attestation struct {
 	API         API
-	BlockHeader `serix:"0"`
+	BlockHeader `serix:"0,nest"`
 	BlockHash   Identifier `serix:"1,mapKey=blockHash"`
 	Signature   Signature  `serix:"2,mapKey=signature"`
 }

@@ -57,7 +57,7 @@ type (
 // Transaction is the part of a SignedTransaction that contains inputs and outputs.
 type Transaction struct {
 	API                 API
-	*TransactionEssence `serix:"0"`
+	*TransactionEssence `serix:"0,nest"`
 	// The outputs of this transaction.
 	Outputs TxEssenceOutputs `serix:"1,mapKey=outputs"`
 }
