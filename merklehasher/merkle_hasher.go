@@ -7,6 +7,12 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
+// Domain separation prefixes.
+const (
+	LeafHashPrefix = 0
+	NodeHashPrefix = 1
+)
+
 type Value interface {
 	serializer.Byter
 }
@@ -72,6 +78,7 @@ func (t *Hasher[V]) Hash(data [][]byte) []byte {
 // hashLeaf returns the Merkle tree ValueHash hash of data.
 func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 	h := t.hash.New()
+	h.Write([]byte{LeafHashPrefix})
 	h.Write(l)
 
 	return h.Sum(nil)
@@ -80,6 +87,7 @@ func (t *Hasher[V]) hashLeaf(l []byte) []byte {
 // hashNode returns the inner Merkle tree node hash of the two child nodes l and r.
 func (t *Hasher[V]) hashNode(l, r []byte) []byte {
 	h := t.hash.New()
+	h.Write([]byte{NodeHashPrefix})
 	h.Write(l)
 	h.Write(r)
 
