@@ -204,18 +204,21 @@ func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.Sl
 		return 0, ierrors.Wrap(err, "failed to calculate the available mana on input side")
 	}
 
+	unboundManaInputs := availableManaInputs.UnboundMana
+	accountBoundManaInputs := availableManaInputs.AccountBoundMana
+
 	// update the account bound mana balances if they exist and/or the onbound mana balance
 	updateUnboundAndAccountBoundManaBalances := func(accountID iotago.AccountID, accountBoundManaOut iotago.Mana) error {
 		// check if there is account bound mana for this account on the input side
-		if accountBalance, exists := availableManaInputs.AccountBoundMana[accountID]; exists {
+		if accountBalance, exists := accountBoundManaInputs[accountID]; exists {
 			// check if there is enough account bound mana for this account on the input side
 			if accountBalance < accountBoundManaOut {
 				// not enough mana for this account on the input side
 				// => set the remaining account bound mana for this account to 0
-				availableManaInputs.AccountBoundMana[accountID] = 0
+				accountBoundManaInputs[accountID] = 0
 
 				// subtract the remainder from the unbound mana
-				availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, accountBoundManaOut-accountBalance)
+				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, accountBoundManaOut-accountBalance)
 				if err != nil {
 					return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s while subtracting remainder", accountID.String())
 				}
@@ -224,13 +227,13 @@ func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.Sl
 			}
 
 			// there is enough account bound mana for this account, subtract it from there
-			availableManaInputs.AccountBoundMana[accountID] -= accountBoundManaOut
+			accountBoundManaInputs[accountID] -= accountBoundManaOut
 
 			return nil
 		}
 
 		// no account bound mana available for the given account, subtract it from the unbounded mana
-		availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, accountBoundManaOut)
+		unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, accountBoundManaOut)
 		if err != nil {
 			return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s", accountID.String())
 		}
@@ -254,7 +257,7 @@ func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.Sl
 					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side, while checking locked mana")
 				}
 			} else {
-				availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, output.StoredMana())
+				unboundManaInputs, err = safemath.SafeSub(unboundManaInputs, output.StoredMana())
 				if err != nil {
 					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
 				}
@@ -274,7 +277,7 @@ func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.Sl
 		return 0, ierrors.Wrap(err, "failed to subtract the minimum required mana to issue the block")
 	}
 
-	return availableManaInputs.UnboundMana, nil
+	return unboundManaInputs, nil
 }
 
 // hasManalockCondition checks if the output is locked for a certain time to an account.
