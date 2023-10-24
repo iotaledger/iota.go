@@ -317,13 +317,83 @@ func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSig
 }
 
 type AvailableManaResult struct {
+	TotalMana            iotago.Mana
+	UnboundMana          iotago.Mana
 	PotentialMana        iotago.Mana
 	StoredMana           iotago.Mana
 	UnboundPotentialMana iotago.Mana
 	UnboundStoredMana    iotago.Mana
-	UnboundMana          iotago.Mana
 	AccountBoundMana     map[iotago.AccountID]iotago.Mana
-	TotalMana            iotago.Mana
+}
+
+func (a *AvailableManaResult) addTotalMana(value iotago.Mana) error {
+	totalMana, err := safemath.SafeAdd(a.TotalMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add total mana")
+	}
+	a.TotalMana = totalMana
+
+	return nil
+}
+
+func (a *AvailableManaResult) addUnboundMana(value iotago.Mana) error {
+	unboundMana, err := safemath.SafeAdd(a.UnboundMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add unbound mana")
+	}
+	a.UnboundMana = unboundMana
+
+	return nil
+}
+
+func (a *AvailableManaResult) AddPotentialMana(value iotago.Mana) error {
+	potentialMana, err := safemath.SafeAdd(a.PotentialMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add potential mana")
+	}
+	a.PotentialMana = potentialMana
+
+	return a.addTotalMana(value)
+}
+
+func (a *AvailableManaResult) AddStoredMana(value iotago.Mana) error {
+	storedMana, err := safemath.SafeAdd(a.StoredMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add stored mana")
+	}
+	a.StoredMana = storedMana
+
+	return a.addTotalMana(value)
+}
+
+func (a *AvailableManaResult) AddUnboundPotentialMana(value iotago.Mana) error {
+	unboundPotentialMana, err := safemath.SafeAdd(a.UnboundPotentialMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add unbound potential mana")
+	}
+	a.UnboundPotentialMana = unboundPotentialMana
+
+	return a.addUnboundMana(value)
+}
+
+func (a *AvailableManaResult) AddUnboundStoredMana(value iotago.Mana) error {
+	unboundStoredMana, err := safemath.SafeAdd(a.UnboundStoredMana, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add unbound stored mana")
+	}
+	a.UnboundStoredMana = unboundStoredMana
+
+	return a.addUnboundMana(value)
+}
+
+func (a *AvailableManaResult) AddAccountBoundMana(accountID iotago.AccountID, value iotago.Mana) error {
+	accountBoundMana, err := safemath.SafeAdd(a.AccountBoundMana[accountID], value)
+	if err != nil {
+		return ierrors.Wrapf(err, "failed to add account bound mana to account %s", accountID.ToHex())
+	}
+	a.AccountBoundMana[accountID] = accountBoundMana
+
+	return nil
 }
 
 func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex) (*AvailableManaResult, error) {
@@ -352,9 +422,8 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 			}
 		}
 
-		result.PotentialMana, err = safemath.SafeAdd(result.PotentialMana, potentialMana)
-		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to add potential mana")
+		if err := result.AddPotentialMana(potentialMana); err != nil {
+			return nil, err
 		}
 
 		// calculate the decayed stored mana of the input
@@ -363,9 +432,8 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 			return nil, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}
 
-		result.StoredMana, err = safemath.SafeAdd(result.StoredMana, storedMana)
-		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to add stored mana")
+		if err := result.AddStoredMana(storedMana); err != nil {
+			return nil, err
 		}
 
 		inputMana, err := safemath.SafeAdd(potentialMana, storedMana)
@@ -374,27 +442,17 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 		}
 
 		if accountOutput, isAccountOutput := input.(*iotago.AccountOutput); isAccountOutput {
-			result.AccountBoundMana[accountOutput.AccountID] += inputMana
+			if err := result.AddAccountBoundMana(accountOutput.AccountID, inputMana); err != nil {
+				return nil, err
+			}
 		} else {
-			result.UnboundPotentialMana, err = safemath.SafeAdd(result.UnboundPotentialMana, potentialMana)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to add unbound potential mana")
+			if err := result.AddUnboundPotentialMana(potentialMana); err != nil {
+				return nil, err
 			}
 
-			result.UnboundStoredMana, err = safemath.SafeAdd(result.UnboundStoredMana, storedMana)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to add unbound stored mana")
+			if err := result.AddUnboundStoredMana(storedMana); err != nil {
+				return nil, err
 			}
-
-			result.UnboundMana, err = safemath.SafeAdd(result.UnboundMana, inputMana)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to add unbound mana")
-			}
-		}
-
-		result.TotalMana, err = safemath.SafeAdd(result.TotalMana, inputMana)
-		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to add total mana")
 		}
 	}
 
