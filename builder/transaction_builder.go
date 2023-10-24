@@ -403,7 +403,7 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 
 	for inputID, input := range b.inputs {
 		// calculate the potential mana of the input
-		var potentialMana iotago.Mana
+		var inputPotentialMana iotago.Mana
 
 		// we need to ignore the storage deposit, because it doesn't generate mana
 		minDeposit, err := b.api.StorageScoreStructure().MinDeposit(input)
@@ -416,41 +416,41 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 				return nil, ierrors.Wrap(err, "failed to calculate excessBaseTokens of the input")
 			}
 
-			potentialMana, err = b.api.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
+			inputPotentialMana, err = b.api.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
 			if err != nil {
 				return nil, ierrors.Wrap(err, "failed to calculate potential mana generation and decay")
 			}
 		}
 
-		if err := result.AddPotentialMana(potentialMana); err != nil {
+		if err := result.AddPotentialMana(inputPotentialMana); err != nil {
 			return nil, err
 		}
 
 		// calculate the decayed stored mana of the input
-		storedMana, err := b.api.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
+		inputStoredMana, err := b.api.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
 			return nil, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}
 
-		if err := result.AddStoredMana(storedMana); err != nil {
+		if err := result.AddStoredMana(inputStoredMana); err != nil {
 			return nil, err
 		}
 
-		inputMana, err := safemath.SafeAdd(potentialMana, storedMana)
-		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to add input mana")
-		}
-
 		if accountOutput, isAccountOutput := input.(*iotago.AccountOutput); isAccountOutput {
-			if err := result.AddAccountBoundMana(accountOutput.AccountID, inputMana); err != nil {
+			inputTotalMana, err := safemath.SafeAdd(inputPotentialMana, inputStoredMana)
+			if err != nil {
+				return nil, ierrors.Wrap(err, "failed to add input mana")
+			}
+
+			if err := result.AddAccountBoundMana(accountOutput.AccountID, inputTotalMana); err != nil {
 				return nil, err
 			}
 		} else {
-			if err := result.AddUnboundPotentialMana(potentialMana); err != nil {
+			if err := result.AddUnboundPotentialMana(inputPotentialMana); err != nil {
 				return nil, err
 			}
 
-			if err := result.AddUnboundStoredMana(storedMana); err != nil {
+			if err := result.AddUnboundStoredMana(inputStoredMana); err != nil {
 				return nil, err
 			}
 		}
