@@ -5866,7 +5866,7 @@ func TestTxSemanticMana(t *testing.T) {
 				TransactionEssence: &iotago.TransactionEssence{
 					Inputs: inputIDs.UTXOInputs(),
 					Allotments: iotago.Allotments{
-						&iotago.Allotment{Value: 50},
+						&iotago.Allotment{Mana: 50},
 					},
 					CreationSlot: 10 + 100*testProtoParams.ParamEpochDurationInSlots(),
 				},

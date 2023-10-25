@@ -118,7 +118,7 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 		}
 	}
 	for _, allotment := range allotments {
-		totalOut, err = safemath.SafeAdd(totalOut, allotment.Value)
+		totalOut, err = safemath.SafeAdd(totalOut, allotment.Mana)
 		if err != nil {
 			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
 		}

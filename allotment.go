@@ -16,14 +16,14 @@ const MaxBlockIssuanceCredits = BlockIssuanceCredits(math.MaxInt64)
 
 // Allotment is a struct that represents a list of account IDs and an allotted value.
 type Allotment struct {
-	AccountID AccountID `serix:"0,mapKey=accountID"`
-	Value     Mana      `serix:"1,mapKey=value"`
+	AccountID AccountID `serix:"0,mapKey=accountId"`
+	Mana      Mana      `serix:"1,mapKey=mana"`
 }
 
 func (a *Allotment) Clone() *Allotment {
 	return &Allotment{
 		AccountID: a.AccountID,
-		Value:     a.Value,
+		Mana:      a.Mana,
 	}
 }
 
@@ -59,7 +59,7 @@ func (a Allotments) WorkScore(workScoreParameters *WorkScoreParameters) (WorkSco
 func (a Allotments) Get(id AccountID) Mana {
 	for _, allotment := range a {
 		if allotment.AccountID == id {
-			return allotment.Value
+			return allotment.Mana
 		}
 	}
 

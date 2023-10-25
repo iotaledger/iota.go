@@ -843,7 +843,7 @@ func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 func RandAllotment() *iotago.Allotment {
 	return &iotago.Allotment{
 		AccountID: RandAccountID(),
-		Value:     RandMana(10000) + 1,
+		Mana:      RandMana(10000) + 1,
 	}
 }
 
