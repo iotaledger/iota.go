@@ -38,6 +38,8 @@ var (
 	ErrAddressCannotReceiveStorageDepositReturnUnlockCondition = ierrors.New("address cannot receive outputs with storage deposit return unlock condition")
 	// ErrAddressCannotReceiveAccountOutput gets returned if an AccountOutput is sent to an address without that capability.
 	ErrAddressCannotReceiveAccountOutput = ierrors.New("address cannot receive account outputs")
+	// ErrAddressCannotReceiveAnchorOutput gets returned if an AnchorOutput is sent to an address without that capability.
+	ErrAddressCannotReceiveAnchorOutput = ierrors.New("address cannot receive anchor outputs")
 	// ErrAddressCannotReceiveNFTOutput gets returned if an NFTOutput is sent to an address without that capability.
 	ErrAddressCannotReceiveNFTOutput = ierrors.New("address cannot receive nft outputs")
 	// ErrAddressCannotReceiveDelegationOutput gets returned if a DelegationOutput is sent to an address without that capability.
@@ -54,12 +56,14 @@ const (
 	AddressAccount AddressType = 8
 	// AddressNFT denotes an NFT address.
 	AddressNFT AddressType = 16
+	// AddressAnchor denotes an Anchor address.
+	AddressAnchor AddressType = 24
 	// AddressImplicitAccountCreation denotes an Ed25519 address that can only be used to create an implicit account.
-	AddressImplicitAccountCreation AddressType = 24
+	AddressImplicitAccountCreation AddressType = 32
 	// AddressMulti denotes a multi address.
-	AddressMulti AddressType = 32
+	AddressMulti AddressType = 40
 	// AddressRestricted denotes a restricted address that has a capability bitmask.
-	AddressRestricted AddressType = 40
+	AddressRestricted AddressType = 48
 )
 
 func (addrType AddressType) String() string {
@@ -83,6 +87,7 @@ var (
 		"Ed25519Address", "", "", "", "", "", "", "",
 		"AccountAddress", "", "", "", "", "", "", "",
 		"NFTAddress", "", "", "", "", "", "", "",
+		"AnchorAddress", "", "", "", "", "", "", "",
 		"ImplicitAccountCreationAddress", "", "", "", "", "", "", "",
 		"MultiAddress", "", "", "", "", "", "", "",
 		"RestrictedAddress",
@@ -128,6 +133,7 @@ type AddressCapabilities interface {
 	CannotReceiveOutputsWithExpirationUnlockCondition() bool
 	CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() bool
 	CannotReceiveAccountOutputs() bool
+	CannotReceiveAnchorOutputs() bool
 	CannotReceiveNFTOutputs() bool
 	CannotReceiveDelegationOutputs() bool
 }
@@ -174,6 +180,8 @@ func newAddress(addressType AddressType) (address Address, err error) {
 		return &AccountAddress{}, nil
 	case AddressNFT:
 		return &NFTAddress{}, nil
+	case AddressAnchor:
+		return &AnchorAddress{}, nil
 	case AddressImplicitAccountCreation:
 		return &ImplicitAccountCreationAddress{}, nil
 	case AddressMulti:

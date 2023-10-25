@@ -32,6 +32,11 @@ func TestAddressDeSerialize(t *testing.T) {
 			target: &iotago.NFTAddress{},
 		},
 		{
+			name:   "ok - AnchorAddress",
+			source: tpkg.RandAnchorAddress(),
+			target: &iotago.AnchorAddress{},
+		},
+		{
 			name:   "ok - ImplicitAccountCreationAddress",
 			source: tpkg.RandImplicitAccountCreationAddress(),
 			target: &iotago.ImplicitAccountCreationAddress{},
@@ -59,6 +64,11 @@ func TestAddressDeSerialize(t *testing.T) {
 		{
 			name:   "ok - RestrictedNFTAddress with capabilities",
 			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			target: &iotago.RestrictedAddress{},
+		},
+		{
+			name:   "ok - RestrictedAnchorAddress with capabilities",
+			source: tpkg.RandRestrictedAnchorAddress(iotago.AddressCapabilitiesBitMask{0xff}),
 			target: &iotago.RestrictedAddress{},
 		},
 		{
@@ -125,6 +135,10 @@ var bech32Tests = []*bech32Test{
 					Address: &iotago.NFTAddress{0x56, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 					Weight:  3,
 				},
+				{
+					Address: &iotago.AnchorAddress{0x57, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  4,
+				},
 			},
 			Threshold: 2,
 		}
@@ -134,7 +148,7 @@ var bech32Tests = []*bech32Test{
 			network:    iotago.PrefixTestnet,
 			addr:       addr,
 			targetAddr: iotago.NewMultiAddressReferenceFromMultiAddress(addr),
-			bech32:     "rms1yz4qe5j4s44a7qpnz4lkd0nuepc9xkchznae90gy78ht8m9g9epxweejdxn",
+			bech32:     "rms19zt4pdt7fl3lqqgnxduzdyzx45c2pc95jq7xccfqzuncep4zjtxmj4skzzd",
 		}
 	}(),
 	func() *bech32Test {
@@ -148,7 +162,7 @@ var bech32Tests = []*bech32Test{
 			network:    iotago.PrefixTestnet,
 			addr:       addr,
 			targetAddr: addr,
-			bech32:     "rms19qq99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp2588z4ru",
+			bech32:     "rms1xqq99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25npuutf",
 		}
 	}(),
 	func() *bech32Test {
@@ -162,7 +176,7 @@ var bech32Tests = []*bech32Test{
 			network:    iotago.PrefixTestnet,
 			addr:       addr,
 			targetAddr: addr,
-			bech32:     "rms19qy99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25psyekx",
+			bech32:     "rms1xqy99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp254k6s7n",
 		}
 	}(),
 	func() *bech32Test {
@@ -176,7 +190,21 @@ var bech32Tests = []*bech32Test{
 			network:    iotago.PrefixTestnet,
 			addr:       addr,
 			targetAddr: addr,
-			bech32:     "rms19qg99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25tqwdqp",
+			bech32:     "rms1xqg99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25lxsyg5",
+		}
+	}(),
+	func() *bech32Test {
+		addr := &iotago.RestrictedAddress{
+			Address:             &iotago.AnchorAddress{0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+			AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x55},
+		}
+
+		return &bech32Test{
+			name:       "Restricted Anchor Address",
+			network:    iotago.PrefixTestnet,
+			addr:       addr,
+			targetAddr: addr,
+			bech32:     "rms1xqv99l0uquscye20zcl47ru6vgwh99txcax3qqmuf4amkpq8683vvjgp25e3kgaw",
 		}
 	}(),
 	func() *bech32Test {
@@ -202,6 +230,10 @@ var bech32Tests = []*bech32Test{
 					Address: &iotago.NFTAddress{0x56, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
 					Weight:  3,
 				},
+				{
+					Address: &iotago.AnchorAddress{0x57, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66, 0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49},
+					Weight:  3,
+				},
 			},
 			Threshold: 2,
 		}
@@ -219,7 +251,7 @@ var bech32Tests = []*bech32Test{
 				Address:             iotago.NewMultiAddressReferenceFromMultiAddress(multiAddr),
 				AllowedCapabilities: addr.AllowedCapabilities,
 			},
-			bech32: "rms19qs25rxj2kzkhhcqxv2h7e470ny8q56mzu20hy4aqnc7avlv4qhyyecp252uua5y",
+			bech32: "rms1xq5vf6xg2ysksnazu9zfuaq93erznxpqjsus79yhkaz9xarpskm2ckqp25kthwqv",
 		}
 	}(),
 }
@@ -251,6 +283,7 @@ func TestImplicitAccountCreationAddressCapabilities(t *testing.T) {
 	require.True(t, address.CannotReceiveOutputsWithExpirationUnlockCondition())
 	require.True(t, address.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition())
 	require.True(t, address.CannotReceiveAccountOutputs())
+	require.True(t, address.CannotReceiveAnchorOutputs())
 	require.True(t, address.CannotReceiveNFTOutputs())
 	require.True(t, address.CannotReceiveDelegationOutputs())
 }
@@ -277,33 +310,52 @@ func assertRestrictedAddresses(t *testing.T, addresses []*iotago.RestrictedAddre
 			addr.CannotReceiveOutputsWithExpirationUnlockCondition,
 			addr.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition,
 			addr.CannotReceiveAccountOutputs,
+			addr.CannotReceiveAnchorOutputs,
 			addr.CannotReceiveNFTOutputs,
 			addr.CannotReceiveDelegationOutputs,
 		}
 
 		require.Equal(t, addr.Size(), len(b))
 
-		indexModuloTen := (i % 10)
+		setBit := func(bit int) iotago.AddressCapabilitiesBitMask {
+			return iotago.AddressCapabilitiesBitMask(iotago.BitMaskSetBit([]byte{}, uint(bit)))
+		}
 
-		switch indexModuloTen {
+		setAllBits := func(bit int) iotago.AddressCapabilitiesBitMask {
+			var bitMask []byte
+			for i := 0; i < bit; i++ {
+				bitMask = iotago.BitMaskSetBit(bitMask, uint(i))
+			}
+
+			return iotago.AddressCapabilitiesBitMask(bitMask)
+		}
+
+		capabilitiesCount := 9
+		indexModuloTestAmount := (i % (capabilitiesCount + 2)) // + 2 because we also test the "all enabled" and "all disabled" capabilities bit mask
+		addressCapabilitiesBytesSize := 2 + (indexModuloTestAmount / 8)
+
+		switch indexModuloTestAmount {
 		default:
 			for checkIndex, check := range addrChecks {
-				require.Equalf(t, check(), indexModuloTen != checkIndex, "index: %d", i)
+				require.Equalf(t, indexModuloTestAmount != checkIndex, check(), "index: %d", i)
 			}
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0 | 1<<indexModuloTen}, "index: %d", i)
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask().Size(), 2, "index: %d", i)
-		case 8:
+			require.Equalf(t, setBit(indexModuloTestAmount), addr.AllowedCapabilitiesBitMask(), "index: %d", i)
+
+			require.Equalf(t, addressCapabilitiesBytesSize, addr.AllowedCapabilitiesBitMask().Size(), "index: %d", i)
+
+		case capabilitiesCount: // all capabilities enabled
 			for _, check := range addrChecks {
 				require.Falsef(t, check(), "index: %d", i)
 			}
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{0xFF}, "index: %d", i)
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask().Size(), 2, "index: %d", i)
-		case 9:
+			require.Equalf(t, setAllBits(indexModuloTestAmount), addr.AllowedCapabilitiesBitMask(), "index: %d", i)
+			require.Equalf(t, addressCapabilitiesBytesSize, addr.AllowedCapabilitiesBitMask().Size(), "index: %d", i)
+
+		case capabilitiesCount + 1: // all capabilities disabled
 			for _, check := range addrChecks {
 				require.Truef(t, check(), "index: %d", i)
 			}
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask(), iotago.AddressCapabilitiesBitMask{}, "index: %d", i)
-			require.Equalf(t, addr.AllowedCapabilitiesBitMask().Size(), 1, "index: %d", i)
+			require.Equalf(t, iotago.AddressCapabilitiesBitMask{}, addr.AllowedCapabilitiesBitMask(), "index: %d", i)
+			require.Equalf(t, 1, addr.AllowedCapabilitiesBitMask().Size(), "index: %d", i)
 		}
 	}
 }
@@ -313,6 +365,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 	edAddr := tpkg.RandEd25519Address()
 	accountAddr := tpkg.RandAccountAddress()
 	nftAddr := tpkg.RandNFTAddress()
+	anchorAddr := tpkg.RandAnchorAddress()
 	multiAddress := tpkg.RandMultiAddress()
 
 	addresses := []*iotago.RestrictedAddress{
@@ -322,6 +375,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveAnchorOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(edAddr, iotago.WithAddressCanReceiveAnything()),
@@ -333,6 +387,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveAnchorOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(accountAddr, iotago.WithAddressCanReceiveAnything()),
@@ -344,10 +399,23 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveAnchorOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(nftAddr, iotago.WithAddressCanReceiveAnything()),
 		iotago.RestrictedAddressWithCapabilities(nftAddr),
+
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveNativeTokens(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveMana(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveOutputsWithTimelockUnlockCondition(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveAccountOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveAnchorOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveNFTOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveDelegationOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr, iotago.WithAddressCanReceiveAnything()),
+		iotago.RestrictedAddressWithCapabilities(anchorAddr),
 
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveNativeTokens(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveMana(true)),
@@ -355,6 +423,7 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveOutputsWithExpirationUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveAccountOutputs(true)),
+		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveAnchorOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveNFTOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveDelegationOutputs(true)),
 		iotago.RestrictedAddressWithCapabilities(multiAddress, iotago.WithAddressCanReceiveAnything()),
@@ -426,6 +495,15 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 							Conditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address:             &iotago.NFTAddress{},
+									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+								}},
+							},
+						},
+						&iotago.BasicOutput{
+							Amount: defaultAmount,
+							Conditions: iotago.BasicOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
+									Address:             &iotago.AnchorAddress{},
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
 								}},
 							},

@@ -61,6 +61,10 @@ func (addr *ImplicitAccountCreationAddress) CannotReceiveAccountOutputs() bool {
 	return true
 }
 
+func (addr *ImplicitAccountCreationAddress) CannotReceiveAnchorOutputs() bool {
+	return true
+}
+
 func (addr *ImplicitAccountCreationAddress) CannotReceiveNFTOutputs() bool {
 	return true
 }

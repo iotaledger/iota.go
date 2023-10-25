@@ -329,6 +329,15 @@ func RandNFTAddress() *iotago.NFTAddress {
 	return addr
 }
 
+// RandAnchorAddress returns a random AnchorAddress.
+func RandAnchorAddress() *iotago.AnchorAddress {
+	addr := &iotago.AnchorAddress{}
+	anchorID := RandBytes(iotago.AnchorAddressBytesLength)
+	copy(addr[:], anchorID)
+
+	return addr
+}
+
 // RandImplicitAccountCreationAddress returns a random ImplicitAccountCreationAddress.
 func RandImplicitAccountCreationAddress() *iotago.ImplicitAccountCreationAddress {
 	iacAddr := &iotago.ImplicitAccountCreationAddress{}
@@ -389,6 +398,14 @@ func RandRestrictedNFTAddress(capabilities iotago.AddressCapabilitiesBitMask) *i
 	}
 }
 
+// RandRestrictedAnchorAddress returns a random restricted anchor address.
+func RandRestrictedAnchorAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
+	return &iotago.RestrictedAddress{
+		Address:             RandAnchorAddress(),
+		AllowedCapabilities: capabilities,
+	}
+}
+
 // RandRestrictedMultiAddress returns a random restricted multi address.
 func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) *iotago.RestrictedAddress {
 	return &iotago.RestrictedAddress{
@@ -397,9 +414,9 @@ func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) 
 	}
 }
 
-// RandAddress returns a random address (Ed25519, Acount, NFT).
+// RandAddress returns a random address (Ed25519, Account, NFT, Anchor).
 func RandAddress() iotago.Address {
-	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT}
+	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT, iotago.AddressAnchor}
 
 	addressType := addressTypes[RandInt(len(addressTypes))]
 
@@ -411,6 +428,8 @@ func RandAddress() iotago.Address {
 		return RandAccountAddress()
 	case iotago.AddressNFT:
 		return RandNFTAddress()
+	case iotago.AddressAnchor:
+		return RandAnchorAddress()
 	default:
 		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
 	}
