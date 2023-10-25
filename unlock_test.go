@@ -28,6 +28,11 @@ func TestUnlock_DeSerialize(t *testing.T) {
 			target: &iotago.AccountUnlock{},
 		},
 		{
+			name:   "ok - anchor",
+			source: tpkg.RandAnchorUnlock(),
+			target: &iotago.AnchorUnlock{},
+		},
+		{
 			name:   "ok - NFT",
 			source: tpkg.RandNFTUnlock(),
 			target: &iotago.NFTUnlock{},
@@ -65,7 +70,8 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 				tpkg.RandEd25519SignatureUnlock(),
 				&iotago.AccountUnlock{Reference: 0},
 				&iotago.AccountUnlock{Reference: 1},
-				&iotago.NFTUnlock{Reference: 2},
+				&iotago.AnchorUnlock{Reference: 2},
+				&iotago.NFTUnlock{Reference: 3},
 			},
 			wantErr: nil,
 		},
@@ -91,9 +97,10 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 				tpkg.RandEd25519SignatureUnlock(),
 				&iotago.AccountUnlock{Reference: 0},
 				&iotago.AccountUnlock{Reference: 1},
+				&iotago.AnchorUnlock{Reference: 2},
 				&iotago.MultiUnlock{
 					Unlocks: []iotago.Unlock{
-						&iotago.NFTUnlock{Reference: 2},
+						&iotago.NFTUnlock{Reference: 3},
 					},
 				},
 			},
