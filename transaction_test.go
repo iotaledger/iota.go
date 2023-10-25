@@ -186,15 +186,15 @@ func TestAllotmentUniqueness(t *testing.T) {
 						Allotments: iotago.Allotments{
 							&iotago.Allotment{
 								AccountID: accountID,
-								Value:     0,
+								Mana:      0,
 							},
 							&iotago.Allotment{
 								AccountID: tpkg.RandAccountID(),
-								Value:     12,
+								Mana:      12,
 							},
 							&iotago.Allotment{
 								AccountID: accountID,
-								Value:     12,
+								Mana:      12,
 							},
 						},
 						Capabilities: iotago.TransactionCapabilitiesBitMask{},

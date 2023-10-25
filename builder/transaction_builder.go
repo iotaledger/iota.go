@@ -93,7 +93,7 @@ func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value
 	// check if the allotment already exists and add the value on top
 	for _, allotment := range b.transaction.Allotments {
 		if allotment.AccountID == accountID {
-			allotment.Value += value
+			allotment.Mana += value
 			return b
 		}
 	}
@@ -101,7 +101,7 @@ func (b *TransactionBuilder) IncreaseAllotment(accountID iotago.AccountID, value
 	// allotment does not exist yet
 	b.transaction.Allotments = append(b.transaction.Allotments, &iotago.Allotment{
 		AccountID: accountID,
-		Value:     value,
+		Mana:      value,
 	})
 
 	return b
@@ -264,7 +264,7 @@ func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.Sl
 
 	// subtract the already alloted mana
 	for _, allotment := range b.transaction.Allotments {
-		if err = updateUnboundAndAccountBoundManaBalances(allotment.AccountID, allotment.Value); err != nil {
+		if err = updateUnboundAndAccountBoundManaBalances(allotment.AccountID, allotment.Mana); err != nil {
 			return 0, ierrors.Wrap(err, "failed to subtract the already alloted mana")
 		}
 	}
