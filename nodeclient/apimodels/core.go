@@ -123,28 +123,34 @@ func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
 }
 
 const (
-	TxFailureNone                                  TransactionFailureReason = 0
-	TxFailureUTXOInputAlreadySpent                 TransactionFailureReason = 1
-	TxFailureConflicting                           TransactionFailureReason = 2
-	TxFailureUTXOInputInvalid                      TransactionFailureReason = 3
-	TxFailureTxTypeInvalid                         TransactionFailureReason = 4
-	TxFailureSumOfInputAndOutputValuesDoesNotMatch TransactionFailureReason = 5
-	TxFailureUnlockBlockSignatureInvalid           TransactionFailureReason = 6
-	TxFailureConfiguredTimelockNotYetExpired       TransactionFailureReason = 7
-	TxFailureGivenNativeTokensInvalid              TransactionFailureReason = 8
-	TxFailureReturnAmountNotFulfilled              TransactionFailureReason = 9
-	TxFailureInputUnlockInvalid                    TransactionFailureReason = 10
-	TxFailureSenderNotUnlocked                     TransactionFailureReason = 11
-	TxFailureChainStateTransitionInvalid           TransactionFailureReason = 12
-	TxFailureInputCreationAfterTxCreation          TransactionFailureReason = 13
-	TxFailureManaAmountInvalid                     TransactionFailureReason = 14
-	TxFailureBICInputInvalid                       TransactionFailureReason = 15
-	TxFailureRewardInputInvalid                    TransactionFailureReason = 16
-	TxFailureCommitmentInputInvalid                TransactionFailureReason = 17
-	TxFailureNoStakingFeature                      TransactionFailureReason = 18
-	TxFailureFailedToClaimStakingReward            TransactionFailureReason = 19
-	TxFailureFailedToClaimDelegationReward         TransactionFailureReason = 20
-	TxFailureSemanticValidationFailed              TransactionFailureReason = 255
+	TxFailureNone                                     TransactionFailureReason = 0
+	TxFailureUTXOInputAlreadySpent                    TransactionFailureReason = 1
+	TxFailureConflicting                              TransactionFailureReason = 2
+	TxFailureUTXOInputInvalid                         TransactionFailureReason = 3
+	TxFailureTxTypeInvalid                            TransactionFailureReason = 4
+	TxFailureSumOfInputAndOutputValuesDoesNotMatch    TransactionFailureReason = 5
+	TxFailureUnlockBlockSignatureInvalid              TransactionFailureReason = 6
+	TxFailureConfiguredTimelockNotYetExpired          TransactionFailureReason = 7
+	TxFailureGivenNativeTokensInvalid                 TransactionFailureReason = 8
+	TxFailureReturnAmountNotFulfilled                 TransactionFailureReason = 9
+	TxFailureInputUnlockInvalid                       TransactionFailureReason = 10
+	TxFailureSenderNotUnlocked                        TransactionFailureReason = 11
+	TxFailureChainStateTransitionInvalid              TransactionFailureReason = 12
+	TxFailureInputCreationAfterTxCreation             TransactionFailureReason = 13
+	TxFailureManaAmountInvalid                        TransactionFailureReason = 14
+	TxFailureBICInputInvalid                          TransactionFailureReason = 15
+	TxFailureRewardInputInvalid                       TransactionFailureReason = 16
+	TxFailureCommitmentInputInvalid                   TransactionFailureReason = 17
+	TxFailureNoStakingFeature                         TransactionFailureReason = 18
+	TxFailureFailedToClaimStakingReward               TransactionFailureReason = 19
+	TxFailureFailedToClaimDelegationReward            TransactionFailureReason = 20
+	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 21
+	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 22
+	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 23
+	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 24
+	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 25
+	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 26
+	TxFailureSemanticValidationFailed                 TransactionFailureReason = 255
 )
 
 func (t TransactionFailureReason) Bytes() ([]byte, error) {
