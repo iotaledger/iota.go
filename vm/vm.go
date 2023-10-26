@@ -17,7 +17,7 @@ type VirtualMachine interface {
 	// Execute executes the given tx in the VM. It is possible to optionally override the default execution functions.
 	Execute(transaction *iotago.Transaction, inputs ResolvedInputs, unlockedIdentities UnlockedIdentities, execFunctions ...ExecFunc) (outputs []iotago.Output, err error)
 	// ChainSTVF executes the chain state transition validation function.
-	ChainSTVF(transType iotago.ChainTransitionType, input *ChainOutputWithIDs, next iotago.ChainOutput, vmParams *Params) error
+	ChainSTVF(vmParams *Params, transType iotago.ChainTransitionType, input *ChainOutputWithIDs, next iotago.ChainOutput) error
 }
 
 // Params defines the VirtualMachine parameters under which the VM operates.
@@ -686,13 +686,13 @@ func ExecFuncChainTransitions() ExecFunc {
 		for chainID, inputChain := range vmParams.WorkingSet.InChains {
 			next := vmParams.WorkingSet.OutChains[chainID]
 			if next == nil {
-				if err := vm.ChainSTVF(iotago.ChainTransitionTypeDestroy, inputChain, nil, vmParams); err != nil {
+				if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeDestroy, inputChain, nil); err != nil {
 					return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "input chain %s (%T) destruction transition failed", chainID, inputChain))
 				}
 
 				continue
 			}
-			if err := vm.ChainSTVF(iotago.ChainTransitionTypeStateChange, inputChain, next, vmParams); err != nil {
+			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeStateChange, inputChain, next); err != nil {
 				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "chain %s (%T) state transition failed", chainID, inputChain))
 			}
 		}
@@ -702,7 +702,7 @@ func ExecFuncChainTransitions() ExecFunc {
 				continue
 			}
 
-			if err := vm.ChainSTVF(iotago.ChainTransitionTypeGenesis, nil, outputChain, vmParams); err != nil {
+			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeGenesis, nil, outputChain); err != nil {
 				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "new chain %s (%T) state transition failed", chainID, outputChain))
 			}
 		}
