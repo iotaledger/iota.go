@@ -16,6 +16,8 @@ var (
 	ErrTxCapabilitiesManaBurningNotAllowed = ierrors.New("mana burning is not allowed by the transaction capabilities")
 	// ErrTxCapabilitiesAccountDestructionNotAllowed gets returned when an account is destroyed in a transaction but it was not allowed by the capabilities.
 	ErrTxCapabilitiesAccountDestructionNotAllowed = ierrors.New("account destruction is not allowed by the transaction capabilities")
+	// ErrTxCapabilitiesAnchorDestructionNotAllowed gets returned when an anchor is destroyed in a transaction but it was not allowed by the capabilities.
+	ErrTxCapabilitiesAnchorDestructionNotAllowed = ierrors.New("anchor destruction is not allowed by the transaction capabilities")
 	// ErrTxCapabilitiesFoundryDestructionNotAllowed gets returned when a foundry is destroyed in a transaction but it was not allowed by the capabilities.
 	ErrTxCapabilitiesFoundryDestructionNotAllowed = ierrors.New("foundry destruction is not allowed by the transaction capabilities")
 	// ErrTxCapabilitiesNFTDestructionNotAllowed gets returned when a NFT is destroyed in a transaction but it was not allowed by the capabilities.
@@ -26,6 +28,7 @@ const (
 	canBurnNativeTokensBitIndex = iota
 	canBurnManaBitIndex
 	canDestroyAccountOutputsBitIndex
+	canDestroyAnchorOutputsBitIndex
 	canDestroyFoundryOutputsBitIndex
 	canDestroyNFTOutputsBitIndex
 )
@@ -35,6 +38,7 @@ type TransactionCapabilitiesOptions struct {
 	canBurnNativeTokens      bool
 	canBurnMana              bool
 	canDestroyAccountOutputs bool
+	canDestroyAnchorOutputs  bool
 	canDestroyFoundryOutputs bool
 	canDestroyNFTOutputs     bool
 }
@@ -44,6 +48,7 @@ func WithTransactionCanDoAnything() options.Option[TransactionCapabilitiesOption
 		o.canBurnNativeTokens = true
 		o.canBurnMana = true
 		o.canDestroyAccountOutputs = true
+		o.canDestroyAnchorOutputs = true
 		o.canDestroyFoundryOutputs = true
 		o.canDestroyNFTOutputs = true
 	}
@@ -64,6 +69,12 @@ func WithTransactionCanBurnMana(canBurnMana bool) options.Option[TransactionCapa
 func WithTransactionCanDestroyAccountOutputs(canDestroyAccountOutputs bool) options.Option[TransactionCapabilitiesOptions] {
 	return func(o *TransactionCapabilitiesOptions) {
 		o.canDestroyAccountOutputs = canDestroyAccountOutputs
+	}
+}
+
+func WithTransactionCanDestroyAnchorOutputs(canDestroyAnchorOutputs bool) options.Option[TransactionCapabilitiesOptions] {
+	return func(o *TransactionCapabilitiesOptions) {
+		o.canDestroyAnchorOutputs = canDestroyAnchorOutputs
 	}
 }
 
@@ -104,6 +115,10 @@ func TransactionCapabilitiesBitMaskWithCapabilities(opts ...options.Option[Trans
 		bm = BitMaskSetBit(bm, canDestroyAccountOutputsBitIndex)
 	}
 
+	if options.canDestroyAnchorOutputs {
+		bm = BitMaskSetBit(bm, canDestroyAnchorOutputsBitIndex)
+	}
+
 	if options.canDestroyFoundryOutputs {
 		bm = BitMaskSetBit(bm, canDestroyFoundryOutputsBitIndex)
 	}
@@ -133,6 +148,10 @@ func (bm TransactionCapabilitiesBitMask) CannotBurnMana() bool {
 
 func (bm TransactionCapabilitiesBitMask) CannotDestroyAccountOutputs() bool {
 	return !BitMaskHasBit(bm, canDestroyAccountOutputsBitIndex)
+}
+
+func (bm TransactionCapabilitiesBitMask) CannotDestroyAnchorOutputs() bool {
+	return !BitMaskHasBit(bm, canDestroyAnchorOutputsBitIndex)
 }
 
 func (bm TransactionCapabilitiesBitMask) CannotDestroyFoundryOutputs() bool {

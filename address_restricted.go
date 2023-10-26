@@ -90,6 +90,10 @@ func (addr *RestrictedAddress) CannotReceiveAccountOutputs() bool {
 	return addr.AllowedCapabilities.CannotReceiveAccountOutputs()
 }
 
+func (addr *RestrictedAddress) CannotReceiveAnchorOutputs() bool {
+	return addr.AllowedCapabilities.CannotReceiveAnchorOutputs()
+}
+
 func (addr *RestrictedAddress) CannotReceiveNFTOutputs() bool {
 	return addr.AllowedCapabilities.CannotReceiveNFTOutputs()
 }

@@ -15,6 +15,7 @@ const (
 	canReceiveOutputsWithExpirationUnlockConditionBitIndex
 	canReceiveOutputsWithStorageDepositReturnUnlockConditionBitIndex
 	canReceiveAccountOutputsBitIndex
+	canReceiveAnchorOutputsBitIndex
 	canReceiveNFTOutputsBitIndex
 	canReceiveDelegationOutputsBitIndex
 )
@@ -27,6 +28,7 @@ type AddressCapabilitiesOptions struct {
 	canReceiveOutputsWithExpirationUnlockCondition           bool
 	canReceiveOutputsWithStorageDepositReturnUnlockCondition bool
 	canReceiveAccountOutputs                                 bool
+	canReceiveAnchorOutputs                                  bool
 	canReceiveNFTOutputs                                     bool
 	canReceiveDelegationOutputs                              bool
 }
@@ -39,6 +41,7 @@ func WithAddressCanReceiveAnything() options.Option[AddressCapabilitiesOptions] 
 		o.canReceiveOutputsWithExpirationUnlockCondition = true
 		o.canReceiveOutputsWithStorageDepositReturnUnlockCondition = true
 		o.canReceiveAccountOutputs = true
+		o.canReceiveAnchorOutputs = true
 		o.canReceiveNFTOutputs = true
 		o.canReceiveDelegationOutputs = true
 	}
@@ -77,6 +80,12 @@ func WithAddressCanReceiveOutputsWithStorageDepositReturnUnlockCondition(canRece
 func WithAddressCanReceiveAccountOutputs(canReceiveAccountOutputs bool) options.Option[AddressCapabilitiesOptions] {
 	return func(o *AddressCapabilitiesOptions) {
 		o.canReceiveAccountOutputs = canReceiveAccountOutputs
+	}
+}
+
+func WithAddressCanReceiveAnchorOutputs(canReceiveAnchorOutputs bool) options.Option[AddressCapabilitiesOptions] {
+	return func(o *AddressCapabilitiesOptions) {
+		o.canReceiveAnchorOutputs = canReceiveAnchorOutputs
 	}
 }
 
@@ -129,6 +138,10 @@ func AddressCapabilitiesBitMaskWithCapabilities(opts ...options.Option[AddressCa
 		bm = BitMaskSetBit(bm, canReceiveAccountOutputsBitIndex)
 	}
 
+	if options.canReceiveAnchorOutputs {
+		bm = BitMaskSetBit(bm, canReceiveAnchorOutputsBitIndex)
+	}
+
 	if options.canReceiveNFTOutputs {
 		bm = BitMaskSetBit(bm, canReceiveNFTOutputsBitIndex)
 	}
@@ -170,6 +183,10 @@ func (bm AddressCapabilitiesBitMask) CannotReceiveOutputsWithStorageDepositRetur
 
 func (bm AddressCapabilitiesBitMask) CannotReceiveAccountOutputs() bool {
 	return !BitMaskHasBit(bm, canReceiveAccountOutputsBitIndex)
+}
+
+func (bm AddressCapabilitiesBitMask) CannotReceiveAnchorOutputs() bool {
+	return !BitMaskHasBit(bm, canReceiveAnchorOutputsBitIndex)
 }
 
 func (bm AddressCapabilitiesBitMask) CannotReceiveNFTOutputs() bool {

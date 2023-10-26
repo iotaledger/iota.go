@@ -28,6 +28,7 @@ var (
 			case *Ed25519Address:
 			case *AccountAddress:
 			case *NFTAddress:
+			case *AnchorAddress:
 			case *ImplicitAccountCreationAddress:
 				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an implicit account creation address inside a multi address", idx)
 			case *MultiAddress:
@@ -62,7 +63,7 @@ var (
 	//  2. RestrictedAddresses are not nested inside the RestrictedAddress.
 	restrictedAddressValidatorFunc = func(ctx context.Context, addr RestrictedAddress) error {
 		switch addr.Address.(type) {
-		case *Ed25519Address, *AccountAddress, *NFTAddress, *MultiAddress:
+		case *Ed25519Address, *AccountAddress, *NFTAddress, *AnchorAddress, *MultiAddress:
 			// allowed address types
 		case *ImplicitAccountCreationAddress:
 			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is an implicit account creation address inside a restricted address")
@@ -96,6 +97,9 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(NFTAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithMapKey("nftId")),
 		)
+		must(api.RegisterTypeSettings(AnchorAddress{},
+			serix.TypeSettings{}.WithObjectType(uint8(AddressAnchor)).WithMapKey("anchorId")),
+		)
 		must(api.RegisterTypeSettings(ImplicitAccountCreationAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithMapKey("pubKeyHash")),
 		)
@@ -111,12 +115,13 @@ func CommonSerixAPI() *serix.API {
 		)
 		must(api.RegisterValidators(RestrictedAddress{}, nil, restrictedAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressCapabilitiesBitMask{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(2),
 		))
 
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*Ed25519Address)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*AccountAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*NFTAddress)(nil)))
+		must(api.RegisterInterfaceObjects((*Address)(nil), (*AnchorAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*ImplicitAccountCreationAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*MultiAddress)(nil)))
 		must(api.RegisterInterfaceObjects((*Address)(nil), (*RestrictedAddress)(nil)))
