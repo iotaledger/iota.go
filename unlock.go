@@ -19,6 +19,8 @@ const (
 	UnlockReference
 	// UnlockAccount denotes an AccountUnlock.
 	UnlockAccount
+	// UnlockAnchor denotes an AnchorUnlock.
+	UnlockAnchor
 	// UnlockNFT denotes a NFTUnlock.
 	UnlockNFT
 	// UnlockMulti denotes a MultiUnlock.
@@ -40,6 +42,7 @@ var (
 		"SignatureUnlock",
 		"ReferenceUnlock",
 		"AccountUnlock",
+		"AnchorUnlock",
 		"NFTUnlock",
 		"MultiUnlock",
 		"EmptyUnlock",
@@ -139,7 +142,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
 //     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock or MultiUnlock
-//  3. Following through AccountUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
+//  3. Following through AccountUnlock(s), AnchorUnlock(s), NFTUnlock(s) refs results to a SignatureUnlock
 //  4. EmptyUnlock(s) are only used inside of MultiUnlock(s)
 //  5. MultiUnlock(s) are not nested
 //  6. MultiUnlock(s) are unique

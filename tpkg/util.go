@@ -446,9 +446,9 @@ func RandEd25519Signature() *iotago.Ed25519Signature {
 	return edSig
 }
 
-// RandUnlock returns a random unlock (except Signature, Reference, Account, NFT).
+// RandUnlock returns a random unlock (except Signature, Reference, Account, Anchor, NFT).
 func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
-	unlockTypes := []iotago.UnlockType{iotago.UnlockSignature, iotago.UnlockReference, iotago.UnlockAccount, iotago.UnlockNFT}
+	unlockTypes := []iotago.UnlockType{iotago.UnlockSignature, iotago.UnlockReference, iotago.UnlockAccount, iotago.UnlockAnchor, iotago.UnlockNFT}
 
 	if allowEmptyUnlock {
 		unlockTypes = append(unlockTypes, iotago.UnlockEmpty)
@@ -464,6 +464,8 @@ func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
 		return RandReferenceUnlock()
 	case iotago.UnlockAccount:
 		return RandAccountUnlock()
+	case iotago.UnlockAnchor:
+		return RandAnchorUnlock()
 	case iotago.UnlockNFT:
 		return RandNFTUnlock()
 	case iotago.UnlockEmpty:
@@ -486,6 +488,11 @@ func RandReferenceUnlock() *iotago.ReferenceUnlock {
 // RandAccountUnlock returns a random account unlock.
 func RandAccountUnlock() *iotago.AccountUnlock {
 	return &iotago.AccountUnlock{Reference: uint16(rand.Intn(1000))}
+}
+
+// RandAnchorUnlock returns a random anchor unlock.
+func RandAnchorUnlock() *iotago.AnchorUnlock {
+	return &iotago.AnchorUnlock{Reference: uint16(rand.Intn(1000))}
 }
 
 // RandNFTUnlock returns a random account unlock.

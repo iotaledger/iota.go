@@ -566,6 +566,8 @@ func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) 
 	switch addr.(type) {
 	case *iotago.AccountAddress:
 		return append(unlocks, &iotago.AccountUnlock{Reference: uint16(pos)})
+	case *iotago.AnchorAddress:
+		return append(unlocks, &iotago.AnchorUnlock{Reference: uint16(pos)})
 	case *iotago.NFTAddress:
 		return append(unlocks, &iotago.NFTUnlock{Reference: uint16(pos)})
 	default:
