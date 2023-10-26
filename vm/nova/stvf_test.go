@@ -2267,7 +2267,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 						tt.svCtx.WorkingSet.UTXOInputsSet[tt.input.OutputID] = tt.input.Output
 					}
 
-					err := novaVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)
 						return
@@ -2288,7 +2288,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				tt.svCtx.WorkingSet.UTXOInputsSet[tt.input.OutputID] = tt.input.Output
 			}
 
-			err := novaVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -2800,7 +2800,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.FoundryOutput)
-					err := novaVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
 						//nolint:gosec // false positive
 						require.ErrorAs(t, err, &tt.wantErr)
@@ -2813,7 +2813,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := novaVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
 				//nolint:gosec // false positive
 				require.ErrorAs(t, err, &tt.wantErr)
@@ -2961,7 +2961,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
 					cpy := copyObject(t, tt.input.Output, muts).(*iotago.NFTOutput)
-					err := novaVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
 						//nolint:gosec // false positive
 						require.ErrorAs(t, err, &tt.wantErr)
@@ -2974,7 +2974,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := novaVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
 				//nolint:gosec // false positive
 				require.ErrorAs(t, err, &tt.wantErr)
@@ -3496,7 +3496,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 						tt.svCtx.WorkingSet.UTXOInputsSet[tt.input.OutputID] = tt.input.Output
 					}
 
-					err := novaVM.ChainSTVF(tt.transType, tt.input, cpy, tt.svCtx)
+					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
 						require.ErrorIs(t, err, tt.wantErr)
 						return
@@ -3517,7 +3517,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				tt.svCtx.WorkingSet.UTXOInputsSet[tt.input.OutputID] = tt.input.Output
 			}
 
-			err := novaVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -3678,7 +3678,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			err := novaVM.ChainSTVF(tt.transType, tt.input, tt.next, tt.svCtx)
+			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
