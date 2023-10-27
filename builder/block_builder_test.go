@@ -25,7 +25,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 		Build()
 	require.NoError(t, err)
 
-	require.Equal(t, iotago.BlockTypeBasic, block.Block.Type())
+	require.Equal(t, iotago.BlockBodyTypeBasic, block.Block.Type())
 
 	basicBlock := block.Block.(*iotago.BasicBlock)
 	expectedBurnedMana, err := basicBlock.ManaCost(100, tpkg.TestAPI.ProtocolParameters().WorkScoreParameters())
@@ -42,7 +42,7 @@ func TestValidationBlockBuilder(t *testing.T) {
 		Build()
 	require.NoError(t, err)
 
-	require.Equal(t, iotago.BlockTypeValidation, block.Block.Type())
+	require.Equal(t, iotago.BlockBodyTypeValidation, block.Block.Type())
 
 	basicBlock := block.Block.(*iotago.ValidationBlock)
 	require.EqualValues(t, 100, basicBlock.HighestSupportedVersion)

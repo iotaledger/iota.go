@@ -39,12 +39,12 @@ var (
 	ErrCommitmentInputNewerThanCommitment = ierrors.New("a block cannot contain a commitment input with index newer than the commitment index")
 )
 
-// BlockType denotes a type of Block.
-type BlockType byte
+// BlockBodyType denotes a type of Block Body.
+type BlockBodyType byte
 
 const (
-	BlockTypeBasic      BlockType = 0
-	BlockTypeValidation BlockType = 1
+	BlockBodyTypeBasic      BlockBodyType = 0
+	BlockBodyTypeValidation BlockBodyType = 1
 )
 
 type ApplicationPayload interface {
@@ -85,7 +85,7 @@ func (b *BlockHeader) Size() int {
 type ProtocolBlock struct {
 	API         API
 	BlockHeader `serix:"0,nest"`
-	Block       Block     `serix:"1,mapKey=block"`
+	Block       BlockBody `serix:"1,mapKey=block"`
 	Signature   Signature `serix:"2,mapKey=signature"`
 }
 
@@ -312,8 +312,8 @@ func (b *ProtocolBlock) syntacticallyValidate() error {
 	return b.Block.syntacticallyValidate(b)
 }
 
-type Block interface {
-	Type() BlockType
+type BlockBody interface {
+	Type() BlockBodyType
 
 	StrongParentIDs() BlockIDs
 	WeakParentIDs() BlockIDs
@@ -346,8 +346,8 @@ func (b *BasicBlock) SetDeserializationContext(ctx context.Context) {
 	b.API = APIFromContext(ctx)
 }
 
-func (b *BasicBlock) Type() BlockType {
-	return BlockTypeBasic
+func (b *BasicBlock) Type() BlockBodyType {
+	return BlockBodyTypeBasic
 }
 
 func (b *BasicBlock) StrongParentIDs() BlockIDs {
@@ -464,8 +464,8 @@ func (b *ValidationBlock) SetDeserializationContext(ctx context.Context) {
 	b.API = APIFromContext(ctx)
 }
 
-func (b *ValidationBlock) Type() BlockType {
-	return BlockTypeValidation
+func (b *ValidationBlock) Type() BlockBodyType {
+	return BlockBodyTypeValidation
 }
 
 func (b *ValidationBlock) StrongParentIDs() BlockIDs {

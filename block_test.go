@@ -570,7 +570,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),
 		commitmentID.ToHex(),
 		issuerID.ToHex(),
-		iotago.BlockTypeValidation,
+		iotago.BlockBodyTypeValidation,
 		strongParents[0].ToHex(),
 		tpkg.TestAPI.Version(),
 		iotago.SignatureEd25519,

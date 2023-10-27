@@ -18,7 +18,7 @@ func TestAttestation(t *testing.T) {
 		Build()
 
 	require.NoError(t, err)
-	require.Equal(t, iotago.BlockTypeValidation, block.Block.Type())
+	require.Equal(t, iotago.BlockBodyTypeValidation, block.Block.Type())
 
 	attestation := iotago.NewAttestation(tpkg.TestAPI, block)
 

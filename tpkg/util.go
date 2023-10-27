@@ -700,7 +700,7 @@ func RandBlockID() iotago.BlockID {
 }
 
 // RandProtocolBlock returns a random block with the given inner payload.
-func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
+func RandProtocolBlock(block iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
 	if basicBlock, isBasic := block.(*iotago.BasicBlock); isBasic {
 		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
 		if err != nil {
