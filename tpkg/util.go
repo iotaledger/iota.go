@@ -710,7 +710,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 
 		return &iotago.Block{
 			API: api,
-			BlockHeader: iotago.BlockHeader{
+			Header: iotago.BlockHeader{
 				ProtocolVersion:  TestAPI.Version(),
 				IssuingTime:      RandUTCTime(),
 				SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
@@ -723,7 +723,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 
 	return &iotago.Block{
 		API: api,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
 			IssuingTime:      RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
@@ -771,7 +771,7 @@ func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, r
 	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
 
 	block := RandBlock(basicBlock, TestAPI, rmc)
-	block.IssuerID = issuerID
+	block.Header.IssuerID = issuerID
 
 	return block
 }

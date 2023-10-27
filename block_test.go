@@ -439,7 +439,7 @@ func TestBlock_DeserializationNotEnoughData(t *testing.T) {
 func TestBasicBlock_MinSize(t *testing.T) {
 	minBlock := &iotago.Block{
 		API: tpkg.TestAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
@@ -467,7 +467,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 func TestValidationBlock_MinSize(t *testing.T) {
 	minBlock := &iotago.Block{
 		API: tpkg.TestAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
@@ -495,7 +495,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	block := &iotago.Block{
 		API: tpkg.TestAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
@@ -549,7 +549,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 	strongParents := tpkg.SortedRandBlockIDs(1)
 	validationBlock := &iotago.Block{
 		API: tpkg.TestAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      issuingTime,
 			IssuerID:         issuerID,

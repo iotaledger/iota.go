@@ -322,7 +322,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 
 	incompleteBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
@@ -378,7 +378,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
@@ -409,7 +409,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 
 	originBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),

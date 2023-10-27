@@ -473,7 +473,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 	// no parents were given. The node will first add this missing information and
 	// validate the block afterward.
 
-	apiForVersion, err := client.APIForVersion(m.ProtocolVersion)
+	apiForVersion, err := client.APIForVersion(m.Header.ProtocolVersion)
 	if err != nil {
 		return iotago.EmptyBlockID, err
 	}

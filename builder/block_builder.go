@@ -20,7 +20,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 
 	protocolBlock := &iotago.Block{
 		API: api,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.EmptyCommitmentID,
 			IssuingTime:      time.Now().UTC(),
@@ -58,7 +58,7 @@ func (b *BasicBlockBuilder) ProtocolVersion(version iotago.Version) *BasicBlockB
 		return b
 	}
 
-	b.protocolBlock.ProtocolVersion = version
+	b.protocolBlock.Header.ProtocolVersion = version
 
 	return b
 }
@@ -68,7 +68,7 @@ func (b *BasicBlockBuilder) IssuingTime(time time.Time) *BasicBlockBuilder {
 		return b
 	}
 
-	b.protocolBlock.IssuingTime = time.UTC()
+	b.protocolBlock.Header.IssuingTime = time.UTC()
 
 	return b
 }
@@ -79,7 +79,7 @@ func (b *BasicBlockBuilder) SlotCommitmentID(commitment iotago.CommitmentID) *Ba
 		return b
 	}
 
-	b.protocolBlock.SlotCommitmentID = commitment
+	b.protocolBlock.Header.SlotCommitmentID = commitment
 
 	return b
 }
@@ -90,7 +90,7 @@ func (b *BasicBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *BasicBlo
 		return b
 	}
 
-	b.protocolBlock.LatestFinalizedSlot = slot
+	b.protocolBlock.Header.LatestFinalizedSlot = slot
 
 	return b
 }
@@ -100,7 +100,7 @@ func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.Priv
 		return b
 	}
 
-	b.protocolBlock.IssuerID = accountID
+	b.protocolBlock.Header.IssuerID = accountID
 
 	signature, err := b.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {
@@ -202,7 +202,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 
 	protocolBlock := &iotago.Block{
 		API: api,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuingTime:      time.Now().UTC(),
@@ -240,7 +240,7 @@ func (v *ValidationBlockBuilder) ProtocolVersion(version iotago.Version) *Valida
 		return v
 	}
 
-	v.protocolBlock.ProtocolVersion = version
+	v.protocolBlock.Header.ProtocolVersion = version
 
 	return v
 }
@@ -250,7 +250,7 @@ func (v *ValidationBlockBuilder) IssuingTime(time time.Time) *ValidationBlockBui
 		return v
 	}
 
-	v.protocolBlock.IssuingTime = time.UTC()
+	v.protocolBlock.Header.IssuingTime = time.UTC()
 
 	return v
 }
@@ -261,7 +261,7 @@ func (v *ValidationBlockBuilder) SlotCommitmentID(commitmentID iotago.Commitment
 		return v
 	}
 
-	v.protocolBlock.SlotCommitmentID = commitmentID
+	v.protocolBlock.Header.SlotCommitmentID = commitmentID
 
 	return v
 }
@@ -272,7 +272,7 @@ func (v *ValidationBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *Val
 		return v
 	}
 
-	v.protocolBlock.LatestFinalizedSlot = slot
+	v.protocolBlock.Header.LatestFinalizedSlot = slot
 
 	return v
 }
@@ -282,7 +282,7 @@ func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519
 		return v
 	}
 
-	v.protocolBlock.IssuerID = accountID
+	v.protocolBlock.Header.IssuerID = accountID
 
 	signature, err := v.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
 	if err != nil {

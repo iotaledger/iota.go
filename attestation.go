@@ -23,7 +23,7 @@ type Attestation struct {
 func NewAttestation(api API, block *Block) *Attestation {
 	return &Attestation{
 		API:         api,
-		BlockHeader: block.BlockHeader,
+		BlockHeader: block.Header,
 		BlockHash:   lo.PanicOnErr(block.Body.Hash()),
 		Signature:   block.Signature,
 	}

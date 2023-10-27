@@ -83,10 +83,10 @@ func (b *BlockHeader) Size() int {
 }
 
 type Block struct {
-	API         API
-	BlockHeader `serix:"0,nest"`
-	Body        BlockBody `serix:"1,mapKey=body"`
-	Signature   Signature `serix:"2,mapKey=signature"`
+	API       API
+	Header    BlockHeader `serix:"0,nest"`
+	Body      BlockBody   `serix:"1,mapKey=body"`
+	Signature Signature   `serix:"2,mapKey=signature"`
 }
 
 func BlockFromBytes(apiProvider APIProvider) func(bytes []byte) (block *Block, consumedBytes int, err error) {
@@ -132,7 +132,7 @@ func (b *Block) SetDeserializationContext(ctx context.Context) {
 // The BlockHeader and Block are separately hashed and concatenated to enable the verification of the signature for
 // an Attestation where only the BlockHeader and the hash of Block is known.
 func (b *Block) SigningMessage() ([]byte, error) {
-	headerHash, err := b.BlockHeader.Hash(b.API)
+	headerHash, err := b.Header.Hash(b.API)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (b *Block) ID() (BlockID, error) {
 		return BlockID{}, err
 	}
 
-	slot := b.API.TimeProvider().SlotFromTime(b.IssuingTime)
+	slot := b.API.TimeProvider().SlotFromTime(b.Header.IssuingTime)
 
 	return NewBlockID(slot, id), nil
 }
@@ -246,7 +246,7 @@ func (b *Block) ForEachParent(consumer func(parent Parent)) {
 func (b *Block) WorkScore() (WorkScore, error) {
 	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
 
-	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreParameters)
+	workScoreHeader, err := b.Header.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -266,13 +266,13 @@ func (b *Block) WorkScore() (WorkScore, error) {
 
 // Size returns the size of the block in bytes.
 func (b *Block) Size() int {
-	return b.BlockHeader.Size() + b.Body.Size() + b.Signature.Size()
+	return b.Header.Size() + b.Body.Size() + b.Signature.Size()
 }
 
 // syntacticallyValidate syntactically validates the Block.
 func (b *Block) syntacticallyValidate() error {
-	if b.API.ProtocolParameters().Version() != b.ProtocolVersion {
-		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.ProtocolVersion)
+	if b.API.ProtocolParameters().Version() != b.Header.ProtocolVersion {
+		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
 	}
 
 	block := b.Body
@@ -291,7 +291,7 @@ func (b *Block) syntacticallyValidate() error {
 
 	minCommittableAge := b.API.ProtocolParameters().MinCommittableAge()
 	maxCommittableAge := b.API.ProtocolParameters().MaxCommittableAge()
-	commitmentSlot := b.SlotCommitmentID.Slot()
+	commitmentSlot := b.Header.SlotCommitmentID.Slot()
 	blockID, err := b.ID()
 	if err != nil {
 		return ierrors.Wrapf(err, "failed to syntactically validate block")
@@ -301,12 +301,12 @@ func (b *Block) syntacticallyValidate() error {
 	// check that commitment is not too recent.
 	if commitmentSlot > 0 && // Don't filter commitments to genesis based on being too recent.
 		blockSlot < commitmentSlot+minCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.SlotCommitmentID.Slot())
+		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.Header.SlotCommitmentID.Slot())
 	}
 
 	// Check that commitment is not too old.
 	if blockSlot > commitmentSlot+maxCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.SlotCommitmentID.Slot(), maxCommittableAge)
+		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.Header.SlotCommitmentID.Slot(), maxCommittableAge)
 	}
 
 	return b.Body.syntacticallyValidate(b)
@@ -438,8 +438,8 @@ func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Slot(), maxCommittableAge)
 			}
 
-			if cInputSlot > block.SlotCommitmentID.Slot() {
-				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), block.SlotCommitmentID.Slot())
+			if cInputSlot > block.Header.SlotCommitmentID.Slot() {
+				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), block.Header.SlotCommitmentID.Slot())
 			}
 		}
 	}
@@ -505,8 +505,8 @@ func (b *ValidationBlockBody) Size() int {
 
 // syntacticallyValidate syntactically validates the ValidationBlock.
 func (b *ValidationBlockBody) syntacticallyValidate(block *Block) error {
-	if b.HighestSupportedVersion < block.ProtocolVersion {
-		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, block.ProtocolVersion)
+	if b.HighestSupportedVersion < block.Header.ProtocolVersion {
+		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, block.Header.ProtocolVersion)
 	}
 
 	return nil
