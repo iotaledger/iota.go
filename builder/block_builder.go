@@ -26,7 +26,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 			IssuingTime:      time.Now().UTC(),
 		},
 		Signature: &iotago.Ed25519Signature{},
-		Block:     basicBlock,
+		Body:      basicBlock,
 	}
 
 	return &BasicBlockBuilder{
@@ -208,7 +208,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 			IssuingTime:      time.Now().UTC(),
 		},
 		Signature: &iotago.Ed25519Signature{},
-		Block:     validationBlock,
+		Body:      validationBlock,
 	}
 
 	return &ValidationBlockBuilder{

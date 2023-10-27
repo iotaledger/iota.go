@@ -445,7 +445,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlock{
 			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
@@ -473,7 +473,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.ValidationBlock{
+		Body: &iotago.ValidationBlock{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -505,7 +505,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 
 	// Invalid HighestSupportedVersion.
 	{
-		protocolBlock.Block = &iotago.ValidationBlock{
+		protocolBlock.Body = &iotago.ValidationBlock{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -522,7 +522,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 
 	// Valid HighestSupportedVersion.
 	{
-		protocolBlock.Block = &iotago.ValidationBlock{
+		protocolBlock.Body = &iotago.ValidationBlock{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -556,7 +556,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 			NetworkID:        networkID,
 			SlotCommitmentID: commitmentID,
 		},
-		Block: &iotago.ValidationBlock{
+		Body: &iotago.ValidationBlock{
 			API:                     tpkg.TestAPI,
 			StrongParents:           strongParents,
 			HighestSupportedVersion: tpkg.TestAPI.Version(),
@@ -564,7 +564,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 		Signature: signature,
 	}
 
-	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s","block":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
+	blockJSON := fmt.Sprintf(`{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s","body":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
 		tpkg.TestAPI.Version(),
 		networkID,
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),

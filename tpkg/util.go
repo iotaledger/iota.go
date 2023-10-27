@@ -716,7 +716,7 @@ func RandProtocolBlock(block iotago.BlockBody, api iotago.API, rmc iotago.Mana) 
 				SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 				IssuerID:         RandAccountID(),
 			},
-			Block:     basicBlock,
+			Body:      basicBlock,
 			Signature: RandEd25519Signature(),
 		}
 	}
@@ -729,7 +729,7 @@ func RandProtocolBlock(block iotago.BlockBody, api iotago.API, rmc iotago.Mana) 
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuerID:         RandAccountID(),
 		},
-		Block:     block,
+		Body:      block,
 		Signature: RandEd25519Signature(),
 	}
 }

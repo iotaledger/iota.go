@@ -169,7 +169,7 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion: tpkg.TestAPI.Version(),
 		},
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlock{
 			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(2),
 			WeakParents:        iotago.BlockIDs{},

@@ -24,7 +24,7 @@ func NewAttestation(api API, block *ProtocolBlock) *Attestation {
 	return &Attestation{
 		API:         api,
 		BlockHeader: block.BlockHeader,
-		BlockHash:   lo.PanicOnErr(block.Block.Hash()),
+		BlockHash:   lo.PanicOnErr(block.Body.Hash()),
 		Signature:   block.Signature,
 	}
 }

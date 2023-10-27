@@ -85,7 +85,7 @@ func (b *BlockHeader) Size() int {
 type ProtocolBlock struct {
 	API         API
 	BlockHeader `serix:"0,nest"`
-	Block       BlockBody `serix:"1,mapKey=block"`
+	Body        BlockBody `serix:"1,mapKey=body"`
 	Signature   Signature `serix:"2,mapKey=signature"`
 }
 
@@ -137,7 +137,7 @@ func (b *ProtocolBlock) SigningMessage() ([]byte, error) {
 		return nil, err
 	}
 
-	blockHash, err := b.Block.Hash()
+	blockHash, err := b.Body.Hash()
 	if err != nil {
 		return nil, err
 	}
@@ -211,9 +211,9 @@ func (b *ProtocolBlock) MustID() BlockID {
 func (b *ProtocolBlock) Parents() (parents []BlockID) {
 	parents = make([]BlockID, 0)
 
-	parents = append(parents, b.Block.StrongParentIDs()...)
-	parents = append(parents, b.Block.WeakParentIDs()...)
-	parents = append(parents, b.Block.ShallowLikeParentIDs()...)
+	parents = append(parents, b.Body.StrongParentIDs()...)
+	parents = append(parents, b.Body.WeakParentIDs()...)
+	parents = append(parents, b.Body.ShallowLikeParentIDs()...)
 
 	return parents
 }
@@ -221,15 +221,15 @@ func (b *ProtocolBlock) Parents() (parents []BlockID) {
 func (b *ProtocolBlock) ParentsWithType() (parents []Parent) {
 	parents = make([]Parent, 0)
 
-	for _, parentBlockID := range b.Block.StrongParentIDs() {
+	for _, parentBlockID := range b.Body.StrongParentIDs() {
 		parents = append(parents, Parent{parentBlockID, StrongParentType})
 	}
 
-	for _, parentBlockID := range b.Block.WeakParentIDs() {
+	for _, parentBlockID := range b.Body.WeakParentIDs() {
 		parents = append(parents, Parent{parentBlockID, WeakParentType})
 	}
 
-	for _, parentBlockID := range b.Block.ShallowLikeParentIDs() {
+	for _, parentBlockID := range b.Body.ShallowLikeParentIDs() {
 		parents = append(parents, Parent{parentBlockID, ShallowLikeParentType})
 	}
 
@@ -251,7 +251,7 @@ func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
 		return 0, err
 	}
 
-	workScoreBlock, err := b.Block.WorkScore(workScoreParameters)
+	workScoreBlock, err := b.Body.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -266,7 +266,7 @@ func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
 
 // Size returns the size of the block in bytes.
 func (b *ProtocolBlock) Size() int {
-	return b.BlockHeader.Size() + b.Block.Size() + b.Signature.Size()
+	return b.BlockHeader.Size() + b.Body.Size() + b.Signature.Size()
 }
 
 // syntacticallyValidate syntactically validates the ProtocolBlock.
@@ -275,7 +275,7 @@ func (b *ProtocolBlock) syntacticallyValidate() error {
 		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.ProtocolVersion)
 	}
 
-	block := b.Block
+	block := b.Body
 	if len(block.WeakParentIDs()) > 0 {
 		// weak parents must be disjunct to the rest of the parents
 		nonWeakParents := lo.KeyOnlyBy(append(block.StrongParentIDs(), block.ShallowLikeParentIDs()...), func(v BlockID) BlockID {
@@ -309,7 +309,7 @@ func (b *ProtocolBlock) syntacticallyValidate() error {
 		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.SlotCommitmentID.Slot(), maxCommittableAge)
 	}
 
-	return b.Block.syntacticallyValidate(b)
+	return b.Body.syntacticallyValidate(b)
 }
 
 type BlockBody interface {

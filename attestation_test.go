@@ -18,14 +18,14 @@ func TestAttestation(t *testing.T) {
 		Build()
 
 	require.NoError(t, err)
-	require.Equal(t, iotago.BlockBodyTypeValidation, block.Block.Type())
+	require.Equal(t, iotago.BlockBodyTypeValidation, block.Body.Type())
 
 	attestation := iotago.NewAttestation(tpkg.TestAPI, block)
 
 	// Compare fields of block and attestation.
 	{
 		require.Equal(t, block.BlockHeader, attestation.BlockHeader)
-		require.Equal(t, lo.PanicOnErr(block.Block.Hash()), attestation.BlockHash)
+		require.Equal(t, lo.PanicOnErr(block.Body.Hash()), attestation.BlockHash)
 		require.Equal(t, block.Signature, attestation.Signature)
 	}
 

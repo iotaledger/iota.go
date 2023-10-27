@@ -327,7 +327,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlock{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
@@ -384,7 +384,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlock{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
@@ -415,7 +415,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlock{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
