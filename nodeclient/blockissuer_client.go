@@ -29,10 +29,10 @@ type (
 	BlockIssuerClient interface {
 		// Info returns the info of the block issuer.
 		Info(ctx context.Context) (*apimodels.BlockIssuerInfo, error)
-		// SendPayload sends a BlockPayload to the block issuer.
-		SendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
-		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends a BlockPayload to the block issuer.
-		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.BlockPayload, *apimodels.BlockCreatedResponse, error)
+		// SendPayload sends an ApplicationPayload to the block issuer.
+		SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
+		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends an ApplicationPayload to the block issuer.
+		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *apimodels.BlockCreatedResponse, error)
 	}
 
 	blockIssuerClient struct {
@@ -63,7 +63,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssu
 	return res, nil
 }
 
-func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, powTargetTrailingZeros uint8, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, powTargetTrailingZeros uint8, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
 	payloadBytes, err := client.core.CommittedAPI().Encode(payload, serix.WithValidation())
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to encode the payload")
@@ -93,7 +93,7 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 	return res, nil
 }
 
-func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago.BlockPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {
@@ -103,7 +103,7 @@ func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago
 	return client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
 }
 
-func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.BlockPayload, *apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *apimodels.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {

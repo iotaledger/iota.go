@@ -153,7 +153,7 @@ func (b *BasicBlockBuilder) ShallowLikeParents(parents iotago.BlockIDs) *BasicBl
 }
 
 // Payload sets the payload.
-func (b *BasicBlockBuilder) Payload(payload iotago.BlockPayload) *BasicBlockBuilder {
+func (b *BasicBlockBuilder) Payload(payload iotago.ApplicationPayload) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}

@@ -47,7 +47,7 @@ const (
 	BlockTypeValidation BlockType = 1
 )
 
-type BlockPayload interface {
+type ApplicationPayload interface {
 	Payload
 }
 
@@ -337,7 +337,7 @@ type BasicBlock struct {
 	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=8"`
 
 	// The inner payload of the block. Can be nil.
-	Payload BlockPayload `serix:"3,optional,mapKey=payload,omitempty"`
+	Payload ApplicationPayload `serix:"3,optional,mapKey=payload,omitempty"`
 
 	MaxBurnedMana Mana `serix:"4,mapKey=maxBurnedMana"`
 }

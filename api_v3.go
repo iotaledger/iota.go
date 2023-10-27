@@ -614,9 +614,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*Block)(nil), (*BasicBlock)(nil)))
 		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidationBlock)(nil)))
 
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*SignedTransaction)(nil)))
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*CandidacyAnnouncement)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*SignedTransaction)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*TaggedData)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
 		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
 		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {

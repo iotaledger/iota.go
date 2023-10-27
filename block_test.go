@@ -97,7 +97,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 }
 
 //nolint:unparam // in the test we always issue at blockIndex=100, but let's keep this flexibility.
-func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.BlockPayload, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.ApplicationPayload, apiProvider *api.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
