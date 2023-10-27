@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -167,10 +167,15 @@ func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identif
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
-	util := marshalutil.New()
+	byteBuffer := stream.NewByteBuffer()
+
 	for _, version := range e.protocolVersions.Slice() {
-		util.WriteBytes(lo.PanicOnErr(version.Version.Bytes()))
-		util.WriteUint64(uint64(version.StartEpoch))
+		if err := stream.Write(byteBuffer, version.Version); err != nil {
+			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write Version")
+		}
+		if err := stream.Write(byteBuffer, version.StartEpoch); err != nil {
+			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write StartEpoch")
+		}
 
 		var paramsHash iotago.Identifier
 		params, paramsExist := e.protocolParametersByVersion[version.Version]
@@ -186,14 +191,12 @@ func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identif
 			}
 		}
 
-		hashBytes, err := paramsHash.Bytes()
-		if err != nil {
-			return iotago.Identifier{}, ierrors.Wrap(err, "failed to get protocol parameters hash bytes")
+		if err := stream.Write(byteBuffer, paramsHash); err != nil {
+			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write protocol parameters hash bytes")
 		}
-		util.WriteBytes(hashBytes)
 	}
 
-	return iotago.IdentifierFromData(util.Bytes()), nil
+	return iotago.IdentifierFromData(lo.PanicOnErr(byteBuffer.Bytes())), nil
 }
 
 func (e *EpochBasedProvider) ProtocolParameters(version iotago.Version) iotago.ProtocolParameters {
