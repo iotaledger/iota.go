@@ -20,7 +20,7 @@ type Attestation struct {
 	Signature   Signature  `serix:"2,mapKey=signature"`
 }
 
-func NewAttestation(api API, block *ProtocolBlock) *Attestation {
+func NewAttestation(api API, block *Block) *Attestation {
 	return &Attestation{
 		API:         api,
 		BlockHeader: block.BlockHeader,

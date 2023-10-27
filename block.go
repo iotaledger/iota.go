@@ -82,27 +82,27 @@ func (b *BlockHeader) Size() int {
 	return BlockHeaderLength
 }
 
-type ProtocolBlock struct {
+type Block struct {
 	API         API
 	BlockHeader `serix:"0,nest"`
 	Body        BlockBody `serix:"1,mapKey=body"`
 	Signature   Signature `serix:"2,mapKey=signature"`
 }
 
-func ProtocolBlockFromBytes(apiProvider APIProvider) func(bytes []byte) (protocolBlock *ProtocolBlock, consumedBytes int, err error) {
-	return func(bytes []byte) (protocolBlock *ProtocolBlock, consumedBytes int, err error) {
-		protocolBlock = new(ProtocolBlock)
+func BlockFromBytes(apiProvider APIProvider) func(bytes []byte) (block *Block, consumedBytes int, err error) {
+	return func(bytes []byte) (block *Block, consumedBytes int, err error) {
+		block = new(Block)
 
 		var version Version
 		if version, consumedBytes, err = VersionFromBytes(bytes); err != nil {
 			err = ierrors.Wrap(err, "failed to parse version")
-		} else if protocolBlock.API, err = apiProvider.APIForVersion(version); err != nil {
+		} else if block.API, err = apiProvider.APIForVersion(version); err != nil {
 			err = ierrors.Wrapf(err, "failed to retrieve API for version %d", version)
-		} else if consumedBytes, err = protocolBlock.API.Decode(bytes, protocolBlock, serix.WithValidation()); err != nil {
-			err = ierrors.Wrap(err, "failed to deserialize ProtocolBlock")
+		} else if consumedBytes, err = block.API.Decode(bytes, block, serix.WithValidation()); err != nil {
+			err = ierrors.Wrap(err, "failed to deserialize Block")
 		}
 
-		return protocolBlock, consumedBytes, err
+		return block, consumedBytes, err
 	}
 }
 
@@ -124,14 +124,14 @@ func blockIdentifier(headerHash Identifier, blockHash Identifier, signatureBytes
 	return IdentifierFromData(byteutils.ConcatBytes(headerHash[:], blockHash[:], signatureBytes))
 }
 
-func (b *ProtocolBlock) SetDeserializationContext(ctx context.Context) {
+func (b *Block) SetDeserializationContext(ctx context.Context) {
 	b.API = APIFromContext(ctx)
 }
 
 // SigningMessage returns the to be signed message.
 // The BlockHeader and Block are separately hashed and concatenated to enable the verification of the signature for
 // an Attestation where only the BlockHeader and the hash of Block is known.
-func (b *ProtocolBlock) SigningMessage() ([]byte, error) {
+func (b *Block) SigningMessage() ([]byte, error) {
 	headerHash, err := b.BlockHeader.Hash(b.API)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func blockSigningMessage(headerHash Identifier, blockHash Identifier) []byte {
 
 // Sign produces signatures signing the essence for every given AddressKeys.
 // The produced signatures are in the same order as the AddressKeys.
-func (b *ProtocolBlock) Sign(addrKey AddressKeys) (Signature, error) {
+func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
 	signMsg, err := b.SigningMessage()
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (b *ProtocolBlock) Sign(addrKey AddressKeys) (Signature, error) {
 }
 
 // VerifySignature verifies the Signature of the block.
-func (b *ProtocolBlock) VerifySignature() (valid bool, err error) {
+func (b *Block) VerifySignature() (valid bool, err error) {
 	signingMessage, err := b.SigningMessage()
 	if err != nil {
 		return false, err
@@ -182,7 +182,7 @@ func (b *ProtocolBlock) VerifySignature() (valid bool, err error) {
 }
 
 // ID computes the ID of the Block.
-func (b *ProtocolBlock) ID() (BlockID, error) {
+func (b *Block) ID() (BlockID, error) {
 	data, err := b.API.Encode(b)
 	if err != nil {
 		return BlockID{}, ierrors.Errorf("can't compute block ID: %w", err)
@@ -199,7 +199,7 @@ func (b *ProtocolBlock) ID() (BlockID, error) {
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
-func (b *ProtocolBlock) MustID() BlockID {
+func (b *Block) MustID() BlockID {
 	blockID, err := b.ID()
 	if err != nil {
 		panic(err)
@@ -208,7 +208,7 @@ func (b *ProtocolBlock) MustID() BlockID {
 	return blockID
 }
 
-func (b *ProtocolBlock) Parents() (parents []BlockID) {
+func (b *Block) Parents() (parents []BlockID) {
 	parents = make([]BlockID, 0)
 
 	parents = append(parents, b.Body.StrongParentIDs()...)
@@ -218,7 +218,7 @@ func (b *ProtocolBlock) Parents() (parents []BlockID) {
 	return parents
 }
 
-func (b *ProtocolBlock) ParentsWithType() (parents []Parent) {
+func (b *Block) ParentsWithType() (parents []Parent) {
 	parents = make([]Parent, 0)
 
 	for _, parentBlockID := range b.Body.StrongParentIDs() {
@@ -237,13 +237,13 @@ func (b *ProtocolBlock) ParentsWithType() (parents []Parent) {
 }
 
 // ForEachParent executes a consumer func for each parent.
-func (b *ProtocolBlock) ForEachParent(consumer func(parent Parent)) {
+func (b *Block) ForEachParent(consumer func(parent Parent)) {
 	for _, parent := range b.ParentsWithType() {
 		consumer(parent)
 	}
 }
 
-func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
+func (b *Block) WorkScore() (WorkScore, error) {
 	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
 
 	workScoreHeader, err := b.BlockHeader.WorkScore(workScoreParameters)
@@ -265,12 +265,12 @@ func (b *ProtocolBlock) WorkScore() (WorkScore, error) {
 }
 
 // Size returns the size of the block in bytes.
-func (b *ProtocolBlock) Size() int {
+func (b *Block) Size() int {
 	return b.BlockHeader.Size() + b.Body.Size() + b.Signature.Size()
 }
 
-// syntacticallyValidate syntactically validates the ProtocolBlock.
-func (b *ProtocolBlock) syntacticallyValidate() error {
+// syntacticallyValidate syntactically validates the Block.
+func (b *Block) syntacticallyValidate() error {
 	if b.API.ProtocolParameters().Version() != b.ProtocolVersion {
 		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.ProtocolVersion)
 	}
@@ -321,7 +321,7 @@ type BlockBody interface {
 
 	Hash() (Identifier, error)
 
-	syntacticallyValidate(protocolBlock *ProtocolBlock) error
+	syntacticallyValidate(block *Block) error
 
 	ProcessableObject
 	Sizer
@@ -408,16 +408,16 @@ func (b *BasicBlock) Size() int {
 }
 
 // syntacticallyValidate syntactically validates the BasicBlock.
-func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
+func (b *BasicBlock) syntacticallyValidate(block *Block) error {
 	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
-		blockID, err := protocolBlock.ID()
+		blockID, err := block.ID()
 		if err != nil {
 			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
 		}
 		blockSlot := blockID.Slot()
 
-		minCommittableAge := protocolBlock.API.ProtocolParameters().MinCommittableAge()
-		maxCommittableAge := protocolBlock.API.ProtocolParameters().MaxCommittableAge()
+		minCommittableAge := block.API.ProtocolParameters().MinCommittableAge()
+		maxCommittableAge := block.API.ProtocolParameters().MaxCommittableAge()
 
 		signedTransaction, _ := b.Payload.(*SignedTransaction)
 
@@ -438,8 +438,8 @@ func (b *BasicBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
 				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Slot(), maxCommittableAge)
 			}
 
-			if cInputSlot > protocolBlock.SlotCommitmentID.Slot() {
-				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), protocolBlock.SlotCommitmentID.Slot())
+			if cInputSlot > block.SlotCommitmentID.Slot() {
+				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), block.SlotCommitmentID.Slot())
 			}
 		}
 	}
@@ -504,9 +504,9 @@ func (b *ValidationBlock) Size() int {
 }
 
 // syntacticallyValidate syntactically validates the ValidationBlock.
-func (b *ValidationBlock) syntacticallyValidate(protocolBlock *ProtocolBlock) error {
-	if b.HighestSupportedVersion < protocolBlock.ProtocolVersion {
-		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, protocolBlock.ProtocolVersion)
+func (b *ValidationBlock) syntacticallyValidate(block *Block) error {
+	if b.HighestSupportedVersion < block.ProtocolVersion {
+		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, block.ProtocolVersion)
 	}
 
 	return nil

@@ -618,14 +618,14 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*TaggedData)(nil)))
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
-		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
-		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
+		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
+		must(api.RegisterValidators(Block{}, func(ctx context.Context, bytes []byte) error {
 			if len(bytes) > MaxBlockSize {
 				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
 			}
 
 			return nil
-		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
+		}, func(ctx context.Context, protocolBlock Block) error {
 			return protocolBlock.syntacticallyValidate()
 		}))
 	}

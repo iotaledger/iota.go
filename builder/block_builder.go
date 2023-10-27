@@ -18,7 +18,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 		ShallowLikeParents: iotago.BlockIDs{},
 	}
 
-	protocolBlock := &iotago.ProtocolBlock{
+	protocolBlock := &iotago.Block{
 		API: api,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
@@ -39,12 +39,12 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 type BasicBlockBuilder struct {
 	basicBlock *iotago.BasicBlock
 
-	protocolBlock *iotago.ProtocolBlock
+	protocolBlock *iotago.Block
 	err           error
 }
 
-// Build builds the ProtocolBlock or returns any error which occurred during the build steps.
-func (b *BasicBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+// Build builds the Block or returns any error which occurred during the build steps.
+func (b *BasicBlockBuilder) Build() (*iotago.Block, error) {
 	if b.err != nil {
 		return nil, b.err
 	}
@@ -200,7 +200,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 		ShallowLikeParents: iotago.BlockIDs{},
 	}
 
-	protocolBlock := &iotago.ProtocolBlock{
+	protocolBlock := &iotago.Block{
 		API: api,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
@@ -221,12 +221,12 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 type ValidationBlockBuilder struct {
 	validationBlock *iotago.ValidationBlock
 
-	protocolBlock *iotago.ProtocolBlock
+	protocolBlock *iotago.Block
 	err           error
 }
 
-// Build builds the ProtocolBlock or returns any error which occurred during the build steps.
-func (v *ValidationBlockBuilder) Build() (*iotago.ProtocolBlock, error) {
+// Build builds the Block or returns any error which occurred during the build steps.
+func (v *ValidationBlockBuilder) Build() (*iotago.Block, error) {
 	if v.err != nil {
 		return nil, v.err
 	}

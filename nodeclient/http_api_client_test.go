@@ -320,7 +320,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHash := tpkg.Rand36ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
-	incompleteBlock := &iotago.ProtocolBlock{
+	incompleteBlock := &iotago.Block{
 		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
@@ -376,7 +376,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	identifier := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.ProtocolBlock{
+	originBlock := &iotago.Block{
 		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
@@ -407,7 +407,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	txID := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(txID[:])
 
-	originBlock := &iotago.ProtocolBlock{
+	originBlock := &iotago.Block{
 		API: mockAPI,
 		BlockHeader: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
