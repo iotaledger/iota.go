@@ -445,7 +445,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Body: &iotago.BasicBlock{
+		Body: &iotago.BasicBlockBody{
 			API:                tpkg.TestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
@@ -473,7 +473,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Body: &iotago.ValidationBlock{
+		Body: &iotago.ValidationBlockBody{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -505,7 +505,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 
 	// Invalid HighestSupportedVersion.
 	{
-		block.Body = &iotago.ValidationBlock{
+		block.Body = &iotago.ValidationBlockBody{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -522,7 +522,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 
 	// Valid HighestSupportedVersion.
 	{
-		block.Body = &iotago.ValidationBlock{
+		block.Body = &iotago.ValidationBlockBody{
 			API:                     tpkg.TestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
@@ -556,7 +556,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 			NetworkID:        networkID,
 			SlotCommitmentID: commitmentID,
 		},
-		Body: &iotago.ValidationBlock{
+		Body: &iotago.ValidationBlockBody{
 			API:                     tpkg.TestAPI,
 			StrongParents:           strongParents,
 			HighestSupportedVersion: tpkg.TestAPI.Version(),

@@ -11,7 +11,7 @@ import (
 // NewBasicBlockBuilder creates a new BasicBlockBuilder.
 func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 	// TODO: burn the correct amount of Mana in all cases according to block work and RMC with issue #285
-	basicBlock := &iotago.BasicBlock{
+	basicBlock := &iotago.BasicBlockBody{
 		API:                api,
 		StrongParents:      iotago.BlockIDs{},
 		WeakParents:        iotago.BlockIDs{},
@@ -37,7 +37,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 
 // BasicBlockBuilder is used to easily build up a Basic Block.
 type BasicBlockBuilder struct {
-	basicBlock *iotago.BasicBlock
+	basicBlock *iotago.BasicBlockBody
 
 	protocolBlock *iotago.Block
 	err           error
@@ -193,7 +193,7 @@ func (b *BasicBlockBuilder) CalculateAndSetMaxBurnedMana(rmc iotago.Mana) *Basic
 
 // NewValidationBlockBuilder creates a new ValidationBlockBuilder.
 func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
-	validationBlock := &iotago.ValidationBlock{
+	validationBlock := &iotago.ValidationBlockBody{
 		API:                api,
 		StrongParents:      iotago.BlockIDs{},
 		WeakParents:        iotago.BlockIDs{},
@@ -219,7 +219,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 
 // ValidationBlockBuilder is used to easily build up a Validation Block.
 type ValidationBlockBuilder struct {
-	validationBlock *iotago.ValidationBlock
+	validationBlock *iotago.ValidationBlockBody
 
 	protocolBlock *iotago.Block
 	err           error

@@ -599,20 +599,20 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(BasicBlock{},
+		must(api.RegisterTypeSettings(BasicBlockBody{},
 			serix.TypeSettings{}.WithObjectType(byte(BlockBodyTypeBasic))),
 		)
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidationBlock{},
+		must(api.RegisterTypeSettings(ValidationBlockBody{},
 			serix.TypeSettings{}.WithObjectType(byte(BlockBodyTypeValidation))),
 		)
 	}
 
 	{
-		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*BasicBlock)(nil)))
-		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*ValidationBlock)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*BasicBlockBody)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*ValidationBlockBody)(nil)))
 
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*SignedTransaction)(nil)))
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*TaggedData)(nil)))

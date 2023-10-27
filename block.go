@@ -327,8 +327,8 @@ type BlockBody interface {
 	Sizer
 }
 
-// BasicBlock represents a basic vertex in the Tangle/BlockDAG.
-type BasicBlock struct {
+// BasicBlockBody represents a basic vertex in the Tangle/BlockDAG.
+type BasicBlockBody struct {
 	API API
 
 	// The parents the block references.
@@ -342,27 +342,27 @@ type BasicBlock struct {
 	MaxBurnedMana Mana `serix:"4,mapKey=maxBurnedMana"`
 }
 
-func (b *BasicBlock) SetDeserializationContext(ctx context.Context) {
+func (b *BasicBlockBody) SetDeserializationContext(ctx context.Context) {
 	b.API = APIFromContext(ctx)
 }
 
-func (b *BasicBlock) Type() BlockBodyType {
+func (b *BasicBlockBody) Type() BlockBodyType {
 	return BlockBodyTypeBasic
 }
 
-func (b *BasicBlock) StrongParentIDs() BlockIDs {
+func (b *BasicBlockBody) StrongParentIDs() BlockIDs {
 	return b.StrongParents
 }
 
-func (b *BasicBlock) WeakParentIDs() BlockIDs {
+func (b *BasicBlockBody) WeakParentIDs() BlockIDs {
 	return b.WeakParents
 }
 
-func (b *BasicBlock) ShallowLikeParentIDs() BlockIDs {
+func (b *BasicBlockBody) ShallowLikeParentIDs() BlockIDs {
 	return b.ShallowLikeParents
 }
 
-func (b *BasicBlock) Hash() (Identifier, error) {
+func (b *BasicBlockBody) Hash() (Identifier, error) {
 	blockBytes, err := b.API.Encode(b)
 	if err != nil {
 		return Identifier{}, ierrors.Errorf("failed to serialize basic block: %w", err)
@@ -371,7 +371,7 @@ func (b *BasicBlock) Hash() (Identifier, error) {
 	return blake2b.Sum256(blockBytes), nil
 }
 
-func (b *BasicBlock) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
+func (b *BasicBlockBody) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	var err error
 	var workScorePayload WorkScore
 	if b.Payload != nil {
@@ -385,7 +385,7 @@ func (b *BasicBlock) WorkScore(workScoreParameters *WorkScoreParameters) (WorkSc
 	return workScoreParameters.Block.Add(workScorePayload)
 }
 
-func (b *BasicBlock) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters) (Mana, error) {
+func (b *BasicBlockBody) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters) (Mana, error) {
 	workScore, err := b.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
@@ -394,7 +394,7 @@ func (b *BasicBlock) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters
 	return ManaCost(rmc, workScore)
 }
 
-func (b *BasicBlock) Size() int {
+func (b *BasicBlockBody) Size() int {
 	var payloadSize int
 	if b.Payload != nil {
 		payloadSize = b.Payload.Size()
@@ -408,7 +408,7 @@ func (b *BasicBlock) Size() int {
 }
 
 // syntacticallyValidate syntactically validates the BasicBlock.
-func (b *BasicBlock) syntacticallyValidate(block *Block) error {
+func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
 		blockID, err := block.ID()
 		if err != nil {
@@ -447,8 +447,8 @@ func (b *BasicBlock) syntacticallyValidate(block *Block) error {
 	return nil
 }
 
-// ValidationBlock represents a validation vertex in the Tangle/BlockDAG.
-type ValidationBlock struct {
+// ValidationBlockBody represents a validation vertex in the Tangle/BlockDAG.
+type ValidationBlockBody struct {
 	API API
 	// The parents the block references.
 	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=50"`
@@ -460,27 +460,27 @@ type ValidationBlock struct {
 	ProtocolParametersHash Identifier `serix:"4,mapKey=protocolParametersHash"`
 }
 
-func (b *ValidationBlock) SetDeserializationContext(ctx context.Context) {
+func (b *ValidationBlockBody) SetDeserializationContext(ctx context.Context) {
 	b.API = APIFromContext(ctx)
 }
 
-func (b *ValidationBlock) Type() BlockBodyType {
+func (b *ValidationBlockBody) Type() BlockBodyType {
 	return BlockBodyTypeValidation
 }
 
-func (b *ValidationBlock) StrongParentIDs() BlockIDs {
+func (b *ValidationBlockBody) StrongParentIDs() BlockIDs {
 	return b.StrongParents
 }
 
-func (b *ValidationBlock) WeakParentIDs() BlockIDs {
+func (b *ValidationBlockBody) WeakParentIDs() BlockIDs {
 	return b.WeakParents
 }
 
-func (b *ValidationBlock) ShallowLikeParentIDs() BlockIDs {
+func (b *ValidationBlockBody) ShallowLikeParentIDs() BlockIDs {
 	return b.ShallowLikeParents
 }
 
-func (b *ValidationBlock) Hash() (Identifier, error) {
+func (b *ValidationBlockBody) Hash() (Identifier, error) {
 	blockBytes, err := b.API.Encode(b)
 	if err != nil {
 		return Identifier{}, ierrors.Errorf("failed to serialize validation block: %w", err)
@@ -489,12 +489,12 @@ func (b *ValidationBlock) Hash() (Identifier, error) {
 	return IdentifierFromData(blockBytes), nil
 }
 
-func (b *ValidationBlock) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
+func (b *ValidationBlockBody) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// Validator blocks do not incur any work score as they do not burn mana
 	return 0, nil
 }
 
-func (b *ValidationBlock) Size() int {
+func (b *ValidationBlockBody) Size() int {
 	return serializer.OneByte + // block type
 		serializer.OneByte + len(b.StrongParents)*BlockIDLength + // StrongParents count
 		serializer.OneByte + len(b.WeakParents)*BlockIDLength + // WeakParents count
@@ -504,7 +504,7 @@ func (b *ValidationBlock) Size() int {
 }
 
 // syntacticallyValidate syntactically validates the ValidationBlock.
-func (b *ValidationBlock) syntacticallyValidate(block *Block) error {
+func (b *ValidationBlockBody) syntacticallyValidate(block *Block) error {
 	if b.HighestSupportedVersion < block.ProtocolVersion {
 		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, block.ProtocolVersion)
 	}

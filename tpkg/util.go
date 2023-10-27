@@ -701,7 +701,7 @@ func RandBlockID() iotago.BlockID {
 
 // RandBlock returns a random block with the given inner payload.
 func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iotago.Block {
-	if basicBlock, isBasic := blockBody.(*iotago.BasicBlock); isBasic {
+	if basicBlock, isBasic := blockBody.(*iotago.BasicBlockBody); isBasic {
 		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
 		if err != nil {
 			panic(err)
@@ -734,7 +734,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	}
 }
 
-func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlock {
+func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
 	var payload iotago.ApplicationPayload
 
 	//nolint:exhaustive
@@ -747,7 +747,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = &iotago.CandidacyAnnouncement{}
 	}
 
-	return &iotago.BasicBlock{
+	return &iotago.BasicBlockBody{
 		API:                api,
 		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
 		WeakParents:        iotago.BlockIDs{},
@@ -757,8 +757,8 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 	}
 }
 
-func RandValidationBlock(api iotago.API) *iotago.ValidationBlock {
-	return &iotago.ValidationBlock{
+func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
+	return &iotago.ValidationBlockBody{
 		API:                     api,
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
