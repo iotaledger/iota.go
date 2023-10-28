@@ -16,7 +16,7 @@ type Attestations = []*Attestation
 type Attestation struct {
 	API         API
 	BlockHeader `serix:"0,nest"`
-	BlockHash   Identifier `serix:"1,mapKey=blockHash"`
+	BodyHash    Identifier `serix:"1,mapKey=bodyHash"`
 	Signature   Signature  `serix:"2,mapKey=signature"`
 }
 
@@ -24,7 +24,7 @@ func NewAttestation(api API, block *Block) *Attestation {
 	return &Attestation{
 		API:         api,
 		BlockHeader: block.Header,
-		BlockHash:   lo.PanicOnErr(block.Body.Hash()),
+		BodyHash:    lo.PanicOnErr(block.Body.Hash()),
 		Signature:   block.Signature,
 	}
 }
@@ -67,7 +67,7 @@ func (a *Attestation) Compare(other *Attestation) int {
 	case a.IssuingTime.Before(other.IssuingTime):
 		return -1
 	default:
-		return bytes.Compare(a.BlockHash[:], other.BlockHash[:])
+		return bytes.Compare(a.BodyHash[:], other.BodyHash[:])
 	}
 }
 
@@ -82,7 +82,7 @@ func (a *Attestation) BlockID() (BlockID, error) {
 		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
-	id := blockIdentifier(headerHash, a.BlockHash, signatureBytes)
+	id := blockIdentifier(headerHash, a.BodyHash, signatureBytes)
 	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
 
 	return NewBlockID(slot, id), nil
@@ -94,7 +94,7 @@ func (a *Attestation) signingMessage() ([]byte, error) {
 		return nil, ierrors.Errorf("failed to create signing message: %w", err)
 	}
 
-	return blockSigningMessage(headerHash, a.BlockHash), nil
+	return blockSigningMessage(headerHash, a.BodyHash), nil
 }
 
 func (a *Attestation) VerifySignature() (valid bool, err error) {
