@@ -14,18 +14,18 @@ import (
 type Attestations = []*Attestation
 
 type Attestation struct {
-	API         API
-	BlockHeader `serix:"0,nest"`
-	BodyHash    Identifier `serix:"1,mapKey=bodyHash"`
-	Signature   Signature  `serix:"2,mapKey=signature"`
+	API       API
+	Header    BlockHeader `serix:"0,nest"`
+	BodyHash  Identifier  `serix:"1,mapKey=bodyHash"`
+	Signature Signature   `serix:"2,mapKey=signature"`
 }
 
 func NewAttestation(api API, block *Block) *Attestation {
 	return &Attestation{
-		API:         api,
-		BlockHeader: block.Header,
-		BodyHash:    lo.PanicOnErr(block.Body.Hash()),
-		Signature:   block.Signature,
+		API:       api,
+		Header:    block.Header,
+		BodyHash:  lo.PanicOnErr(block.Body.Hash()),
+		Signature: block.Signature,
 	}
 }
 
@@ -58,13 +58,13 @@ func (a *Attestation) Compare(other *Attestation) int {
 		return -1
 	case other == nil:
 		return 1
-	case a.SlotCommitmentID.Slot() > other.SlotCommitmentID.Slot():
+	case a.Header.SlotCommitmentID.Slot() > other.Header.SlotCommitmentID.Slot():
 		return 1
-	case a.SlotCommitmentID.Slot() < other.SlotCommitmentID.Slot():
+	case a.Header.SlotCommitmentID.Slot() < other.Header.SlotCommitmentID.Slot():
 		return -1
-	case a.IssuingTime.After(other.IssuingTime):
+	case a.Header.IssuingTime.After(other.Header.IssuingTime):
 		return 1
-	case a.IssuingTime.Before(other.IssuingTime):
+	case a.Header.IssuingTime.Before(other.Header.IssuingTime):
 		return -1
 	default:
 		return bytes.Compare(a.BodyHash[:], other.BodyHash[:])
@@ -77,19 +77,19 @@ func (a *Attestation) BlockID() (BlockID, error) {
 		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
-	headerHash, err := a.BlockHeader.Hash(a.API)
+	headerHash, err := a.Header.Hash(a.API)
 	if err != nil {
 		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
 	}
 
 	id := blockIdentifier(headerHash, a.BodyHash, signatureBytes)
-	slot := a.API.TimeProvider().SlotFromTime(a.IssuingTime)
+	slot := a.API.TimeProvider().SlotFromTime(a.Header.IssuingTime)
 
 	return NewBlockID(slot, id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {
-	headerHash, err := a.BlockHeader.Hash(a.API)
+	headerHash, err := a.Header.Hash(a.API)
 	if err != nil {
 		return nil, ierrors.Errorf("failed to create signing message: %w", err)
 	}

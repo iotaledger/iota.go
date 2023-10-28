@@ -24,7 +24,7 @@ func TestAttestation(t *testing.T) {
 
 	// Compare fields of block and attestation.
 	{
-		require.Equal(t, block.Header, attestation.BlockHeader)
+		require.Equal(t, block.Header, attestation.Header)
 		require.Equal(t, lo.PanicOnErr(block.Body.Hash()), attestation.BodyHash)
 		require.Equal(t, block.Signature, attestation.Signature)
 	}
