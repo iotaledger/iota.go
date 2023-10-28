@@ -84,7 +84,7 @@ func (b *BlockHeader) Size() int {
 
 type Block struct {
 	API       API
-	Header    BlockHeader `serix:"0,nest"`
+	Header    BlockHeader `serix:"0,mapKey=header"`
 	Body      BlockBody   `serix:"1,mapKey=body"`
 	Signature Signature   `serix:"2,mapKey=signature"`
 }
