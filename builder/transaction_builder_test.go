@@ -27,6 +27,7 @@ func TestTransactionBuilder(t *testing.T) {
 	}
 
 	tests := []*test{
+		// ok - 1 input/output
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
@@ -45,6 +46,8 @@ func TestTransactionBuilder(t *testing.T) {
 				builder:    bdl,
 			}
 		}(),
+
+		// ok - mix basic+chain outputs
 		func() *test {
 			var (
 				inputID1 = &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
@@ -71,8 +74,7 @@ func TestTransactionBuilder(t *testing.T) {
 					Amount:    1000,
 					AccountID: tpkg.Rand32ByteArray(),
 					Conditions: iotago.AccountOutputUnlockConditions{
-						&iotago.StateControllerAddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
-						&iotago.GovernorAddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
+						&iotago.AddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
 					},
 				}
 
@@ -100,6 +102,8 @@ func TestTransactionBuilder(t *testing.T) {
 				builder:    bdl,
 			}
 		}(),
+
+		// ok - with tagged data payload
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
@@ -119,6 +123,8 @@ func TestTransactionBuilder(t *testing.T) {
 				builder:    bdl,
 			}
 		}(),
+
+		// err - missing address keys (wrong address)
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
@@ -144,6 +150,8 @@ func TestTransactionBuilder(t *testing.T) {
 				buildErr:   iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
+
+		// err - missing address keys (no keys given at all)
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 

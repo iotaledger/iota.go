@@ -31,6 +31,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
 	accountID := accountAddress.AccountID()
 
+	anchorAddress := iotago.AnchorAddressFromOutputID(inputIDs[0])
+	anchorID := anchorAddress.AnchorID()
+
 	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
 	nftID := nftAddress.NFTID()
 
@@ -50,18 +53,54 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
-							Amount:    OneMi,
+							Amount:    OneIOTA,
 							AccountID: accountID,
 							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+						&iotago.AccountOutput{
+							Amount:    OneIOTA,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   iotago.ErrNonUniqueChainOutputs,
+			deSeriErr: nil,
+		},
+		{
+			// we transition the same Anchor twice
+			name: "transition the same Anchor twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					API: tpkg.TestAPI,
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID:     tpkg.TestNetworkID,
+						ContextInputs: iotago.TxEssenceContextInputs{},
+						Inputs:        inputIDs.UTXOInputs(),
+						Allotments:    iotago.Allotments{},
+						Capabilities:  iotago.TransactionCapabilitiesBitMask{},
+					},
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AnchorOutput{
+							Amount:   OneIOTA,
+							AnchorID: anchorID,
+							Conditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
 						},
-						&iotago.AccountOutput{
-							Amount:    OneMi,
-							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AnchorOutput{
+							Amount:   OneIOTA,
+							AnchorID: anchorID,
+							Conditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -86,7 +125,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.NFTOutput{
-							Amount: OneMi,
+							Amount: OneIOTA,
 							NFTID:  nftID,
 							Conditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
@@ -94,7 +133,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Features: nil,
 						},
 						&iotago.NFTOutput{
-							Amount: OneMi,
+							Amount: OneIOTA,
 							NFTID:  nftID,
 							Conditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
@@ -120,16 +159,15 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
-							Amount:    OneMi,
+							Amount:    OneIOTA,
 							AccountID: accountID,
 							Conditions: iotago.AccountOutputUnlockConditions{
-								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
 						},
 						&iotago.FoundryOutput{
-							Amount:       OneMi,
+							Amount:       OneIOTA,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),
@@ -142,7 +180,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Features: nil,
 						},
 						&iotago.FoundryOutput{
-							Amount:       OneMi,
+							Amount:       OneIOTA,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),

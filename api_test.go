@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	OneMi iotago.BaseToken = 1_000_000
+	OneIOTA iotago.BaseToken = 1_000_000
 )
 
 type deSerializeTest struct {

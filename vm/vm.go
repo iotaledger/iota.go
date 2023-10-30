@@ -377,16 +377,16 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 				chainID = chainID.(iotago.UTXOIDChainID).FromOutputID(signedTransaction.Transaction.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput).OutputID())
 			}
 
-			// for account outputs which are not state transitioning, we do not add it to the set of unlocked chains
-			if currentAccount, ok := chainConstrOutput.(*iotago.AccountOutput); ok {
+			// for anchor outputs which are not state transitioning, we do not add it to the set of unlocked chains
+			if currentAnchor, ok := chainConstrOutput.(*iotago.AnchorOutput); ok {
 				next, hasNextState := outChains[chainID]
 				if !hasNextState {
 					continue
 				}
-				// note that isAccount should never be false in practice,
+				// note that isAnchor should never be false in practice,
 				// but we add it anyway as an additional safeguard
-				nextAccount, isAccount := next.(*iotago.AccountOutput)
-				if !isAccount || (currentAccount.StateIndex+1 != nextAccount.StateIndex) {
+				nextAnchor, isAnchor := next.(*iotago.AnchorOutput)
+				if !isAnchor || (currentAnchor.StateIndex+1 != nextAnchor.StateIndex) {
 					continue
 				}
 			}
@@ -428,7 +428,7 @@ func identToUnlock(transaction *iotago.Transaction, input iotago.Output, inputIn
 		return in.Ident(nextTransDepIdentOutput)
 
 	default:
-		panic("unknown ident output type in semantic unlocks")
+		panic(fmt.Sprintf("unknown ident output type in semantic unlocks: %T", in))
 	}
 }
 
@@ -793,6 +793,10 @@ func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Addr
 
 	if addrWithCapabilities.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
 		return iotago.ErrAddressCannotReceiveAccountOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveAnchorOutputs() && output.Type() == iotago.OutputAnchor {
+		return iotago.ErrAddressCannotReceiveAnchorOutput
 	}
 
 	if addrWithCapabilities.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {

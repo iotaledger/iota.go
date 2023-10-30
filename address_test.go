@@ -462,7 +462,7 @@ func runOutputsSyntacticalValidationTest(t *testing.T, testAPI iotago.API, test 
 
 func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 
-	defaultAmount := OneMi
+	defaultAmount := OneIOTA
 
 	tests := []*outputsSyntacticalValidationTest{
 		// ok - Valid address types nested inside of a RestrictedAddress
@@ -588,7 +588,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 
 func TestMultiAddressSyntacticalValidation(t *testing.T) {
 
-	defaultAmount := OneMi
+	defaultAmount := OneIOTA
 
 	tests := []*outputsSyntacticalValidationTest{
 		// fail - threshold > cumulativeWeight
