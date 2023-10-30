@@ -599,33 +599,33 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterTypeSettings(BasicBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeBasic))),
+		must(api.RegisterTypeSettings(BasicBlockBody{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockBodyTypeBasic))),
 		)
 	}
 
 	{
-		must(api.RegisterTypeSettings(ValidationBlock{},
-			serix.TypeSettings{}.WithObjectType(byte(BlockTypeValidation))),
+		must(api.RegisterTypeSettings(ValidationBlockBody{},
+			serix.TypeSettings{}.WithObjectType(byte(BlockBodyTypeValidation))),
 		)
 	}
 
 	{
-		must(api.RegisterInterfaceObjects((*Block)(nil), (*BasicBlock)(nil)))
-		must(api.RegisterInterfaceObjects((*Block)(nil), (*ValidationBlock)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*BasicBlockBody)(nil)))
+		must(api.RegisterInterfaceObjects((*BlockBody)(nil), (*ValidationBlockBody)(nil)))
 
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*SignedTransaction)(nil)))
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*TaggedData)(nil)))
-		must(api.RegisterInterfaceObjects((*BlockPayload)(nil), (*CandidacyAnnouncement)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*SignedTransaction)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*TaggedData)(nil)))
+		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
-		must(api.RegisterTypeSettings(ProtocolBlock{}, serix.TypeSettings{}))
-		must(api.RegisterValidators(ProtocolBlock{}, func(ctx context.Context, bytes []byte) error {
+		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
+		must(api.RegisterValidators(Block{}, func(ctx context.Context, bytes []byte) error {
 			if len(bytes) > MaxBlockSize {
 				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
 			}
 
 			return nil
-		}, func(ctx context.Context, protocolBlock ProtocolBlock) error {
+		}, func(ctx context.Context, protocolBlock Block) error {
 			return protocolBlock.syntacticallyValidate()
 		}))
 	}
