@@ -289,8 +289,10 @@ func (b *Block) syntacticallyValidate() error {
 		}
 	}
 
-	minCommittableAge := b.API.ProtocolParameters().MinCommittableAge()
-	maxCommittableAge := b.API.ProtocolParameters().MaxCommittableAge()
+	protocolParams := b.API.ProtocolParameters()
+	genesisSlot := protocolParams.GenesisSlot()
+	minCommittableAge := protocolParams.MinCommittableAge()
+	maxCommittableAge := protocolParams.MaxCommittableAge()
 	commitmentSlot := b.Header.SlotCommitmentID.Slot()
 	blockID, err := b.ID()
 	if err != nil {
@@ -299,7 +301,7 @@ func (b *Block) syntacticallyValidate() error {
 	blockSlot := blockID.Slot()
 
 	// check that commitment is not too recent.
-	if commitmentSlot > 0 && // Don't filter commitments to genesis based on being too recent.
+	if commitmentSlot > genesisSlot && // Don't filter commitments to genesis based on being too recent.
 		blockSlot < commitmentSlot+minCommittableAge {
 		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.Header.SlotCommitmentID.Slot())
 	}
