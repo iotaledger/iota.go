@@ -79,7 +79,12 @@ func (p *V3ProtocolParameters) NetworkID() NetworkID {
 	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
 }
 
-// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
+// GenesisBlockID defines the block ID of the genesis block.
+func (p *V3ProtocolParameters) GenesisBlockID() BlockID {
+	return NewBlockID(p.basicProtocolParameters.GenesisSlot, EmptyIdentifier)
+}
+
+// GenesisSlot defines the genesis slot.
 func (p *V3ProtocolParameters) GenesisSlot() SlotIndex {
 	return p.basicProtocolParameters.GenesisSlot
 }

@@ -119,6 +119,8 @@ type ProtocolParameters interface {
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
+	// GenesisBlockID defines the block ID of the genesis block.
+	GenesisBlockID() BlockID
 	// GenesisSlot defines the slot of the genesis.
 	GenesisSlot() SlotIndex
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
