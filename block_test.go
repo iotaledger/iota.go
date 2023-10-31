@@ -442,7 +442,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Body: &iotago.BasicBlockBody{
@@ -470,7 +470,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Body: &iotago.ValidationBlockBody{
@@ -498,7 +498,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 	}
@@ -543,7 +543,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 func TestBlockJSONMarshalling(t *testing.T) {
 	networkID := iotago.NetworkIDFromString("xxxNetwork")
 	issuingTime := tpkg.RandUTCTime()
-	commitmentID := iotago.NewEmptyCommitment(tpkg.TestAPI.Version()).MustID()
+	commitmentID := iotago.NewEmptyCommitment(tpkg.TestAPI).MustID()
 	issuerID := tpkg.RandAccountID()
 	signature := tpkg.RandEd25519Signature()
 	strongParents := tpkg.SortedRandBlockIDs(1)
