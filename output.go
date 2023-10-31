@@ -63,6 +63,8 @@ const (
 	OutputBasic OutputType = iota
 	// OutputAccount denotes an AccountOutput.
 	OutputAccount
+	// OutputAnchor denotes an AnchorOuptut.
+	OutputAnchor
 	// OutputFoundry denotes a FoundryOutput.
 	OutputFoundry
 	// OutputNFT denotes an NFTOutput.
@@ -82,6 +84,7 @@ func (outputType OutputType) String() string {
 var outputNames = [OutputDelegation + 1]string{
 	"BasicOutput",
 	"AccountOutput",
+	"AnchorOutput",
 	"FoundryOutput",
 	"NFTOutput",
 	"DelegationOutput",
@@ -414,8 +417,8 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 }
 
 // OutputsSyntacticalAccount returns an OutputsSyntacticalValidationFunc which checks that AccountOutput(s)':
-//   - StateIndex/FoundryCounter are zero if the AccountID is zeroed
-//   - StateController and GovernanceController must be different from AccountAddress derived from AccountID
+//   - FoundryCounter is zero if the AccountID is zeroed
+//   - Address must be different from AccountAddress derived from AccountID
 func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		accountOutput, is := output.(*AccountOutput)
@@ -424,22 +427,47 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 		}
 
 		if accountOutput.AccountEmpty() {
-			switch {
-			case accountOutput.StateIndex != 0:
-				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, state index not zero", index)
-			case accountOutput.FoundryCounter != 0:
+			if accountOutput.FoundryCounter != 0 {
 				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
 			}
+
 			// can not be cyclic when the AccountOutput is new
 			return nil
 		}
 
-		outputAccountAddr := AccountAddress(accountOutput.AccountID)
-		if stateCtrlAddr, ok := accountOutput.StateController().(*AccountAddress); ok && outputAccountAddr == *stateCtrlAddr {
-			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d, AccountID=StateController", index)
+		if addr, ok := accountOutput.Ident().(*AccountAddress); ok && AccountAddress(accountOutput.AccountID) == *addr {
+			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d", index)
 		}
-		if govCtrlAddr, ok := accountOutput.GovernorAddress().(*AccountAddress); ok && outputAccountAddr == *govCtrlAddr {
-			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d, AccountID=GovernanceController", index)
+
+		return nil
+	}
+}
+
+// OutputsSyntacticalAnchor returns an OutputsSyntacticalValidationFunc which checks that AnchorOutput(s)':
+//   - StateIndex is zero if the AnchorID is zeroed
+//   - StateController and GovernanceController must be different from AnchorAddress derived from AnchorID
+func OutputsSyntacticalAnchor() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		anchorOutput, is := output.(*AnchorOutput)
+		if !is {
+			return nil
+		}
+
+		if anchorOutput.AnchorEmpty() {
+			if anchorOutput.StateIndex != 0 {
+				return ierrors.Wrapf(ErrAnchorOutputNonEmptyState, "output %d, state index not zero", index)
+			}
+
+			// can not be cyclic when the AnchorOutput is new
+			return nil
+		}
+
+		outputAnchorAddr := AnchorAddress(anchorOutput.AnchorID)
+		if stateCtrlAddr, ok := anchorOutput.StateController().(*AnchorAddress); ok && outputAnchorAddr == *stateCtrlAddr {
+			return ierrors.Wrapf(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=StateController", index)
+		}
+		if govCtrlAddr, ok := anchorOutput.GovernorAddress().(*AnchorAddress); ok && outputAnchorAddr == *govCtrlAddr {
+			return ierrors.Wrapf(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=GovernanceController", index)
 		}
 
 		return nil
