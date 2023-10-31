@@ -154,7 +154,7 @@ func TestBlock_Commitments(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
-			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 11, 21, 4),
 		), 0)
 
@@ -174,7 +174,7 @@ func TestBlock_Commitments1(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
-			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 7, 21, 4),
 		), 0)
 
@@ -199,7 +199,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
-			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 7, 21, 4),
 		), 0)
 
@@ -266,7 +266,7 @@ func TestBlock_WeakParents(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
-			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 10, 20, 4),
 		), 0)
 	strongParent1 := tpkg.RandBlockID()
@@ -325,7 +325,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	apiProvider := api.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
-			iotago.WithTimeProviderOptions(time.Now().Add(-20*time.Minute).Unix(), 10, 13),
+			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 11, 21, 4),
 		), 0)
 

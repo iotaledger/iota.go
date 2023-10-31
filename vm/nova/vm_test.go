@@ -41,7 +41,7 @@ var (
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 20, 20, 20, 20, 100, 100, 100, 200),
-		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
+		iotago.WithTimeProviderOptions(0, 100, slotDurationSeconds, slotsPerEpochExponent),
 		iotago.WithManaOptions(bitsCount,
 			generationRate,
 			generationRateExponent,
