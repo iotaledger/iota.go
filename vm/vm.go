@@ -103,14 +103,6 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
 		}
 	}
-	// rewards
-	for _, reward := range rewards {
-		var err error
-		totalIn, err = safemath.SafeAdd(totalIn, reward)
-		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
-		}
-	}
 
 	// whether it's valid to claim rewards is checked in the delegation and staking STVFs.
 	for _, reward := range rewards {
