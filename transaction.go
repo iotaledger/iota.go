@@ -23,6 +23,8 @@ const (
 var (
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
+	// ErrTxEssenceCapabilitiesInvalid gets returned when the capabilities within a Transaction are invalid.
+	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
@@ -252,7 +254,7 @@ func (t *Transaction) Size() int {
 func (t *Transaction) syntacticallyValidate(api API) error {
 	protoParams := api.ProtocolParameters()
 
-	if err := t.TransactionEssence.syntacticallyValidate(api); err != nil {
+	if err := t.TransactionEssence.SyntacticallyValidate(api); err != nil {
 		return err
 	}
 
