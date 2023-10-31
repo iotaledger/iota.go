@@ -18,6 +18,8 @@ func TestTimeProvider(t *testing.T) {
 }
 
 func testTimeProviderWithGenesisSlot(t *testing.T, genesisSlot iotago.SlotIndex) {
+	t.Helper()
+
 	genesisUnixTime := int64(1630000000) // Replace with an appropriate Unix timestamp
 	genesisTime := time.Unix(genesisUnixTime, 0)
 	slotDurationSeconds := int64(10)
