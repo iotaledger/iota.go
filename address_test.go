@@ -48,7 +48,7 @@ func TestAddressDeSerialize(t *testing.T) {
 		},
 		{
 			name:   "ok - RestrictedEd25519Address without capabilities",
-			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0x0}),
+			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{}),
 			target: &iotago.RestrictedAddress{},
 		},
 		{
