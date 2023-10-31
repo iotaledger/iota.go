@@ -433,6 +433,63 @@ func TestRestrictedAddressCapabilities(t *testing.T) {
 	assertRestrictedAddresses(t, addresses)
 }
 
+//nolint:dupl // we have a lot of similar tests
+func TestRestrictedAddressCapabilitiesBitMask(t *testing.T) {
+
+	type test struct {
+		name    string
+		addr    *iotago.RestrictedAddress
+		wantErr error
+	}
+
+	tests := []*test{
+		{
+			name: "ok - no trailing zero bytes",
+			addr: &iotago.RestrictedAddress{
+				Address:             tpkg.RandEd25519Address(),
+				AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x01, 0x02},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok - empty capabilities",
+			addr: &iotago.RestrictedAddress{
+				Address:             tpkg.RandEd25519Address(),
+				AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - trailing zero bytes",
+			addr: &iotago.RestrictedAddress{
+				Address:             tpkg.RandEd25519Address(),
+				AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x01, 0x00},
+			},
+			wantErr: iotago.ErrBitmaskTrailingZeroBytes,
+		},
+		{
+			name: "fail - single zero bytes",
+			addr: &iotago.RestrictedAddress{
+				Address:             tpkg.RandEd25519Address(),
+				AllowedCapabilities: iotago.AddressCapabilitiesBitMask{0x00},
+			},
+			wantErr: iotago.ErrBitmaskTrailingZeroBytes,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := tpkg.TestAPI.Encode(test.addr, serix.WithValidation())
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 type outputsSyntacticalValidationTest struct {
 	// the name of the testcase
 	name string
