@@ -1,8 +1,11 @@
+//nolint:scopelint
 package iotago_test
 
 import (
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -249,5 +252,50 @@ func TestAllotmentUniqueness(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
+func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
+
+	type test struct {
+		name    string
+		tx      *iotago.Transaction
+		wantErr error
+	}
+
+	randTransactionWithCapabilities := func(capabilities iotago.TransactionCapabilitiesBitMask) *iotago.Transaction {
+		tx := tpkg.RandTransaction(tpkg.TestAPI)
+		tx.Capabilities = capabilities
+		return tx
+	}
+
+	tests := []*test{
+		{
+			name:    "ok - no trailing zero bytes",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{0x01}),
+			wantErr: nil,
+		},
+		{
+			name:    "ok - empty capabilities",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{}),
+			wantErr: nil,
+		},
+		{
+			name:    "fail - single zero byte",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{0x00}),
+			wantErr: iotago.ErrBitmaskTrailingZeroBytes,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
 	}
 }

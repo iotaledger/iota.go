@@ -15,6 +15,8 @@ var (
 	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrInvalidAddressType gets returned when an address type is invalid.
 	ErrInvalidAddressType = ierrors.New("invalid address type")
+	// ErrInvalidRestrictedAddress gets returned when a RestrictedAddress is invalid.
+	ErrInvalidRestrictedAddress = ierrors.New("invalid restricted address")
 	// ErrInvalidNestedAddressType gets returned when a nested address inside a MultiAddress or RestrictedAddress is invalid.
 	ErrInvalidNestedAddressType = ierrors.New("invalid nested address type")
 	// ErrImplicitAccountCreationAddressInInvalidUnlockCondition gets returned when a Implicit Account Creation Address

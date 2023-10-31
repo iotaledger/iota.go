@@ -61,7 +61,12 @@ var (
 	// restrictedAddressValidatorFunc is a validator which checks that:
 	//  1. ImplicitAccountCreationAddress are not nested inside the RestrictedAddress.
 	//  2. RestrictedAddresses are not nested inside the RestrictedAddress.
+	//  3. The bitmask does not contain trailing zero bytes.
 	restrictedAddressValidatorFunc = func(ctx context.Context, addr RestrictedAddress) error {
+		if err := BitMaskNonTrailingZeroBytesValidatorFunc(addr.AllowedCapabilities); err != nil {
+			return ierrors.Wrapf(ErrInvalidRestrictedAddress, "invalid allowed capabilities bitmask: %w", err)
+		}
+
 		switch addr.Address.(type) {
 		case *Ed25519Address, *AccountAddress, *NFTAddress, *AnchorAddress, *MultiAddress:
 			// allowed address types
