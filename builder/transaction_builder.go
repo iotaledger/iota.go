@@ -459,7 +459,7 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 	return result, nil
 }
 
-// MinRequiredAllotedMana returns the minimum alloted mana required to issue a ProtocolBlock
+// MinRequiredAllotedMana returns the minimum alloted mana required to issue a Block
 // with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
 func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.WorkScoreParameters, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction

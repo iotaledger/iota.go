@@ -699,43 +699,43 @@ func RandBlockID() iotago.BlockID {
 	return Rand36ByteArray()
 }
 
-// RandProtocolBlock returns a random block with the given inner payload.
-func RandProtocolBlock(block iotago.Block, api iotago.API, rmc iotago.Mana) *iotago.ProtocolBlock {
-	if basicBlock, isBasic := block.(*iotago.BasicBlock); isBasic {
+// RandBlock returns a random block with the given inner payload.
+func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iotago.Block {
+	if basicBlock, isBasic := blockBody.(*iotago.BasicBlockBody); isBasic {
 		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
 		if err != nil {
 			panic(err)
 		}
 		basicBlock.MaxBurnedMana = burnedMana
 
-		return &iotago.ProtocolBlock{
+		return &iotago.Block{
 			API: api,
-			BlockHeader: iotago.BlockHeader{
+			Header: iotago.BlockHeader{
 				ProtocolVersion:  TestAPI.Version(),
 				IssuingTime:      RandUTCTime(),
 				SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 				IssuerID:         RandAccountID(),
 			},
-			Block:     basicBlock,
+			Body:      basicBlock,
 			Signature: RandEd25519Signature(),
 		}
 	}
 
-	return &iotago.ProtocolBlock{
+	return &iotago.Block{
 		API: api,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
 			IssuingTime:      RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
 			IssuerID:         RandAccountID(),
 		},
-		Block:     block,
+		Body:      blockBody,
 		Signature: RandEd25519Signature(),
 	}
 }
 
-func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlock {
-	var payload iotago.BlockPayload
+func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
+	var payload iotago.ApplicationPayload
 
 	//nolint:exhaustive
 	switch withPayloadType {
@@ -747,7 +747,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = &iotago.CandidacyAnnouncement{}
 	}
 
-	return &iotago.BasicBlock{
+	return &iotago.BasicBlockBody{
 		API:                api,
 		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
 		WeakParents:        iotago.BlockIDs{},
@@ -757,8 +757,8 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 	}
 }
 
-func RandValidationBlock(api iotago.API) *iotago.ValidationBlock {
-	return &iotago.ValidationBlock{
+func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
+	return &iotago.ValidationBlockBody{
 		API:                     api,
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
@@ -767,11 +767,11 @@ func RandValidationBlock(api iotago.API) *iotago.ValidationBlock {
 	}
 }
 
-func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.ProtocolBlock {
+func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
 	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
 
-	block := RandProtocolBlock(basicBlock, TestAPI, rmc)
-	block.IssuerID = issuerID
+	block := RandBlock(basicBlock, TestAPI, rmc)
+	block.Header.IssuerID = issuerID
 
 	return block
 }

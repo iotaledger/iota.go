@@ -320,14 +320,14 @@ func TestClient_SubmitBlock(t *testing.T) {
 	blockHash := tpkg.Rand36ByteArray()
 	blockHashStr := hexutil.EncodeHex(blockHash[:])
 
-	incompleteBlock := &iotago.ProtocolBlock{
+	incompleteBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlockBody{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
@@ -376,15 +376,15 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	identifier := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(identifier[:])
 
-	originBlock := &iotago.ProtocolBlock{
+	originBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlockBody{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
@@ -407,15 +407,15 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	txID := tpkg.Rand36ByteArray()
 	queryHash := hexutil.EncodeHex(txID[:])
 
-	originBlock := &iotago.ProtocolBlock{
+	originBlock := &iotago.Block{
 		API: mockAPI,
-		BlockHeader: iotago.BlockHeader{
+		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI.Version()).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
-		Block: &iotago.BasicBlock{
+		Body: &iotago.BasicBlockBody{
 			API:                mockAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
 			WeakParents:        iotago.BlockIDs{},
