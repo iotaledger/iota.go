@@ -3727,6 +3727,7 @@ func createWorkingSet(t *testing.T, input *vm.ChainOutputWithIDs, workingSet *vm
 			tpkg.TestAPI.StorageScoreStructure(),
 			workingSet.Tx.CreationSlot,
 			workingSet.UTXOInputsSet,
+			workingSet.Rewards,
 		)
 		require.NoError(t, err)
 		workingSet.TotalManaIn = totalManaIn

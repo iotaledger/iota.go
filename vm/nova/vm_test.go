@@ -1437,7 +1437,7 @@ func runNovaTransactionExecutionTest(t *testing.T, test *txExecTest) {
 		// HINT: all outputs are created at slot 0 and the transaction is executed at slot 10000
 		var txCreationSlot iotago.SlotIndex = 10000
 
-		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.StorageScoreStructure(), txCreationSlot, inputSet)
+		totalInputMana, err := vm.TotalManaIn(testAPI.ManaDecayProvider(), testAPI.StorageScoreStructure(), txCreationSlot, inputSet, vm.RewardsInputSet{})
 		require.NoError(t, err)
 
 		outputs := iotago.TxEssenceOutputs{

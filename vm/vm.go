@@ -71,7 +71,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 	return workingSet.Tx.TransactionEssence.Inputs[inputIndex].(*iotago.UTXOInput)
 }
 
-func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStructure *iotago.StorageScoreStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet) (iotago.Mana, error) {
+func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStructure *iotago.StorageScoreStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet, rewards RewardsInputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
 	for outputID, input := range inputSet {
 		// stored Mana
@@ -83,7 +83,6 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		if err != nil {
 			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
 		}
-
 		// potential Mana
 		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
 		minDeposit, err := storageScoreStructure.MinDeposit(input)
@@ -99,6 +98,14 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaPotential)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
+	}
+	// rewards
+	for _, reward := range rewards {
+		var err error
+		totalIn, err = safemath.SafeAdd(totalIn, reward)
 		if err != nil {
 			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
 		}
@@ -582,11 +589,6 @@ func ExecFuncBalancedMana() ExecFunc {
 		}
 		manaIn := vmParams.WorkingSet.TotalManaIn
 		manaOut := vmParams.WorkingSet.TotalManaOut
-
-		// Whether it's valid to claim rewards is checked in the delegation and staking STVFs.
-		for _, reward := range vmParams.WorkingSet.Rewards {
-			manaIn += reward
-		}
 
 		if manaIn < manaOut {
 			// less mana on input side than on output side => not allowed

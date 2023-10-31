@@ -70,6 +70,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 		api.StorageScoreStructure(),
 		workingSet.Tx.CreationSlot,
 		workingSet.UTXOInputsSet,
+		workingSet.Rewards,
 	)
 	if err != nil {
 		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
