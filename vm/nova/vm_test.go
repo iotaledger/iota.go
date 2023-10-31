@@ -6850,14 +6850,17 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	currentSlot := testAPI.TimeProvider().EpochStart(currentEpoch)
 
 	blockIssuerFeature := &iotago.BlockIssuerFeature{
-		BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+		BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 		ExpirySlot:      currentSlot + 500,
 	}
 
-	inputIDs := tpkg.RandOutputIDsWithCreationSlot(0, 1)
+	var creationSlot iotago.SlotIndex = 100
+	balance := OneIOTA * 10
+
+	inputIDs := tpkg.RandOutputIDsWithCreationSlot(creationSlot, 1)
 	inputs := vm.InputSet{
 		inputIDs[0]: &iotago.AccountOutput{
-			Amount:         OneIOTA * 10,
+			Amount:         balance,
 			AccountID:      accountID,
 			Mana:           0,
 			FoundryCounter: 0,
@@ -6876,6 +6879,8 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		},
 	}
 
+	inputMinDeposit := lo.PanicOnErr(testAPI.StorageScoreStructure().MinDeposit(inputs[inputIDs[0]]))
+
 	transaction := &iotago.Transaction{
 		API: testAPI,
 		TransactionEssence: &iotago.TransactionEssence{
@@ -6885,7 +6890,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.AccountOutput{
 				Amount:         OneIOTA * 5,
-				Mana:           12043,
+				Mana:           lo.PanicOnErr(testAPI.ManaDecayProvider().ManaGenerationWithDecay(balance-inputMinDeposit, creationSlot, currentSlot)),
 				AccountID:      accountID,
 				FoundryCounter: 0,
 				Conditions: iotago.AccountOutputUnlockConditions{

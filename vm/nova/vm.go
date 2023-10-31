@@ -29,9 +29,9 @@ type virtualMachine struct {
 	execList []vm.ExecFunc
 }
 
-func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
+func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs vm.ResolvedInputs) (*vm.WorkingSet, error) {
 	var err error
-	utxoInputsSet := constructInputSet(inputs.InputSet)
+	utxoInputsSet := constructInputSet(resolvedInputs.InputSet)
 	workingSet := &vm.WorkingSet{}
 	workingSet.Tx = t
 	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
@@ -61,9 +61,9 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, inputs vm.Reso
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
 	workingSet.OutChains = workingSet.Tx.Outputs.ChainOutputSet(txID)
 
-	workingSet.BIC = inputs.BlockIssuanceCreditInputSet
-	workingSet.Commitment = inputs.CommitmentInput
-	workingSet.Rewards = inputs.RewardsInputSet
+	workingSet.BIC = resolvedInputs.BlockIssuanceCreditInputSet
+	workingSet.Commitment = resolvedInputs.CommitmentInput
+	workingSet.Rewards = resolvedInputs.RewardsInputSet
 
 	workingSet.TotalManaIn, err = vm.TotalManaIn(
 		api.ManaDecayProvider(),
@@ -109,12 +109,12 @@ func (novaVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTr
 	return vm.ValidateUnlocks(signedTransaction, inputs)
 }
 
-func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, inputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
+func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, resolvedInputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
 	vmParams := &vm.Params{
 		API: transaction.API,
 	}
 
-	if vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, transaction, inputs); err != nil {
+	if vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, transaction, resolvedInputs); err != nil {
 		return nil, ierrors.Wrap(err, "failed to create working set")
 	}
 	vmParams.WorkingSet.UnlockedIdents = unlockedIdentities
@@ -265,12 +265,12 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	return nil
 }
 
-func accountGenesisValid(vmParams *vm.Params, current *iotago.AccountOutput, accountIDMustBeZeroed bool) error {
-	if accountIDMustBeZeroed && !current.AccountID.Empty() {
+func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accountIDMustBeZeroed bool) error {
+	if accountIDMustBeZeroed && !next.AccountID.Empty() {
 		return ierrors.Wrap(iotago.ErrInvalidAccountStateTransition, "AccountOutput's ID is not zeroed even though it is new")
 	}
 
-	if nextBlockIssuerFeat := current.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
+	if nextBlockIssuerFeat := next.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
 		}
@@ -280,13 +280,13 @@ func accountGenesisValid(vmParams *vm.Params, current *iotago.AccountOutput, acc
 		}
 	}
 
-	if stakingFeat := current.FeatureSet().Staking(); stakingFeat != nil {
-		if err := accountStakingGenesisValidation(vmParams, current, stakingFeat); err != nil {
+	if stakingFeat := next.FeatureSet().Staking(); stakingFeat != nil {
+		if err := accountStakingGenesisValidation(vmParams, next, stakingFeat); err != nil {
 			return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
 		}
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedIdents)
 }
 
 func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, next *iotago.AccountOutput) error {
@@ -373,15 +373,6 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	manaIn := vmParams.WorkingSet.TotalManaIn
 	manaOut := vmParams.WorkingSet.TotalManaOut
 
-	// add the claimed mana rewards of the account in question
-	if manaReward, isClaiming := vmParams.WorkingSet.Rewards[next.ChainID()]; isClaiming {
-		var err error
-		manaIn, err = safemath.SafeAdd(manaIn, manaReward)
-		if err != nil {
-			return ierrors.Wrapf(iotago.ErrManaOverflow, "account %s mana rewards exceeds max mana, manaReward: %d, manaIn: %d, err: %w", next.AccountID, manaReward, manaIn, err)
-		}
-	}
-
 	// AccountInStored
 	manaStoredAccount, err := manaDecayProvider.ManaWithDecay(current.StoredMana(), input.OutputID.CreationSlot(), vmParams.WorkingSet.Tx.CreationSlot)
 	if err != nil {
@@ -453,9 +444,6 @@ func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *io
 	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
 
 	if currentStakingFeat != nil {
-		if next.FeatureSet().BlockIssuer() == nil {
-			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
-		}
 
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
@@ -470,9 +458,10 @@ func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *io
 
 		if futureBoundedEpoch <= currentStakingFeat.EndEpoch {
 			earliestUnbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
+			nextHasBlockIssuerFeat := next.FeatureSet().BlockIssuer() != nil
 
 			return accountStakingNonExpiredValidation(
-				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, isClaiming,
+				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, isClaiming, nextHasBlockIssuerFeat,
 			)
 		}
 
@@ -487,8 +476,8 @@ func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *io
 // Validates the rules for a newly added Staking Feature in an account,
 // or one which was effectively removed and added within the same transaction.
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
-func accountStakingGenesisValidation(vmParams *vm.Params, acc *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
-	if acc.Amount < stakingFeat.StakedAmount {
+func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
+	if next.Amount < stakingFeat.StakedAmount {
 		return iotago.ErrInvalidStakingAmountMismatch
 	}
 
@@ -511,7 +500,7 @@ func accountStakingGenesisValidation(vmParams *vm.Params, acc *iotago.AccountOut
 		return ierrors.Wrapf(iotago.ErrInvalidStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
-	if acc.FeatureSet().BlockIssuer() == nil {
+	if next.FeatureSet().BlockIssuer() == nil {
 		return iotago.ErrInvalidStakingBlockIssuerRequired
 	}
 
@@ -525,6 +514,7 @@ func accountStakingNonExpiredValidation(
 	nextStakingFeat *iotago.StakingFeature,
 	earliestUnbondingEpoch iotago.EpochIndex,
 	isClaiming bool,
+	nextHasBlockIssuerFeat bool,
 ) error {
 	if nextStakingFeat == nil {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBondedRemoval)
@@ -532,6 +522,10 @@ func accountStakingNonExpiredValidation(
 
 	if isClaiming {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingRewardClaim)
+	}
+
+	if !nextHasBlockIssuerFeat {
+		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
 	}
 
 	if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -674,7 +668,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) 
 //
 // On anchor state transitions: The StateIndex must be incremented by 1 and Only Amount, StateIndex and StateMetadata can be mutated.
 //
-// On anchor governance transition: Only StateController (must be mutated), GovernanceController and the MetadataBlock can be mutated.
+// On anchor governance transition: Only StateController, GovernanceController and the MetadataBlock can be mutated.
 func anchorSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.AnchorOutput) error {
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:

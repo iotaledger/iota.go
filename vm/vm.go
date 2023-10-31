@@ -73,6 +73,7 @@ func (workingSet *WorkingSet) UTXOInputAtIndex(inputIndex uint16) *iotago.UTXOIn
 
 func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStructure *iotago.StorageScoreStructure, txCreationSlot iotago.SlotIndex, inputSet InputSet, rewards RewardsInputSet) (iotago.Mana, error) {
 	var totalIn iotago.Mana
+
 	for outputID, input := range inputSet {
 		// stored Mana
 		manaStored, err := manaDecayProvider.ManaWithDecay(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
@@ -103,6 +104,15 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		}
 	}
 	// rewards
+	for _, reward := range rewards {
+		var err error
+		totalIn, err = safemath.SafeAdd(totalIn, reward)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+		}
+	}
+
+	// whether it's valid to claim rewards is checked in the delegation and staking STVFs.
 	for _, reward := range rewards {
 		var err error
 		totalIn, err = safemath.SafeAdd(totalIn, reward)

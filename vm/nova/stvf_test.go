@@ -120,7 +120,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 				Features: iotago.AccountOutputFeatures{
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -160,7 +160,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 				Features: iotago.AccountOutputFeatures{
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -200,7 +200,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 				Features: iotago.AccountOutputFeatures{
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -828,7 +828,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 							EndEpoch:     iotago.MaxEpochIndex,
 						},
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      990,
 						},
 					},
@@ -1086,7 +1086,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1127,7 +1127,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1165,7 +1165,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1203,7 +1203,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1245,7 +1245,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1294,7 +1294,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1332,7 +1332,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "ok - state transition",
+			name: "ok - foundry counter increased by number of new foundries",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 				Output: &iotago.AccountOutput{
@@ -1356,7 +1356,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1015,
 					},
 				},
@@ -1421,7 +1421,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1436,7 +1436,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -1478,7 +1478,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					ImmutableFeatures: iotago.AccountOutputImmFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      900,
 						},
 					},
@@ -1492,7 +1492,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      999,
 					},
 				},
@@ -1525,7 +1525,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      900,
 						},
 					},
@@ -1540,7 +1540,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      999,
 					},
 				},
@@ -1582,7 +1582,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1100,
 						},
 					},
@@ -1597,7 +1597,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      999,
 					},
 				},
@@ -1639,7 +1639,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1655,7 +1655,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -1697,7 +1697,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1712,7 +1712,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -1751,7 +1751,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1767,7 +1767,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.MetadataFeature{Data: []byte("1337")},
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      999,
 					},
 				},
@@ -1808,7 +1808,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+							BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 							ExpirySlot:      1000,
 						},
 					},
@@ -1825,7 +1825,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
-						BlockIssuerKeys: tpkg.RandomBlockIsssuerKeysEd25519(1),
+						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1000,
 					},
 				},
@@ -1880,7 +1880,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - state transition",
+			name: "fail - invalid foundry counters",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 				Output: &iotago.AccountOutput{

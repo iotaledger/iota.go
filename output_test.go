@@ -595,7 +595,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			wantErr: iotago.ErrAccountOutputNonEmptyState,
 		},
 		{
-			name: "fail - cyclic",
+			name: "fail - account's unlock condition contains its own account address",
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AccountOutput {
 					accountID := iotago.AccountID(tpkg.Rand32ByteArray())
@@ -681,7 +681,7 @@ func TestOutputsSyntacticalAnchor(t *testing.T) {
 			wantErr: iotago.ErrAnchorOutputNonEmptyState,
 		},
 		{
-			name: "fail - cyclic state controller",
+			name: "fail - anchors's state controller address unlock condition contains its own anchor address",
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AnchorOutput {
 					anchorID := iotago.AnchorID(tpkg.Rand32ByteArray())
@@ -700,7 +700,7 @@ func TestOutputsSyntacticalAnchor(t *testing.T) {
 			wantErr: iotago.ErrAnchorOutputCyclicAddress,
 		},
 		{
-			name: "fail - cyclic governance controller",
+			name: "fail - anchors's governor address unlock condition contains its own anchor address",
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.AnchorOutput {
 					anchorID := iotago.AnchorID(tpkg.Rand32ByteArray())
@@ -872,7 +872,7 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 			},
 		},
 		{
-			name: "fail - cyclic",
+			name: "fail - NFT's address unlock condition contains its own NFT address",
 			outputs: iotago.Outputs[iotago.Output]{
 				func() *iotago.NFTOutput {
 					nftID := iotago.NFTID(tpkg.Rand32ByteArray())
