@@ -93,8 +93,8 @@ func DelegationIDFromOutputID(outputID OutputID) DelegationID {
 }
 
 type (
-	delegationOutputUnlockCondition  interface{ UnlockCondition }
-	DelegationOutputUnlockConditions = UnlockConditions[delegationOutputUnlockCondition]
+	DelegationOutputUnlockCondition  interface{ UnlockCondition }
+	DelegationOutputUnlockConditions = UnlockConditions[DelegationOutputUnlockCondition]
 )
 
 // DelegationOutput is an output type used to implement delegation.

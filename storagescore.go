@@ -109,7 +109,7 @@ func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *S
 
 	dummyAddress := &Ed25519Address{}
 	dummyBasicOutput := &BasicOutput{
-		UnlockConditions: UnlockConditions[basicOutputUnlockCondition]{
+		UnlockConditions: UnlockConditions[BasicOutputUnlockCondition]{
 			&AddressUnlockCondition{
 				Address: dummyAddress,
 			},
@@ -160,8 +160,7 @@ func (r *StorageScoreStructure) MinDeposit(object NonEphemeralObject) (BaseToken
 // MinStorageDepositForReturnOutput returns the minimum storage costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *StorageScoreStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
-	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{UnlockConditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
-
+	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{UnlockConditions: UnlockConditions[BasicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
 }
 
 func (r StorageScoreParameters) Equals(other StorageScoreParameters) bool {

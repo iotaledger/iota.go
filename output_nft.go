@@ -84,12 +84,12 @@ func NFTIDFromOutputID(o OutputID) NFTID {
 }
 
 type (
-	nftOutputUnlockCondition  interface{ UnlockCondition }
-	nftOutputFeature          interface{ Feature }
-	nftOutputImmFeature       interface{ Feature }
-	NFTOutputUnlockConditions = UnlockConditions[nftOutputUnlockCondition]
-	NFTOutputFeatures         = Features[nftOutputFeature]
-	NFTOutputImmFeatures      = Features[nftOutputImmFeature]
+	NFTOutputUnlockCondition  interface{ UnlockCondition }
+	NFTOutputFeature          interface{ Feature }
+	NFTOutputImmFeature       interface{ Feature }
+	NFTOutputUnlockConditions = UnlockConditions[NFTOutputUnlockCondition]
+	NFTOutputFeatures         = Features[NFTOutputFeature]
+	NFTOutputImmFeatures      = Features[NFTOutputImmFeature]
 )
 
 // NFTOutput is an output type used to implement non-fungible tokens.
