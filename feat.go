@@ -172,14 +172,15 @@ func (f *Features[T]) Upsert(feature T) {
 }
 
 // Remove removes the feature with the given type.
-func (f *Features[T]) Remove(featureType FeatureType) {
+func (f *Features[T]) Remove(featureType FeatureType) bool {
 	for i, ele := range *f {
 		if ele.Type() == featureType {
 			*f = append((*f)[:i], (*f)[i+1:]...)
-
-			return
+			return true
 		}
 	}
+
+	return false
 }
 
 // Sort sorts the Features in place by type.

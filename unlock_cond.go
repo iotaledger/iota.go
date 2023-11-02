@@ -181,6 +181,18 @@ func (f *UnlockConditions[T]) Upsert(unlockCondition T) {
 	*f = append(*f, unlockCondition)
 }
 
+// Remove removes the given unlock condition if it exists.
+func (f *UnlockConditions[T]) Remove(unlockConditionType UnlockConditionType) bool {
+	for i, ele := range *f {
+		if ele.Type() == unlockConditionType {
+			*f = append((*f)[:i], (*f)[i+1:]...)
+			return true
+		}
+	}
+
+	return false
+}
+
 // Sort sorts the UnlockConditions in place by type.
 func (f UnlockConditions[T]) Sort() {
 	sort.Slice(f, func(i, j int) bool { return f[i].Type() < f[j].Type() })
