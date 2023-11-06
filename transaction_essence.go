@@ -106,9 +106,13 @@ func (u *TransactionEssence) WorkScore(workScoreParameters *WorkScoreParameters)
 	return workScoreContextInputs.Add(workScoreInputs, workScoreAllotments)
 }
 
-// syntacticallyValidate checks whether the transaction essence is syntactically valid.
+// SyntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) syntacticallyValidate(api API) error {
+func (u *TransactionEssence) SyntacticallyValidate(api API) error {
+	if err := BitMaskNonTrailingZeroBytesValidatorFunc(u.Capabilities); err != nil {
+		return ierrors.Wrapf(ErrTxEssenceCapabilitiesInvalid, "invalid capabilities bitmask: %w", err)
+	}
+
 	protoParams := api.ProtocolParameters()
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {

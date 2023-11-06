@@ -749,7 +749,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 
 	return &iotago.BasicBlockBody{
 		API:                api,
-		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
 		Payload:            payload,
@@ -760,7 +760,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
 	return &iotago.ValidationBlockBody{
 		API:                     api,
-		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.ValidationBlockMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
 		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,

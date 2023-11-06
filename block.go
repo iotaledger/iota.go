@@ -19,10 +19,10 @@ import (
 const (
 	// MaxBlockSize defines the maximum size of a block.
 	MaxBlockSize = 32768
-	// BlockMaxParents defines the maximum amount of parents in a block.
-	BlockMaxParents = 8
-	// BlockTypeValidationMaxParents defines the maximum amount of parents in a ValidationBlock. TODO: replace number with committee size.
-	BlockTypeValidationMaxParents = BlockMaxParents + 42
+	// BasicBlockMaxParents defines the maximum number of parents in a basic block.
+	BasicBlockMaxParents = 8
+	// ValidationBlockMaxParents defines the maximum number of parents in a ValidationBlock.
+	ValidationBlockMaxParents = 50
 
 	// block type + strong parents count + weak parents count + shallow like parents count + payload type + mana.
 	BasicBlockSizeEmptyParentsAndEmptyPayload = serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.OneByte + serializer.TypeDenotationByteSize + ManaSize
