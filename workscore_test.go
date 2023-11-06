@@ -32,12 +32,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 	output2 := &iotago.AccountOutput{
 		Amount: 1_000_000,
 		Conditions: iotago.AccountOutputUnlockConditions{
-			&iotago.StateControllerAddressUnlockCondition{
-				Address: addr,
-			},
-			&iotago.GovernorAddressUnlockCondition{
-				Address: addr,
-			},
+			&iotago.AddressUnlockCondition{addr},
 		},
 		Features: iotago.AccountOutputFeatures{
 			&iotago.BlockIssuerFeature{

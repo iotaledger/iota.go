@@ -23,6 +23,8 @@ const (
 var (
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
+	// ErrTxEssenceCapabilitiesInvalid gets returned when the capabilities within a Transaction are invalid.
+	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
@@ -34,8 +36,12 @@ var (
 	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
-	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the State/Governance controller.
-	ErrAccountOutputCyclicAddress = ierrors.New("account output's AccountID corresponds to state and/or governance controller")
+	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the address field within the output.
+	ErrAccountOutputCyclicAddress = ierrors.New("account output's ID corresponds to address field")
+	// ErrAnchorOutputNonEmptyState gets returned if an AnchorOutput with zeroed AnchorID contains state (counters non-zero etc.).
+	ErrAnchorOutputNonEmptyState = ierrors.New("anchor output is not empty state")
+	// ErrAnchorOutputCyclicAddress gets returned if an AnchorOutput's AnchorID results into the same address as the State/Governance controller.
+	ErrAnchorOutputCyclicAddress = ierrors.New("anchor output's AnchorID corresponds to state and/or governance controller")
 	// ErrNFTOutputCyclicAddress gets returned if an NFTOutput's NFTID results into the same address as the address field within the output.
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
 	// ErrDelegationValidatorAddressZeroed gets returned if a Delegation Output's Validator address is zeroed out.
@@ -248,7 +254,7 @@ func (t *Transaction) Size() int {
 func (t *Transaction) syntacticallyValidate(api API) error {
 	protoParams := api.ProtocolParameters()
 
-	if err := t.TransactionEssence.syntacticallyValidate(api); err != nil {
+	if err := t.TransactionEssence.SyntacticallyValidate(api); err != nil {
 		return err
 	}
 
@@ -259,6 +265,7 @@ func (t *Transaction) syntacticallyValidate(api API) error {
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAccount(),
+		OutputsSyntacticalAnchor(),
 		OutputsSyntacticalNFT(),
 		OutputsSyntacticalDelegation(),
 	)

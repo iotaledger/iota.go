@@ -91,14 +91,9 @@ func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *S
 		Amount:         0,
 		Mana:           0,
 		AccountID:      EmptyAccountID,
-		StateIndex:     0,
-		StateMetadata:  []byte{},
 		FoundryCounter: 0,
 		Conditions: AccountOutputUnlockConditions{
-			&GovernorAddressUnlockCondition{
-				Address: &Ed25519Address{},
-			},
-			&StateControllerAddressUnlockCondition{
+			&AddressUnlockCondition{
 				Address: &Ed25519Address{},
 			},
 		},

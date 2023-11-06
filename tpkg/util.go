@@ -749,7 +749,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 
 	return &iotago.BasicBlockBody{
 		API:                api,
-		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BlockMaxParents)),
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
 		WeakParents:        iotago.BlockIDs{},
 		ShallowLikeParents: iotago.BlockIDs{},
 		Payload:            payload,
@@ -760,7 +760,7 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
 	return &iotago.ValidationBlockBody{
 		API:                     api,
-		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.BlockTypeValidationMaxParents)),
+		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.ValidationBlockMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
 		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,
@@ -932,8 +932,8 @@ func RandEd25519PrivateKey() ed25519.PrivateKey {
 	return ed25519.NewKeyFromSeed(seed[:])
 }
 
-// RandomBlockIsssuerKeysEd25519 returns count random block issuer keys.
-func RandomBlockIsssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
+// RandomBlockIssuerKeysEd25519 returns count random block issuer keys.
+func RandomBlockIssuerKeysEd25519(count int) iotago.BlockIssuerKeys {
 	blockIssuerKeys := make(iotago.BlockIssuerKeys, 0, count)
 	for i := 0; i < count; i++ {
 		blockIssuerKeys = append(blockIssuerKeys, iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(Rand32ByteArray()))

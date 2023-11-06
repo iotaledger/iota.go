@@ -1,8 +1,11 @@
+//nolint:scopelint
 package iotago_test
 
 import (
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -31,6 +34,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
 	accountID := accountAddress.AccountID()
 
+	anchorAddress := iotago.AnchorAddressFromOutputID(inputIDs[0])
+	anchorID := anchorAddress.AnchorID()
+
 	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
 	nftID := nftAddress.NFTID()
 
@@ -50,18 +56,54 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
-							Amount:    OneMi,
+							Amount:    OneIOTA,
 							AccountID: accountID,
 							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+						&iotago.AccountOutput{
+							Amount:    OneIOTA,
+							AccountID: accountID,
+							Conditions: iotago.AccountOutputUnlockConditions{
+								&iotago.AddressUnlockCondition{Address: ident1},
+							},
+							Features: nil,
+						},
+					},
+				}),
+			target:    &iotago.SignedTransaction{},
+			seriErr:   iotago.ErrNonUniqueChainOutputs,
+			deSeriErr: nil,
+		},
+		{
+			// we transition the same Anchor twice
+			name: "transition the same Anchor twice",
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+				&iotago.Transaction{
+					API: tpkg.TestAPI,
+					TransactionEssence: &iotago.TransactionEssence{
+						NetworkID:     tpkg.TestNetworkID,
+						ContextInputs: iotago.TxEssenceContextInputs{},
+						Inputs:        inputIDs.UTXOInputs(),
+						Allotments:    iotago.Allotments{},
+						Capabilities:  iotago.TransactionCapabilitiesBitMask{},
+					},
+					Outputs: iotago.TxEssenceOutputs{
+						&iotago.AnchorOutput{
+							Amount:   OneIOTA,
+							AnchorID: anchorID,
+							Conditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
 						},
-						&iotago.AccountOutput{
-							Amount:    OneMi,
-							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AnchorOutput{
+							Amount:   OneIOTA,
+							AnchorID: anchorID,
+							Conditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -86,7 +128,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.NFTOutput{
-							Amount: OneMi,
+							Amount: OneIOTA,
 							NFTID:  nftID,
 							Conditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
@@ -94,7 +136,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Features: nil,
 						},
 						&iotago.NFTOutput{
-							Amount: OneMi,
+							Amount: OneIOTA,
 							NFTID:  nftID,
 							Conditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
@@ -120,16 +162,15 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 					},
 					Outputs: iotago.TxEssenceOutputs{
 						&iotago.AccountOutput{
-							Amount:    OneMi,
+							Amount:    OneIOTA,
 							AccountID: accountID,
 							Conditions: iotago.AccountOutputUnlockConditions{
-								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
 						},
 						&iotago.FoundryOutput{
-							Amount:       OneMi,
+							Amount:       OneIOTA,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),
@@ -142,7 +183,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Features: nil,
 						},
 						&iotago.FoundryOutput{
-							Amount:       OneMi,
+							Amount:       OneIOTA,
 							SerialNumber: 1,
 							TokenScheme: &iotago.SimpleTokenScheme{
 								MintedTokens:  big.NewInt(50),
@@ -211,5 +252,50 @@ func TestAllotmentUniqueness(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
+func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
+
+	type test struct {
+		name    string
+		tx      *iotago.Transaction
+		wantErr error
+	}
+
+	randTransactionWithCapabilities := func(capabilities iotago.TransactionCapabilitiesBitMask) *iotago.Transaction {
+		tx := tpkg.RandTransaction(tpkg.TestAPI)
+		tx.Capabilities = capabilities
+		return tx
+	}
+
+	tests := []*test{
+		{
+			name:    "ok - no trailing zero bytes",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{0x01}),
+			wantErr: nil,
+		},
+		{
+			name:    "ok - empty capabilities",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{}),
+			wantErr: nil,
+		},
+		{
+			name:    "fail - single zero byte",
+			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{0x00}),
+			wantErr: iotago.ErrBitmaskTrailingZeroBytes,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
 	}
 }
