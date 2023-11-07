@@ -7850,7 +7850,13 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		resolvedInputs.CommitmentInput = &tests[idx].resolvedCommitmentInput
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateAndExecuteSignedTransaction(tx, resolvedInputs)
+			var err error
+			// Some constraints are implicitly tested as part of the address restrictions, which are syntactic checks.
+			err = tx.Transaction.SyntacticallyValidate(tx.API)
+			if err == nil {
+				err = validateAndExecuteSignedTransaction(tx, resolvedInputs)
+			}
+
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
