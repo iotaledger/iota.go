@@ -701,6 +701,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		merklehasher.RegisterSerixRules[*APIByter[TxEssenceOutput]](api)
+		merklehasher.RegisterSerixRules[Identifier](api)
 	}
 
 	return v3
