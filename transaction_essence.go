@@ -108,7 +108,10 @@ func (u *TransactionEssence) WorkScore(workScoreParameters *WorkScoreParameters)
 
 // SyntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (u *TransactionEssence) SyntacticallyValidate(api API) error {
+//
+// This function includes "essence" in its name to disambiguate it from the "SyntacticallyValidate" function on the Transaction,
+// and since the essence is embedded in the Transaction a similar name could easily lead to confusion.
+func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 	if err := BitMaskNonTrailingZeroBytesValidatorFunc(u.Capabilities); err != nil {
 		return ierrors.Wrapf(ErrTxEssenceCapabilitiesInvalid, "invalid capabilities bitmask: %w", err)
 	}

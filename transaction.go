@@ -251,10 +251,10 @@ func (t *Transaction) Size() int {
 
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
-func (t *Transaction) syntacticallyValidate(api API) error {
+func (t *Transaction) SyntacticallyValidate(api API) error {
 	protoParams := api.ProtocolParameters()
 
-	if err := t.TransactionEssence.SyntacticallyValidate(api); err != nil {
+	if err := t.TransactionEssence.syntacticallyValidateEssence(api); err != nil {
 		return err
 	}
 
