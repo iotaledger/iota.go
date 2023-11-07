@@ -29,8 +29,6 @@ func TestOutputTypeString(t *testing.T) {
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
-	emptyAccountAddress := iotago.AccountAddress(iotago.EmptyAccountID)
-
 	tests := []deSerializeTest{
 		{
 			name: "ok - BasicOutput",
@@ -164,75 +162,6 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 			},
 			target: &iotago.DelegationOutput{},
-		},
-		{
-			name: "fail - Account Output contains Implicit Account Creation Address",
-			source: &iotago.AccountOutput{
-				Conditions: iotago.AccountOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
-				},
-			},
-			target:  &iotago.AccountOutput{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
-		},
-		{
-			name: "fail - Anchor Output contains Implicit Account Creation Address as State Controller",
-			source: &iotago.AnchorOutput{
-				Conditions: iotago.AnchorOutputUnlockConditions{
-					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
-					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-				},
-			},
-			target:  &iotago.AnchorOutput{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
-		},
-		{
-			name: "fail - Anchor Output contains Implicit Account Creation Address as Governor",
-			source: &iotago.AnchorOutput{
-				Conditions: iotago.AnchorOutputUnlockConditions{
-					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
-				},
-			},
-			target:  &iotago.AnchorOutput{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
-		},
-		{
-			name: "fail - NFT Output contains Implicit Account Creation Address",
-			source: &iotago.NFTOutput{
-				Conditions: iotago.NFTOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
-				},
-			},
-			target:  &iotago.NFTOutput{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
-		},
-		{
-			name: "fail - Delegation Output contains Implicit Account Creation Address",
-			source: &iotago.DelegationOutput{
-				Amount:           1337,
-				DelegatedAmount:  1337,
-				DelegationID:     tpkg.Rand32ByteArray(),
-				ValidatorAddress: tpkg.RandAccountAddress(),
-				StartEpoch:       iotago.EpochIndex(32),
-				EndEpoch:         iotago.EpochIndex(37),
-				Conditions: iotago.DelegationOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
-				},
-			},
-			target:  &iotago.DelegationOutput{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
-		},
-		{
-			name: "fail - Delegation Output contains empty validator address",
-			source: &iotago.DelegationOutput{
-				ValidatorAddress: &emptyAccountAddress,
-				Conditions: iotago.DelegationOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-				},
-			},
-			target:  &iotago.DelegationOutput{},
-			seriErr: iotago.ErrDelegationValidatorAddressEmpty,
 		},
 	}
 
@@ -939,7 +868,7 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationValidatorAddressZeroed,
+			wantErr: iotago.ErrDelegationValidatorAddressEmpty,
 		},
 	}
 	valFunc := iotago.OutputsSyntacticalDelegation()
@@ -1253,4 +1182,82 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestOutputsSyntacticDisallowedImplicitAccountCreationAddress(t *testing.T) {
+	type test struct {
+		name    string
+		output  iotago.Output
+		wantErr error
+	}
+
+	tests := []test{
+		{
+			name: "fail - Account Output contains Implicit Account Creation Address",
+			output: &iotago.AccountOutput{
+				Conditions: iotago.AccountOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Anchor Output contains Implicit Account Creation Address as State Controller",
+			output: &iotago.AnchorOutput{
+				Conditions: iotago.AnchorOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Anchor Output contains Implicit Account Creation Address as Governor",
+			output: &iotago.AnchorOutput{
+				Conditions: iotago.AnchorOutputUnlockConditions{
+					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - NFT Output contains Implicit Account Creation Address",
+			output: &iotago.NFTOutput{
+				Conditions: iotago.NFTOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+		{
+			name: "fail - Delegation Output contains Implicit Account Creation Address",
+			output: &iotago.DelegationOutput{
+				Amount:           1337,
+				DelegatedAmount:  1337,
+				DelegationID:     tpkg.Rand32ByteArray(),
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				StartEpoch:       iotago.EpochIndex(32),
+				EndEpoch:         iotago.EpochIndex(37),
+				Conditions: iotago.DelegationOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandImplicitAccountCreationAddress()},
+				},
+			},
+			wantErr: iotago.ErrImplicitAccountCreationAddressInInvalidOutput,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			implicitAccountCreationAddressValidatorFunc := iotago.OutputsSyntacticalImplicitAccountCreationAddress()
+
+			err := implicitAccountCreationAddressValidatorFunc(0, tt.output)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			}
+		})
+	}
+
 }

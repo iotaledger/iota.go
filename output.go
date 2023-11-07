@@ -488,6 +488,21 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
+		nativeTokenFeature := foundryOutput.FeatureSet().NativeToken()
+		if nativeTokenFeature == nil {
+			return nil
+		}
+
+		foundryID, err := foundryOutput.FoundryID()
+		if err != nil {
+			return err
+		}
+
+		// NativeTokenFeature ID should have the same ID as the foundry
+		if !foundryID.Matches(nativeTokenFeature.ID) {
+			return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
+		}
+
 		return nil
 	}
 }
@@ -524,7 +539,7 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 		}
 
 		if delegationOutput.ValidatorAddress.AccountID().Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
+			return ierrors.Wrapf(ErrDelegationValidatorAddressEmpty, "output %d", index)
 		}
 
 		return nil
@@ -611,10 +626,11 @@ func OutputsSyntacticalAddressRestrictions() OutputsSyntacticalValidationFunc {
 
 func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
-		// Foundry Outputs cannot contain non-Account Addresses in the first place,
-		// so they don't have to be checked.
 		switch typedOutput := output.(type) {
-		case *BasicOutput:
+		case *BasicOutput, *FoundryOutput:
+			// - Implicit Account Creation Addresses are allowed in Basic Outputs.
+			// - Foundry Outputs cannot contain non-Account Addresses in the first place,
+			// so they don't have to be checked.
 			return nil
 		case *AccountOutput, *NFTOutput, *DelegationOutput:
 			// The serialization rules enforce that these output types always have an address unlock condition set.

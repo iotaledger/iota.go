@@ -74,6 +74,9 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 			}
 
 			foundryBytes, err := tpkg.TestAPI.Encode(foundryIn, serix.WithValidation())
+			if err == nil {
+				err = iotago.OutputsSyntacticalFoundry()(0, foundryIn)
+			}
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 				return
