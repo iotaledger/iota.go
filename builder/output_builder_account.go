@@ -153,6 +153,13 @@ func (builder *AccountOutputBuilder) MustBuild() *iotago.AccountOutput {
 	return output
 }
 
+// RemoveFeature removes a feature from the output.
+func (builder *AccountOutputBuilder) RemoveFeature(featureType iotago.FeatureType) *AccountOutputBuilder {
+	builder.output.Features.Remove(featureType)
+
+	return builder
+}
+
 // BlockIssuerTransition narrows the builder functions to the ones available for an iotago.BlockIssuerFeature transition.
 // If BlockIssuerFeature does not exist, it creates and sets an empty feature.
 func (builder *AccountOutputBuilder) BlockIssuerTransition() *BlockIssuerTransition {

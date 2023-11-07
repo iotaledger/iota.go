@@ -26,6 +26,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
+		rewards:    iotago.Mana(0),
 	}
 }
 
@@ -36,6 +37,7 @@ type TransactionBuilder struct {
 	transaction      *iotago.Transaction
 	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
+	rewards          iotago.Mana
 }
 
 // TxInput defines an input with the address to unlock.
@@ -77,9 +79,24 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
-// AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
-	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, contextInput)
+// AddCommitmentInput adds the given commitment input to the builder.
+func (b *TransactionBuilder) AddCommitmentInput(commitmentInput *iotago.CommitmentInput) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, commitmentInput)
+
+	return b
+}
+
+// AddBlockIssuanceCreditInput adds the given block issuance credit input to the builder.
+func (b *TransactionBuilder) AddBlockIssuanceCreditInput(blockIssuanceCreditInput *iotago.BlockIssuanceCreditInput) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, blockIssuanceCreditInput)
+
+	return b
+}
+
+// AddRewardInput adds the given reward input to the builder.
+func (b *TransactionBuilder) AddRewardInput(rewardInput *iotago.RewardInput, mana iotago.Mana) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, rewardInput)
+	b.rewards += mana
 
 	return b
 }

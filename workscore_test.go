@@ -71,9 +71,9 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		}).
 		AddOutput(output1).
 		AddOutput(output2).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
-		AddContextInput(&iotago.BlockIssuanceCreditInput{AccountID: tpkg.RandAccountID()}).
-		AddContextInput(&iotago.RewardInput{Index: 0}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
+		AddBlockIssuanceCreditInput(&iotago.BlockIssuanceCreditInput{AccountID: tpkg.RandAccountID()}).
+		AddRewardInput(&iotago.RewardInput{Index: 0}, 0).
 		IncreaseAllotment(tpkg.RandAccountID(), tpkg.RandMana(10000)+1).
 		IncreaseAllotment(tpkg.RandAccountID(), tpkg.RandMana(10000)+1).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
