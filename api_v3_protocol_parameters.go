@@ -3,6 +3,7 @@ package iotago
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/iotaledger/hive.go/runtime/options"
@@ -11,6 +12,15 @@ import (
 // V3ProtocolParameters defines the parameters of the protocol.
 type V3ProtocolParameters struct {
 	basicProtocolParameters `serix:"0"`
+
+	hashIdentifier Identifier
+	hashOnce       sync.Once
+
+	bytes      []byte
+	bytesMutex sync.Mutex
+
+	networkID     NetworkID
+	networkIDOnce sync.Once
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
@@ -75,8 +85,11 @@ func (p *V3ProtocolParameters) TokenSupply() BaseToken {
 }
 
 func (p *V3ProtocolParameters) NetworkID() NetworkID {
-	// TODO: add sync.Once here?
-	return NetworkIDFromString(p.basicProtocolParameters.NetworkName)
+	p.networkIDOnce.Do(func() {
+		p.networkID = NetworkIDFromString(p.basicProtocolParameters.NetworkName)
+	})
+
+	return p.networkID
 }
 
 // GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
@@ -144,8 +157,26 @@ func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
-	// TODO: add sync.Once here?
-	return CommonSerixAPI().Encode(context.TODO(), p)
+	if len(p.bytes) > 0 {
+		return p.bytes, nil
+	}
+
+	p.bytesMutex.Lock()
+	defer p.bytesMutex.Unlock()
+
+	// Check if some other goroutine cached the bytes while waiting for the lock.
+	if len(p.bytes) > 0 {
+		return p.bytes, nil
+	}
+
+	bytes, err := CommonSerixAPI().Encode(context.TODO(), p)
+	if err != nil {
+		return nil, err
+	}
+
+	p.bytes = bytes
+
+	return p.bytes, nil
 }
 
 func (p *V3ProtocolParameters) Hash() (Identifier, error) {
@@ -154,8 +185,11 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 		return Identifier{}, err
 	}
 
-	// TODO: add sync.Once here?
-	return IdentifierFromData(bytes), nil
+	p.hashOnce.Do(func() {
+		p.hashIdentifier = IdentifierFromData(bytes)
+	})
+
+	return p.hashIdentifier, nil
 }
 
 func (p *V3ProtocolParameters) String() string {
