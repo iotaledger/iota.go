@@ -592,8 +592,7 @@ func checkAddressRestrictions(output TxEssenceOutput, address Address) error {
 	return nil
 }
 
-// OutputsSyntacticalAddressRestrictions returns a func that checks the capability flag restrictions on addresses, and checks that
-// no more than one Implicit Account Creation Address is on the input side of a transaction.
+// OutputsSyntacticalAddressRestrictions returns a func that checks the capability flag restrictions on addresses.
 //
 // Does not validate the Return Address in StorageDepositReturnUnlockCondition because such a Return Address
 // already is as restricted as the most restricted address.
