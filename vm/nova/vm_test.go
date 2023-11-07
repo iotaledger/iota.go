@@ -6999,7 +6999,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	require.NoError(t, validateAndExecuteSignedTransaction(tx, resolvedInputs))
 }
 
-func TestTxSemanticAddressRestrictions(t *testing.T) {
+func TestTxSyntacticAddressRestrictions(t *testing.T) {
 	type testParameters struct {
 		name    string
 		address iotago.Address
@@ -7012,8 +7012,6 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
 	addr := tpkg.RandEd25519Address()
-
-	iotago.RestrictedAddressWithCapabilities(addr)
 
 	tests := []*test{
 		{
@@ -7328,6 +7326,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 		transaction := &iotago.Transaction{
 			API: testAPI,
 			TransactionEssence: &iotago.TransactionEssence{
+				NetworkID:    testAPI.ProtocolParameters().NetworkID(),
 				Inputs:       inputIDs.UTXOInputs(),
 				CreationSlot: 10,
 			},
@@ -7347,9 +7346,8 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 			t.Run(testInput.name, func(t *testing.T) {
 				testOutput := tt.createTestOutput(testInput.address)
 
-				inputs, sig, transaction := makeTransaction(testOutput)
+				_, sig, transaction := makeTransaction(testOutput)
 
-				resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 				tx := &iotago.SignedTransaction{
 					API:         testAPI,
 					Transaction: transaction,
@@ -7358,13 +7356,18 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				_, err := novaVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAtMostOneImplicitAccountCreationAddress())
-				if testInput.wantErr != nil {
-					require.ErrorIs(t, err, testInput.wantErr)
-					return
-				}
+				addressRestrictionFunc := iotago.OutputsSyntacticalAddressRestrictions()
 
-				require.NoError(t, err)
+				for index, output := range tx.Transaction.Outputs {
+					err := addressRestrictionFunc(index, output)
+
+					if testInput.wantErr != nil {
+						require.ErrorIs(t, err, testInput.wantErr)
+						return
+					}
+
+					require.NoError(t, err)
+				}
 			})
 		}
 	}
