@@ -609,6 +609,35 @@ func OutputsSyntacticalAddressRestrictions() OutputsSyntacticalValidationFunc {
 	}
 }
 
+func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		// Foundry Outputs cannot contain non-Account Addresses in the first place,
+		// so they don't have to be checked.
+		switch typedOutput := output.(type) {
+		case *BasicOutput:
+			return nil
+		case *AccountOutput, *NFTOutput, *DelegationOutput:
+			// The serialization rules enforce that these output types always have an address unlock condition set.
+			if output.UnlockConditionSet().Address().Address.Type() == AddressImplicitAccountCreation {
+				return ErrImplicitAccountCreationAddressInInvalidOutput
+			}
+		case *AnchorOutput:
+			// The serialization rules enforce that these addresses are always set.
+			stateControllerAddress := typedOutput.Conditions.MustSet().StateControllerAddress().Address
+			governorAddress := typedOutput.Conditions.MustSet().GovernorAddress().Address
+
+			if (stateControllerAddress.Type() == AddressImplicitAccountCreation) ||
+				(governorAddress.Type() == AddressImplicitAccountCreation) {
+				return ErrImplicitAccountCreationAddressInInvalidOutput
+			}
+		default:
+			panic("unrecognized output type")
+		}
+
+		return nil
+	}
+}
+
 // SyntacticallyValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
 func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...OutputsSyntacticalValidationFunc) error {
 	for i, output := range outputs {

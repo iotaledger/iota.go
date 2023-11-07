@@ -269,6 +269,7 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 		OutputsSyntacticalNFT(),
 		OutputsSyntacticalDelegation(),
 		OutputsSyntacticalAddressRestrictions(),
+		OutputsSyntacticalImplicitAccountCreationAddress(),
 	)
 }
 
