@@ -7358,7 +7358,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				_, err := novaVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
+				_, err := novaVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAtMostOneImplicitAccountCreationAddress())
 				if testInput.wantErr != nil {
 					require.ErrorIs(t, err, testInput.wantErr)
 					return
