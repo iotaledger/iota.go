@@ -341,6 +341,7 @@ type AvailableManaResult struct {
 	UnboundPotentialMana iotago.Mana
 	UnboundStoredMana    iotago.Mana
 	AccountBoundMana     map[iotago.AccountID]iotago.Mana
+	Rewards              iotago.Mana
 }
 
 func (a *AvailableManaResult) addTotalMana(value iotago.Mana) error {
@@ -399,6 +400,16 @@ func (a *AvailableManaResult) AddUnboundStoredMana(value iotago.Mana) error {
 		return ierrors.Wrap(err, "failed to add unbound stored mana")
 	}
 	a.UnboundStoredMana = unboundStoredMana
+
+	return a.addUnboundMana(value)
+}
+
+func (a *AvailableManaResult) AddRewards(value iotago.Mana) error {
+	rewards, err := safemath.SafeAdd(a.Rewards, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add rewards")
+	}
+	a.Rewards = rewards
 
 	return a.addUnboundMana(value)
 }
@@ -471,6 +482,11 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 				return nil, err
 			}
 		}
+	}
+
+	// add the rewards (unbound)
+	if err := result.AddRewards(b.rewards); err != nil {
+		return nil, err
 	}
 
 	return result, nil
