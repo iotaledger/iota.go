@@ -90,7 +90,7 @@ var (
 
 	anchorOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
-		Max: 2, // Max: SenderFeature, MetadataFeature
+		Max: 3, // Max: SenderFeature, MetadataFeature, GovernorMetadataFeature
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -340,9 +340,33 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(IssuerFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureIssuer))),
 		)
+
+		must(api.RegisterTypeSettings(MetadataFeatureEntriesKey(""),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxLen(64)),
+		)
+		must(api.RegisterTypeSettings(MetadataFeatureEntriesValue{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithMinLen(0).WithMaxLen(1000)),
+		)
+		must(api.RegisterTypeSettings(MetadataFeatureEntries{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxLen(64).WithMaxByteSize(8192)),
+		)
 		must(api.RegisterTypeSettings(MetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))),
 		)
+
+		must(api.RegisterTypeSettings(GovernorMetadataFeatureEntriesKey(""),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxLen(64)),
+		)
+		must(api.RegisterTypeSettings(GovernorMetadataFeatureEntriesValue{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithMinLen(0).WithMaxLen(1000)),
+		)
+		must(api.RegisterTypeSettings(GovernorMetadataFeatureEntries{},
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxLen(64).WithMaxByteSize(8192)),
+		)
+		must(api.RegisterTypeSettings(GovernorMetadataFeature{},
+			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadataGovernor))),
+		)
+
 		must(api.RegisterTypeSettings(TagFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureTag))),
 		)
@@ -358,6 +382,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*Feature)(nil), (*GovernorMetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*TagFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*NativeTokenFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*Feature)(nil), (*BlockIssuerFeature)(nil)))
@@ -496,6 +521,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*GovernorMetadataFeature)(nil)))
 
 		must(api.RegisterTypeSettings(AnchorOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3ImmFeatBlocksArrRules),

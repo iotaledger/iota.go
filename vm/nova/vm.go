@@ -1,7 +1,6 @@
 package nova
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/iotaledger/hive.go/core/safemath"
@@ -734,8 +733,10 @@ func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutpu
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
 	case current.StateIndex != next.StateIndex:
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
-	case !bytes.Equal(current.StateMetadata, next.StateMetadata):
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "state metadata changed, in %v / out %v", current.StateMetadata, next.StateMetadata)
+	}
+
+	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "%w", err)
 	}
 
 	return nil
@@ -753,7 +754,7 @@ func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) er
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
 	}
 
-	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+	if err := iotago.FeatureUnchanged(iotago.FeatureMetadataGovernor, current.Features.MustSet(), next.Features.MustSet()); err != nil {
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "%w", err)
 	}
 

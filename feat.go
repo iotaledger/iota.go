@@ -39,6 +39,8 @@ const (
 	FeatureIssuer
 	// FeatureMetadata denotes a MetadataFeature.
 	FeatureMetadata
+	// FeatureMetadataGovernor denotes a GovernorMetadataFeature.
+	FeatureMetadataGovernor
 	// FeatureTag denotes a TagFeature.
 	FeatureTag
 	// NativeTokenFeature denotes a NativeTokenFeature.
@@ -58,7 +60,14 @@ func (featType FeatureType) String() string {
 }
 
 var featNames = [FeatureStaking + 1]string{
-	"SenderFeature", "IssuerFeature", "MetadataFeature", "TagFeature", "NativeTokenFeature", "BlockIssuerFeature", "StakingFeature",
+	"SenderFeature",
+	"IssuerFeature",
+	"MetadataFeature",
+	"GovernorMetadataFeature",
+	"TagFeature",
+	"NativeTokenFeature",
+	"BlockIssuerFeature",
+	"StakingFeature",
 }
 
 // Features is a slice of Feature(s).
@@ -192,28 +201,6 @@ func (f FeatureSet) Issuer() *IssuerFeature {
 	return b.(*IssuerFeature)
 }
 
-// BlockIssuer returns the BlockIssuerFeature in the set or nil.
-func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
-	b, has := f[FeatureBlockIssuer]
-	if !has {
-		return nil
-	}
-
-	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuerFeature
-	return b.(*BlockIssuerFeature)
-}
-
-// Staking returns the StakingFeature in the set or nil.
-func (f FeatureSet) Staking() *StakingFeature {
-	b, has := f[FeatureStaking]
-	if !has {
-		return nil
-	}
-
-	//nolint:forcetypeassert // we can safely assume that this is a StakingFeature
-	return b.(*StakingFeature)
-}
-
 // Metadata returns the MetadataFeature in the set or nil.
 func (f FeatureSet) Metadata() *MetadataFeature {
 	b, has := f[FeatureMetadata]
@@ -223,6 +210,17 @@ func (f FeatureSet) Metadata() *MetadataFeature {
 
 	//nolint:forcetypeassert // we can safely assume that this is a MetadataFeature
 	return b.(*MetadataFeature)
+}
+
+// GovernorMetadata returns the GovernorMetadataFeature in the set or nil.
+func (f FeatureSet) GovernorMetadata() *GovernorMetadataFeature {
+	b, has := f[FeatureMetadataGovernor]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a GovernorMetadataFeature
+	return b.(*GovernorMetadataFeature)
 }
 
 // Tag returns the TagFeature in the set or nil.
@@ -251,6 +249,28 @@ func (f FeatureSet) NativeToken() *NativeTokenFeature {
 
 	//nolint:forcetypeassert // we can safely assume that this is a NativeTokenFeature
 	return b.(*NativeTokenFeature)
+}
+
+// BlockIssuer returns the BlockIssuerFeature in the set or nil.
+func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
+	b, has := f[FeatureBlockIssuer]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuerFeature
+	return b.(*BlockIssuerFeature)
+}
+
+// Staking returns the StakingFeature in the set or nil.
+func (f FeatureSet) Staking() *StakingFeature {
+	b, has := f[FeatureStaking]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a StakingFeature
+	return b.(*StakingFeature)
 }
 
 // EveryTuple runs f for every key which exists in both this set and other.

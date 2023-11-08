@@ -17,7 +17,7 @@ import (
 type fieldMutations map[string]interface{}
 
 //nolint:thelper
-func copyObject(t *testing.T, source any, mutations fieldMutations) any {
+func copyObjectAndMutate(t *testing.T, source any, mutations fieldMutations) any {
 	srcBytes, err := tpkg.TestAPI.Encode(source)
 	require.NoError(t, err)
 
@@ -1354,7 +1354,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				FoundryCounter: 7,
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: exampleAddress},
-					&iotago.MetadataFeature{Data: []byte("1337")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
 						ExpirySlot:      1015,
@@ -1652,7 +1652,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
-					&iotago.MetadataFeature{Data: []byte("1337")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
@@ -1764,7 +1764,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
-					&iotago.MetadataFeature{Data: []byte("1337")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
 					&iotago.SenderFeature{Address: exampleAddress},
 					&iotago.BlockIssuerFeature{
 						BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
@@ -1927,7 +1927,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.input.Output, muts).(*iotago.AccountOutput)
+					cpy := copyObjectAndMutate(t, tt.input.Output, muts).(*iotago.AccountOutput)
 
 					createWorkingSet(t, tt.input, tt.svCtx.WorkingSet)
 
@@ -2044,6 +2044,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					StateIndex: 10,
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
+					},
 				},
 			},
 			next: &iotago.AnchorOutput{
@@ -2057,7 +2060,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				},
 				Features: iotago.AnchorOutputFeatures{
 					&iotago.SenderFeature{Address: exampleGovCtrl},
-					&iotago.MetadataFeature{Data: []byte("1337")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
+					// adding governor metadata feature
+					&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2093,6 +2098,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					StateIndex: 10,
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
+					},
 				},
 			},
 			next: &iotago.AnchorOutput{
@@ -2102,10 +2110,12 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
-				StateIndex:    11,
-				StateMetadata: []byte("1337"),
+				StateIndex: 11,
 				Features: iotago.AnchorOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
+					// adding metadata feature
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
+					&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2138,7 +2148,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-						&iotago.MetadataFeature{Data: []byte("1337")},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
 					},
 					StateIndex: 10,
 				},
@@ -2152,7 +2162,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				},
 				StateIndex: 10,
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-					&iotago.MetadataFeature{Data: []byte("1338")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1338")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2183,7 +2193,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-						&iotago.MetadataFeature{Data: []byte("1337")},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
 					},
 					StateIndex: 10,
 				},
@@ -2197,7 +2207,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				},
 				StateIndex: 11,
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-					&iotago.MetadataFeature{Data: []byte("1338")},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1338")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2228,14 +2238,27 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{
+							Entries: iotago.MetadataFeatureEntries{
+								"data": []byte("foo"),
+							},
+						},
+					},
 				},
 			},
 			nextMut: map[string]fieldMutations{
 				"amount": {
 					"Amount": iotago.BaseToken(1337),
 				},
-				"state_metadata": {
-					"StateMetadata": []byte("7331"),
+				"metadata_feature_changed": {
+					"Features": iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{
+							Entries: iotago.MetadataFeatureEntries{
+								"data": []byte("bar"),
+							},
+						},
+					},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2264,6 +2287,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("foo")}},
+					},
 					ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 						&iotago.IssuerFeature{Address: exampleIssuer},
 					},
@@ -2290,10 +2316,10 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				"state_index_bigger_more_than_1": {
 					"StateIndex": uint32(7),
 				},
-				"metadata_feature_added": {
+				"governance_metadata_feature_changed": {
 					"StateIndex": uint32(11),
 					"Features": iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{Data: []byte("foo")},
+						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("bar")}},
 					},
 				},
 			},
@@ -2321,7 +2347,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.input.Output, muts).(*iotago.AnchorOutput)
+					cpy := copyObjectAndMutate(t, tt.input.Output, muts).(*iotago.AnchorOutput)
 
 					createWorkingSet(t, tt.input, tt.svCtx.WorkingSet)
 
@@ -2540,7 +2566,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			nextMut: map[string]fieldMutations{
 				"change_metadata": {
 					"Features": iotago.FoundryOutputFeatures{
-						&iotago.MetadataFeature{Data: tpkg.RandBytes(20)},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(20)}},
 					},
 				},
 			},
@@ -2850,7 +2876,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.input.Output, muts).(*iotago.FoundryOutput)
+					cpy := copyObjectAndMutate(t, tt.input.Output, muts).(*iotago.FoundryOutput)
 
 					createWorkingSet(t, tt.input, tt.svCtx.WorkingSet)
 
@@ -2891,7 +2917,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		},
 		ImmutableFeatures: iotago.NFTOutputImmFeatures{
 			&iotago.IssuerFeature{Address: exampleIssuer},
-			&iotago.MetadataFeature{Data: []byte("some-ipfs-link")},
+			&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some-ipfs-link")}},
 		},
 	}
 
@@ -2986,7 +3012,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			nextMut: map[string]fieldMutations{
 				"immutable_metadata": {
 					"ImmutableFeatures": iotago.NFTOutputImmFeatures{
-						&iotago.MetadataFeature{Data: []byte("link-to-cat.gif")},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("link-to-cat.gif")}},
 					},
 				},
 				"issuer": {
@@ -3016,7 +3042,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.input.Output, muts).(*iotago.NFTOutput)
+					cpy := copyObjectAndMutate(t, tt.input.Output, muts).(*iotago.NFTOutput)
 
 					createWorkingSet(t, tt.input, tt.svCtx.WorkingSet)
 
@@ -3546,7 +3572,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 		if tt.nextMut != nil {
 			for mutName, muts := range tt.nextMut {
 				t.Run(fmt.Sprintf("%s_%s", tt.name, mutName), func(t *testing.T) {
-					cpy := copyObject(t, tt.input.Output, muts).(*iotago.DelegationOutput)
+					cpy := copyObjectAndMutate(t, tt.input.Output, muts).(*iotago.DelegationOutput)
 
 					createWorkingSet(t, tt.input, tt.svCtx.WorkingSet)
 

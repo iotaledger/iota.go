@@ -360,43 +360,46 @@ func TestNovaTransactionExecution(t *testing.T) {
 				// anchor output with no features - state index 0 [defaultAmount] (owned by - state: ident3, gov: ident4) => going to be governance transitioned
 				// => output 8: governance transition (added metadata)
 				anchor1InputID: &iotago.AnchorOutput{
-					Amount:        defaultAmount,
-					AnchorID:      anchor1AnchorID,
-					StateIndex:    0,
-					StateMetadata: []byte("gov transitioning"),
+					Amount:     defaultAmount,
+					AnchorID:   anchor1AnchorID,
+					StateIndex: 0,
 					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
-					Features: nil,
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("gov transitioning")}},
+					},
 				},
 
 				// anchor output with no features - state index 5 [defaultAmount] (owned by - state: ident3, gov: ident4) => going to be state transitioned
 				// => output 9: state transition (state index 5 => 6, changed state metadata)
 				anchor2InputID: &iotago.AnchorOutput{
-					Amount:        defaultAmount,
-					AnchorID:      anchor2AnchorID,
-					StateIndex:    5,
-					StateMetadata: []byte("state transitioning"),
+					Amount:     defaultAmount,
+					AnchorID:   anchor2AnchorID,
+					StateIndex: 5,
 					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
-					Features: nil,
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("state transitioning")}},
+					},
 				},
 
 				// anchor output with no features - state index 0 [defaultAmount] (owned by - state: ident3, gov: ident3) => going to be destroyed
 				// => output 10: destroyed and new anchor output created
 				inputIDs[10]: &iotago.AnchorOutput{
-					Amount:        defaultAmount,
-					AnchorID:      iotago.AnchorID{},
-					StateIndex:    0,
-					StateMetadata: []byte("going to be destroyed"),
+					Amount:     defaultAmount,
+					AnchorID:   iotago.AnchorID{},
+					StateIndex: 0,
 					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 						&iotago.GovernorAddressUnlockCondition{Address: ident3},
 					},
-					Features: nil,
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("going to be destroyed")}},
+					},
 				},
 
 				// foundry output - serialNumber: 1, minted: 100, melted: 0, max: 1000 [defaultAmount] (owned by account1AccountAddress)
@@ -479,7 +482,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.IssuerFeature{Address: ident3},
 					},
 					ImmutableFeatures: iotago.NFTOutputImmFeatures{
-						&iotago.MetadataFeature{Data: []byte("transfer to 4")},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("transfer to 4")}},
 					},
 				},
 
@@ -495,7 +498,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.IssuerFeature{Address: ident3},
 					},
 					ImmutableFeatures: iotago.NFTOutputImmFeatures{
-						&iotago.MetadataFeature{Data: []byte("going to be destroyed")},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("going to be destroyed")}},
 					},
 				},
 
@@ -623,7 +626,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 						Features: iotago.AccountOutputFeatures{
-							&iotago.MetadataFeature{Data: []byte("transitioned")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("transitioned")}},
 						},
 					},
 
@@ -637,52 +640,57 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident3},
 						},
 						Features: iotago.AccountOutputFeatures{
-							&iotago.MetadataFeature{Data: []byte("new")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("new")}},
 						},
 					},
 
 					// governance transitioned anchor output [defaultAmount] (owned by - state: ident3, gov: ident4)
 					// => input 8
 					&iotago.AnchorOutput{
-						Amount:        defaultAmount,
-						AnchorID:      anchor1AnchorID,
-						StateIndex:    0,
-						StateMetadata: []byte("gov transitioning"),
+						Amount:     defaultAmount,
+						AnchorID:   anchor1AnchorID,
+						StateIndex: 0,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
 						Features: iotago.AnchorOutputFeatures{
-							&iotago.MetadataFeature{Data: []byte("the gov mutation on this output")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("gov transitioning")}},
+							&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("the gov mutation on this output")}},
 						},
 					},
 
 					// state transitioned anchor output [defaultAmount] (owned by - state: ident3, gov: ident4)
 					// => input 9
 					&iotago.AnchorOutput{
-						Amount:        defaultAmount,
-						AnchorID:      anchor2AnchorID,
-						StateIndex:    6,
-						StateMetadata: []byte("next state"),
+						Amount:     defaultAmount,
+						AnchorID:   anchor2AnchorID,
+						StateIndex: 6,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Features: nil,
+						Features: iotago.AnchorOutputFeatures{
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{
+								"data":  []byte("state transitioning"),
+								"added": []byte("next state"),
+							}},
+						},
 					},
 
 					// new anchor output [defaultAmount] (owned by - state: ident3, gov: ident4)
 					// => input 10
 					&iotago.AnchorOutput{
-						Amount:        defaultAmount,
-						AnchorID:      iotago.AnchorID{},
-						StateIndex:    0,
-						StateMetadata: []byte("a new anchor output"),
+						Amount:     defaultAmount,
+						AnchorID:   iotago.AnchorID{},
+						StateIndex: 0,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: ident3},
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
-						Features: nil,
+						Features: iotago.AnchorOutputFeatures{
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("a new anchor output")}},
+						},
 					},
 
 					// foundry output - serialNumber: 1, minted: 200, melted: 0, max: 1000 [defaultAmount] (owned by account1AccountAddress)
@@ -743,7 +751,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.ImmutableAccountUnlockCondition{Address: account1AccountAddress},
 						},
 						Features: iotago.FoundryOutputFeatures{
-							&iotago.MetadataFeature{Data: []byte("interesting metadata")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("interesting metadata")}},
 						},
 					},
 
@@ -773,7 +781,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.IssuerFeature{Address: ident3},
 						},
 						ImmutableFeatures: iotago.NFTOutputImmFeatures{
-							&iotago.MetadataFeature{Data: []byte("transfer to 4")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("transfer to 4")}},
 						},
 					},
 
@@ -787,7 +795,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						},
 						Features: nil,
 						ImmutableFeatures: iotago.NFTOutputImmFeatures{
-							&iotago.MetadataFeature{Data: []byte("immutable metadata")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable metadata")}},
 						},
 					},
 
@@ -1630,15 +1638,16 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 						return []iotago.Output{
 							// we add an output with a Ed25519 address to be able to check the AnchorUnlock in the RestrictedAddress
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    1,
-								StateMetadata: []byte("current state"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 1,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("current state")}},
+								},
 							},
 							// owned by restricted anchor address
 							&iotago.BasicOutput{
@@ -1653,15 +1662,16 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 						return iotago.TxEssenceOutputs{
 							// the anchor unlock needs to be a state transition (governor doesn't work for anchor reference unlocks)
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    2,
-								StateMetadata: []byte("next state"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 2,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("next state")}},
+								},
 							},
 							&iotago.BasicOutput{
 								Amount: totalInputAmount - defaultAmount,
@@ -1711,7 +1721,7 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							// owned by restricted NFT address
@@ -1733,10 +1743,10 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 								},
 								Features: iotago.NFTOutputFeatures{
 									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
-									&iotago.MetadataFeature{Data: []byte("some new metadata")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -1799,7 +1809,7 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							// owned by restricted multi address
@@ -1821,10 +1831,10 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 								},
 								Features: iotago.NFTOutputFeatures{
 									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
-									&iotago.MetadataFeature{Data: []byte("some new metadata")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2398,15 +2408,16 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						return []iotago.Output{
 							// we add an output with a Ed25519 address to be able to check the AnchorUnlock in the MultiAddress
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    1,
-								StateMetadata: []byte("current state"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 1,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("current state")}},
+								},
 							},
 							&iotago.BasicOutput{
 								Amount: defaultAmount,
@@ -2427,15 +2438,16 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						return iotago.TxEssenceOutputs{
 							// the anchor unlock needs to be a state transition (governor doesn't work for anchor reference unlocks)
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    2,
-								StateMetadata: []byte("next state"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 2,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("next state")}},
+								},
 							},
 							&iotago.BasicOutput{
 								Amount: totalInputAmount - defaultAmount,
@@ -2533,15 +2545,16 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						return []iotago.Output{
 							// we add an output with a Ed25519 address to be able to check the AnchorUnlock in the MultiAddress
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    1,
-								StateMetadata: []byte("governance transition"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 1,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("governance transition")}},
+								},
 							},
 							&iotago.BasicOutput{
 								Amount: defaultAmount,
@@ -2562,15 +2575,16 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						return iotago.TxEssenceOutputs{
 							// the anchor unlock needs to be a state transition (governor doesn't work for anchor reference unlocks)
 							&iotago.AnchorOutput{
-								Amount:        defaultAmount,
-								AnchorID:      testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
-								StateIndex:    1,
-								StateMetadata: []byte("governance transition"),
+								Amount:     defaultAmount,
+								AnchorID:   testAddresses[0].(*iotago.AnchorAddress).AnchorID(),
+								StateIndex: 1,
 								UnlockConditions: iotago.AnchorOutputUnlockConditions{
 									&iotago.StateControllerAddressUnlockCondition{Address: ed25519Addresses[0]},
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
-								Features: nil,
+								Features: iotago.AnchorOutputFeatures{
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("governance transition")}},
+								},
 							},
 							&iotago.BasicOutput{
 								Amount: totalInputAmount - defaultAmount,
@@ -2677,7 +2691,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2705,10 +2719,10 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 								},
 								Features: iotago.NFTOutputFeatures{
 									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
-									&iotago.MetadataFeature{Data: []byte("some new metadata")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
-									&iotago.MetadataFeature{Data: []byte("immutable")},
+									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -4962,7 +4976,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 							&iotago.AddressUnlockCondition{Address: ident2},
 						},
 						Features: iotago.BasicOutputFeatures{
-							&iotago.MetadataFeature{Data: []byte("foo")},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("foo")}},
 						},
 					},
 				},

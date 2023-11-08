@@ -42,7 +42,11 @@ func TestFeaturesDeSerialize(t *testing.T) {
 		{
 			name: "ok - MetadataFeature",
 			source: &iotago.MetadataFeature{
-				Data: []byte("hello world"),
+				Entries: iotago.MetadataFeatureEntries{
+					"hello":    []byte("world"),
+					"did:iota": []byte("hello digital autonomy"),
+					"empty":    []byte(""),
+				},
 			},
 			target: &iotago.MetadataFeature{},
 		},
