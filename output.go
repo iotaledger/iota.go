@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/iotaledger/hive.go/constraints"
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -388,6 +389,28 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 
 		if nativeToken.Amount.Cmp(common.Big0) == 0 {
 			return ierrors.Wrapf(ErrNativeTokenAmountLessThanEqualZero, "output %d", index)
+		}
+
+		return nil
+	}
+}
+
+// OutputsSyntacticalStoredMana returns an OutputsSyntacticalValidationFunc which checks that:
+//   - the sum of all stored mana fields does not exceed 2^(Mana Bits Count) - 1.
+func OutputsSyntacticalStoredMana(maxManaValue Mana) OutputsSyntacticalValidationFunc {
+	var sum Mana
+
+	return func(index int, output Output) error {
+		storedMana := output.StoredMana()
+
+		var err error
+		sum, err = safemath.SafeAdd(sum, storedMana)
+		if err != nil {
+			return ierrors.Errorf("%w: %w: stored mana sum calculation failed at output %d", ErrMaxManaExceeded, err, index)
+		}
+
+		if sum > maxManaValue {
+			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of stored mana exceeds max value with output %d", index)
 		}
 
 		return nil
