@@ -35,27 +35,27 @@ func (w WorkScore) Multiply(in int) (WorkScore, error) {
 
 type WorkScoreParameters struct {
 	// DataByte accounts for the network traffic per byte.
-	DataByte WorkScore `serix:"0,mapKey=dataByte"`
+	DataByte WorkScore `serix:""`
 	// Block accounts for work done to process a block in the node software.
-	Block WorkScore `serix:"1,mapKey=block"`
+	Block WorkScore `serix:""`
 	// Input accounts for loading the UTXO from the database and performing the mana calculations.
-	Input WorkScore `serix:"2,mapKey=input"`
+	Input WorkScore `serix:""`
 	// ContextInput accounts for loading and checking the context input.
-	ContextInput WorkScore `serix:"3,mapKey=contextInput"`
+	ContextInput WorkScore `serix:""`
 	// Output accounts for storing the UTXO in the database.
-	Output WorkScore `serix:"4,mapKey=output"`
+	Output WorkScore `serix:""`
 	// NativeToken accounts for calculations done with native tokens.
-	NativeToken WorkScore `serix:"5,mapKey=nativeToken"`
+	NativeToken WorkScore `serix:""`
 	// Staking accounts for the existence of a staking feature in the output.
 	// The node might need to update the staking vector.
-	Staking WorkScore `serix:"6,mapKey=staking"`
+	Staking WorkScore `serix:""`
 	// BlockIssuer accounts for the existence of a block issuer feature in the output.
 	// The node might need to update the available public keys that are allowed to issue blocks.
-	BlockIssuer WorkScore `serix:"7,mapKey=blockIssuer"`
+	BlockIssuer WorkScore `serix:""`
 	// Allotment accounts for accessing the account based ledger to transform the mana to block issuance credits.
-	Allotment WorkScore `serix:"8,mapKey=allotment"`
+	Allotment WorkScore `serix:""`
 	// SignatureEd25519 accounts for an Ed25519 signature check.
-	SignatureEd25519 WorkScore `serix:"9,mapKey=signatureEd25519"`
+	SignatureEd25519 WorkScore `serix:""`
 }
 
 func (w WorkScoreParameters) Equals(other WorkScoreParameters) bool {

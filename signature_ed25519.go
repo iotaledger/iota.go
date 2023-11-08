@@ -25,9 +25,9 @@ var (
 // Ed25519Signature defines an Ed25519 signature.
 type Ed25519Signature struct {
 	// The public key used to verify the given signature.
-	PublicKey [ed25519.PublicKeySize]byte `serix:"0,mapKey=publicKey"`
+	PublicKey [ed25519.PublicKeySize]byte `serix:""`
 	// The signature.
-	Signature [ed25519.SignatureSize]byte `serix:"1,mapKey=signature"`
+	Signature [ed25519.SignatureSize]byte `serix:""`
 }
 
 func (e *Ed25519Signature) Clone() Signature {

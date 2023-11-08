@@ -9,14 +9,14 @@ import (
 )
 
 type Roots struct {
-	TangleRoot             Identifier `serix:"0,mapKey=tangleRoot"`
-	StateMutationRoot      Identifier `serix:"1,mapKey=stateMutationRoot"`
-	StateRoot              Identifier `serix:"2,mapKey=stateRoot"`
-	AccountRoot            Identifier `serix:"3,mapKey=accountRoot"`
-	AttestationsRoot       Identifier `serix:"4,mapKey=attestationsRoot"`
-	CommitteeRoot          Identifier `serix:"5,mapKey=committeeRoot"`
-	RewardsRoot            Identifier `serix:"6,mapKey=rewardsRoot"`
-	ProtocolParametersHash Identifier `serix:"7,mapKey=protocolParametersHash"`
+	TangleRoot             Identifier `serix:""`
+	StateMutationRoot      Identifier `serix:""`
+	StateRoot              Identifier `serix:""`
+	AccountRoot            Identifier `serix:""`
+	AttestationsRoot       Identifier `serix:""`
+	CommitteeRoot          Identifier `serix:""`
+	RewardsRoot            Identifier `serix:""`
+	ProtocolParametersHash Identifier `serix:""`
 }
 
 func NewRoots(tangleRoot, stateMutationRoot, attestationsRoot, stateRoot, accountRoot, committeeRoot, rewardsRoot, protocolParametersHash Identifier) *Roots {

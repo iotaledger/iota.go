@@ -7,7 +7,7 @@ import (
 
 // GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AccountOutput.
 type GovernorAddressUnlockCondition struct {
-	Address Address `serix:"0,mapKey=address"`
+	Address Address `serix:""`
 }
 
 func (s *GovernorAddressUnlockCondition) Clone() UnlockCondition {

@@ -92,29 +92,29 @@ type (
 // AnchorOutput is an output type which represents an anchor.
 type AnchorOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The stored mana held by the output.
-	Mana Mana `serix:"1,mapKey=mana"`
+	Mana Mana `serix:""`
 	// The identifier for this anchor.
-	AnchorID AnchorID `serix:"2,mapKey=anchorId"`
+	AnchorID AnchorID `serix:""`
 	// The index of the state.
-	StateIndex uint32 `serix:"3,mapKey=stateIndex"`
+	StateIndex uint32 `serix:""`
 	// The state of the anchor which can only be mutated by the state controller.
-	StateMetadata []byte `serix:"4,lengthPrefixType=uint16,mapKey=stateMetadata,omitempty,maxLen=8192"`
+	StateMetadata []byte `serix:",omitempty,lenPrefix=uint16,maxLen=8192"`
 	// The unlock conditions on this output.
-	Conditions AnchorOutputUnlockConditions `serix:"5,mapKey=unlockConditions,omitempty"`
+	UnlockConditions AnchorOutputUnlockConditions `serix:",omitempty"`
 	// The features on the output.
-	Features AnchorOutputFeatures `serix:"6,mapKey=features,omitempty"`
+	Features AnchorOutputFeatures `serix:",omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures AnchorOutputImmFeatures `serix:"7,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures AnchorOutputImmFeatures `serix:",omitempty"`
 }
 
 func (a *AnchorOutput) GovernorAddress() Address {
-	return a.Conditions.MustSet().GovernorAddress().Address
+	return a.UnlockConditions.MustSet().GovernorAddress().Address
 }
 
 func (a *AnchorOutput) StateController() Address {
-	return a.Conditions.MustSet().StateControllerAddress().Address
+	return a.UnlockConditions.MustSet().StateControllerAddress().Address
 }
 
 func (a *AnchorOutput) Clone() Output {
@@ -124,7 +124,7 @@ func (a *AnchorOutput) Clone() Output {
 		AnchorID:          a.AnchorID,
 		StateIndex:        a.StateIndex,
 		StateMetadata:     lo.CopySlice(a.StateMetadata),
-		Conditions:        a.Conditions.Clone(),
+		UnlockConditions:  a.UnlockConditions.Clone(),
 		Features:          a.Features.Clone(),
 		ImmutableFeatures: a.ImmutableFeatures.Clone(),
 	}
@@ -156,7 +156,7 @@ func (a *AnchorOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !a.Conditions.Equal(otherOutput.Conditions) {
+	if !a.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -178,13 +178,13 @@ func (a *AnchorOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pas
 func (a *AnchorOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(a.Size())) +
-		a.Conditions.StorageScore(storageScoreStruct, nil) +
+		a.UnlockConditions.StorageScore(storageScoreStruct, nil) +
 		a.Features.StorageScore(storageScoreStruct, nil) +
 		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (a *AnchorOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := a.UnlockConditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -234,7 +234,7 @@ func (a *AnchorOutput) FeatureSet() FeatureSet {
 }
 
 func (a *AnchorOutput) UnlockConditionSet() UnlockConditionSet {
-	return a.Conditions.MustSet()
+	return a.UnlockConditions.MustSet()
 }
 
 func (a *AnchorOutput) ImmutableFeatureSet() FeatureSet {
@@ -270,7 +270,7 @@ func (a *AnchorOutput) Size() int {
 		serializer.UInt32ByteSize +
 		serializer.UInt16ByteSize +
 		len(a.StateMetadata) +
-		a.Conditions.Size() +
+		a.UnlockConditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size()
 }

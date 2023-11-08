@@ -11,7 +11,7 @@ func NewFoundryOutputBuilder(accountAddr *iotago.AccountAddress, tokenScheme iot
 		Amount:       amount,
 		SerialNumber: 0,
 		TokenScheme:  tokenScheme,
-		Conditions: iotago.FoundryOutputUnlockConditions{
+		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features:          iotago.FoundryOutputFeatures{},
@@ -71,7 +71,7 @@ func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 		}
 	}
 
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
 

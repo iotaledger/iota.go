@@ -36,10 +36,10 @@ var (
 // as well as a range of epoch indices in which the feature is considered active and can claim rewards.
 // Removing the feature can only be done by going through an unbonding period.
 type StakingFeature struct {
-	StakedAmount BaseToken  `serix:"0,mapKey=stakedAmount"`
-	FixedCost    Mana       `serix:"1,mapKey=fixedCost"`
-	StartEpoch   EpochIndex `serix:"2,mapKey=startEpoch"`
-	EndEpoch     EpochIndex `serix:"3,mapKey=endEpoch"`
+	StakedAmount BaseToken  `serix:""`
+	FixedCost    Mana       `serix:""`
+	StartEpoch   EpochIndex `serix:""`
+	EndEpoch     EpochIndex `serix:""`
 }
 
 func (s *StakingFeature) Clone() Feature {

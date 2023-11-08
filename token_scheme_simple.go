@@ -22,11 +22,11 @@ var (
 // SimpleTokenScheme is a TokenScheme which works with minted/melted/maximum supply counters.
 type SimpleTokenScheme struct {
 	// The amount of tokens which has been minted.
-	MintedTokens *big.Int `serix:"0,mapKey=mintedTokens"`
+	MintedTokens *big.Int `serix:""`
 	// The amount of tokens which has been melted.
-	MeltedTokens *big.Int `serix:"1,mapKey=meltedTokens"`
+	MeltedTokens *big.Int `serix:""`
 	// The maximum supply of tokens controlled.
-	MaximumSupply *big.Int `serix:"2,mapKey=maximumSupply"`
+	MaximumSupply *big.Int `serix:""`
 }
 
 func (s *SimpleTokenScheme) Clone() TokenScheme {

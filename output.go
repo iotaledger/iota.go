@@ -638,8 +638,8 @@ func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValida
 			}
 		case *AnchorOutput:
 			// The serialization rules enforce that these addresses are always set.
-			stateControllerAddress := typedOutput.Conditions.MustSet().StateControllerAddress().Address
-			governorAddress := typedOutput.Conditions.MustSet().GovernorAddress().Address
+			stateControllerAddress := typedOutput.UnlockConditions.MustSet().StateControllerAddress().Address
+			governorAddress := typedOutput.UnlockConditions.MustSet().GovernorAddress().Address
 
 			if (stateControllerAddress.Type() == AddressImplicitAccountCreation) ||
 				(governorAddress.Type() == AddressImplicitAccountCreation) {

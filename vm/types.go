@@ -73,7 +73,7 @@ type ResolvedInputs struct {
 }
 
 type ImplicitAccountOutput struct {
-	*iotago.BasicOutput `serix:"0,nest=false"`
+	*iotago.BasicOutput `serix:""`
 }
 
 func (o *ImplicitAccountOutput) ChainID() iotago.ChainID {

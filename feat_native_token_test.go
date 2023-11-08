@@ -62,7 +62,7 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 					MeltedTokens:  big.NewInt(0),
 					MaximumSupply: big.NewInt(100),
 				},
-				Conditions: iotago.FoundryOutputUnlockConditions{
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAccountUnlockCondition{
 						Address: accountAddress,
 					},

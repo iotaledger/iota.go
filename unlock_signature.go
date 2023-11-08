@@ -7,7 +7,7 @@ import (
 // SignatureUnlock holds a signature which unlocks inputs.
 type SignatureUnlock struct {
 	// The signature of this unlock.
-	Signature Signature `serix:"0,mapKey=signature"`
+	Signature Signature `serix:""`
 }
 
 func (s *SignatureUnlock) Clone() Unlock {

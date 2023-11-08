@@ -20,7 +20,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 
 	output1 := &iotago.BasicOutput{
 		Amount: 100000,
-		Conditions: iotago.BasicOutputUnlockConditions{
+		UnlockConditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{
 				Address: addr,
 			},
@@ -31,7 +31,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 	}
 	output2 := &iotago.AccountOutput{
 		Amount: 1_000_000,
-		Conditions: iotago.AccountOutputUnlockConditions{
+		UnlockConditions: iotago.AccountOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{addr},
 		},
 		Features: iotago.AccountOutputFeatures{

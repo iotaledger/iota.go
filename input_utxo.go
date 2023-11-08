@@ -17,9 +17,9 @@ const (
 // UTXOInput references an unspent transaction output by the Transaction's ID and the corresponding index of the Output.
 type UTXOInput struct {
 	// The transaction ID of the referenced transaction.
-	TransactionID TransactionID `serix:"0,mapKey=transactionId"`
+	TransactionID TransactionID `serix:""`
 	// The output index of the output on the referenced transaction.
-	TransactionOutputIndex uint16 `serix:"1,mapKey=transactionOutputIndex"`
+	TransactionOutputIndex uint16 `serix:""`
 }
 
 func (u *UTXOInput) Clone() Input {

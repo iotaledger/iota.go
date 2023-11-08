@@ -101,19 +101,19 @@ type (
 // AccountOutput is an output type which represents an account.
 type AccountOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The stored mana held by the output.
-	Mana Mana `serix:"1,mapKey=mana"`
+	Mana Mana `serix:""`
 	// The identifier for this account.
-	AccountID AccountID `serix:"2,mapKey=accountId"`
+	AccountID AccountID `serix:""`
 	// The counter that denotes the number of foundries created by this account.
-	FoundryCounter uint32 `serix:"3,mapKey=foundryCounter"`
+	FoundryCounter uint32 `serix:""`
 	// The unlock conditions on this output.
-	Conditions AccountOutputUnlockConditions `serix:"4,mapKey=unlockConditions,omitempty"`
+	UnlockConditions AccountOutputUnlockConditions `serix:",omitempty"`
 	// The features on the output.
-	Features AccountOutputFeatures `serix:"5,mapKey=features,omitempty"`
+	Features AccountOutputFeatures `serix:",omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures AccountOutputImmFeatures `serix:"6,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures AccountOutputImmFeatures `serix:",omitempty"`
 }
 
 func (a *AccountOutput) Clone() Output {
@@ -122,7 +122,7 @@ func (a *AccountOutput) Clone() Output {
 		Mana:              a.Mana,
 		AccountID:         a.AccountID,
 		FoundryCounter:    a.FoundryCounter,
-		Conditions:        a.Conditions.Clone(),
+		UnlockConditions:  a.UnlockConditions.Clone(),
 		Features:          a.Features.Clone(),
 		ImmutableFeatures: a.ImmutableFeatures.Clone(),
 	}
@@ -150,7 +150,7 @@ func (a *AccountOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !a.Conditions.Equal(otherOutput.Conditions) {
+	if !a.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -173,13 +173,13 @@ func (a *AccountOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotInd
 func (a *AccountOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(a.Size())) +
-		a.Conditions.StorageScore(storageScoreStruct, nil) +
+		a.UnlockConditions.StorageScore(storageScoreStruct, nil) +
 		a.Features.StorageScore(storageScoreStruct, nil) +
 		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := a.UnlockConditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -198,7 +198,7 @@ func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 }
 
 func (a *AccountOutput) Ident() Address {
-	return a.Conditions.MustSet().Address().Address
+	return a.UnlockConditions.MustSet().Address().Address
 }
 
 func (a *AccountOutput) ChainID() ChainID {
@@ -214,7 +214,7 @@ func (a *AccountOutput) FeatureSet() FeatureSet {
 }
 
 func (a *AccountOutput) UnlockConditionSet() UnlockConditionSet {
-	return a.Conditions.MustSet()
+	return a.UnlockConditions.MustSet()
 }
 
 func (a *AccountOutput) ImmutableFeatureSet() FeatureSet {
@@ -248,7 +248,7 @@ func (a *AccountOutput) Size() int {
 		AccountIDLength +
 		// FoundryCounter
 		serializer.UInt32ByteSize +
-		a.Conditions.Size() +
+		a.UnlockConditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size()
 }

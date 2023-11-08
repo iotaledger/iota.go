@@ -531,7 +531,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address:             ed25519Addresses[0],
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
@@ -540,7 +540,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 						},
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address:             &iotago.AccountAddress{},
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
@@ -549,7 +549,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 						},
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address:             &iotago.NFTAddress{},
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
@@ -558,7 +558,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 						},
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address:             &iotago.AnchorAddress{},
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
@@ -567,7 +567,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 						},
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address: &iotago.MultiAddress{
 										Addresses: []*iotago.AddressWithWeight{
@@ -597,7 +597,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address: &iotago.ImplicitAccountCreationAddress{},
 								}},
@@ -618,7 +618,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address: &iotago.RestrictedAddress{
 										Address:             ed25519Addresses[0],
@@ -657,7 +657,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{
@@ -688,7 +688,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{
@@ -715,7 +715,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{
@@ -746,7 +746,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{},
 									Threshold: 1,
@@ -768,7 +768,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{Address: ed25519Addresses[2], Weight: 1},
@@ -802,7 +802,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										// both have the same pubKeyHash
@@ -834,7 +834,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.RestrictedAddress{
 									Address: &iotago.MultiAddress{
 										Addresses: []*iotago.AddressWithWeight{
@@ -863,7 +863,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{
@@ -898,7 +898,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 					return iotago.TxEssenceOutputs{
 						&iotago.BasicOutput{
 							Amount: defaultAmount,
-							Conditions: iotago.BasicOutputUnlockConditions{
+							UnlockConditions: iotago.BasicOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: &iotago.MultiAddress{
 									Addresses: []*iotago.AddressWithWeight{
 										{

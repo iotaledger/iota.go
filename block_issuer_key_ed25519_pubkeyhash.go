@@ -18,7 +18,7 @@ const (
 
 // An Ed25519 Address Block Issuer Key.
 type Ed25519PublicKeyHashBlockIssuerKey struct {
-	PublicKeyHash [Ed25519PublicKeyHashBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
+	PublicKeyHash [Ed25519PublicKeyHashBytesLength]byte `serix:"pubKeyHash"`
 }
 
 // Ed25519PublicKeyHashBlockIssuerKeyFromImplicitAccountCreationAddress creates an Ed25519PublicKeyHashBlockIssuerKey from an Ed25519 public key hash.

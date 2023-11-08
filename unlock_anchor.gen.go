@@ -7,7 +7,7 @@ import (
 // AnchorUnlock is an Unlock which references a previous unlock.
 type AnchorUnlock struct {
 	// The other unlock this AnchorUnlock references to.
-	Reference uint16 `serix:"0,mapKey=reference"`
+	Reference uint16 `serix:""`
 }
 
 func (r *AnchorUnlock) Clone() Unlock {

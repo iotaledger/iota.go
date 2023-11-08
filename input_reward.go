@@ -8,7 +8,7 @@ import (
 
 type RewardInput struct {
 	// The index of the transaction input for which to claim rewards.
-	Index uint16 `serix:"0,mapKey=index"`
+	Index uint16 `serix:""`
 }
 
 func (r *RewardInput) Clone() Input {
