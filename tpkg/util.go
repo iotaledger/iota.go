@@ -713,7 +713,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 			Header: iotago.BlockHeader{
 				ProtocolVersion:  TestAPI.Version(),
 				IssuingTime:      RandUTCTime(),
-				SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
+				SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
 				IssuerID:         RandAccountID(),
 			},
 			Body:      basicBlock,
@@ -726,7 +726,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  TestAPI.Version(),
 			IssuingTime:      RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
 			IssuerID:         RandAccountID(),
 		},
 		Body:      blockBody,
@@ -1058,7 +1058,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 		),
-		iotago.WithTimeProviderOptions(time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
+		iotago.WithTimeProviderOptions(RandSlot(), time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
 		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlot(), RandSlot(), RandSlot()),
 		iotago.WithCongestionControlOptions(
 			RandMana(iotago.MaxMana),

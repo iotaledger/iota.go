@@ -298,7 +298,7 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams ProtocolParameters) API {
 	api := CommonSerixAPI()
 
-	timeProvider := NewTimeProvider(protoParams.GenesisUnixTimestamp(), int64(protoParams.SlotDurationInSeconds()), protoParams.SlotsPerEpochExponent())
+	timeProvider := NewTimeProvider(protoParams.GenesisSlot(), protoParams.GenesisUnixTimestamp(), int64(protoParams.SlotDurationInSeconds()), protoParams.SlotsPerEpochExponent())
 
 	maxBlockWork, err := protoParams.WorkScoreParameters().MaxBlockWork()
 	must(err)
@@ -685,6 +685,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		merklehasher.RegisterSerixRules[*APIByter[TxEssenceOutput]](api)
+		merklehasher.RegisterSerixRules[Identifier](api)
 	}
 
 	return v3
