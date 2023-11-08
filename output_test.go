@@ -297,7 +297,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrOutputAmountMoreThanTotalSupply,
+			wantErr: iotago.ErrOutputsSumExceedsTotalSupply,
 		},
 		{
 			name:        "fail - sum more than total supply over multiple outputs",

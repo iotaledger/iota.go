@@ -333,7 +333,6 @@ type OutputsSyntacticalValidationFunc func(index int, output Output) error
 
 // OutputsSyntacticalDepositAmount returns an OutputsSyntacticalValidationFunc which checks that:
 //   - every output has base token amount more than zero
-//   - every output has base token amount less than the total supply
 //   - the sum of base token amounts does not exceed the total supply
 //   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
@@ -344,12 +343,16 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 	return func(index int, output Output) error {
 		amount := output.BaseTokenAmount()
 
-		switch {
-		case amount == 0:
+		if amount == 0 {
 			return ierrors.Wrapf(ErrAmountMustBeGreaterThanZero, "output %d", index)
-		case amount > protoParams.TokenSupply():
-			return ierrors.Wrapf(ErrOutputAmountMoreThanTotalSupply, "output %d", index)
-		case sum+amount > protoParams.TokenSupply():
+		}
+
+		var err error
+		sum, err = safemath.SafeAdd(sum, amount)
+		if err != nil {
+			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "%w: output %d", err, index)
+		}
+		if sum > protoParams.TokenSupply() {
 			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "output %d", index)
 		}
 
