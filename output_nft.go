@@ -188,17 +188,6 @@ func (n *NFTOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkSco
 	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (n *NFTOutput) syntacticallyValidate() error {
-	// Address should never be nil.
-	address := n.Conditions.MustSet().Address().Address
-
-	if address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
-}
-
 func (n *NFTOutput) ChainID() ChainID {
 	return n.NFTID
 }

@@ -20,6 +20,8 @@ import (
 // epoch 2: [slot 16; slot 24)
 // ...
 type TimeProvider struct {
+	genesisSlot SlotIndex
+
 	// genesisUnixTime is the time (Unix in seconds) of the genesis.
 	genesisUnixTime int64
 
@@ -40,8 +42,9 @@ type TimeProvider struct {
 }
 
 // NewTimeProvider creates a new time provider.
-func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerEpochExponent uint8) *TimeProvider {
+func NewTimeProvider(genesisSlot SlotIndex, genesisUnixTime int64, slotDurationSeconds int64, slotsPerEpochExponent uint8) *TimeProvider {
 	return &TimeProvider{
+		genesisSlot:           genesisSlot,
 		genesisUnixTime:       genesisUnixTime,
 		genesisTime:           time.Unix(genesisUnixTime, 0),
 		slotDurationSeconds:   slotDurationSeconds,
@@ -49,6 +52,11 @@ func NewTimeProvider(genesisUnixTime int64, slotDurationSeconds int64, slotsPerE
 		epochDurationSeconds:  (1 << slotsPerEpochExponent) * slotDurationSeconds,
 		epochDurationSlots:    1 << slotsPerEpochExponent,
 	}
+}
+
+// GenesisSlot is the slot of the genesis.
+func (t *TimeProvider) GenesisSlot() SlotIndex {
+	return t.genesisSlot
 }
 
 // GenesisUnixTime is the time (Unix in seconds) of the genesis.
@@ -85,55 +93,67 @@ func (t *TimeProvider) SlotsPerEpochExponent() uint8 {
 func (t *TimeProvider) SlotFromTime(targetTime time.Time) SlotIndex {
 	elapsed := targetTime.Sub(t.genesisTime)
 	if elapsed < 0 {
-		return 0
+		return t.genesisSlot
 	}
 
-	return SlotIndex(int64(elapsed/time.Second)/t.slotDurationSeconds) + 1
+	return t.genesisSlot + SlotIndex(int64(elapsed/time.Second)/t.slotDurationSeconds) + 1
 }
 
 // SlotStartTime calculates the start time of the given slot.
 func (t *TimeProvider) SlotStartTime(slot SlotIndex) time.Time {
-	if slot == 0 {
+	if slot <= t.genesisSlot {
 		return t.genesisTime.Add(-time.Nanosecond)
 	}
 
-	startUnix := t.genesisUnixTime + int64(slot-1)*t.slotDurationSeconds
+	startUnix := t.genesisUnixTime + int64(slot-t.genesisSlot-1)*t.slotDurationSeconds
 
 	return time.Unix(startUnix, 0)
 }
 
 // SlotEndTime returns the latest possible timestamp for a slot. Anything with higher timestamp will belong to the next slot.
 func (t *TimeProvider) SlotEndTime(slot SlotIndex) time.Time {
-	if slot == 0 {
+	if slot <= t.genesisSlot {
 		return t.genesisTime.Add(-time.Nanosecond)
 	}
 
-	endUnix := t.genesisUnixTime + int64(slot)*t.slotDurationSeconds
+	endUnix := t.genesisUnixTime + int64(slot-t.genesisSlot)*t.slotDurationSeconds
 	// we subtract 1 nanosecond from the next slot to get the latest possible timestamp for slot i
 	return time.Unix(endUnix, 0).Add(-time.Nanosecond)
 }
 
 // EpochFromSlot calculates the EpochIndex from the given slot.
 func (t *TimeProvider) EpochFromSlot(slot SlotIndex) EpochIndex {
-	return EpochIndex(slot >> t.slotsPerEpochExponent)
+	if slot <= t.genesisSlot {
+		return 0
+	}
+
+	return EpochIndex((slot - t.genesisSlot) >> t.slotsPerEpochExponent)
 }
 
 // EpochStart calculates the start slot of the given epoch.
 func (t *TimeProvider) EpochStart(epoch EpochIndex) SlotIndex {
-	return SlotIndex(epoch << t.slotsPerEpochExponent)
+	return t.genesisSlot + SlotIndex(epoch<<t.slotsPerEpochExponent)
 }
 
 // EpochEnd calculates the end included slot of the given epoch.
 func (t *TimeProvider) EpochEnd(epoch EpochIndex) SlotIndex {
-	return SlotIndex((epoch+1)<<t.slotsPerEpochExponent - 1)
+	return t.genesisSlot + SlotIndex((epoch+1)<<t.slotsPerEpochExponent-1)
 }
 
 // SlotsBeforeNextEpoch calculates the slots before the start of the next epoch.
 func (t *TimeProvider) SlotsBeforeNextEpoch(slot SlotIndex) SlotIndex {
-	return t.EpochStart(t.EpochFromSlot(slot)+1) - slot
+	if slot < t.genesisSlot {
+		return 0
+	}
+
+	return t.genesisSlot + t.EpochStart(t.EpochFromSlot(slot)+1) - slot
 }
 
 // SlotsSinceEpochStart calculates the slots since the start of the epoch.
 func (t *TimeProvider) SlotsSinceEpochStart(slot SlotIndex) SlotIndex {
-	return slot - t.EpochStart(t.EpochFromSlot(slot))
+	if slot < t.genesisSlot {
+		return 0
+	}
+
+	return t.genesisSlot + slot - t.EpochStart(t.EpochFromSlot(slot))
 }

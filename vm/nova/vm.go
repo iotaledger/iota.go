@@ -20,7 +20,7 @@ func NewVirtualMachine() vm.VirtualMachine {
 			vm.ExecFuncBalancedNativeTokens(),
 			vm.ExecFuncChainTransitions(),
 			vm.ExecFuncBalancedMana(),
-			vm.ExecFuncAddressRestrictions(),
+			vm.ExecFuncAtMostOneImplicitAccountCreationAddress(),
 		},
 	}
 }

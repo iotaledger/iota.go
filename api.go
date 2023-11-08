@@ -110,7 +110,7 @@ type ProtocolParameters interface {
 	NetworkID() NetworkID
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
-	// StorageScoreStructure defines the storage score structure used by the given network.
+	// StorageScoreParameters defines the storage score structure used by the given network.
 	StorageScoreParameters() *StorageScoreParameters
 	// WorkScoreParameters defines the work score parameters used by the given network.
 	WorkScoreParameters() *WorkScoreParameters
@@ -119,6 +119,10 @@ type ProtocolParameters interface {
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
+	// GenesisBlockID defines the block ID of the genesis block.
+	GenesisBlockID() BlockID
+	// GenesisSlot defines the slot of the genesis.
+	GenesisSlot() SlotIndex
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
 	GenesisUnixTimestamp() int64
 	// SlotDurationInSeconds defines the duration of each slot in seconds.

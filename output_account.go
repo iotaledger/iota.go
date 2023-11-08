@@ -178,15 +178,6 @@ func (a *AccountOutput) StorageScore(storageScoreStruct *StorageScoreStructure, 
 		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
-func (a *AccountOutput) syntacticallyValidate() error {
-	// Address should never be nil.
-	if a.Conditions.MustSet().Address().Address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
-}
-
 func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
 	if err != nil {

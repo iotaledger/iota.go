@@ -19,7 +19,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 		nativeTokenFeature                  = tpkg.RandNativeTokenFeature()
 		expirationTarget                    = tpkg.RandEd25519Address()
 		metadata                            = []byte("123456")
-		slotTimeProvider                    = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
+		slotTimeProvider                    = iotago.NewTimeProvider(0, time.Now().Unix(), 10, 10)
 	)
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
 	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))

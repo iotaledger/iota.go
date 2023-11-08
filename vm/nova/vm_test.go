@@ -41,7 +41,7 @@ var (
 		iotago.WithNetworkOptions("test", "test"),
 		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 20, 20, 20, 20, 100, 100, 100, 200),
-		iotago.WithTimeProviderOptions(100, slotDurationSeconds, slotsPerEpochExponent),
+		iotago.WithTimeProviderOptions(0, 100, slotDurationSeconds, slotsPerEpochExponent),
 		iotago.WithManaOptions(bitsCount,
 			generationRate,
 			generationRateExponent,
@@ -6999,7 +6999,7 @@ func TestManaRewardsClaimingDelegation(t *testing.T) {
 	require.NoError(t, validateAndExecuteSignedTransaction(tx, resolvedInputs))
 }
 
-func TestTxSemanticAddressRestrictions(t *testing.T) {
+func TestTxSyntacticAddressRestrictions(t *testing.T) {
 	type testParameters struct {
 		name    string
 		address iotago.Address
@@ -7012,8 +7012,6 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 
 	_, ident, identAddrKeys := tpkg.RandEd25519Identity()
 	addr := tpkg.RandEd25519Address()
-
-	iotago.RestrictedAddressWithCapabilities(addr)
 
 	tests := []*test{
 		{
@@ -7328,6 +7326,7 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 		transaction := &iotago.Transaction{
 			API: testAPI,
 			TransactionEssence: &iotago.TransactionEssence{
+				NetworkID:    testAPI.ProtocolParameters().NetworkID(),
 				Inputs:       inputIDs.UTXOInputs(),
 				CreationSlot: 10,
 			},
@@ -7347,9 +7346,8 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 			t.Run(testInput.name, func(t *testing.T) {
 				testOutput := tt.createTestOutput(testInput.address)
 
-				inputs, sig, transaction := makeTransaction(testOutput)
+				_, sig, transaction := makeTransaction(testOutput)
 
-				resolvedInputs := vm.ResolvedInputs{InputSet: inputs}
 				tx := &iotago.SignedTransaction{
 					API:         testAPI,
 					Transaction: transaction,
@@ -7358,13 +7356,18 @@ func TestTxSemanticAddressRestrictions(t *testing.T) {
 					},
 				}
 
-				_, err := novaVM.Execute(tx.Transaction, resolvedInputs, make(vm.UnlockedIdentities), vm.ExecFuncAddressRestrictions())
-				if testInput.wantErr != nil {
-					require.ErrorIs(t, err, testInput.wantErr)
-					return
-				}
+				addressRestrictionFunc := iotago.OutputsSyntacticalAddressRestrictions()
 
-				require.NoError(t, err)
+				for index, output := range tx.Transaction.Outputs {
+					err := addressRestrictionFunc(index, output)
+
+					if testInput.wantErr != nil {
+						require.ErrorIs(t, err, testInput.wantErr)
+						return
+					}
+
+					require.NoError(t, err)
+				}
 			})
 		}
 	}
@@ -7847,7 +7850,13 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		resolvedInputs.CommitmentInput = &tests[idx].resolvedCommitmentInput
 
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateAndExecuteSignedTransaction(tx, resolvedInputs)
+			var err error
+			// Some constraints are implicitly tested as part of the address restrictions, which are syntactic checks.
+			err = tx.Transaction.SyntacticallyValidate(tx.API)
+			if err == nil {
+				err = validateAndExecuteSignedTransaction(tx, resolvedInputs)
+			}
+
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return

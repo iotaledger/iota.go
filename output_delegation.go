@@ -180,21 +180,6 @@ func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructur
 		d.Conditions.StorageScore(storageScoreStruct, nil)
 }
 
-func (d *DelegationOutput) syntacticallyValidate() error {
-	if d.ValidatorAddress.AccountID().Empty() {
-		return ErrDelegationValidatorAddressEmpty
-	}
-
-	// Address should never be nil.
-	address := d.Conditions.MustSet().Address().Address
-
-	if address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
-}
-
 func (d *DelegationOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	return d.Conditions.WorkScore(workScoreParameters)
 }
