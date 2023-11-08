@@ -34,19 +34,19 @@ type (
 // TransactionEssence is the essence part if a Transaction.
 type TransactionEssence struct {
 	// The network ID for which this essence is valid for.
-	NetworkID NetworkID `serix:"0,mapKey=networkId"`
+	NetworkID NetworkID `serix:""`
 	// The slot index in which the transaction was created by the client.
-	CreationSlot SlotIndex `serix:"1,mapKey=creationSlot"`
+	CreationSlot SlotIndex `serix:""`
 	// The commitment references of this transaction.
-	ContextInputs TxEssenceContextInputs `serix:"2,mapKey=contextInputs"`
+	ContextInputs TxEssenceContextInputs `serix:""`
 	// The inputs of this transaction.
-	Inputs TxEssenceInputs `serix:"3,mapKey=inputs"`
+	Inputs TxEssenceInputs `serix:""`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:"4,mapKey=allotments"`
+	Allotments TxEssenceAllotments `serix:""`
 	// The capabilities of the transaction.
-	Capabilities TransactionCapabilitiesBitMask `serix:"5,mapKey=capabilities"`
+	Capabilities TransactionCapabilitiesBitMask `serix:""`
 	// The optional embedded payload.
-	Payload TxEssencePayload `serix:"6,optional,mapKey=payload"`
+	Payload TxEssencePayload `serix:",optional"`
 }
 
 func (u *TransactionEssence) Clone() *TransactionEssence {

@@ -10,7 +10,7 @@ import (
 
 // V3ProtocolParameters defines the parameters of the protocol.
 type V3ProtocolParameters struct {
-	basicProtocolParameters `serix:"0"`
+	basicProtocolParameters `serix:""`
 }
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {

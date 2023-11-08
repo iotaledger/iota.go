@@ -9,7 +9,7 @@ import (
 // MetadataFeature is a feature which simply holds binary data to be freely
 // interpreted by higher layer applications.
 type MetadataFeature struct {
-	Data []byte `serix:"0,lengthPrefixType=uint16,mapKey=data,minLen=1,maxLen=8192"`
+	Data []byte `serix:",lenPrefix=uint16,minLen=1,maxLen=8192"`
 }
 
 func (s *MetadataFeature) Clone() Feature {

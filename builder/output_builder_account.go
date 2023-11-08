@@ -12,7 +12,7 @@ func NewAccountOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken)
 		Mana:           0,
 		AccountID:      iotago.EmptyAccountID,
 		FoundryCounter: 0,
-		Conditions: iotago.AccountOutputUnlockConditions{
+		UnlockConditions: iotago.AccountOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
 		Features:          iotago.AccountOutputFeatures{},
@@ -66,7 +66,7 @@ func (builder *AccountOutputBuilder) FoundriesToGenerate(count uint32) *AccountO
 
 // Address sets/modifies an iotago.AddressUnlockCondition on the output.
 func (builder *AccountOutputBuilder) Address(addr iotago.Address) *AccountOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
+	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
 }
@@ -136,7 +136,7 @@ func (builder *AccountOutputBuilder) Build() (*iotago.AccountOutput, error) {
 		}
 	}
 
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
 

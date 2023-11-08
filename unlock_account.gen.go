@@ -7,7 +7,7 @@ import (
 // AccountUnlock is an Unlock which references a previous unlock.
 type AccountUnlock struct {
 	// The other unlock this AccountUnlock references to.
-	Reference uint16 `serix:"0,mapKey=reference"`
+	Reference uint16 `serix:""`
 }
 
 func (r *AccountUnlock) Clone() Unlock {

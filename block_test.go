@@ -188,7 +188,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
 	output := &iotago.BasicOutput{
 		Amount: 100000,
-		Conditions: iotago.BasicOutputUnlockConditions{
+		UnlockConditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{
 				Address: addr,
 			},
@@ -314,7 +314,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	addr := iotago.Ed25519AddressFromPubKey(keyPair.PublicKey[:])
 	output := &iotago.BasicOutput{
 		Amount: 100000,
-		Conditions: iotago.BasicOutputUnlockConditions{
+		UnlockConditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{
 				Address: addr,
 			},

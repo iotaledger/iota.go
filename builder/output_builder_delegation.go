@@ -13,7 +13,7 @@ func NewDelegationOutputBuilder(validatorAddress *iotago.AccountAddress, addr io
 		ValidatorAddress: validatorAddress,
 		StartEpoch:       0,
 		EndEpoch:         0,
-		Conditions: iotago.DelegationOutputUnlockConditions{
+		UnlockConditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
 	}}
@@ -76,7 +76,7 @@ func (builder *DelegationOutputBuilder) EndEpoch(endEpoch iotago.EpochIndex) *De
 
 // Address sets/modifies an iotago.AddressUnlockCondition on the output.
 func (builder *DelegationOutputBuilder) Address(addr iotago.Address) *DelegationOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
+	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
 }
@@ -84,7 +84,7 @@ func (builder *DelegationOutputBuilder) Address(addr iotago.Address) *Delegation
 // Build builds the iotago.DelegationOutput.
 func (builder *DelegationOutputBuilder) Build() (*iotago.DelegationOutput, error) {
 
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 
 	return builder.output, nil
 }

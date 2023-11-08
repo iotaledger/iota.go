@@ -7,7 +7,7 @@ import (
 // {{.Name}} is an Unlock which references a previous unlock.
 type {{.Name}} struct {
 	// The other unlock this {{.Name}} references to.
-	Reference uint16 `serix:"0,mapKey=reference"`
+	Reference uint16 `serix:""`
 }
 
 func ({{.Receiver}} *{{.Name}}) Clone() Unlock {

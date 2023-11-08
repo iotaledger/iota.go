@@ -169,219 +169,219 @@ type (
 	// InfoResponse defines the response of a GET info REST API call.
 	InfoResponse struct {
 		// The name of the node software.
-		Name string `serix:"0,mapKey=name"`
+		Name string `serix:""`
 		// The semver version of the node software.
-		Version string `serix:"1,mapKey=version"`
+		Version string `serix:""`
 		// The current status of this node.
-		Status *InfoResNodeStatus `serix:"2,mapKey=status"`
+		Status *InfoResNodeStatus `serix:""`
 		// The metrics of this node.
-		Metrics *InfoResNodeMetrics `serix:"3,mapKey=metrics"`
+		Metrics *InfoResNodeMetrics `serix:""`
 		// The protocol parameters used by this node.
-		ProtocolParameters []*InfoResProtocolParameters `serix:"4,mapKey=protocolParameters"`
+		ProtocolParameters []*InfoResProtocolParameters `serix:""`
 		// The base token of the network.
-		BaseToken *InfoResBaseToken `serix:"5,mapKey=baseToken"`
+		BaseToken *InfoResBaseToken `serix:""`
 		// The features this node exposes.
-		Features []string `serix:"6,mapKey=features"`
+		Features []string `serix:""`
 	}
 
 	InfoResProtocolParameters struct {
-		StartEpoch iotago.EpochIndex         `serix:"0,mapKey=startEpoch"`
-		Parameters iotago.ProtocolParameters `serix:"1,mapKey=parameters"`
+		StartEpoch iotago.EpochIndex         `serix:""`
+		Parameters iotago.ProtocolParameters `serix:""`
 	}
 
 	// InfoResNodeStatus defines the status of the node in info response.
 	InfoResNodeStatus struct {
 		// Whether the node is healthy.
-		IsHealthy bool `serix:"0,mapKey=isHealthy"`
+		IsHealthy bool `serix:""`
 		// The accepted tangle time.
-		AcceptedTangleTime time.Time `serix:"1,mapKey=acceptedTangleTime"`
+		AcceptedTangleTime time.Time `serix:""`
 		// The relative accepted tangle time.
-		RelativeAcceptedTangleTime time.Time `serix:"2,mapKey=relativeAcceptedTangleTime"`
+		RelativeAcceptedTangleTime time.Time `serix:""`
 		// The confirmed tangle time.
-		ConfirmedTangleTime time.Time `serix:"3,mapKey=confirmedTangleTime"`
+		ConfirmedTangleTime time.Time `serix:""`
 		// The relative confirmed tangle time.
-		RelativeConfirmedTangleTime time.Time `serix:"4,mapKey=relativeConfirmedTangleTime"`
+		RelativeConfirmedTangleTime time.Time `serix:""`
 		// The id of the latest known commitment.
-		LatestCommitmentID iotago.CommitmentID `serix:"5,mapKey=latestCommitmentId"`
+		LatestCommitmentID iotago.CommitmentID `serix:""`
 		// The latest finalized slot.
-		LatestFinalizedSlot iotago.SlotIndex `serix:"6,mapKey=latestFinalizedSlot"`
+		LatestFinalizedSlot iotago.SlotIndex `serix:""`
 		// The slot of the latest accepted block.
-		LatestAcceptedBlockSlot iotago.SlotIndex `serix:"7,mapKey=latestAcceptedBlockSlot"`
+		LatestAcceptedBlockSlot iotago.SlotIndex `serix:""`
 		// The slot of the latest confirmed block.
-		LatestConfirmedBlockSlot iotago.SlotIndex `serix:"8,mapKey=latestConfirmedBlockSlot"`
+		LatestConfirmedBlockSlot iotago.SlotIndex `serix:""`
 		// The epoch at which the tangle data was pruned.
-		PruningEpoch iotago.EpochIndex `serix:"9,mapKey=pruningEpoch"`
+		PruningEpoch iotago.EpochIndex `serix:""`
 	}
 
 	// InfoResNodeMetrics defines the metrics of a node in info response.
 	InfoResNodeMetrics struct {
 		// The current rate of new blocks per second, it's updated when a commitment is committed.
-		BlocksPerSecond float64 `serix:"0,mapKey=blocksPerSecond"`
+		BlocksPerSecond float64 `serix:""`
 		// The current rate of confirmed blocks per second, it's updated when a commitment is committed.
-		ConfirmedBlocksPerSecond float64 `serix:"1,mapKey=confirmedBlocksPerSecond"`
+		ConfirmedBlocksPerSecond float64 `serix:""`
 		// The ratio of confirmed blocks in relation to new blocks up until the latest commitment is committed.
-		ConfirmationRate float64 `serix:"2,mapKey=confirmationRate"`
+		ConfirmationRate float64 `serix:""`
 	}
 
 	// InfoResBaseToken defines the info res base token information.
 	InfoResBaseToken struct {
 		// The base token name.
-		Name string `serix:"0,mapKey=name"`
+		Name string `serix:""`
 		// The base token ticker symbol.
-		TickerSymbol string `serix:"1,mapKey=tickerSymbol"`
+		TickerSymbol string `serix:""`
 		// The base token unit.
-		Unit string `serix:"2,mapKey=unit"`
+		Unit string `serix:""`
 		// The base token subunit.
-		Subunit string `serix:"3,mapKey=subunit,omitempty"`
+		Subunit string `serix:",omitempty"`
 		// The base token amount of decimals.
-		Decimals uint32 `serix:"4,mapKey=decimals"`
+		Decimals uint32 `serix:""`
 		// The base token uses the metric prefix.
-		UseMetricPrefix bool `serix:"5,mapKey=useMetricPrefix"`
+		UseMetricPrefix bool `serix:""`
 	}
 
 	// IssuanceBlockHeaderResponse defines the response of a GET block issuance REST API call.
 	IssuanceBlockHeaderResponse struct {
 		// StrongParents are the strong parents of the block.
-		StrongParents iotago.BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents"`
+		StrongParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// WeakParents are the weak parents of the block.
-		WeakParents iotago.BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents"`
+		WeakParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// ShallowLikeParents are the shallow like parents of the block.
-		ShallowLikeParents iotago.BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents"`
+		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// LatestFinalizedSlot is the latest finalized slot.
-		LatestFinalizedSlot iotago.SlotIndex `serix:"3,mapKey=latestFinalizedSlot"`
+		LatestFinalizedSlot iotago.SlotIndex `serix:""`
 		// Commitment is the commitment of the block.
-		Commitment *iotago.Commitment `serix:"4,mapKey=commitment"`
+		Commitment *iotago.Commitment `serix:""`
 	}
 
 	// BlockCreatedResponse defines the response of a POST blocks REST API call.
 	BlockCreatedResponse struct {
 		// The hex encoded block ID of the block.
-		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
+		BlockID iotago.BlockID `serix:""`
 	}
 
 	// BlockMetadataResponse defines the response of a GET block metadata REST API call.
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
-		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
+		BlockID iotago.BlockID `serix:""`
 		// BlockState might be pending, rejected, failed, confirmed, finalized.
-		BlockState string `serix:"1,mapKey=blockState"`
+		BlockState string `serix:""`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
-		BlockFailureReason BlockFailureReason `serix:"2,mapKey=blockFailureReason,omitempty"`
+		BlockFailureReason BlockFailureReason `serix:",omitempty"`
 		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
-		TransactionState string `serix:"3,mapKey=transactionState,omitempty"`
+		TransactionState string `serix:",omitempty"`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
-		TransactionFailureReason TransactionFailureReason `serix:"4,mapKey=transactionFailureReason,omitempty"`
+		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
 	}
 
 	// OutputResponse defines the response of a GET outputs REST API call.
 	OutputResponse struct {
-		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
-		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
+		Output        iotago.TxEssenceOutput `serix:""`
+		OutputIDProof *iotago.OutputIDProof  `serix:""`
 	}
 
 	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
 	OutputWithMetadataResponse struct {
-		Output        iotago.TxEssenceOutput `serix:"0,mapKey=output"`
-		OutputIDProof *iotago.OutputIDProof  `serix:"1,mapKey=outputIdProof"`
-		Metadata      *OutputMetadata        `serix:"2,mapKey=metadata"`
+		Output        iotago.TxEssenceOutput `serix:""`
+		OutputIDProof *iotago.OutputIDProof  `serix:""`
+		Metadata      *OutputMetadata        `serix:""`
 	}
 
 	// OutputMetadata defines the response of a GET outputs metadata REST API call.
 	OutputMetadata struct {
 		// BlockID is the block ID that contains the output.
-		BlockID iotago.BlockID `serix:"0,mapKey=blockId"`
+		BlockID iotago.BlockID `serix:""`
 		// TransactionID is the transaction ID that creates the output.
-		TransactionID iotago.TransactionID `serix:"1,mapKey=transactionId"`
+		TransactionID iotago.TransactionID `serix:""`
 		// OutputIndex is the index of the output.
-		OutputIndex uint16 `serix:"2,mapKey=outputIndex"`
+		OutputIndex uint16 `serix:""`
 		// IsSpent indicates whether the output is spent or not.
-		IsSpent bool `serix:"3,mapKey=isSpent"`
+		IsSpent bool `serix:""`
 		// CommitmentIDSpent is the commitment ID that includes the spent output.
-		CommitmentIDSpent iotago.CommitmentID `serix:"4,mapKey=commitmentIdSpent,omitempty"`
+		CommitmentIDSpent iotago.CommitmentID `serix:",omitempty"`
 		// TransactionIDSpent is the transaction ID that spends the output.
-		TransactionIDSpent iotago.TransactionID `serix:"5,mapKey=transactionIdSpent,omitempty"`
+		TransactionIDSpent iotago.TransactionID `serix:",omitempty"`
 		// IncludedCommitmentID is the commitment ID that includes the output.
-		IncludedCommitmentID iotago.CommitmentID `serix:"6,mapKey=includedCommitmentId,omitempty"`
+		IncludedCommitmentID iotago.CommitmentID `serix:",omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.
-		LatestCommitmentID iotago.CommitmentID `serix:"7,mapKey=latestCommitmentId"`
+		LatestCommitmentID iotago.CommitmentID `serix:""`
 	}
 
 	// UTXOChangesResponse defines the response for UTXO slot REST API call.
 	UTXOChangesResponse struct {
 		// The slot of the requested commitment.
-		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
+		Slot iotago.SlotIndex `serix:""`
 		// The outputs that are created in this slot.
-		CreatedOutputs iotago.OutputIDs `serix:"1,mapKey=createdOutputs"`
+		CreatedOutputs iotago.OutputIDs `serix:""`
 		// The outputs that are consumed in this slot.
-		ConsumedOutputs iotago.OutputIDs `serix:"2,mapKey=consumedOutputs"`
+		ConsumedOutputs iotago.OutputIDs `serix:""`
 	}
 
 	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
 		// Slot is the slot for which the estimate is provided
-		Slot iotago.SlotIndex `serix:"0,mapKey=slot"`
+		Slot iotago.SlotIndex `serix:""`
 		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
-		Ready bool `serix:"1,mapKey=ready"`
+		Ready bool `serix:""`
 		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in Slot slot.
-		ReferenceManaCost iotago.Mana `serix:"2,mapKey=referenceManaCost"`
+		ReferenceManaCost iotago.Mana `serix:""`
 		// BlockIssuanceCredits (BIC) is the mana a user has on its BIC account exactly slot - MaxCommittableASge in the past.
 		// This balance needs to be > 0 zero, otherwise account is locked
-		BlockIssuanceCredits iotago.BlockIssuanceCredits `serix:"3,mapKey=blockIssuanceCredits"`
+		BlockIssuanceCredits iotago.BlockIssuanceCredits `serix:""`
 	}
 
 	// ValidatorResponse defines the response used in stakers response REST API calls.
 	ValidatorResponse struct {
 		// AccountID is the hex encoded account ID of the validator.
-		AccountID iotago.AccountID `serix:"0,mapKey=accountId"`
+		AccountID iotago.AccountID `serix:""`
 		// StakingEpochEnd is the epoch until which the validator registered to stake.
-		StakingEpochEnd iotago.EpochIndex `serix:"1,mapKey=stakingEpochEnd"`
+		StakingEpochEnd iotago.EpochIndex `serix:""`
 		// PoolStake is the sum of tokens delegated to the pool and the validator stake.
-		PoolStake iotago.BaseToken `serix:"2,mapKey=poolStake"`
+		PoolStake iotago.BaseToken `serix:""`
 		// ValidatorStake is the stake of the validator.
-		ValidatorStake iotago.BaseToken `serix:"3,mapKey=validatorStake"`
+		ValidatorStake iotago.BaseToken `serix:""`
 		// FixedCost is the fixed cost that the validator receives from the total pool reward.
-		FixedCost iotago.Mana `serix:"4,mapKey=fixedCost"`
+		FixedCost iotago.Mana `serix:""`
 		// Active indicates whether the validator was active recently, and would be considered during committee selection.
-		Active bool `serix:"5,mapKey=active"`
+		Active bool `serix:""`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version    `serix:"6,mapKey=latestSupportedProtocolVersion"`
-		LatestSupportedProtocolHash    iotago.Identifier `serix:"7,mapKey=latestSupportedProtocolHash"`
+		LatestSupportedProtocolVersion iotago.Version    `serix:""`
+		LatestSupportedProtocolHash    iotago.Identifier `serix:""`
 	}
 
 	// ValidatorsResponse defines the response for the staking REST API call.
 	ValidatorsResponse struct {
-		Validators []*ValidatorResponse `serix:"0,mapKey=stakers"`
-		PageSize   uint32               `serix:"1,mapKey=pageSize"`
-		Cursor     string               `serix:"2,mapKey=cursor,omitempty"`
+		Validators []*ValidatorResponse `serix:"stakers"`
+		PageSize   uint32               `serix:""`
+		Cursor     string               `serix:",omitempty"`
 	}
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
 		// EpochStart is the starting epoch for the range for which the mana rewards are returned.
-		EpochStart iotago.EpochIndex `serix:"0,mapKey=epochStart"`
+		EpochStart iotago.EpochIndex `serix:""`
 		// EpochEnd is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
-		EpochEnd iotago.EpochIndex `serix:"1,mapKey=epochEnd"`
+		EpochEnd iotago.EpochIndex `serix:""`
 		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
-		Rewards iotago.Mana `serix:"2,mapKey=rewards"`
+		Rewards iotago.Mana `serix:""`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
 	CommitteeMemberResponse struct {
 		// AccountID is the hex encoded account ID of the validator.
-		AccountID iotago.AccountID `serix:"0,mapKey=accountId"`
+		AccountID iotago.AccountID `serix:""`
 		// PoolStake is the sum of tokens delegated to the pool and the validator stake.
-		PoolStake iotago.BaseToken `serix:"1,mapKey=poolStake"`
+		PoolStake iotago.BaseToken `serix:""`
 		// ValidatorStake is the stake of the validator.
-		ValidatorStake iotago.BaseToken `serix:"2,mapKey=validatorStake"`
+		ValidatorStake iotago.BaseToken `serix:""`
 		// FixedCost is the fixed cost that the validator received from the total pool reward.
-		FixedCost iotago.Mana `serix:"3,mapKey=fixedCost"`
+		FixedCost iotago.Mana `serix:""`
 	}
 
 	// CommitteeResponse defines the response for the staking REST API call.
 	CommitteeResponse struct {
-		Committee           []*CommitteeMemberResponse `serix:"0,mapKey=committee"`
-		TotalStake          iotago.BaseToken           `serix:"1,mapKey=totalStake"`
-		TotalValidatorStake iotago.BaseToken           `serix:"2,mapKey=totalValidatorStake"`
-		Epoch               iotago.EpochIndex          `serix:"3,mapKey=epoch"`
+		Committee           []*CommitteeMemberResponse `serix:""`
+		TotalStake          iotago.BaseToken           `serix:""`
+		TotalValidatorStake iotago.BaseToken           `serix:""`
+		Epoch               iotago.EpochIndex          `serix:""`
 	}
 )

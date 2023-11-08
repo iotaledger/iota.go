@@ -847,15 +847,15 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 // RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
-		Amount:     0,
-		Conditions: iotago.BasicOutputUnlockConditions{},
-		Features:   iotago.BasicOutputFeatures{},
+		Amount:           0,
+		UnlockConditions: iotago.BasicOutputUnlockConditions{},
+		Features:         iotago.BasicOutputFeatures{},
 	}
 
 	//nolint:exhaustive
 	switch addrType {
 	case iotago.AddressEd25519:
-		dep.Conditions = iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
+		dep.UnlockConditions = iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: RandEd25519Address()}}
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
@@ -911,7 +911,7 @@ func OneInputOutputTransaction() *iotago.SignedTransaction {
 			Outputs: iotago.TxEssenceOutputs{
 				&iotago.BasicOutput{
 					Amount: 1337,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: RandEd25519Address()},
 					},
 				},

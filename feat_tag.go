@@ -8,7 +8,7 @@ import (
 
 // TagFeature is a feature which allows to additionally tag an output by a user defined value.
 type TagFeature struct {
-	Tag []byte `serix:"0,lengthPrefixType=uint8,mapKey=tag,minLen=1,maxLen=64"`
+	Tag []byte `serix:",lenPrefix=uint8,minLen=1,maxLen=64"`
 }
 
 func (s *TagFeature) Clone() Feature {

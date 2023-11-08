@@ -94,19 +94,19 @@ func CommonSerixAPI() *serix.API {
 
 	{
 		must(api.RegisterTypeSettings(Ed25519Address{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithMapKey("pubKeyHash")),
+			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithFieldKey("pubKeyHash")),
 		)
 		must(api.RegisterTypeSettings(AccountAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithMapKey("accountId")),
+			serix.TypeSettings{}.WithObjectType(uint8(AddressAccount)).WithFieldKey("accountId")),
 		)
 		must(api.RegisterTypeSettings(NFTAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithMapKey("nftId")),
+			serix.TypeSettings{}.WithObjectType(uint8(AddressNFT)).WithFieldKey("nftId")),
 		)
 		must(api.RegisterTypeSettings(AnchorAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressAnchor)).WithMapKey("anchorId")),
+			serix.TypeSettings{}.WithObjectType(uint8(AddressAnchor)).WithFieldKey("anchorId")),
 		)
 		must(api.RegisterTypeSettings(ImplicitAccountCreationAddress{},
-			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithMapKey("pubKeyHash")),
+			serix.TypeSettings{}.WithObjectType(uint8(AddressImplicitAccountCreation)).WithFieldKey("pubKeyHash")),
 		)
 		must(api.RegisterTypeSettings(MultiAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressMulti))),

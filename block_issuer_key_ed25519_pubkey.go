@@ -12,7 +12,7 @@ const Ed25519PublicKeyBlockIssuerKeyLength = serializer.SmallTypeDenotationByteS
 
 // A Ed25519 public key Block Issuer Key.
 type Ed25519PublicKeyBlockIssuerKey struct {
-	PublicKey ed25519.PublicKey `serix:"0,mapKey=publicKey"`
+	PublicKey ed25519.PublicKey `serix:""`
 }
 
 // Ed25519PublicKeyBlockIssuerKeyFromPublicKey creates a block issuer key from an Ed25519 public key.

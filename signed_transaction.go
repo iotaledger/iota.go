@@ -40,9 +40,9 @@ type TransactionContextInputs ContextInputs[Input]
 type SignedTransaction struct {
 	API API
 	// The transaction essence, respectively the transfer part of a SignedTransaction.
-	Transaction *Transaction `serix:"0,mapKey=transaction"`
+	Transaction *Transaction `serix:""`
 	// The unlocks defining the unlocking data for the inputs within the Transaction.
-	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
+	Unlocks Unlocks `serix:""`
 }
 
 // ID computes the ID of the SignedTransaction.

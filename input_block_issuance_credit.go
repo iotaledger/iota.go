@@ -5,7 +5,7 @@ import (
 )
 
 type BlockIssuanceCreditInput struct {
-	AccountID AccountID `serix:"0,mapKey=accountId"`
+	AccountID AccountID `serix:""`
 }
 
 func (b *BlockIssuanceCreditInput) Clone() Input {

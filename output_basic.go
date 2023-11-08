@@ -17,13 +17,13 @@ type BasicOutputs []*BasicOutput
 // BasicOutput is an output type which can hold native tokens and features.
 type BasicOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The stored mana held by the output.
-	Mana Mana `serix:"1,mapKey=mana"`
+	Mana Mana `serix:""`
 	// The unlock conditions on this output.
-	Conditions BasicOutputUnlockConditions `serix:"2,mapKey=unlockConditions,omitempty"`
+	UnlockConditions BasicOutputUnlockConditions `serix:",omitempty"`
 	// The features on the output.
-	Features BasicOutputFeatures `serix:"3,mapKey=features,omitempty"`
+	Features BasicOutputFeatures `serix:",omitempty"`
 }
 
 // IsSimpleTransfer tells whether this BasicOutput fulfills the criteria of being a simple transfer.
@@ -33,10 +33,10 @@ func (e *BasicOutput) IsSimpleTransfer() bool {
 
 func (e *BasicOutput) Clone() Output {
 	return &BasicOutput{
-		Amount:     e.Amount,
-		Mana:       e.Mana,
-		Conditions: e.Conditions.Clone(),
-		Features:   e.Features.Clone(),
+		Amount:           e.Amount,
+		Mana:             e.Mana,
+		UnlockConditions: e.UnlockConditions.Clone(),
+		Features:         e.Features.Clone(),
 	}
 }
 
@@ -54,7 +54,7 @@ func (e *BasicOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !e.Conditions.Equal(otherOutput.Conditions) {
+	if !e.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -73,12 +73,12 @@ func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex
 func (e *BasicOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(e.Size())) +
-		e.Conditions.StorageScore(storageScoreStruct, nil) +
+		e.UnlockConditions.StorageScore(storageScoreStruct, nil) +
 		e.Features.StorageScore(storageScoreStruct, nil)
 }
 
 func (e *BasicOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	workScoreConditions, err := e.Conditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := e.UnlockConditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -96,7 +96,7 @@ func (e *BasicOutput) FeatureSet() FeatureSet {
 }
 
 func (e *BasicOutput) UnlockConditionSet() UnlockConditionSet {
-	return e.Conditions.MustSet()
+	return e.UnlockConditions.MustSet()
 }
 
 func (e *BasicOutput) BaseTokenAmount() BaseToken {
@@ -108,7 +108,7 @@ func (e *BasicOutput) StoredMana() Mana {
 }
 
 func (e *BasicOutput) Ident() Address {
-	return e.Conditions.MustSet().Address().Address
+	return e.UnlockConditions.MustSet().Address().Address
 }
 
 func (e *BasicOutput) Type() OutputType {
@@ -120,6 +120,6 @@ func (e *BasicOutput) Size() int {
 	return serializer.OneByte +
 		BaseTokenSize +
 		ManaSize +
-		e.Conditions.Size() +
+		e.UnlockConditions.Size() +
 		e.Features.Size()
 }

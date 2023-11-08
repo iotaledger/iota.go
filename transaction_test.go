@@ -58,7 +58,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -66,7 +66,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -94,7 +94,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AnchorOutput{
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
-							Conditions: iotago.AnchorOutputUnlockConditions{
+							UnlockConditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -103,7 +103,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AnchorOutput{
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
-							Conditions: iotago.AnchorOutputUnlockConditions{
+							UnlockConditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -130,7 +130,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.NFTOutput{
 							Amount: OneIOTA,
 							NFTID:  nftID,
-							Conditions: iotago.NFTOutputUnlockConditions{
+							UnlockConditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -138,7 +138,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.NFTOutput{
 							Amount: OneIOTA,
 							NFTID:  nftID,
-							Conditions: iotago.NFTOutputUnlockConditions{
+							UnlockConditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -164,7 +164,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -177,7 +177,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 								MeltedTokens:  big.NewInt(0),
 								MaximumSupply: big.NewInt(50),
 							},
-							Conditions: iotago.FoundryOutputUnlockConditions{
+							UnlockConditions: iotago.FoundryOutputUnlockConditions{
 								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 							},
 							Features: nil,
@@ -190,7 +190,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 								MeltedTokens:  big.NewInt(0),
 								MaximumSupply: big.NewInt(50),
 							},
-							Conditions: iotago.FoundryOutputUnlockConditions{
+							UnlockConditions: iotago.FoundryOutputUnlockConditions{
 								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 							},
 							Features: nil,

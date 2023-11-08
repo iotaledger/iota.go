@@ -9,13 +9,13 @@ import (
 // IndexerResponse is the standard successful response by the indexer.
 type IndexerResponse struct {
 	// The committed slot at which these outputs where available at.
-	CommittedSlot iotago.SlotIndex `serix:"0,mapKey=committedSlot"`
+	CommittedSlot iotago.SlotIndex `serix:""`
 	// The maximum count of results that are returned by the node.
-	PageSize uint32 `serix:"1,mapKey=pageSize"`
+	PageSize uint32 `serix:""`
 	// The output IDs (transaction hash + output index) of the found outputs.
-	Items iotago.HexOutputIDs `serix:"2,mapKey=items,lengthPrefixType=uint16"`
+	Items iotago.HexOutputIDs `serix:",lenPrefix=uint16"`
 	// The cursor to use for getting the next results.
-	Cursor string `serix:"3,mapKey=cursor,omitempty"`
+	Cursor string `serix:",omitempty"`
 }
 
 // IndexerCursorParams define page size and cursor query parameters.

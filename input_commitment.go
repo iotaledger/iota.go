@@ -5,7 +5,7 @@ import (
 )
 
 type CommitmentInput struct {
-	CommitmentID CommitmentID `serix:"0,mapKey=commitmentId"`
+	CommitmentID CommitmentID `serix:""`
 }
 
 func (c *CommitmentInput) Clone() Input {

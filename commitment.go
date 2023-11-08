@@ -10,12 +10,12 @@ import (
 )
 
 type Commitment struct {
-	ProtocolVersion      Version      `serix:"0,mapKey=protocolVersion"`
-	Slot                 SlotIndex    `serix:"1,mapKey=slot"`
-	PreviousCommitmentID CommitmentID `serix:"2,mapKey=previousCommitmentId"`
-	RootsID              Identifier   `serix:"3,mapKey=rootsId"`
-	CumulativeWeight     uint64       `serix:"4,mapKey=cumulativeWeight"`
-	ReferenceManaCost    Mana         `serix:"5,mapKey=referenceManaCost"`
+	ProtocolVersion      Version      `serix:""`
+	Slot                 SlotIndex    `serix:""`
+	PreviousCommitmentID CommitmentID `serix:""`
+	RootsID              Identifier   `serix:""`
+	CumulativeWeight     uint64       `serix:""`
+	ReferenceManaCost    Mana         `serix:""`
 }
 
 func NewCommitment(version Version, slot SlotIndex, prevID CommitmentID, rootsID Identifier, cumulativeWeight uint64, rmc Mana) *Commitment {
