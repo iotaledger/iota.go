@@ -857,7 +857,7 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 			},
 		},
 		{
-			name: "fail - validator id zeroed",
+			name: "fail - Delegation Output contains empty validator address",
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.DelegationOutput{
 					Amount:           OneIOTA,
