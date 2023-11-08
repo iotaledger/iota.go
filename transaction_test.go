@@ -371,7 +371,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue + 1)}
 				},
 			),
-			wantErr: nil,
+			wantErr: iotago.ErrMaxManaExceeded,
 		},
 		{
 			name: "fail - sum of allotted mana exceeds max value",
@@ -380,7 +380,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue - 1), allotmentWithMana(maxManaValue - 1)}
 				},
 			),
-			wantErr: nil,
+			wantErr: iotago.ErrMaxManaExceeded,
 		},
 	}
 

@@ -277,7 +277,9 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 	}
 
 	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
-	t.allotmentSyntacticValidation(maxManaValue)
+	if err := t.allotmentSyntacticValidation(maxManaValue); err != nil {
+		return err
+	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
 		OutputsSyntacticalDepositAmount(protoParams, api.StorageScoreStructure()),
