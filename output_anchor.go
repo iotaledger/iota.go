@@ -183,18 +183,6 @@ func (a *AnchorOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _
 		a.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
-func (a *AnchorOutput) syntacticallyValidate() error {
-	// Address should never be nil.
-	stateControllerAddress := a.Conditions.MustSet().StateControllerAddress().Address
-	governorAddress := a.Conditions.MustSet().GovernorAddress().Address
-
-	if (stateControllerAddress.Type() == AddressImplicitAccountCreation) || (governorAddress.Type() == AddressImplicitAccountCreation) {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
-}
-
 func (a *AnchorOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	workScoreConditions, err := a.Conditions.WorkScore(workScoreParameters)
 	if err != nil {

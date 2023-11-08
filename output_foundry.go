@@ -211,25 +211,6 @@ func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 	return workScoreTokenScheme.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (f *FoundryOutput) syntacticallyValidate() error {
-	nativeTokenFeature := f.FeatureSet().NativeToken()
-	if nativeTokenFeature == nil {
-		return nil
-	}
-
-	foundryID, err := f.FoundryID()
-	if err != nil {
-		return err
-	}
-
-	// NativeTokenFeature ID should have the same ID as the foundry
-	if !foundryID.Matches(nativeTokenFeature.ID) {
-		return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
-	}
-
-	return nil
-}
-
 func (f *FoundryOutput) ChainID() ChainID {
 	foundryID, err := f.FoundryID()
 	if err != nil {

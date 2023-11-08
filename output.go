@@ -488,6 +488,21 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 			return ierrors.Wrapf(err, "output %d", index)
 		}
 
+		nativeTokenFeature := foundryOutput.FeatureSet().NativeToken()
+		if nativeTokenFeature == nil {
+			return nil
+		}
+
+		foundryID, err := foundryOutput.FoundryID()
+		if err != nil {
+			return err
+		}
+
+		// NativeTokenFeature ID should have the same ID as the foundry
+		if !foundryID.Matches(nativeTokenFeature.ID) {
+			return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
+		}
+
 		return nil
 	}
 }
@@ -524,7 +539,114 @@ func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
 		}
 
 		if delegationOutput.ValidatorAddress.AccountID().Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorAddressZeroed, "output %d", index)
+			return ierrors.Wrapf(ErrDelegationValidatorAddressEmpty, "output %d", index)
+		}
+
+		return nil
+	}
+}
+
+func checkAddressRestrictions(output TxEssenceOutput, address Address) error {
+	addrWithCapabilities, isAddrWithCapabilities := address.(AddressCapabilities)
+	if !isAddrWithCapabilities {
+		// no restrictions
+		return nil
+	}
+
+	if addrWithCapabilities.CannotReceiveNativeTokens() && output.FeatureSet().HasNativeTokenFeature() {
+		return ErrAddressCannotReceiveNativeTokens
+	}
+
+	if addrWithCapabilities.CannotReceiveMana() && output.StoredMana() != 0 {
+		return ErrAddressCannotReceiveMana
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
+		return ErrAddressCannotReceiveTimelockUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
+		return ErrAddressCannotReceiveExpirationUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
+		return ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
+	}
+
+	if addrWithCapabilities.CannotReceiveAccountOutputs() && output.Type() == OutputAccount {
+		return ErrAddressCannotReceiveAccountOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveAnchorOutputs() && output.Type() == OutputAnchor {
+		return ErrAddressCannotReceiveAnchorOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveNFTOutputs() && output.Type() == OutputNFT {
+		return ErrAddressCannotReceiveNFTOutput
+	}
+
+	if addrWithCapabilities.CannotReceiveDelegationOutputs() && output.Type() == OutputDelegation {
+		return ErrAddressCannotReceiveDelegationOutput
+	}
+
+	return nil
+}
+
+// OutputsSyntacticalAddressRestrictions returns a func that checks the capability flag restrictions on addresses.
+//
+// Does not validate the Return Address in StorageDepositReturnUnlockCondition because such a Return Address
+// already is as restricted as the most restricted address.
+func OutputsSyntacticalAddressRestrictions() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
+			if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
+				return err
+			}
+		}
+		if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
+			if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
+				return err
+			}
+		}
+		if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
+			if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
+				return err
+			}
+		}
+		if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
+			if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+}
+
+func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		switch typedOutput := output.(type) {
+		case *BasicOutput, *FoundryOutput:
+			// - Implicit Account Creation Addresses are allowed in Basic Outputs.
+			// - Foundry Outputs cannot contain non-Account Addresses in the first place,
+			// so they don't have to be checked.
+			return nil
+		case *AccountOutput, *NFTOutput, *DelegationOutput:
+			// The serialization rules enforce that these output types always have an address unlock condition set.
+			if output.UnlockConditionSet().Address().Address.Type() == AddressImplicitAccountCreation {
+				return ErrImplicitAccountCreationAddressInInvalidOutput
+			}
+		case *AnchorOutput:
+			// The serialization rules enforce that these addresses are always set.
+			stateControllerAddress := typedOutput.Conditions.MustSet().StateControllerAddress().Address
+			governorAddress := typedOutput.Conditions.MustSet().GovernorAddress().Address
+
+			if (stateControllerAddress.Type() == AddressImplicitAccountCreation) ||
+				(governorAddress.Type() == AddressImplicitAccountCreation) {
+				return ErrImplicitAccountCreationAddressInInvalidOutput
+			}
+		default:
+			panic("unrecognized output type")
 		}
 
 		return nil
