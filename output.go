@@ -406,7 +406,7 @@ func OutputsSyntacticalStoredMana(maxManaValue Mana) OutputsSyntacticalValidatio
 		var err error
 		sum, err = safemath.SafeAdd(sum, storedMana)
 		if err != nil {
-			return ierrors.Errorf("%w: %w: stored mana sum calculation failed at output %d", ErrMaxManaExceeded, err, index)
+			return ierrors.Wrapf(ErrMaxManaExceeded, "%w: stored mana sum calculation failed at output %d", err, index)
 		}
 
 		if sum > maxManaValue {
