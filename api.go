@@ -151,6 +151,8 @@ type ProtocolParameters interface {
 
 	RewardsParameters() *RewardsParameters
 
+	TargetCommitteeSize() uint8
+
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)

@@ -56,6 +56,9 @@ type basicProtocolParameters struct {
 	VersionSignaling VersionSignaling `serix:"19,mapKey=versionSignaling"`
 	// RewardsParameters defines the parameters used for reward calculation.
 	RewardsParameters RewardsParameters `serix:"20,mapKey=rewardsParameters"`
+
+	// TargetCommitteeSize defines the target size of the committee. If there's fewer candidates the actual committee size could be smaller in a given epoch.
+	TargetCommitteeSize uint8 `serix:"21,mapKey=targetCommitteeSize"`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -79,5 +82,6 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
 		b.CongestionControlParameters.Equals(other.CongestionControlParameters) &&
 		b.VersionSignaling.Equals(other.VersionSignaling) &&
-		b.RewardsParameters.Equals(other.RewardsParameters)
+		b.RewardsParameters.Equals(other.RewardsParameters) &&
+		b.TargetCommitteeSize == other.TargetCommitteeSize
 }

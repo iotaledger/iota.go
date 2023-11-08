@@ -38,6 +38,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(8, 8, 31, 1154, 2, 1),
+			WithTargetCommitteeSize(32),
 		},
 			opts...,
 		),
@@ -141,6 +142,10 @@ func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
 
 func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 	return &p.basicProtocolParameters.RewardsParameters
+}
+
+func (p *V3ProtocolParameters) TargetCommitteeSize() uint8 {
+	return p.basicProtocolParameters.TargetCommitteeSize
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
@@ -317,5 +322,11 @@ func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, po
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
+	}
+}
+
+func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.TargetCommitteeSize = targetCommitteeSize
 	}
 }
