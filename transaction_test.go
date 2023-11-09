@@ -299,3 +299,100 @@ func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
 		})
 	}
 }
+
+func TestTransactionSyntacticMaxMana(t *testing.T) {
+	type test struct {
+		name    string
+		tx      *iotago.Transaction
+		wantErr error
+	}
+
+	basicOutputWithMana := func(mana iotago.Mana) *iotago.BasicOutput {
+		return &iotago.BasicOutput{
+			Amount: OneIOTA,
+			Mana:   mana,
+			Conditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: tpkg.RandEd25519Address(),
+				},
+			},
+		}
+	}
+
+	allotmentWithMana := func(mana iotago.Mana) *iotago.Allotment {
+		return &iotago.Allotment{
+			Mana:      mana,
+			AccountID: tpkg.RandAccountID(),
+		}
+	}
+
+	var maxManaValue iotago.Mana = (1 << tpkg.TestAPI.ProtocolParameters().ManaParameters().BitsCount) - 1
+	tests := []*test{
+		{
+			name: "ok - stored mana sum below max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(1), basicOutputWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: nil,
+		},
+		{
+			name: "fail - one output's stored mana exceeds max mana value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue + 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "fail - sum of stored mana exceeds max mana value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue - 1), basicOutputWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "ok - allotted mana sum below max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(1), allotmentWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: nil,
+		},
+		{
+			name: "fail - one allotment's mana exceeds max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue + 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "fail - sum of allotted mana exceeds max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue - 1), allotmentWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
@@ -46,12 +47,12 @@ var (
 	ErrNFTOutputCyclicAddress = ierrors.New("NFT output's ID corresponds to address field")
 	// ErrOutputsSumExceedsTotalSupply gets returned if the sum of the output deposits exceeds the total supply of tokens.
 	ErrOutputsSumExceedsTotalSupply = ierrors.New("accumulated output balance exceeds total supply")
-	// ErrOutputAmountMoreThanTotalSupply gets returned if an output base token amount is more than the total supply.
-	ErrOutputAmountMoreThanTotalSupply = ierrors.New("an output's base token amount cannot exceed the total supply")
 	// ErrStorageDepositLessThanMinReturnOutputStorageDeposit gets returned when the storage deposit condition's amount is less than the min storage deposit for the return output.
 	ErrStorageDepositLessThanMinReturnOutputStorageDeposit = ierrors.New("storage deposit return amount is less than the min storage deposit needed for the return output")
 	// ErrStorageDepositExceedsTargetOutputAmount gets returned when the storage deposit condition's amount exceeds the target output's base token amount.
 	ErrStorageDepositExceedsTargetOutputAmount = ierrors.New("storage deposit return amount exceeds target output's base token amount")
+	// ErrMaxManaExceeded gets returned when the sum of stored mana in all outputs or the sum of Mana in all allotments exceeds the maximum Mana value.
+	ErrMaxManaExceeded = ierrors.New("max mana value exceeded")
 )
 
 type (
@@ -247,6 +248,25 @@ func (t *Transaction) Size() int {
 	return t.TransactionEssence.Size() + t.Outputs.Size()
 }
 
+// allotmentSyntacticValidation checks that the sum of all allotted mana does not exceed 2^(Mana Bits Count) - 1.
+func (t *Transaction) allotmentSyntacticValidation(maxManaValue Mana) error {
+	var sum Mana
+
+	for index, allotment := range t.Allotments {
+		var err error
+		sum, err = safemath.SafeAdd(sum, allotment.Mana)
+		if err != nil {
+			return ierrors.Errorf("%w: %w: allotment mana sum calculation failed at allotment %d", ErrMaxManaExceeded, err, index)
+		}
+
+		if sum > maxManaValue {
+			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
+		}
+	}
+
+	return nil
+}
+
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (t *Transaction) SyntacticallyValidate(api API) error {
@@ -256,10 +276,16 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 		return err
 	}
 
+	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
+	if err := t.allotmentSyntacticValidation(maxManaValue); err != nil {
+		return err
+	}
+
 	return SyntacticallyValidateOutputs(t.Outputs,
 		OutputsSyntacticalDepositAmount(protoParams, api.StorageScoreStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),
+		OutputsSyntacticalStoredMana(maxManaValue),
 		OutputsSyntacticalChainConstrainedOutputUniqueness(),
 		OutputsSyntacticalFoundry(),
 		OutputsSyntacticalAccount(),
