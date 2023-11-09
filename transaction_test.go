@@ -311,7 +311,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		return &iotago.BasicOutput{
 			Amount: OneIOTA,
 			Mana:   mana,
-			Conditions: iotago.BasicOutputUnlockConditions{
+			UnlockConditions: iotago.BasicOutputUnlockConditions{
 				&iotago.AddressUnlockCondition{
 					Address: tpkg.RandEd25519Address(),
 				},
