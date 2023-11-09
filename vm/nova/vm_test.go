@@ -368,7 +368,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("gov transitioning")}},
+						&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("gov transitioning")}},
 					},
 				},
 
@@ -383,7 +383,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: ident4},
 					},
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("state transitioning")}},
+						&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("state transitioning")}},
 					},
 				},
 
@@ -398,7 +398,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: ident3},
 					},
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("going to be destroyed")}},
+						&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("going to be destroyed")}},
 					},
 				},
 
@@ -655,8 +655,8 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
 						Features: iotago.AnchorOutputFeatures{
-							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("gov transitioning")}},
-							&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("the gov mutation on this output")}},
+							&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("gov transitioning")}},
+							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("the gov mutation on this output")}},
 						},
 					},
 
@@ -671,7 +671,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
 						Features: iotago.AnchorOutputFeatures{
-							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{
+							&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{
 								"data":  []byte("state transitioning"),
 								"added": []byte("next state"),
 							}},
@@ -689,7 +689,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 							&iotago.GovernorAddressUnlockCondition{Address: ident4},
 						},
 						Features: iotago.AnchorOutputFeatures{
-							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("a new anchor output")}},
+							&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("a new anchor output")}},
 						},
 					},
 
@@ -1646,7 +1646,7 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("current state")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("current state")}},
 								},
 							},
 							// owned by restricted anchor address
@@ -1670,7 +1670,7 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("next state")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("next state")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2416,7 +2416,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("current state")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("current state")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2446,7 +2446,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("next state")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("next state")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2553,7 +2553,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("governance transition")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("governance transition")}},
 								},
 							},
 							&iotago.BasicOutput{
@@ -2583,7 +2583,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.GovernorAddressUnlockCondition{Address: ed25519Addresses[1]},
 								},
 								Features: iotago.AnchorOutputFeatures{
-									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("governance transition")}},
+									&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("governance transition")}},
 								},
 							},
 							&iotago.BasicOutput{

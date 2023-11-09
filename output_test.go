@@ -89,7 +89,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 				Features: iotago.AnchorOutputFeatures{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
-					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
+					&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
 				},
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},

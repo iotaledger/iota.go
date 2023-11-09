@@ -39,8 +39,8 @@ const (
 	FeatureIssuer
 	// FeatureMetadata denotes a MetadataFeature.
 	FeatureMetadata
-	// FeatureMetadataGovernor denotes a GovernorMetadataFeature.
-	FeatureMetadataGovernor
+	// FeatureStateMetadata denotes a StateMetadataFeature.
+	FeatureStateMetadata
 	// FeatureTag denotes a TagFeature.
 	FeatureTag
 	// NativeTokenFeature denotes a NativeTokenFeature.
@@ -63,7 +63,7 @@ var featNames = [FeatureStaking + 1]string{
 	"SenderFeature",
 	"IssuerFeature",
 	"MetadataFeature",
-	"GovernorMetadataFeature",
+	"StateMetadataFeature",
 	"TagFeature",
 	"NativeTokenFeature",
 	"BlockIssuerFeature",
@@ -212,15 +212,15 @@ func (f FeatureSet) Metadata() *MetadataFeature {
 	return b.(*MetadataFeature)
 }
 
-// GovernorMetadata returns the GovernorMetadataFeature in the set or nil.
-func (f FeatureSet) GovernorMetadata() *GovernorMetadataFeature {
-	b, has := f[FeatureMetadataGovernor]
+// StateMetadata returns the StateMetadataFeature in the set or nil.
+func (f FeatureSet) StateMetadata() *StateMetadataFeature {
+	b, has := f[FeatureStateMetadata]
 	if !has {
 		return nil
 	}
 
-	//nolint:forcetypeassert // we can safely assume that this is a GovernorMetadataFeature
-	return b.(*GovernorMetadataFeature)
+	//nolint:forcetypeassert // we can safely assume that this is a StateMetadataFeature
+	return b.(*StateMetadataFeature)
 }
 
 // Tag returns the TagFeature in the set or nil.

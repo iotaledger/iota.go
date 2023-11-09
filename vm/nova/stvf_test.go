@@ -2045,7 +2045,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 					StateIndex: 10,
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
+						&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("1337")}},
 					},
 				},
 			},
@@ -2060,9 +2060,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				},
 				Features: iotago.AnchorOutputFeatures{
 					&iotago.SenderFeature{Address: exampleGovCtrl},
-					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
-					// adding governor metadata feature
-					&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
+					&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("1337")}},
+					// adding metadata feature
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1338")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2099,7 +2099,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 					StateIndex: 10,
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1338")}},
 					},
 				},
 			},
@@ -2113,9 +2113,9 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				StateIndex: 11,
 				Features: iotago.AnchorOutputFeatures{
 					&iotago.SenderFeature{Address: exampleStateCtrl},
-					// adding metadata feature
-					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1337")}},
-					&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("1338")}},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("1338")}},
+					// adding state metadata feature
+					&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": []byte("1337")}},
 				},
 			},
 			transType: iotago.ChainTransitionTypeStateChange,
@@ -2239,8 +2239,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{
-							Entries: iotago.MetadataFeatureEntries{
+						&iotago.StateMetadataFeature{
+							Entries: iotago.StateMetadataFeatureEntries{
 								"data": []byte("foo"),
 							},
 						},
@@ -2251,10 +2251,10 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				"amount": {
 					"Amount": iotago.BaseToken(1337),
 				},
-				"metadata_feature_changed": {
+				"state_metadata_feature_changed": {
 					"Features": iotago.AnchorOutputFeatures{
-						&iotago.MetadataFeature{
-							Entries: iotago.MetadataFeatureEntries{
+						&iotago.StateMetadataFeature{
+							Entries: iotago.StateMetadataFeatureEntries{
 								"data": []byte("bar"),
 							},
 						},
@@ -2288,7 +2288,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 					Features: iotago.AnchorOutputFeatures{
-						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("foo")}},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("foo")}},
 					},
 					ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 						&iotago.IssuerFeature{Address: exampleIssuer},
@@ -2316,10 +2316,10 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				"state_index_bigger_more_than_1": {
 					"StateIndex": uint32(7),
 				},
-				"governance_metadata_feature_changed": {
+				"metadata_feature_changed": {
 					"StateIndex": uint32(11),
 					"Features": iotago.AnchorOutputFeatures{
-						&iotago.GovernorMetadataFeature{Entries: iotago.GovernorMetadataFeatureEntries{"data": []byte("bar")}},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("bar")}},
 					},
 				},
 			},

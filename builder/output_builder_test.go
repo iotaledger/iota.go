@@ -152,17 +152,17 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 func TestAnchorOutputBuilder(t *testing.T) {
 	var (
-		stateCtrl                           = tpkg.RandEd25519Address()
-		stateCtrlNew                        = tpkg.RandEd25519Address()
-		gov                                 = tpkg.RandEd25519Address()
-		amount             iotago.BaseToken = 1337
-		metadataEntries                     = iotago.MetadataFeatureEntries{"data": []byte("123456")}
-		immMetadataEntries                  = iotago.MetadataFeatureEntries{"data": []byte("654321")}
-		immSender                           = tpkg.RandEd25519Address()
+		stateCtrl                             = tpkg.RandEd25519Address()
+		stateCtrlNew                          = tpkg.RandEd25519Address()
+		gov                                   = tpkg.RandEd25519Address()
+		amount               iotago.BaseToken = 1337
+		stateMetadataEntries                  = iotago.StateMetadataFeatureEntries{"data": []byte("123456")}
+		immMetadataEntries                    = iotago.MetadataFeatureEntries{"data": []byte("654321")}
+		immSender                             = tpkg.RandEd25519Address()
 	)
 
 	anchorOutput, err := builder.NewAnchorOutputBuilder(stateCtrl, gov, amount).
-		Metadata(metadataEntries).
+		StateMetadata(stateMetadataEntries).
 		ImmutableMetadata(immMetadataEntries).
 		ImmutableSender(immSender).
 		Build()
@@ -176,7 +176,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
 		Features: iotago.AnchorOutputFeatures{
-			&iotago.MetadataFeature{Entries: metadataEntries},
+			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
@@ -186,17 +186,17 @@ func TestAnchorOutputBuilder(t *testing.T) {
 	require.True(t, expected.Equal(anchorOutput), "anchor output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
-	newMetadataEntries := iotago.MetadataFeatureEntries{"newData": []byte("newState")}
+	newMetadataEntries := iotago.StateMetadataFeatureEntries{"newData": []byte("newState")}
 
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	expectedCpy := expected.Clone().(*iotago.AnchorOutput)
 	expectedCpy.Amount = newAmount
 	expectedCpy.StateIndex++
-	expectedCpy.Features.Upsert(&iotago.MetadataFeature{Entries: newMetadataEntries})
+	expectedCpy.Features.Upsert(&iotago.StateMetadataFeature{Entries: newMetadataEntries})
 
 	updatedOutput, err := builder.NewAnchorOutputBuilderFromPrevious(anchorOutput).StateTransition().
 		Amount(newAmount).
-		Metadata(newMetadataEntries).
+		StateMetadata(newMetadataEntries).
 		Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)
@@ -214,7 +214,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
 		Features: iotago.AnchorOutputFeatures{
-			&iotago.MetadataFeature{Entries: metadataEntries},
+			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},

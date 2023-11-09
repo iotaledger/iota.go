@@ -9,37 +9,37 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-type GovernorMetadataFeatureEntriesKey string
-type GovernorMetadataFeatureEntriesValue []byte
-type GovernorMetadataFeatureEntries map[GovernorMetadataFeatureEntriesKey]GovernorMetadataFeatureEntriesValue
+type StateMetadataFeatureEntriesKey string
+type StateMetadataFeatureEntriesValue []byte
+type StateMetadataFeatureEntries map[StateMetadataFeatureEntriesKey]StateMetadataFeatureEntriesValue
 
-// GovernorMetadataFeature is a feature which simply holds binary data to be freely
+// StateMetadataFeature is a feature which simply holds binary data to be freely
 // interpreted by higher layer applications.
-type GovernorMetadataFeature struct {
-	Entries GovernorMetadataFeatureEntries `serix:""`
+type StateMetadataFeature struct {
+	Entries StateMetadataFeatureEntries `serix:""`
 }
 
-func (m GovernorMetadataFeature) Clone() Feature {
-	copiedMap := make(GovernorMetadataFeatureEntries)
+func (m StateMetadataFeature) Clone() Feature {
+	copiedMap := make(StateMetadataFeatureEntries)
 	for key, value := range m.Entries {
 		copiedMap[key] = lo.CopySlice(value)
 	}
 
-	return &GovernorMetadataFeature{
+	return &StateMetadataFeature{
 		Entries: copiedMap,
 	}
 }
 
-func (m GovernorMetadataFeature) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
+func (m StateMetadataFeature) StorageScore(_ *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return 0
 }
 
-func (m GovernorMetadataFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
+func (m StateMetadataFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
 }
 
-func (m GovernorMetadataFeature) Equal(other Feature) bool {
-	otherFeat, is := other.(*GovernorMetadataFeature)
+func (m StateMetadataFeature) Equal(other Feature) bool {
+	otherFeat, is := other.(*StateMetadataFeature)
 	if !is {
 		return false
 	}
@@ -62,11 +62,11 @@ func (m GovernorMetadataFeature) Equal(other Feature) bool {
 	return true
 }
 
-func (m GovernorMetadataFeature) Type() FeatureType {
-	return FeatureMetadataGovernor
+func (m StateMetadataFeature) Type() FeatureType {
+	return FeatureStateMetadata
 }
 
-func (m GovernorMetadataFeature) mapSize() int {
+func (m StateMetadataFeature) mapSize() int {
 	var size int
 
 	// Map Length
@@ -79,7 +79,7 @@ func (m GovernorMetadataFeature) mapSize() int {
 	return size
 }
 
-func (m GovernorMetadataFeature) Size() int {
+func (m StateMetadataFeature) Size() int {
 	// FeatureType + Entries
 	return serializer.SmallTypeDenotationByteSize + m.mapSize()
 }

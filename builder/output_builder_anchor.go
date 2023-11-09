@@ -96,15 +96,15 @@ func (builder *AnchorOutputBuilder) ImmutableSender(senderAddr iotago.Address) *
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
 func (builder *AnchorOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AnchorOutputBuilder {
 	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
-	builder.stateCtrlReq = true
+	builder.govCtrlReq = true
 
 	return builder
 }
 
-// GovernorMetadata sets/modifies an iotago.GovernorMetadataFeature on the output.
-func (builder *AnchorOutputBuilder) GovernorMetadata(entries iotago.GovernorMetadataFeatureEntries) *AnchorOutputBuilder {
-	builder.output.Features.Upsert(&iotago.GovernorMetadataFeature{Entries: entries})
-	builder.govCtrlReq = true
+// StateMetadata sets/modifies an iotago.StateMetadataFeature on the output.
+func (builder *AnchorOutputBuilder) StateMetadata(entries iotago.StateMetadataFeatureEntries) *AnchorOutputBuilder {
+	builder.output.Features.Upsert(&iotago.StateMetadataFeature{Entries: entries})
+	builder.stateCtrlReq = true
 
 	return builder
 }
@@ -170,9 +170,9 @@ func (trans *AnchorStateTransition) Mana(mana iotago.Mana) *AnchorStateTransitio
 	return trans.builder.Mana(mana).StateTransition()
 }
 
-// Metadata sets/modifies an iotago.MetadataFeature as a mutable feature on the output.
-func (trans *AnchorStateTransition) Metadata(entries iotago.MetadataFeatureEntries) *AnchorStateTransition {
-	return trans.builder.Metadata(entries).StateTransition()
+// StateMetadata sets/modifies an iotago.StateMetadataFeature on the output.
+func (trans *AnchorStateTransition) StateMetadata(entries iotago.StateMetadataFeatureEntries) *AnchorStateTransition {
+	return trans.builder.StateMetadata(entries).StateTransition()
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
@@ -211,9 +211,9 @@ func (trans *AnchorGovernanceTransition) Sender(senderAddr iotago.Address) *Anch
 	return trans.builder.Sender(senderAddr).GovernanceTransition()
 }
 
-// GovernorMetadata sets/modifies an iotago.GovernorMetadataFeature on the output.
-func (trans *AnchorGovernanceTransition) GovernorMetadata(entries iotago.GovernorMetadataFeatureEntries) *AnchorGovernanceTransition {
-	return trans.builder.GovernorMetadata(entries).GovernanceTransition()
+// Metadata sets/modifies an iotago.MetadataFeature as a mutable feature on the output.
+func (trans *AnchorGovernanceTransition) Metadata(entries iotago.MetadataFeatureEntries) *AnchorGovernanceTransition {
+	return trans.builder.Metadata(entries).GovernanceTransition()
 }
 
 // Builder returns the AnchorOutputBuilder.

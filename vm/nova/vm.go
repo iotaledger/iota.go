@@ -735,7 +735,7 @@ func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutpu
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
 	}
 
-	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+	if err := iotago.FeatureUnchanged(iotago.FeatureStateMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "%w", err)
 	}
 
@@ -754,7 +754,7 @@ func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) er
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
 	}
 
-	if err := iotago.FeatureUnchanged(iotago.FeatureMetadataGovernor, current.Features.MustSet(), next.Features.MustSet()); err != nil {
+	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
 		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "%w", err)
 	}
 
