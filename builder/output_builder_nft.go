@@ -11,7 +11,7 @@ func NewNFTOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *NF
 		Amount: amount,
 		Mana:   0,
 		NFTID:  iotago.EmptyNFTID(),
-		Conditions: iotago.NFTOutputUnlockConditions{
+		UnlockConditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
 		Features:          iotago.NFTOutputFeatures{},
@@ -50,7 +50,7 @@ func (builder *NFTOutputBuilder) Mana(mana iotago.Mana) *NFTOutputBuilder {
 
 // Address sets/modifies an iotago.AddressUnlockCondition on the output.
 func (builder *NFTOutputBuilder) Address(addr iotago.Address) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
+	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
 }
@@ -65,21 +65,21 @@ func (builder *NFTOutputBuilder) NFTID(nftID iotago.NFTID) *NFTOutputBuilder {
 
 // StorageDepositReturn sets/modifies an iotago.StorageDepositReturnUnlockCondition on the output.
 func (builder *NFTOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount iotago.BaseToken) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
+	builder.output.UnlockConditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
 
 	return builder
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
 func (builder *NFTOutputBuilder) Timelock(untilSlot iotago.SlotIndex) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{Slot: untilSlot})
+	builder.output.UnlockConditions.Upsert(&iotago.TimelockUnlockCondition{Slot: untilSlot})
 
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
 func (builder *NFTOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlot iotago.SlotIndex) *NFTOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, Slot: expiredAfterSlot})
+	builder.output.UnlockConditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, Slot: expiredAfterSlot})
 
 	return builder
 }
@@ -129,7 +129,7 @@ func (builder *NFTOutputBuilder) Build() (*iotago.NFTOutput, error) {
 		}
 	}
 
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
 

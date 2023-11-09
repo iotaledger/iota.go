@@ -44,8 +44,8 @@ func (sum NativeTokenSum) ValueOrBigInt0(id NativeTokenID) *big.Int {
 
 // NativeTokenFeature is a feature that holds a native token which represents a token that resides natively on the ledger.
 type NativeTokenFeature struct {
-	ID     NativeTokenID `serix:"0,mapKey=id"`
-	Amount *big.Int      `serix:"1,mapKey=amount"`
+	ID     NativeTokenID `serix:""`
+	Amount *big.Int      `serix:""`
 }
 
 // Clone clones the NativeTokenFeature.

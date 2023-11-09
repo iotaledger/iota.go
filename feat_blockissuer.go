@@ -14,8 +14,8 @@ const (
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
 type BlockIssuerFeature struct {
-	BlockIssuerKeys BlockIssuerKeys `serix:"0,mapKey=blockIssuerKeys,lengthPrefixType=uint8"`
-	ExpirySlot      SlotIndex       `serix:"1,mapKey=expirySlot"`
+	BlockIssuerKeys BlockIssuerKeys `serix:",lenPrefix=uint8"`
+	ExpirySlot      SlotIndex       `serix:""`
 }
 
 func (s *BlockIssuerFeature) Clone() Feature {

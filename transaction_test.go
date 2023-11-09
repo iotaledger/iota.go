@@ -58,7 +58,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -66,7 +66,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -94,7 +94,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AnchorOutput{
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
-							Conditions: iotago.AnchorOutputUnlockConditions{
+							UnlockConditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -103,7 +103,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AnchorOutput{
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
-							Conditions: iotago.AnchorOutputUnlockConditions{
+							UnlockConditions: iotago.AnchorOutputUnlockConditions{
 								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
 								&iotago.GovernorAddressUnlockCondition{Address: ident1},
 							},
@@ -130,7 +130,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.NFTOutput{
 							Amount: OneIOTA,
 							NFTID:  nftID,
-							Conditions: iotago.NFTOutputUnlockConditions{
+							UnlockConditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -138,7 +138,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.NFTOutput{
 							Amount: OneIOTA,
 							NFTID:  nftID,
-							Conditions: iotago.NFTOutputUnlockConditions{
+							UnlockConditions: iotago.NFTOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -164,7 +164,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						&iotago.AccountOutput{
 							Amount:    OneIOTA,
 							AccountID: accountID,
-							Conditions: iotago.AccountOutputUnlockConditions{
+							UnlockConditions: iotago.AccountOutputUnlockConditions{
 								&iotago.AddressUnlockCondition{Address: ident1},
 							},
 							Features: nil,
@@ -177,7 +177,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 								MeltedTokens:  big.NewInt(0),
 								MaximumSupply: big.NewInt(50),
 							},
-							Conditions: iotago.FoundryOutputUnlockConditions{
+							UnlockConditions: iotago.FoundryOutputUnlockConditions{
 								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 							},
 							Features: nil,
@@ -190,7 +190,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 								MeltedTokens:  big.NewInt(0),
 								MaximumSupply: big.NewInt(50),
 							},
-							Conditions: iotago.FoundryOutputUnlockConditions{
+							UnlockConditions: iotago.FoundryOutputUnlockConditions{
 								&iotago.ImmutableAccountUnlockCondition{Address: accountAddress},
 							},
 							Features: nil,
@@ -284,6 +284,103 @@ func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
 			name:    "fail - single zero byte",
 			tx:      randTransactionWithCapabilities(iotago.TransactionCapabilitiesBitMask{0x00}),
 			wantErr: iotago.ErrBitmaskTrailingZeroBytes,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestTransactionSyntacticMaxMana(t *testing.T) {
+	type test struct {
+		name    string
+		tx      *iotago.Transaction
+		wantErr error
+	}
+
+	basicOutputWithMana := func(mana iotago.Mana) *iotago.BasicOutput {
+		return &iotago.BasicOutput{
+			Amount: OneIOTA,
+			Mana:   mana,
+			UnlockConditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: tpkg.RandEd25519Address(),
+				},
+			},
+		}
+	}
+
+	allotmentWithMana := func(mana iotago.Mana) *iotago.Allotment {
+		return &iotago.Allotment{
+			Mana:      mana,
+			AccountID: tpkg.RandAccountID(),
+		}
+	}
+
+	var maxManaValue iotago.Mana = (1 << tpkg.TestAPI.ProtocolParameters().ManaParameters().BitsCount) - 1
+	tests := []*test{
+		{
+			name: "ok - stored mana sum below max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(1), basicOutputWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: nil,
+		},
+		{
+			name: "fail - one output's stored mana exceeds max mana value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue + 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "fail - sum of stored mana exceeds max mana value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue - 1), basicOutputWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "ok - allotted mana sum below max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(1), allotmentWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: nil,
+		},
+		{
+			name: "fail - one allotment's mana exceeds max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue + 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
+		},
+		{
+			name: "fail - sum of allotted mana exceeds max value",
+			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+				func(tx *iotago.Transaction) {
+					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue - 1), allotmentWithMana(maxManaValue - 1)}
+				},
+			),
+			wantErr: iotago.ErrMaxManaExceeded,
 		},
 	}
 

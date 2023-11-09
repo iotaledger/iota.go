@@ -8,7 +8,7 @@ import (
 // MultiUnlock is an Unlock which holds a list of unlocks for a multi address.
 type MultiUnlock struct {
 	// The unlocks for this MultiUnlock.
-	Unlocks []Unlock `serix:"0,lengthPrefixType=uint8,mapKey=unlocks,minLen=1,maxLen=10"`
+	Unlocks []Unlock `serix:",lenPrefix=uint8,minLen=1,maxLen=10"`
 }
 
 func (u *MultiUnlock) Clone() Unlock {

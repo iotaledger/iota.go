@@ -7,7 +7,7 @@ import (
 
 // AddressUnlockCondition is an UnlockCondition defining an identity which has to be unlocked.
 type AddressUnlockCondition struct {
-	Address Address `serix:"0,mapKey=address"`
+	Address Address `serix:""`
 }
 
 func (s *AddressUnlockCondition) Clone() UnlockCondition {

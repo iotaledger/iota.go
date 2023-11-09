@@ -8,7 +8,7 @@ import (
 // Unlike the AddressUnlockCondition, this unlock condition is immutable for an output which contains it,
 // meaning it also only applies to ChainOutput(s).
 type ImmutableAccountUnlockCondition struct {
-	Address *AccountAddress `serix:"0,mapKey=address"`
+	Address *AccountAddress `serix:""`
 }
 
 func (s *ImmutableAccountUnlockCondition) Clone() UnlockCondition {

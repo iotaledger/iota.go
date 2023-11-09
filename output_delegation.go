@@ -100,19 +100,19 @@ type (
 // DelegationOutput is an output type used to implement delegation.
 type DelegationOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The amount of IOTA tokens that were delegated when the output was created.
-	DelegatedAmount BaseToken `serix:"1,mapKey=delegatedAmount"`
+	DelegatedAmount BaseToken `serix:""`
 	// The identifier for this output.
-	DelegationID DelegationID `serix:"2,mapKey=delegationId"`
+	DelegationID DelegationID `serix:""`
 	// The Account ID of the validator to which this output is delegating.
-	ValidatorAddress *AccountAddress `serix:"3,mapKey=validatorAddress"`
+	ValidatorAddress *AccountAddress `serix:""`
 	// The index of the first epoch for which this output delegates.
-	StartEpoch EpochIndex `serix:"4,mapKey=startEpoch"`
+	StartEpoch EpochIndex `serix:""`
 	// The index of the last epoch for which this output delegates.
-	EndEpoch EpochIndex `serix:"5,mapKey=endEpoch"`
+	EndEpoch EpochIndex `serix:""`
 	// The unlock conditions on this output.
-	Conditions DelegationOutputUnlockConditions `serix:"6,mapKey=unlockConditions,omitempty"`
+	UnlockConditions DelegationOutputUnlockConditions `serix:",omitempty"`
 }
 
 func (d *DelegationOutput) Clone() Output {
@@ -123,7 +123,7 @@ func (d *DelegationOutput) Clone() Output {
 		ValidatorAddress: d.ValidatorAddress,
 		StartEpoch:       d.StartEpoch,
 		EndEpoch:         d.EndEpoch,
-		Conditions:       d.Conditions.Clone(),
+		UnlockConditions: d.UnlockConditions.Clone(),
 	}
 }
 
@@ -157,7 +157,7 @@ func (d *DelegationOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !d.Conditions.Equal(otherOutput.Conditions) {
+	if !d.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -165,7 +165,7 @@ func (d *DelegationOutput) Equal(other Output) bool {
 }
 
 func (d *DelegationOutput) Ident() Address {
-	return d.Conditions.MustSet().Address().Address
+	return d.UnlockConditions.MustSet().Address().Address
 }
 
 func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
@@ -177,26 +177,11 @@ func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructur
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(d.Size())) +
 		storageScoreStruct.OffsetDelegation() +
-		d.Conditions.StorageScore(storageScoreStruct, nil)
-}
-
-func (d *DelegationOutput) syntacticallyValidate() error {
-	if d.ValidatorAddress.AccountID().Empty() {
-		return ErrDelegationValidatorAddressEmpty
-	}
-
-	// Address should never be nil.
-	address := d.Conditions.MustSet().Address().Address
-
-	if address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
+		d.UnlockConditions.StorageScore(storageScoreStruct, nil)
 }
 
 func (d *DelegationOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	return d.Conditions.WorkScore(workScoreParameters)
+	return d.UnlockConditions.WorkScore(workScoreParameters)
 }
 
 func (d *DelegationOutput) ChainID() ChainID {
@@ -208,7 +193,7 @@ func (d *DelegationOutput) FeatureSet() FeatureSet {
 }
 
 func (d *DelegationOutput) UnlockConditionSet() UnlockConditionSet {
-	return d.Conditions.MustSet()
+	return d.UnlockConditions.MustSet()
 }
 
 func (d *DelegationOutput) BaseTokenAmount() BaseToken {
@@ -234,5 +219,5 @@ func (d *DelegationOutput) Size() int {
 		AccountAddressBytesLength +
 		EpochIndexLength +
 		EpochIndexLength +
-		d.Conditions.Size()
+		d.UnlockConditions.Size()
 }

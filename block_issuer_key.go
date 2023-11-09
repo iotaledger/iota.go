@@ -2,12 +2,15 @@ package iotago
 
 import (
 	"bytes"
+	"context"
+	"io"
 	"slices"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 )
 
 // BlockIssuerKeyType defines the type of block issuer key.
@@ -133,15 +136,73 @@ func (keys BlockIssuerKeys) StorageScore(storageScoreStruct *StorageScoreStructu
 	return storageScore
 }
 
+func (keys BlockIssuerKeys) Bytes() ([]byte, error) {
+	return CommonSerixAPI().Encode(context.TODO(), keys)
+}
+
 // BlockIssuerKey is a key that is allowed to issue blocks from an account with a BlockIssuerFeature.
 type BlockIssuerKey interface {
 	Sizer
 	NonEphemeralObject
 	constraints.Cloneable[BlockIssuerKey]
 	constraints.Equalable[BlockIssuerKey]
+	serializer.Byter
 
-	// Bytes returns a byte slice consisting of the type prefix and the unique identifier of the key.
-	Bytes() []byte
 	// Type returns the BlockIssuerKeyType.
 	Type() BlockIssuerKeyType
+}
+
+func BlockIssuerKeysFromReader(reader io.ReadSeeker) (BlockIssuerKeys, error) {
+	b := make(BlockIssuerKeys, 0)
+	// serix.LengthPrefixTypeAsByte is used to read the length prefix of the array
+	if err := stream.ReadCollection(reader, serializer.SeriLengthPrefixTypeAsByte, func(i int) error {
+		blockIssuerKey, err := BlockIssuerKeyFromReader(reader)
+		if err != nil {
+			return ierrors.Wrapf(err, "unable to read block issuer key %d", i)
+		}
+
+		b = append(b, blockIssuerKey)
+
+		return nil
+	}); err != nil {
+		return nil, ierrors.Wrap(err, "unable to read block issuer keys")
+	}
+
+	return b, nil
+}
+
+func BlockIssuerKeyFromReader(reader io.ReadSeeker) (BlockIssuerKey, error) {
+	blockIssuerKeyType, err := stream.PeekSize(reader, serializer.SeriLengthPrefixTypeAsByte)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read block issuer key type")
+	}
+
+	switch BlockIssuerKeyType(blockIssuerKeyType) {
+	case BlockIssuerKeyEd25519PublicKey:
+		readBytes, err := stream.ReadBytes(reader, Ed25519PublicKeyBlockIssuerKeyLength)
+		if err != nil {
+			return nil, ierrors.Wrap(err, "unable to read block issuer key bytes")
+		}
+
+		return Ed25519PublicKeyBlockIssuerKeyFromBytes(readBytes)
+	case BlockIssuerKeyPublicKeyHash:
+		readBytes, err := stream.ReadBytes(reader, Ed25519PublicKeyHashBlockIssuerKeyLength)
+		if err != nil {
+			return nil, ierrors.Wrap(err, "unable to read block issuer key bytes")
+		}
+
+		return Ed25519PublicKeyHashBlockIssuerKeyFromBytes(readBytes)
+	default:
+		return nil, ierrors.Errorf("unsupported block issuer key type: %d", blockIssuerKeyType)
+	}
+}
+
+func BlockIssuerKeyFromBytes(bytes []byte) (BlockIssuerKey, error) {
+	var blockIssuerKey BlockIssuerKey
+
+	if _, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey); err != nil {
+		return nil, ierrors.Wrap(err, "unable to decode block issuer key")
+	}
+
+	return blockIssuerKey, nil
 }

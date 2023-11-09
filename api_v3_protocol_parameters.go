@@ -11,7 +11,7 @@ import (
 
 // V3ProtocolParameters defines the parameters of the protocol.
 type V3ProtocolParameters struct {
-	basicProtocolParameters `serix:"0"`
+	basicProtocolParameters `serix:""`
 
 	hashIdentifier Identifier
 	hashOnce       sync.Once
@@ -32,7 +32,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100, 100),
 			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-			WithTimeProviderOptions(time.Now().Unix(), 10, 13),
+			WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
 			WithManaOptions(63,
 				1,
 				17,
@@ -48,6 +48,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(8, 8, 31, 1154, 2, 1),
+			WithTargetCommitteeSize(32),
 		},
 			opts...,
 		),
@@ -90,6 +91,16 @@ func (p *V3ProtocolParameters) NetworkID() NetworkID {
 	})
 
 	return p.networkID
+}
+
+// GenesisBlockID defines the block ID of the genesis block.
+func (p *V3ProtocolParameters) GenesisBlockID() BlockID {
+	return NewBlockID(p.basicProtocolParameters.GenesisSlot, EmptyIdentifier)
+}
+
+// GenesisSlot defines the genesis slot.
+func (p *V3ProtocolParameters) GenesisSlot() SlotIndex {
+	return p.basicProtocolParameters.GenesisSlot
 }
 
 // GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
@@ -156,6 +167,10 @@ func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 	return &p.basicProtocolParameters.RewardsParameters
 }
 
+func (p *V3ProtocolParameters) TargetCommitteeSize() uint8 {
+	return p.basicProtocolParameters.TargetCommitteeSize
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	if len(p.bytes) > 0 {
 		return p.bytes, nil
@@ -193,7 +208,7 @@ func (p *V3ProtocolParameters) Hash() (Identifier, error) {
 }
 
 func (p *V3ProtocolParameters) String() string {
-	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tStorageScore Structure: %v\n\tWorkScore Structure: %v\n\tMana Structure: %v\n\tToken Supply: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
+	return fmt.Sprintf("ProtocolParameters: {\n\tVersion: %d\n\tNetwork Name: %s\n\tBech32 HRP Prefix: %s\n\tStorageScore Structure: %v\n\tWorkScore Structure: %v\n\tMana Structure: %v\n\tToken Supply: %d\n\tGenesis Slot: %d\n\tGenesis Unix Timestamp: %d\n\tSlot Duration in Seconds: %d\n\tSlots per Epoch Exponent: %d\n\tStaking Unbonding Period: %d\n\tValidation Blocks per Slot: %d\n\tPunishment Epochs: %d\n\tLiveness Threshold Lower Bound: %d\n\tLiveness Threshold Upper Bound: %d\n\tMin Committable Age: %d\n\tMax Committable Age: %d\n\tEpoch Nearing Threshold: %d\n\tCongestion Control parameters: %v\n\tVersion Signaling: %v\n\tRewardsParameters: %v\n",
 		p.basicProtocolParameters.Version,
 		p.basicProtocolParameters.NetworkName,
 		p.basicProtocolParameters.Bech32HRP,
@@ -201,6 +216,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.WorkScoreParameters,
 		p.basicProtocolParameters.ManaParameters,
 		p.basicProtocolParameters.TokenSupply,
+		p.basicProtocolParameters.GenesisSlot,
 		p.basicProtocolParameters.GenesisUnixTimestamp,
 		p.basicProtocolParameters.SlotDurationInSeconds,
 		p.basicProtocolParameters.SlotsPerEpochExponent,
@@ -294,8 +310,9 @@ func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExpone
 	}
 }
 
-func WithTimeProviderOptions(genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
+func WithTimeProviderOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.GenesisSlot = genesisSlot
 		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
 		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
 		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
@@ -351,5 +368,11 @@ func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, po
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
+	}
+}
+
+func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.TargetCommitteeSize = targetCommitteeSize
 	}
 }

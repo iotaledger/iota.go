@@ -7,7 +7,7 @@ import (
 
 // StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AccountOutput.
 type StateControllerAddressUnlockCondition struct {
-	Address Address `serix:"0,mapKey=address"`
+	Address Address `serix:""`
 }
 
 func (s *StateControllerAddressUnlockCondition) Clone() UnlockCondition {

@@ -298,7 +298,7 @@ func (v *v3api) Decode(b []byte, obj interface{}, opts ...serix.Option) (int, er
 func V3API(protoParams ProtocolParameters) API {
 	api := CommonSerixAPI()
 
-	timeProvider := NewTimeProvider(protoParams.GenesisUnixTimestamp(), int64(protoParams.SlotDurationInSeconds()), protoParams.SlotsPerEpochExponent())
+	timeProvider := NewTimeProvider(protoParams.GenesisSlot(), protoParams.GenesisUnixTimestamp(), int64(protoParams.SlotDurationInSeconds()), protoParams.SlotsPerEpochExponent())
 
 	maxBlockWork, err := protoParams.WorkScoreParameters().MaxBlockWork()
 	must(err)
@@ -456,9 +456,6 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
-		must(api.RegisterValidators(AccountOutput{}, nil, func(ctx context.Context, account AccountOutput) error {
-			return account.syntacticallyValidate()
-		}))
 
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
@@ -485,9 +482,6 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(AnchorOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAnchor))))
-		must(api.RegisterValidators(AnchorOutput{}, nil, func(ctx context.Context, anchor AnchorOutput) error {
-			return anchor.syntacticallyValidate()
-		}))
 
 		must(api.RegisterTypeSettings(AnchorOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3UnlockCondArrRules),
@@ -515,10 +509,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(FoundryOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputFoundry))),
 		)
-		must(api.RegisterValidators(FoundryOutput{}, nil, func(ctx context.Context, foundry FoundryOutput) error {
-			//nolint:contextcheck
-			return foundry.syntacticallyValidate()
-		}))
 
 		must(api.RegisterTypeSettings(FoundryOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3UnlockCondArrRules),
@@ -547,9 +537,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(NFTOutput{},
 			serix.TypeSettings{}.WithObjectType(uint8(OutputNFT))),
 		)
-		must(api.RegisterValidators(NFTOutput{}, nil, func(ctx context.Context, nft NFTOutput) error {
-			return nft.syntacticallyValidate()
-		}))
 
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -578,9 +565,6 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
-		must(api.RegisterValidators(DelegationOutput{}, nil, func(ctx context.Context, delegation DelegationOutput) error {
-			return delegation.syntacticallyValidate()
-		}))
 
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
@@ -701,6 +685,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		merklehasher.RegisterSerixRules[*APIByter[TxEssenceOutput]](api)
+		merklehasher.RegisterSerixRules[Identifier](api)
 	}
 
 	return v3

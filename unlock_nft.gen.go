@@ -7,7 +7,7 @@ import (
 // NFTUnlock is an Unlock which references a previous unlock.
 type NFTUnlock struct {
 	// The other unlock this NFTUnlock references to.
-	Reference uint16 `serix:"0,mapKey=reference"`
+	Reference uint16 `serix:""`
 }
 
 func (r *NFTUnlock) Clone() Unlock {

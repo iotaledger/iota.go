@@ -11,10 +11,10 @@ import (
 
 type OutputIDProof struct {
 	API                   API
-	Slot                  SlotIndex                                       `serix:"0,mapKey=slot"`
-	OutputIndex           uint16                                          `serix:"1,mapKey=outputIndex"`
-	TransactionCommitment Identifier                                      `serix:"2,mapKey=transactionCommitment"`
-	OutputCommitmentProof *merklehasher.Proof[*APIByter[TxEssenceOutput]] `serix:"3,mapKey=outputCommitmentProof"`
+	Slot                  SlotIndex                                       `serix:""`
+	OutputIndex           uint16                                          `serix:""`
+	TransactionCommitment Identifier                                      `serix:""`
+	OutputCommitmentProof *merklehasher.Proof[*APIByter[TxEssenceOutput]] `serix:""`
 }
 
 func OutputIDProofFromTransaction(tx *Transaction, outputIndex uint16) (*OutputIDProof, error) {
@@ -103,7 +103,7 @@ func (p *OutputIDProof) OutputID(output Output) (OutputID, error) {
 
 type APIByter[T any] struct {
 	API   API
-	Value T `serix:"0,nest"`
+	Value T `serix:",inlined"`
 }
 
 func APIByterFactory[T any](api API) func(value T) *APIByter[T] {

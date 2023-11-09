@@ -9,7 +9,7 @@ func NewBasicOutputBuilder(targetAddr iotago.Address, amount iotago.BaseToken) *
 	return &BasicOutputBuilder{output: &iotago.BasicOutput{
 		Amount: amount,
 		Mana:   0,
-		Conditions: iotago.BasicOutputUnlockConditions{
+		UnlockConditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
 		Features: iotago.BasicOutputFeatures{},
@@ -43,7 +43,7 @@ func (builder *BasicOutputBuilder) Mana(mana iotago.Mana) *BasicOutputBuilder {
 
 // Address sets/modifies an iotago.AddressUnlockCondition on the output.
 func (builder *BasicOutputBuilder) Address(addr iotago.Address) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
+	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
 }
@@ -57,21 +57,21 @@ func (builder *BasicOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *B
 
 // StorageDepositReturn sets/modifies an iotago.StorageDepositReturnUnlockCondition on the output.
 func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount iotago.BaseToken) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
+	builder.output.UnlockConditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
 
 	return builder
 }
 
 // Timelock sets/modifies an iotago.TimelockUnlockCondition on the output.
 func (builder *BasicOutputBuilder) Timelock(untilSlot iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.TimelockUnlockCondition{Slot: untilSlot})
+	builder.output.UnlockConditions.Upsert(&iotago.TimelockUnlockCondition{Slot: untilSlot})
 
 	return builder
 }
 
 // Expiration sets/modifies an iotago.ExpirationUnlockCondition on the output.
 func (builder *BasicOutputBuilder) Expiration(returnAddr iotago.Address, expiredAfterSlot iotago.SlotIndex) *BasicOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, Slot: expiredAfterSlot})
+	builder.output.UnlockConditions.Upsert(&iotago.ExpirationUnlockCondition{ReturnAddress: returnAddr, Slot: expiredAfterSlot})
 
 	return builder
 }
@@ -99,7 +99,7 @@ func (builder *BasicOutputBuilder) Tag(tag []byte) *BasicOutputBuilder {
 
 // Build builds the iotago.BasicOutput.
 func (builder *BasicOutputBuilder) Build() (*iotago.BasicOutput, error) {
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 	builder.output.Features.Sort()
 
 	return builder.output, nil

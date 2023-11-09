@@ -29,11 +29,11 @@ func VersionFromBytes(b []byte) (Version, int, error) {
 // VersionSignaling defines the parameters used by signaling protocol parameters upgrade.
 type VersionSignaling struct {
 	// WindowSize is the size of the window in epochs to find which version of protocol parameters was most signaled, from currentEpoch - windowSize to currentEpoch.
-	WindowSize uint8 `serix:"0,mapKey=windowSize"`
+	WindowSize uint8 `serix:""`
 	// WindowTargetRatio is the target number of supporters for a version to win in a windowSize.
-	WindowTargetRatio uint8 `serix:"1,mapKey=windowTargetRatio"`
+	WindowTargetRatio uint8 `serix:""`
 	// ActivationOffset is the offset in epochs to activate the new version of protocol parameters.
-	ActivationOffset uint8 `serix:"2,mapKey=activationOffset"`
+	ActivationOffset uint8 `serix:""`
 }
 
 func (s VersionSignaling) Equals(signaling VersionSignaling) bool {
@@ -110,7 +110,7 @@ type ProtocolParameters interface {
 	NetworkID() NetworkID
 	// Bech32HRP defines the HRP prefix used for Bech32 addresses in the network.
 	Bech32HRP() NetworkPrefix
-	// StorageScoreStructure defines the storage score structure used by the given network.
+	// StorageScoreParameters defines the storage score structure used by the given network.
 	StorageScoreParameters() *StorageScoreParameters
 	// WorkScoreParameters defines the work score parameters used by the given network.
 	WorkScoreParameters() *WorkScoreParameters
@@ -119,6 +119,10 @@ type ProtocolParameters interface {
 	// TokenSupply defines the current token supply on the network.
 	TokenSupply() BaseToken
 
+	// GenesisBlockID defines the block ID of the genesis block.
+	GenesisBlockID() BlockID
+	// GenesisSlot defines the slot of the genesis.
+	GenesisSlot() SlotIndex
 	// GenesisUnixTimestamp defines the genesis timestamp at which the slots start to count.
 	GenesisUnixTimestamp() int64
 	// SlotDurationInSeconds defines the duration of each slot in seconds.
@@ -150,6 +154,8 @@ type ProtocolParameters interface {
 	VersionSignaling() *VersionSignaling
 
 	RewardsParameters() *RewardsParameters
+
+	TargetCommitteeSize() uint8
 
 	Bytes() ([]byte, error)
 

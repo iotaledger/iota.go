@@ -12,8 +12,8 @@ import (
 )
 
 type RestrictedAddress struct {
-	Address             Address                    `serix:"0,mapKey=address"`
-	AllowedCapabilities AddressCapabilitiesBitMask `serix:"1,mapKey=allowedCapabilities"`
+	Address             Address                    `serix:""`
+	AllowedCapabilities AddressCapabilitiesBitMask `serix:""`
 }
 
 func (addr *RestrictedAddress) Clone() Address {

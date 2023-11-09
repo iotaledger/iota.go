@@ -204,7 +204,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 		API: api,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(api.ProtocolParameters().Version()).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
 			IssuingTime:      time.Now().UTC(),
 		},
 		Signature: &iotago.Ed25519Signature{},

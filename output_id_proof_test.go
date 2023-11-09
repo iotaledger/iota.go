@@ -35,7 +35,7 @@ func TestOutputIDProof(t *testing.T) {
 				Outputs: lo.RepeatBy(1, func(_ int) iotago.TxEssenceOutput {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					}
@@ -55,7 +55,7 @@ func TestOutputIDProof(t *testing.T) {
 				Outputs: lo.RepeatBy(2, func(_ int) iotago.TxEssenceOutput {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					}
@@ -75,7 +75,7 @@ func TestOutputIDProof(t *testing.T) {
 				Outputs: lo.RepeatBy(3, func(_ int) iotago.TxEssenceOutput {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					}
@@ -95,7 +95,7 @@ func TestOutputIDProof(t *testing.T) {
 				Outputs: lo.RepeatBy(iotago.MaxOutputsCount, func(_ int) iotago.TxEssenceOutput {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident1},
 						},
 					}

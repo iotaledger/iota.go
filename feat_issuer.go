@@ -11,7 +11,7 @@ import (
 // afterwards, the issuer feature must not change, meaning that subsequent outputs
 // must always define the same issuer identity (the identity does not need to be unlocked anymore though).
 type IssuerFeature struct {
-	Address Address `serix:"0,mapKey=address"`
+	Address Address `serix:""`
 }
 
 func (s *IssuerFeature) Clone() Feature {
