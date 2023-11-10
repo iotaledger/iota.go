@@ -45,7 +45,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 				Entries: iotago.MetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
-					"empty":    []byte(""),
+					"":         []byte(""),
 				},
 			},
 			target: &iotago.MetadataFeature{},
@@ -56,7 +56,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 				Entries: iotago.StateMetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
-					"empty":    []byte(""),
+					"":         []byte(""),
 				},
 			},
 			target: &iotago.StateMetadataFeature{},
