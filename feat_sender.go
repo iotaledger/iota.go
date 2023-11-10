@@ -8,7 +8,7 @@ import (
 // with a sender identity. The sender identity needs to be unlocked in the transaction
 // for the SenderFeature to be valid.
 type SenderFeature struct {
-	Address Address `serix:"0,mapKey=address"`
+	Address Address `serix:""`
 }
 
 func (s *SenderFeature) Clone() Feature {

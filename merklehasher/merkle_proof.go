@@ -24,23 +24,23 @@ type MerkleHashable[V Value] interface {
 
 // ValueHash contains the hash of the value for which the proof is being computed.
 type ValueHash[V Value] struct {
-	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
+	Hash []byte `serix:",lenPrefix=uint8"`
 }
 
 // LeafHash contains the hash of a leaf in the tree.
 type LeafHash[V Value] struct {
-	Hash []byte `serix:"0,mapKey=hash,lengthPrefixType=uint8"`
+	Hash []byte `serix:",lenPrefix=uint8"`
 }
 
 // Node contains the hashes of the left and right children of a node in the tree.
 type Node[V Value] struct {
-	Left  MerkleHashable[V] `serix:"0,mapKey=l"`
-	Right MerkleHashable[V] `serix:"1,mapKey=r"`
+	Left  MerkleHashable[V] `serix:"l"`
+	Right MerkleHashable[V] `serix:"r"`
 }
 
 // nolint: tagliatelle // Does not understand generics
 type Proof[V Value] struct {
-	MerkleHashable[V] `serix:"0,nest"`
+	MerkleHashable[V] `serix:",inlined"`
 }
 
 // ComputeProof computes the audit path given the values and the value we want to create the inclusion proof for.

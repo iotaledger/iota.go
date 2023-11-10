@@ -39,7 +39,7 @@ var (
 				for i := 0; i < iotago.MaxOutputsCount; i++ {
 					outputs = append(outputs, &iotago.BasicOutput{
 						Amount: 100,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						},
 					})

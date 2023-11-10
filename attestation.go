@@ -15,9 +15,9 @@ type Attestations = []*Attestation
 
 type Attestation struct {
 	API       API
-	Header    BlockHeader `serix:"0,mapKey=header"`
-	BodyHash  Identifier  `serix:"1,mapKey=bodyHash"`
-	Signature Signature   `serix:"2,mapKey=signature"`
+	Header    BlockHeader `serix:""`
+	BodyHash  Identifier  `serix:""`
+	Signature Signature   `serix:""`
 }
 
 func NewAttestation(api API, block *Block) *Attestation {

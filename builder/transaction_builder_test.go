@@ -35,7 +35,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -58,14 +58,14 @@ func TestTransactionBuilder(t *testing.T) {
 
 			var (
 				basicOutput = &iotago.BasicOutput{
-					Amount:     1000,
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
+					Amount:           1000,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
 				}
 
 				nftOutput = &iotago.NFTOutput{
 					Amount:            1000,
 					NFTID:             tpkg.Rand32ByteArray(),
-					Conditions:        iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
+					UnlockConditions:  iotago.NFTOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddr}},
 					Features:          nil,
 					ImmutableFeatures: nil,
 				}
@@ -73,14 +73,14 @@ func TestTransactionBuilder(t *testing.T) {
 				accountOwnedByNFT = &iotago.AccountOutput{
 					Amount:    1000,
 					AccountID: tpkg.Rand32ByteArray(),
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: nftOutput.ChainID().ToAddress()},
 					},
 				}
 
 				basicOwnedByAccount = &iotago.BasicOutput{
-					Amount:     1000,
-					Conditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: accountOwnedByNFT.ChainID().ToAddress()}},
+					Amount:           1000,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: accountOwnedByNFT.ChainID().ToAddress()}},
 				}
 			)
 
@@ -91,7 +91,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: accountOwnedByNFT.ChainID().ToAddress(), InputID: inputID4.OutputID(), Input: basicOwnedByAccount}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 4000,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -111,7 +111,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				}).
@@ -132,7 +132,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})
@@ -159,7 +159,7 @@ func TestTransactionBuilder(t *testing.T) {
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
-					Conditions: iotago.BasicOutputUnlockConditions{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				})

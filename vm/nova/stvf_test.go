@@ -48,7 +48,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: new(big.Int).SetInt64(10000),
 		},
-		Conditions: iotago.FoundryOutputUnlockConditions{
+		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountID.ToAddress().(*iotago.AccountAddress)},
 		},
 	}
@@ -83,7 +83,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -112,7 +112,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -152,7 +152,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -192,7 +192,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -232,7 +232,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -273,7 +273,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -314,7 +314,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -355,7 +355,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -396,7 +396,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: iotago.AccountID{},
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -438,7 +438,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -455,7 +455,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -496,7 +496,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -507,7 +507,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -546,7 +546,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -557,7 +557,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -597,7 +597,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -608,7 +608,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -646,7 +646,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -663,7 +663,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -699,7 +699,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -716,7 +716,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -758,7 +758,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -775,7 +775,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -817,7 +817,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -837,7 +837,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -878,7 +878,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -895,7 +895,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -931,7 +931,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -948,7 +948,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -991,7 +991,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1008,7 +1008,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1053,7 +1053,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: tpkg.RandAccountAddress().AccountID(),
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 				},
@@ -1081,7 +1081,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1122,7 +1122,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1160,7 +1160,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: tpkg.RandAccountAddress().AccountID(),
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1198,7 +1198,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1240,7 +1240,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1254,7 +1254,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{},
@@ -1289,7 +1289,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1303,7 +1303,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{},
@@ -1338,7 +1338,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					FoundryCounter: 5,
@@ -1348,7 +1348,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Amount:    200,
 				AccountID: exampleAccountID,
 				// mutating owner
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				FoundryCounter: 7,
@@ -1391,7 +1391,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 								Amount:       100,
 								SerialNumber: 6,
 								TokenScheme:  &iotago.SimpleTokenScheme{},
-								Conditions: iotago.FoundryOutputUnlockConditions{
+								UnlockConditions: iotago.FoundryOutputUnlockConditions{
 									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountID.ToAddress().(*iotago.AccountAddress)},
 								},
 							},
@@ -1399,7 +1399,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 								Amount:       100,
 								SerialNumber: 7,
 								TokenScheme:  &iotago.SimpleTokenScheme{},
-								Conditions: iotago.FoundryOutputUnlockConditions{
+								UnlockConditions: iotago.FoundryOutputUnlockConditions{
 									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountID.ToAddress().(*iotago.AccountAddress)},
 								},
 							},
@@ -1416,7 +1416,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1430,7 +1430,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1473,7 +1473,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -1487,7 +1487,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    200,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -1520,7 +1520,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1534,7 +1534,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1577,7 +1577,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1591,7 +1591,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1634,7 +1634,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1648,7 +1648,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1692,7 +1692,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1706,7 +1706,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1746,7 +1746,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1760,7 +1760,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -1803,7 +1803,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					Features: iotago.AccountOutputFeatures{
@@ -1818,7 +1818,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    100,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: exampleAddress},
 				},
 				FoundryCounter: 5,
@@ -1861,7 +1861,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 								Amount:       100,
 								SerialNumber: 6,
 								TokenScheme:  &iotago.SimpleTokenScheme{},
-								Conditions: iotago.FoundryOutputUnlockConditions{
+								UnlockConditions: iotago.FoundryOutputUnlockConditions{
 									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountID.ToAddress().(*iotago.AccountAddress)},
 								},
 							},
@@ -1869,7 +1869,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 								Amount:       100,
 								SerialNumber: 7,
 								TokenScheme:  &iotago.SimpleTokenScheme{},
-								Conditions: iotago.FoundryOutputUnlockConditions{
+								UnlockConditions: iotago.FoundryOutputUnlockConditions{
 									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountID.ToAddress().(*iotago.AccountAddress)},
 								},
 							},
@@ -1887,7 +1887,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Amount:         100,
 					AccountID:      exampleAccountID,
 					FoundryCounter: 5,
-					Conditions: iotago.AccountOutputUnlockConditions{
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: exampleAddress},
 					},
 					ImmutableFeatures: iotago.AccountOutputImmFeatures{
@@ -1978,7 +1978,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AnchorOutput{
 				Amount:   100,
 				AnchorID: iotago.AnchorID{},
-				Conditions: iotago.AnchorOutputUnlockConditions{
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2010,7 +2010,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AnchorOutput{
 					Amount:   100,
 					AnchorID: tpkg.RandAnchorAddress().AnchorID(),
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2039,7 +2039,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AnchorOutput{
 					Amount:   100,
 					AnchorID: exampleAnchorID,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2051,7 +2051,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				AnchorID:   exampleAnchorID,
 				StateIndex: 10,
 				// mutating controllers
-				Conditions: iotago.AnchorOutputUnlockConditions{
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
@@ -2088,7 +2088,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AnchorOutput{
 					Amount:   100,
 					AnchorID: exampleAnchorID,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2098,7 +2098,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AnchorOutput{
 				Amount:   200,
 				AnchorID: exampleAnchorID,
-				Conditions: iotago.AnchorOutputUnlockConditions{
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -2133,7 +2133,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AnchorOutput{
 					Amount:   100,
 					AnchorID: exampleAnchorID,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2146,7 +2146,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AnchorOutput{
 				Amount:   100,
 				AnchorID: exampleAnchorID,
-				Conditions: iotago.AnchorOutputUnlockConditions{
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -2178,7 +2178,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 				Output: &iotago.AnchorOutput{
 					Amount:   100,
 					AnchorID: exampleAnchorID,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2191,7 +2191,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AnchorOutput{
 				Amount:   200,
 				AnchorID: exampleAnchorID,
-				Conditions: iotago.AnchorOutputUnlockConditions{
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 					&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 				},
@@ -2224,7 +2224,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					Amount:     100,
 					AnchorID:   exampleAnchorID,
 					StateIndex: 10,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2260,7 +2260,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					Amount:     100,
 					AnchorID:   exampleAnchorID,
 					StateIndex: 10,
-					Conditions: iotago.AnchorOutputUnlockConditions{
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
@@ -2272,14 +2272,14 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			nextMut: map[string]fieldMutations{
 				"state_controller": {
 					"StateIndex": uint32(11),
-					"Conditions": iotago.AnchorOutputUnlockConditions{
+					"UnlockConditions": iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 						&iotago.GovernorAddressUnlockCondition{Address: exampleGovCtrl},
 					},
 				},
 				"governance_controller": {
 					"StateIndex": uint32(11),
-					"Conditions": iotago.AnchorOutputUnlockConditions{
+					"UnlockConditions": iotago.AnchorOutputUnlockConditions{
 						&iotago.StateControllerAddressUnlockCondition{Address: exampleStateCtrl},
 						&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -2361,7 +2361,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  big.NewInt(0),
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
-		Conditions: iotago.FoundryOutputUnlockConditions{
+		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
 		},
 	}
@@ -2374,7 +2374,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MeltedTokens:  startingSupply,
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
-		Conditions: iotago.FoundryOutputUnlockConditions{
+		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
 		},
 	}
@@ -2507,7 +2507,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 									MeltedTokens:  big.NewInt(0),
 									MaximumSupply: new(big.Int).SetUint64(1000),
 								},
-								Conditions: iotago.FoundryOutputUnlockConditions{
+								UnlockConditions: iotago.FoundryOutputUnlockConditions{
 									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
 								},
 							},
@@ -2886,7 +2886,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 	exampleCurrentNFTOutput := &iotago.NFTOutput{
 		Amount: 100,
 		NFTID:  iotago.NFTID{},
-		Conditions: iotago.NFTOutputUnlockConditions{
+		UnlockConditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 		},
 		ImmutableFeatures: iotago.NFTOutputImmFeatures{
@@ -2958,7 +2958,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					"Amount": iotago.BaseToken(1337),
 				},
 				"address": {
-					"Conditions": iotago.NFTOutputUnlockConditions{
+					"UnlockConditions": iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3080,7 +3080,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch + 1,
 				EndEpoch:         0,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3111,7 +3111,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch + 1,
 				EndEpoch:         0,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3142,7 +3142,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch + 1,
 				EndEpoch:         0,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3173,7 +3173,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch + 1,
 				EndEpoch:         currentEpoch + 5,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3204,7 +3204,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch - 3,
 				EndEpoch:         0,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3236,7 +3236,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3271,7 +3271,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3323,7 +3323,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3367,7 +3367,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3411,7 +3411,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3449,7 +3449,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3487,7 +3487,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					ValidatorAddress: tpkg.RandAccountAddress(),
 					StartEpoch:       currentEpoch + 1,
 					EndEpoch:         0,
-					Conditions: iotago.DelegationOutputUnlockConditions{
+					UnlockConditions: iotago.DelegationOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
@@ -3519,7 +3519,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				StartEpoch:       currentEpoch + 1,
 				EndEpoch:         0,
-				Conditions: iotago.DelegationOutputUnlockConditions{
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
@@ -3608,7 +3608,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    exampleAmount,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{
@@ -3620,7 +3620,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &vm.ImplicitAccountOutput{
 					BasicOutput: &iotago.BasicOutput{
 						Amount: exampleAmount,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{
 								Address: implicitAccountCreationAddr,
 							},
@@ -3656,7 +3656,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 			next: &iotago.AccountOutput{
 				Amount:    exampleAmount,
 				AccountID: exampleAccountID,
-				Conditions: iotago.AccountOutputUnlockConditions{
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AccountOutputFeatures{},
@@ -3666,7 +3666,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 				Output: &vm.ImplicitAccountOutput{
 					BasicOutput: &iotago.BasicOutput{
 						Amount: exampleAmount,
-						Conditions: iotago.BasicOutputUnlockConditions{
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{
 								Address: implicitAccountCreationAddr,
 							},

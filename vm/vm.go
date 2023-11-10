@@ -768,83 +768,10 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 	}
 }
 
-func checkAddressRestrictions(output iotago.TxEssenceOutput, address iotago.Address) error {
-	addrWithCapabilities, isAddrWithCapabilities := address.(iotago.AddressCapabilities)
-	if !isAddrWithCapabilities {
-		// no restrictions
-		return nil
-	}
-
-	if addrWithCapabilities.CannotReceiveNativeTokens() && output.FeatureSet().HasNativeTokenFeature() {
-		return iotago.ErrAddressCannotReceiveNativeTokens
-	}
-
-	if addrWithCapabilities.CannotReceiveMana() && output.StoredMana() != 0 {
-		return iotago.ErrAddressCannotReceiveMana
-	}
-
-	if addrWithCapabilities.CannotReceiveOutputsWithTimelockUnlockCondition() && output.UnlockConditionSet().HasTimelockCondition() {
-		return iotago.ErrAddressCannotReceiveTimelockUnlockCondition
-	}
-
-	if addrWithCapabilities.CannotReceiveOutputsWithExpirationUnlockCondition() && output.UnlockConditionSet().HasExpirationCondition() {
-		return iotago.ErrAddressCannotReceiveExpirationUnlockCondition
-	}
-
-	if addrWithCapabilities.CannotReceiveOutputsWithStorageDepositReturnUnlockCondition() && output.UnlockConditionSet().HasStorageDepositReturnCondition() {
-		return iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition
-	}
-
-	if addrWithCapabilities.CannotReceiveAccountOutputs() && output.Type() == iotago.OutputAccount {
-		return iotago.ErrAddressCannotReceiveAccountOutput
-	}
-
-	if addrWithCapabilities.CannotReceiveAnchorOutputs() && output.Type() == iotago.OutputAnchor {
-		return iotago.ErrAddressCannotReceiveAnchorOutput
-	}
-
-	if addrWithCapabilities.CannotReceiveNFTOutputs() && output.Type() == iotago.OutputNFT {
-		return iotago.ErrAddressCannotReceiveNFTOutput
-	}
-
-	if addrWithCapabilities.CannotReceiveDelegationOutputs() && output.Type() == iotago.OutputDelegation {
-		return iotago.ErrAddressCannotReceiveDelegationOutput
-	}
-
-	return nil
-}
-
-// Returns a func that checks the capability flag restrictions on addresses, and checks that
-// no more than one Implicit Account Creation Address is on the input side of a transaction.
-//
-// Does not validate the Return Address in StorageDepositReturnUnlockCondition because such a Return Address
-// already is as restricted as the most restricted address.
-func ExecFuncAddressRestrictions() ExecFunc {
+// Returns a func that checks that no more than one Implicit Account Creation Address
+// is on the input side of a transaction.
+func ExecFuncAtMostOneImplicitAccountCreationAddress() ExecFunc {
 	return func(vm VirtualMachine, vmParams *Params) error {
-		for _, output := range vmParams.WorkingSet.Tx.Outputs {
-			if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
-				if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
-					return err
-				}
-			}
-			if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
-				if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
-					return err
-				}
-			}
-			if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
-				if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
-					return err
-				}
-			}
-			if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
-				if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
-					return err
-				}
-			}
-		}
-
-		// Check that no more than one Implicit Account Creation Address is on the input side of a transaction.
 		transactionHasImplicitAccountCreationAddress := false
 		for _, input := range vmParams.WorkingSet.UTXOInputs {
 			addressUnlockCondition := input.UnlockConditionSet().Address()

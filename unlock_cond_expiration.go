@@ -10,9 +10,9 @@ import (
 //   - only the return identity can consume the output, if T is at the same time or after the one defined in the condition.
 type ExpirationUnlockCondition struct {
 	// The identity who is allowed to use the output after the expiration has happened.
-	ReturnAddress Address `serix:"0,mapKey=returnAddress"`
+	ReturnAddress Address `serix:""`
 	// The slot index at which the expiration happens.
-	Slot SlotIndex `serix:"1,mapKey=slot,omitempty"`
+	Slot SlotIndex `serix:",omitempty"`
 }
 
 func (s *ExpirationUnlockCondition) Clone() UnlockCondition {

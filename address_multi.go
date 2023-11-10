@@ -25,8 +25,8 @@ var (
 
 // AddressWithWeight is an Address with a weight used for threshold calculation in a MultiAddress.
 type AddressWithWeight struct {
-	Address Address `serix:"0,mapKey=address"`
-	Weight  byte    `serix:"1,mapKey=weight"`
+	Address Address `serix:""`
+	Weight  byte    `serix:""`
 }
 
 func (a *AddressWithWeight) Size() int {
@@ -40,8 +40,8 @@ type AddressesWithWeight []*AddressWithWeight
 // MultiAddress defines a multi address that consists of addresses with weights and
 // a threshold value that needs to be reached to unlock the multi address.
 type MultiAddress struct {
-	Addresses AddressesWithWeight `serix:"0,mapKey=addresses"`
-	Threshold uint16              `serix:"1,mapKey=threshold"`
+	Addresses AddressesWithWeight `serix:""`
+	Threshold uint16              `serix:""`
 }
 
 func (addr *MultiAddress) Clone() Address {

@@ -62,7 +62,7 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 					MeltedTokens:  big.NewInt(0),
 					MaximumSupply: big.NewInt(100),
 				},
-				Conditions: iotago.FoundryOutputUnlockConditions{
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
 					&iotago.ImmutableAccountUnlockCondition{
 						Address: accountAddress,
 					},
@@ -74,6 +74,9 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 			}
 
 			foundryBytes, err := tpkg.TestAPI.Encode(foundryIn, serix.WithValidation())
+			if err == nil {
+				err = iotago.OutputsSyntacticalFoundry()(0, foundryIn)
+			}
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 				return

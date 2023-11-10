@@ -95,17 +95,17 @@ type (
 // NFTOutput is an output type used to implement non-fungible tokens.
 type NFTOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The stored mana held by the output.
-	Mana Mana `serix:"1,mapKey=mana"`
+	Mana Mana `serix:""`
 	// The identifier of this NFT.
-	NFTID NFTID `serix:"2,mapKey=nftId"`
+	NFTID NFTID `serix:""`
 	// The unlock conditions on this output.
-	Conditions NFTOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
+	UnlockConditions NFTOutputUnlockConditions `serix:",omitempty"`
 	// The feature on the output.
-	Features NFTOutputFeatures `serix:"4,mapKey=features,omitempty"`
+	Features NFTOutputFeatures `serix:",omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures NFTOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures NFTOutputImmFeatures `serix:",omitempty"`
 }
 
 func (n *NFTOutput) Clone() Output {
@@ -113,7 +113,7 @@ func (n *NFTOutput) Clone() Output {
 		Amount:            n.Amount,
 		Mana:              n.Mana,
 		NFTID:             n.NFTID,
-		Conditions:        n.Conditions.Clone(),
+		UnlockConditions:  n.UnlockConditions.Clone(),
 		Features:          n.Features.Clone(),
 		ImmutableFeatures: n.ImmutableFeatures.Clone(),
 	}
@@ -137,7 +137,7 @@ func (n *NFTOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !n.Conditions.Equal(otherOutput.Conditions) {
+	if !n.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -153,7 +153,7 @@ func (n *NFTOutput) Equal(other Output) bool {
 }
 
 func (n *NFTOutput) Ident() Address {
-	return n.Conditions.MustSet().Address().Address
+	return n.UnlockConditions.MustSet().Address().Address
 }
 
 func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
@@ -164,13 +164,13 @@ func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, 
 func (n *NFTOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(n.Size())) +
-		n.Conditions.StorageScore(storageScoreStruct, nil) +
+		n.UnlockConditions.StorageScore(storageScoreStruct, nil) +
 		n.Features.StorageScore(storageScoreStruct, nil) +
 		n.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
 
 func (n *NFTOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	workScoreConditions, err := n.Conditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := n.UnlockConditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -188,17 +188,6 @@ func (n *NFTOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkSco
 	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (n *NFTOutput) syntacticallyValidate() error {
-	// Address should never be nil.
-	address := n.Conditions.MustSet().Address().Address
-
-	if address.Type() == AddressImplicitAccountCreation {
-		return ErrImplicitAccountCreationAddressInInvalidOutput
-	}
-
-	return nil
-}
-
 func (n *NFTOutput) ChainID() ChainID {
 	return n.NFTID
 }
@@ -208,7 +197,7 @@ func (n *NFTOutput) FeatureSet() FeatureSet {
 }
 
 func (n *NFTOutput) UnlockConditionSet() UnlockConditionSet {
-	return n.Conditions.MustSet()
+	return n.UnlockConditions.MustSet()
 }
 
 func (n *NFTOutput) ImmutableFeatureSet() FeatureSet {
@@ -233,7 +222,7 @@ func (n *NFTOutput) Size() int {
 		BaseTokenSize +
 		ManaSize +
 		NFTIDLength +
-		n.Conditions.Size() +
+		n.UnlockConditions.Size() +
 		n.Features.Size() +
 		n.ImmutableFeatures.Size()
 }

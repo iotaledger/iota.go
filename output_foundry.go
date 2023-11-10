@@ -112,17 +112,17 @@ type (
 // FoundryOutput is an output type which controls the supply of user defined native tokens.
 type FoundryOutput struct {
 	// The amount of IOTA tokens held by the output.
-	Amount BaseToken `serix:"0,mapKey=amount"`
+	Amount BaseToken `serix:""`
 	// The serial number of the foundry.
-	SerialNumber uint32 `serix:"1,mapKey=serialNumber"`
+	SerialNumber uint32 `serix:""`
 	// The token scheme this foundry uses.
-	TokenScheme TokenScheme `serix:"2,mapKey=tokenScheme"`
+	TokenScheme TokenScheme `serix:""`
 	// The unlock conditions on this output.
-	Conditions FoundryOutputUnlockConditions `serix:"3,mapKey=unlockConditions,omitempty"`
+	UnlockConditions FoundryOutputUnlockConditions `serix:",omitempty"`
 	// The feature on the output.
-	Features FoundryOutputFeatures `serix:"4,mapKey=features,omitempty"`
+	Features FoundryOutputFeatures `serix:",omitempty"`
 	// The immutable feature on the output.
-	ImmutableFeatures FoundryOutputImmFeatures `serix:"5,mapKey=immutableFeatures,omitempty"`
+	ImmutableFeatures FoundryOutputImmFeatures `serix:",omitempty"`
 }
 
 func (f *FoundryOutput) Clone() Output {
@@ -130,7 +130,7 @@ func (f *FoundryOutput) Clone() Output {
 		Amount:            f.Amount,
 		SerialNumber:      f.SerialNumber,
 		TokenScheme:       f.TokenScheme.Clone(),
-		Conditions:        f.Conditions.Clone(),
+		UnlockConditions:  f.UnlockConditions.Clone(),
 		Features:          f.Features.Clone(),
 		ImmutableFeatures: f.ImmutableFeatures.Clone(),
 	}
@@ -154,7 +154,7 @@ func (f *FoundryOutput) Equal(other Output) bool {
 		return false
 	}
 
-	if !f.Conditions.Equal(otherOutput.Conditions) {
+	if !f.UnlockConditions.Equal(otherOutput.UnlockConditions) {
 		return false
 	}
 
@@ -182,7 +182,7 @@ func (f *FoundryOutput) StorageScore(storageScoreStruct *StorageScoreStructure, 
 	return storageScoreStruct.OffsetOutput +
 		storageScoreStruct.FactorData().Multiply(StorageScore(f.Size())) +
 		f.TokenScheme.StorageScore(storageScoreStruct, nil) +
-		f.Conditions.StorageScore(storageScoreStruct, nil) +
+		f.UnlockConditions.StorageScore(storageScoreStruct, nil) +
 		f.Features.StorageScore(storageScoreStruct, nil) +
 		f.ImmutableFeatures.StorageScore(storageScoreStruct, nil)
 }
@@ -193,7 +193,7 @@ func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 		return 0, err
 	}
 
-	workScoreConditions, err := f.Conditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := f.UnlockConditions.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -209,25 +209,6 @@ func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 	}
 
 	return workScoreTokenScheme.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
-}
-
-func (f *FoundryOutput) syntacticallyValidate() error {
-	nativeTokenFeature := f.FeatureSet().NativeToken()
-	if nativeTokenFeature == nil {
-		return nil
-	}
-
-	foundryID, err := f.FoundryID()
-	if err != nil {
-		return err
-	}
-
-	// NativeTokenFeature ID should have the same ID as the foundry
-	if !foundryID.Matches(nativeTokenFeature.ID) {
-		return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
-	}
-
-	return nil
 }
 
 func (f *FoundryOutput) ChainID() ChainID {
@@ -274,7 +255,7 @@ func (f *FoundryOutput) FeatureSet() FeatureSet {
 }
 
 func (f *FoundryOutput) UnlockConditionSet() UnlockConditionSet {
-	return f.Conditions.MustSet()
+	return f.UnlockConditions.MustSet()
 }
 
 func (f *FoundryOutput) ImmutableFeatureSet() FeatureSet {
@@ -299,7 +280,7 @@ func (f *FoundryOutput) Size() int {
 		BaseTokenSize +
 		FoundrySerialNumberLength +
 		f.TokenScheme.Size() +
-		f.Conditions.Size() +
+		f.UnlockConditions.Size() +
 		f.Features.Size() +
 		f.ImmutableFeatures.Size()
 }

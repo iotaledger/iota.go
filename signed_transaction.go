@@ -40,9 +40,9 @@ type TransactionContextInputs ContextInputs[Input]
 type SignedTransaction struct {
 	API API
 	// The transaction essence, respectively the transfer part of a SignedTransaction.
-	Transaction *Transaction `serix:"0,mapKey=transaction"`
+	Transaction *Transaction `serix:""`
 	// The unlocks defining the unlocking data for the inputs within the Transaction.
-	Unlocks Unlocks `serix:"1,mapKey=unlocks"`
+	Unlocks Unlocks `serix:""`
 }
 
 // ID computes the ID of the SignedTransaction.
@@ -103,7 +103,7 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(inputs))
 	}
 
-	if err := t.Transaction.syntacticallyValidate(t.API); err != nil {
+	if err := t.Transaction.SyntacticallyValidate(t.API); err != nil {
 		return ierrors.Errorf("transaction is invalid: %w", err)
 	}
 

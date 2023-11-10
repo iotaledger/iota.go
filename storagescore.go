@@ -35,17 +35,17 @@ func (factor StorageScoreFactor) With(other StorageScoreFactor) StorageScoreFact
 // generate Mana, which serves as a rent payment in Mana for storing the object.
 type StorageScoreParameters struct {
 	// Defines the number of IOTA tokens required per unit of storage score.
-	StorageCost BaseToken `serix:"0,mapKey=storageCost"`
+	StorageCost BaseToken `serix:""`
 	// Defines the factor to be used for data only fields.
-	FactorData StorageScoreFactor `serix:"1,mapKey=factorData"`
+	FactorData StorageScoreFactor `serix:""`
 	// Defines the offset to be applied to all outputs for the overhead of handling them in storage.
-	OffsetOutputOverhead StorageScore `serix:"2,mapKey=offsetOutputOverhead"`
+	OffsetOutputOverhead StorageScore `serix:""`
 	// Defines the offset to be used for block issuer feature public keys.
-	OffsetEd25519BlockIssuerKey StorageScore `serix:"3,mapKey=offsetEd25519BlockIssuerKey"`
+	OffsetEd25519BlockIssuerKey StorageScore `serix:""`
 	// Defines the offset to be used for staking feature.
-	OffsetStakingFeature StorageScore `serix:"4,mapKey=offsetStakingFeature"`
+	OffsetStakingFeature StorageScore `serix:""`
 	// Defines the offset to be used for delegation output.
-	OffsetDelegation StorageScore `serix:"5,mapKey=offsetDelegation"`
+	OffsetDelegation StorageScore `serix:""`
 }
 
 // StorageScoreStructure includes the storage score parameters and the additional factors/offsets computed from these parameters.
@@ -92,7 +92,7 @@ func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *S
 		Mana:           0,
 		AccountID:      EmptyAccountID,
 		FoundryCounter: 0,
-		Conditions: AccountOutputUnlockConditions{
+		UnlockConditions: AccountOutputUnlockConditions{
 			&AddressUnlockCondition{
 				Address: &Ed25519Address{},
 			},
@@ -109,7 +109,7 @@ func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *S
 
 	dummyAddress := &Ed25519Address{}
 	dummyBasicOutput := &BasicOutput{
-		Conditions: UnlockConditions[basicOutputUnlockCondition]{
+		UnlockConditions: UnlockConditions[basicOutputUnlockCondition]{
 			&AddressUnlockCondition{
 				Address: dummyAddress,
 			},
@@ -160,7 +160,7 @@ func (r *StorageScoreStructure) MinDeposit(object NonEphemeralObject) (BaseToken
 // MinStorageDepositForReturnOutput returns the minimum storage costs for an BasicOutput which returns
 // a StorageDepositReturnUnlockCondition amount back to the origin sender.
 func (r *StorageScoreStructure) MinStorageDepositForReturnOutput(sender Address) (BaseToken, error) {
-	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{Conditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
+	return safemath.SafeMul(r.StorageCost(), BaseToken((&BasicOutput{UnlockConditions: UnlockConditions[basicOutputUnlockCondition]{&AddressUnlockCondition{Address: sender}}, Amount: 0}).StorageScore(r, nil)))
 
 }
 

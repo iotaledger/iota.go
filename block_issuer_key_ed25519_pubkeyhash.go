@@ -7,16 +7,18 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // Ed25519PublicKeyHashBytesLength is the length of an Ed25519 public key hash.
-const Ed25519PublicKeyHashBytesLength = blake2b.Size256
+const (
+	Ed25519PublicKeyHashBytesLength          = blake2b.Size256
+	Ed25519PublicKeyHashBlockIssuerKeyLength = serializer.SmallTypeDenotationByteSize + Ed25519PublicKeyHashBytesLength
+)
 
 // An Ed25519 Address Block Issuer Key.
 type Ed25519PublicKeyHashBlockIssuerKey struct {
-	PublicKeyHash [Ed25519PublicKeyHashBytesLength]byte `serix:"0,mapKey=pubKeyHash"`
+	PublicKeyHash [Ed25519PublicKeyHashBytesLength]byte `serix:"pubKeyHash"`
 }
 
 // Ed25519PublicKeyHashBlockIssuerKeyFromImplicitAccountCreationAddress creates an Ed25519PublicKeyHashBlockIssuerKey from an Ed25519 public key hash.
@@ -42,9 +44,19 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Clone() BlockIssuerKey {
 	}
 }
 
+func Ed25519PublicKeyHashBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKeyHashBlockIssuerKey, error) {
+	blockIssuerKey := &Ed25519PublicKeyHashBlockIssuerKey{}
+	_, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return blockIssuerKey, nil
+}
+
 // Bytes returns a byte slice consisting of the type prefix and the raw address.
-func (key *Ed25519PublicKeyHashBlockIssuerKey) Bytes() []byte {
-	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), key))
+func (key *Ed25519PublicKeyHashBlockIssuerKey) Bytes() ([]byte, error) {
+	return CommonSerixAPI().Encode(context.TODO(), key)
 }
 
 // Type returns the BlockIssuerKeyType.
@@ -67,7 +79,7 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Compare(other *Ed25519PublicKeyHa
 
 // Size returns the size of the block issuer key when serialized.
 func (key *Ed25519PublicKeyHashBlockIssuerKey) Size() int {
-	return serializer.SmallTypeDenotationByteSize + Ed25519PublicKeyHashBytesLength
+	return Ed25519PublicKeyHashBlockIssuerKeyLength
 }
 
 func (key *Ed25519PublicKeyHashBlockIssuerKey) StorageScore(storageScoreStructure *StorageScoreStructure, _ StorageScoreFunc) StorageScore {

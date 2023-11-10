@@ -13,7 +13,7 @@ func NewAnchorOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, am
 		AnchorID:      iotago.EmptyAnchorID,
 		StateIndex:    0,
 		StateMetadata: []byte{},
-		Conditions: iotago.AnchorOutputUnlockConditions{
+		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: govAddr},
 		},
@@ -72,7 +72,7 @@ func (builder *AnchorOutputBuilder) StateMetadata(data []byte) *AnchorOutputBuil
 
 // StateController sets the iotago.StateControllerAddressUnlockCondition of the output.
 func (builder *AnchorOutputBuilder) StateController(stateCtrl iotago.Address) *AnchorOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl})
+	builder.output.UnlockConditions.Upsert(&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl})
 	builder.govCtrlReq = true
 
 	return builder
@@ -80,7 +80,7 @@ func (builder *AnchorOutputBuilder) StateController(stateCtrl iotago.Address) *A
 
 // Governor sets the iotago.GovernorAddressUnlockCondition of the output.
 func (builder *AnchorOutputBuilder) Governor(governor iotago.Address) *AnchorOutputBuilder {
-	builder.output.Conditions.Upsert(&iotago.GovernorAddressUnlockCondition{Address: governor})
+	builder.output.UnlockConditions.Upsert(&iotago.GovernorAddressUnlockCondition{Address: governor})
 	builder.govCtrlReq = true
 
 	return builder
@@ -133,7 +133,7 @@ func (builder *AnchorOutputBuilder) Build() (*iotago.AnchorOutput, error) {
 		}
 	}
 
-	builder.output.Conditions.Sort()
+	builder.output.UnlockConditions.Sort()
 	builder.output.Features.Sort()
 	builder.output.ImmutableFeatures.Sort()
 

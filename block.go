@@ -55,14 +55,14 @@ type ApplicationPayload interface {
 const BlockHeaderLength = serializer.OneByte + serializer.UInt64ByteSize + serializer.UInt64ByteSize + CommitmentIDLength + SlotIndexLength + AccountIDLength
 
 type BlockHeader struct {
-	ProtocolVersion Version   `serix:"0,mapKey=protocolVersion"`
-	NetworkID       NetworkID `serix:"1,mapKey=networkId"`
+	ProtocolVersion Version   `serix:""`
+	NetworkID       NetworkID `serix:""`
 
-	IssuingTime         time.Time    `serix:"2,mapKey=issuingTime"`
-	SlotCommitmentID    CommitmentID `serix:"3,mapKey=slotCommitmentId"`
-	LatestFinalizedSlot SlotIndex    `serix:"4,mapKey=latestFinalizedSlot"`
+	IssuingTime         time.Time    `serix:""`
+	SlotCommitmentID    CommitmentID `serix:""`
+	LatestFinalizedSlot SlotIndex    `serix:""`
 
-	IssuerID AccountID `serix:"5,mapKey=issuerId"`
+	IssuerID AccountID `serix:""`
 }
 
 func (b *BlockHeader) Hash(api API) (Identifier, error) {
@@ -84,9 +84,9 @@ func (b *BlockHeader) Size() int {
 
 type Block struct {
 	API       API
-	Header    BlockHeader `serix:"0,mapKey=header"`
-	Body      BlockBody   `serix:"1,mapKey=body"`
-	Signature Signature   `serix:"2,mapKey=signature"`
+	Header    BlockHeader `serix:""`
+	Body      BlockBody   `serix:""`
+	Signature Signature   `serix:""`
 }
 
 func BlockFromBytes(apiProvider APIProvider) func(bytes []byte) (block *Block, consumedBytes int, err error) {
@@ -289,8 +289,10 @@ func (b *Block) syntacticallyValidate() error {
 		}
 	}
 
-	minCommittableAge := b.API.ProtocolParameters().MinCommittableAge()
-	maxCommittableAge := b.API.ProtocolParameters().MaxCommittableAge()
+	protocolParams := b.API.ProtocolParameters()
+	genesisSlot := protocolParams.GenesisSlot()
+	minCommittableAge := protocolParams.MinCommittableAge()
+	maxCommittableAge := protocolParams.MaxCommittableAge()
 	commitmentSlot := b.Header.SlotCommitmentID.Slot()
 	blockID, err := b.ID()
 	if err != nil {
@@ -299,7 +301,7 @@ func (b *Block) syntacticallyValidate() error {
 	blockSlot := blockID.Slot()
 
 	// check that commitment is not too recent.
-	if commitmentSlot > 0 && // Don't filter commitments to genesis based on being too recent.
+	if commitmentSlot > genesisSlot && // Don't filter commitments to genesis based on being too recent.
 		blockSlot < commitmentSlot+minCommittableAge {
 		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.Header.SlotCommitmentID.Slot())
 	}
@@ -332,14 +334,14 @@ type BasicBlockBody struct {
 	API API
 
 	// The parents the block references.
-	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=8"`
-	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=8"`
-	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=8"`
+	StrongParents      BlockIDs `serix:",lenPrefix=uint8,minLen=1,maxLen=8"`
+	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8"`
+	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8"`
 
 	// The inner payload of the block. Can be nil.
-	Payload ApplicationPayload `serix:"3,optional,mapKey=payload,omitempty"`
+	Payload ApplicationPayload `serix:",optional,omitempty"`
 
-	MaxBurnedMana Mana `serix:"4,mapKey=maxBurnedMana"`
+	MaxBurnedMana Mana `serix:""`
 }
 
 func (b *BasicBlockBody) SetDeserializationContext(ctx context.Context) {
@@ -451,13 +453,13 @@ func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 type ValidationBlockBody struct {
 	API API
 	// The parents the block references.
-	StrongParents      BlockIDs `serix:"0,lengthPrefixType=uint8,mapKey=strongParents,minLen=1,maxLen=50"`
-	WeakParents        BlockIDs `serix:"1,lengthPrefixType=uint8,mapKey=weakParents,minLen=0,maxLen=50"`
-	ShallowLikeParents BlockIDs `serix:"2,lengthPrefixType=uint8,mapKey=shallowLikeParents,minLen=0,maxLen=50"`
+	StrongParents      BlockIDs `serix:",lenPrefix=uint8,minLen=1,maxLen=50"`
+	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50"`
+	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50"`
 
-	HighestSupportedVersion Version `serix:"3,mapKey=highestSupportedVersion"`
+	HighestSupportedVersion Version `serix:""`
 	// ProtocolParametersHash is the hash of the protocol parameters for the HighestSupportedVersion.
-	ProtocolParametersHash Identifier `serix:"4,mapKey=protocolParametersHash"`
+	ProtocolParametersHash Identifier `serix:""`
 }
 
 func (b *ValidationBlockBody) SetDeserializationContext(ctx context.Context) {

@@ -19,7 +19,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 		nativeTokenFeature                  = tpkg.RandNativeTokenFeature()
 		expirationTarget                    = tpkg.RandEd25519Address()
 		metadata                            = []byte("123456")
-		slotTimeProvider                    = iotago.NewTimeProvider(time.Now().Unix(), 10, 10)
+		slotTimeProvider                    = iotago.NewTimeProvider(0, time.Now().Unix(), 10, 10)
 	)
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
 	expiration := slotTimeProvider.SlotFromTime(time.Now().Add(10 * time.Minute))
@@ -34,7 +34,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 
 	require.Equal(t, &iotago.BasicOutput{
 		Amount: 1337,
-		Conditions: iotago.BasicOutputUnlockConditions{
+		UnlockConditions: iotago.BasicOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 			&iotago.TimelockUnlockCondition{Slot: timelock},
 			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, Slot: expiration},
@@ -76,7 +76,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 	expected := &iotago.AccountOutput{
 		Amount:         1337,
 		FoundryCounter: 5,
-		Conditions: iotago.AccountOutputUnlockConditions{
+		UnlockConditions: iotago.AccountOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
 		Features: iotago.AccountOutputFeatures{
@@ -126,7 +126,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 	expectedFeatures := &iotago.AccountOutput{
 		Amount:         1337,
 		FoundryCounter: 5,
-		Conditions: iotago.AccountOutputUnlockConditions{
+		UnlockConditions: iotago.AccountOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
 		Features: iotago.AccountOutputFeatures{
@@ -173,7 +173,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 		Amount:        amount,
 		StateIndex:    0,
 		StateMetadata: metadata,
-		Conditions: iotago.AnchorOutputUnlockConditions{
+		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
@@ -209,7 +209,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 		Amount:        amount,
 		StateIndex:    0,
 		StateMetadata: metadata,
-		Conditions: iotago.AnchorOutputUnlockConditions{
+		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrlNew},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
@@ -247,7 +247,7 @@ func TestDelegationOutputBuilder(t *testing.T) {
 		ValidatorAddress: validatorAddress,
 		StartEpoch:       1000,
 		EndEpoch:         0,
-		Conditions: iotago.DelegationOutputUnlockConditions{
+		UnlockConditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: address},
 		},
 	}
@@ -269,7 +269,7 @@ func TestDelegationOutputBuilder(t *testing.T) {
 		DelegationID:     delegationID,
 		StartEpoch:       1000,
 		EndEpoch:         1500,
-		Conditions: iotago.DelegationOutputUnlockConditions{
+		UnlockConditions: iotago.DelegationOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: updatedAddress},
 		},
 	}
@@ -300,7 +300,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 	require.Equal(t, &iotago.FoundryOutput{
 		Amount:      1337,
 		TokenScheme: tokenScheme,
-		Conditions: iotago.FoundryOutputUnlockConditions{
+		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features: iotago.FoundryOutputFeatures{
@@ -329,7 +329,7 @@ func TestNFTOutputBuilder(t *testing.T) {
 
 	require.Equal(t, &iotago.NFTOutput{
 		Amount: 1337,
-		Conditions: iotago.NFTOutputUnlockConditions{
+		UnlockConditions: iotago.NFTOutputUnlockConditions{
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
 		Features: iotago.NFTOutputFeatures{

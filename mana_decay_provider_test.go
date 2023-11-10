@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	testManaDecayFactors = tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent)
 	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
 
-	testTimeProvider = iotago.NewTimeProvider(0, slotDurationSeconds, slotsPerEpochExponent)
+	testTimeProvider = iotago.NewTimeProvider(0, 0, slotDurationSeconds, slotsPerEpochExponent)
 	manaStruct := &iotago.ManaParameters{
 		BitsCount:                    bitsCount,
 		GenerationRate:               generationRate,

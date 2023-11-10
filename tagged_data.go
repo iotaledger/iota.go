@@ -8,9 +8,9 @@ import (
 // TaggedData is a payload which holds a tag and associated data.
 type TaggedData struct {
 	// The tag to use to categorize the data.
-	Tag []byte `serix:"0,lengthPrefixType=uint8,mapKey=tag,omitempty,maxLen=64"`
+	Tag []byte `serix:",omitempty,lenPrefix=uint8,maxLen=64"`
 	// The data within the payload.
-	Data []byte `serix:"1,lengthPrefixType=uint32,mapKey=data,maxLen=8192"`
+	Data []byte `serix:",lenPrefix=uint32,maxLen=8192"`
 }
 
 func (u *TaggedData) Clone() Payload {
