@@ -7575,6 +7575,56 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "ok - implicit account with native tokens transitioned to account with block issuer feature",
+			inputs: []TestInput{
+				{
+					inputID: outputID1,
+					input: &iotago.BasicOutput{
+						Amount: exampleAmount,
+						Mana:   exampleMana,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+						},
+						Features: iotago.BasicOutputFeatures{
+							exampleNativeTokenFeature,
+						},
+					},
+					unlockTarget: implicitAccountIdent,
+				},
+			},
+			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
+				accountID1: iotago.BlockIssuanceCredits(0),
+			},
+			resolvedCommitmentInput: iotago.Commitment{
+				Slot: commitmentSlot,
+			},
+			outputs: []iotago.Output{
+				&iotago.AccountOutput{
+					Amount:    exampleAmount,
+					Mana:      exampleMana,
+					AccountID: accountID1,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{
+							Address: edIdent,
+						},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							ExpirySlot: iotago.MaxSlotIndex,
+							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
+								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+							),
+						},
+						exampleNativeTokenFeature,
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
+			wantErr: nil,
+		},
+		{
 			name: "fail - implicit account transitioned to account without block issuer feature",
 			inputs: []TestInput{
 				{
