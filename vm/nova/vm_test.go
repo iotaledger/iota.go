@@ -7422,7 +7422,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
-	exampleMetadataFeature := iotago.MetadataFeature{Data: tpkg.RandBytes(40)}
+	exampleMetadataFeature := iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(40)}}
 	exampleMetadataFeatureStorageDeposit := iotago.BaseToken(exampleMetadataFeature.Size()*int(testAPI.StorageScoreStructure().FactorData())) * testAPI.StorageScoreStructure().StorageCost()
 
 	storageScore := dummyImplicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
@@ -7523,9 +7523,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 					},
 					Features: iotago.BasicOutputFeatures{
-						&iotago.MetadataFeature{
-							Data: tpkg.RandBytes(40),
-						},
+						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(40)}},
 						&iotago.TagFeature{
 							Tag: tpkg.RandBytes(12),
 						},
