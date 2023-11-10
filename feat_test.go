@@ -42,9 +42,24 @@ func TestFeaturesDeSerialize(t *testing.T) {
 		{
 			name: "ok - MetadataFeature",
 			source: &iotago.MetadataFeature{
-				Data: []byte("hello world"),
+				Entries: iotago.MetadataFeatureEntries{
+					"hello":    []byte("world"),
+					"did:iota": []byte("hello digital autonomy"),
+					"":         []byte(""),
+				},
 			},
 			target: &iotago.MetadataFeature{},
+		},
+		{
+			name: "ok - StateMetadataFeature",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"hello":    []byte("world"),
+					"did:iota": []byte("hello digital autonomy"),
+					"":         []byte(""),
+				},
+			},
+			target: &iotago.StateMetadataFeature{},
 		},
 		{
 			name: "ok - TagFeature",
@@ -52,6 +67,57 @@ func TestFeaturesDeSerialize(t *testing.T) {
 				Tag: []byte("hello world"),
 			},
 			target: &iotago.TagFeature{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
+func TestFeaturesMetadata(t *testing.T) {
+	tests := []deSerializeTest{
+		{
+			name: "ok - MetadataFeature",
+			source: &iotago.MetadataFeature{
+				Entries: iotago.MetadataFeatureEntries{
+					"hello":    []byte("world"),
+					"did:iota": []byte("hello digital autonomy"),
+					"empty":    []byte(""),
+				},
+			},
+			target: &iotago.MetadataFeature{},
+		},
+		{
+			name: "fail - MetadataFeature - non ASCII char in key",
+			source: &iotago.MetadataFeature{
+				Entries: iotago.MetadataFeatureEntries{
+					"hellö": []byte("world"),
+				},
+			},
+			seriErr: iotago.ErrInvalidMetadataKey,
+			target:  &iotago.MetadataFeature{},
+		},
+		{
+			name: "ok - StateMetadataFeature",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"hello":    []byte("world"),
+					"did:iota": []byte("hello digital autonomy"),
+					"empty":    []byte(""),
+				},
+			},
+			target: &iotago.StateMetadataFeature{},
+		},
+		{
+			name: "fail - StateMetadataFeature - non ASCII char in key",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"hellö": []byte("world"),
+				},
+			},
+			seriErr: iotago.ErrInvalidStateMetadataKey,
+			target:  &iotago.StateMetadataFeature{},
 		},
 	}
 
