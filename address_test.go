@@ -277,7 +277,7 @@ func TestParseBech32(t *testing.T) {
 
 func TestImplicitAccountCreationAddressCapabilities(t *testing.T) {
 	address := iotago.ImplicitAccountCreationAddressFromPubKey(ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519())
-	require.True(t, address.CannotReceiveNativeTokens())
+	require.False(t, address.CannotReceiveNativeTokens())
 	require.False(t, address.CannotReceiveMana())
 	require.True(t, address.CannotReceiveOutputsWithTimelockUnlockCondition())
 	require.True(t, address.CannotReceiveOutputsWithExpirationUnlockCondition())

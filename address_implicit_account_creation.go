@@ -38,7 +38,7 @@ func (addr *ImplicitAccountCreationAddress) StorageScore(storageScoreStruct *Sto
 }
 
 func (addr *ImplicitAccountCreationAddress) CannotReceiveNativeTokens() bool {
-	return true
+	return false
 }
 
 func (addr *ImplicitAccountCreationAddress) CannotReceiveMana() bool {
