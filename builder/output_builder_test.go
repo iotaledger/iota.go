@@ -186,17 +186,17 @@ func TestAnchorOutputBuilder(t *testing.T) {
 	require.True(t, expected.Equal(anchorOutput), "anchor output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
-	newMetadataEntries := iotago.StateMetadataFeatureEntries{"newData": []byte("newState")}
+	newStateMetadataEntries := iotago.StateMetadataFeatureEntries{"newData": []byte("newState")}
 
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	expectedCpy := expected.Clone().(*iotago.AnchorOutput)
 	expectedCpy.Amount = newAmount
 	expectedCpy.StateIndex++
-	expectedCpy.Features.Upsert(&iotago.StateMetadataFeature{Entries: newMetadataEntries})
+	expectedCpy.Features.Upsert(&iotago.StateMetadataFeature{Entries: newStateMetadataEntries})
 
 	updatedOutput, err := builder.NewAnchorOutputBuilderFromPrevious(anchorOutput).StateTransition().
 		Amount(newAmount).
-		StateMetadata(newMetadataEntries).
+		StateMetadata(newStateMetadataEntries).
 		Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)

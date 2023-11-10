@@ -3,6 +3,7 @@ package iotago
 import (
 	"fmt"
 	"sort"
+	"unicode"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -15,6 +16,10 @@ var (
 	ErrNonUniqueFeatures = ierrors.New("non unique features within outputs")
 	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainOutput is invalid.
 	ErrInvalidFeatureTransition = ierrors.New("invalid feature transition")
+	// ErrInvalidMetadataKey gets returned when a MetadataFeature's key is invalid.
+	ErrInvalidMetadataKey = ierrors.New("invalid metadata key")
+	// ErrInvalidStateMetadataKey gets returned when a StateMetadataFeature's key is invalid.
+	ErrInvalidStateMetadataKey = ierrors.New("invalid state metadata key")
 )
 
 // Feature is an abstract building block extending the features of an Output.
@@ -312,6 +317,16 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 
 	if !in.Equal(out) {
 		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s changed, in %v / out %v", featType, in, out)
+	}
+
+	return nil
+}
+
+func checkASCIIString(s string) error {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
+			return ierrors.Errorf("string contains non-ASCII character at index %d", i)
+		}
 	}
 
 	return nil
