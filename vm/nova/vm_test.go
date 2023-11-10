@@ -7408,6 +7408,9 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 		},
 	}
+	exampleMetadataFeature := iotago.MetadataFeature{Data: tpkg.RandBytes(40)}
+	exampleMetadataFeatureStorageDeposit := iotago.BaseToken(exampleMetadataFeature.StorageScore(testAPI.StorageScoreStructure(), nil)) * testAPI.StorageScoreStructure().StorageCost()
+
 	storageScore := dummyImplicitAccount.StorageScore(testAPI.StorageScoreStructure(), nil)
 	minAmountImplicitAccount := testAPI.StorageScoreStructure().StorageCost() * iotago.BaseToken(storageScore)
 
@@ -7444,23 +7447,6 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:   "fail - implicit account contains native tokens",
-			inputs: exampleInputs,
-			outputs: []iotago.Output{
-				&iotago.BasicOutput{
-					Amount: exampleAmount,
-					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
-					},
-					Features: iotago.BasicOutputFeatures{
-						exampleNativeTokenFeature,
-					},
-				},
-			},
-			keys:    []iotago.AddressKeys{edIdentAddrKeys},
-			wantErr: iotago.ErrAddressCannotReceiveNativeTokens,
-		},
-		{
 			name:   "fail - implicit account contains timelock unlock conditions",
 			inputs: exampleInputs,
 			outputs: []iotago.Output{
@@ -7474,6 +7460,73 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			},
 			keys:    []iotago.AddressKeys{edIdentAddrKeys},
 			wantErr: iotago.ErrAddressCannotReceiveTimelockUnlockCondition,
+		},
+		{
+			name:   "fail - implicit account contains expiration unlock conditions",
+			inputs: exampleInputs,
+			outputs: []iotago.Output{
+				&iotago.BasicOutput{
+					Amount: exampleAmount,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+						&iotago.ExpirationUnlockCondition{
+							// The implicit account creation address should disallow this expiration UC.
+							ReturnAddress: tpkg.RandEd25519Address(),
+							Slot:          500,
+						},
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
+			wantErr: iotago.ErrAddressCannotReceiveExpirationUnlockCondition,
+		},
+		{
+			name:   "fail - implicit account contains storage deposit return unlock conditions",
+			inputs: exampleInputs,
+			outputs: []iotago.Output{
+				&iotago.BasicOutput{
+					Amount: exampleAmount,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+						&iotago.StorageDepositReturnUnlockCondition{
+							// The implicit account creation address should disallow this SDRUC.
+							ReturnAddress: tpkg.RandEd25519Address(),
+							Amount:        20_000,
+						},
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
+			wantErr: iotago.ErrAddressCannotReceiveStorageDepositReturnUnlockCondition,
+		},
+		{
+			name:   "ok - implicit account contains features",
+			inputs: exampleInputs,
+			outputs: []iotago.Output{
+				&iotago.BasicOutput{
+					Amount: exampleAmount,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+					},
+					Features: iotago.BasicOutputFeatures{
+						&iotago.MetadataFeature{
+							Data: tpkg.RandBytes(40),
+						},
+						&iotago.TagFeature{
+							Tag: tpkg.RandBytes(12),
+						},
+						&iotago.SenderFeature{
+							Address: edIdentAddrKeys.Address,
+						},
+						&iotago.NativeTokenFeature{
+							ID:     exampleNativeTokenFeature.ID,
+							Amount: exampleNativeTokenFeature.Amount,
+						},
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{edIdentAddrKeys},
+			wantErr: nil,
 		},
 		{
 			name: "ok - implicit account transitioned to account with block issuer feature",
@@ -7615,6 +7668,53 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			outputs: []iotago.Output{
 				&iotago.AccountOutput{
 					Amount:    minAmountImplicitAccount,
+					Mana:      0,
+					AccountID: accountID1,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{
+							Address: edIdent,
+						},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							ExpirySlot: iotago.MaxSlotIndex,
+							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
+								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+							),
+						},
+					},
+				},
+			},
+			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
+			wantErr: nil,
+		},
+		{
+			name: "ok - implicit account with minimal amount and metadata feat can be transitioned",
+			inputs: []TestInput{
+				{
+					inputID: outputID1,
+					input: &iotago.BasicOutput{
+						Amount: minAmountImplicitAccount + exampleMetadataFeatureStorageDeposit,
+						Mana:   0,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
+						},
+						Features: iotago.BasicOutputFeatures{
+							&exampleMetadataFeature,
+						},
+					},
+					unlockTarget: implicitAccountIdent,
+				},
+			},
+			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
+				accountID1: iotago.BlockIssuanceCredits(0),
+			},
+			resolvedCommitmentInput: iotago.Commitment{
+				Slot: commitmentSlot,
+			},
+			outputs: []iotago.Output{
+				&iotago.AccountOutput{
+					Amount:    minAmountImplicitAccount + exampleMetadataFeatureStorageDeposit,
 					Mana:      0,
 					AccountID: accountID1,
 					UnlockConditions: iotago.AccountOutputUnlockConditions{
