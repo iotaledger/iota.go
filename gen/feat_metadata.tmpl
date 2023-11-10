@@ -13,8 +13,9 @@ type {{.Name}}EntriesKey string
 type {{.Name}}EntriesValue []byte
 type {{.Name}}Entries map[{{.Name}}EntriesKey]{{.Name}}EntriesValue
 
-// {{.Name}} is a feature which simply holds binary data to be freely
-// interpreted by higher layer applications.
+// {{.Name}} is a feature which holds a map of key-value pairs.
+// The keys must consist of ASCII characters only.
+// The values are arbitrary byte slices.
 type {{.Name}} struct {
 	Entries {{.Name}}Entries `serix:""`
 }

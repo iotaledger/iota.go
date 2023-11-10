@@ -13,8 +13,9 @@ type MetadataFeatureEntriesKey string
 type MetadataFeatureEntriesValue []byte
 type MetadataFeatureEntries map[MetadataFeatureEntriesKey]MetadataFeatureEntriesValue
 
-// MetadataFeature is a feature which simply holds binary data to be freely
-// interpreted by higher layer applications.
+// MetadataFeature is a feature which holds a map of key-value pairs.
+// The keys must consist of ASCII characters only.
+// The values are arbitrary byte slices.
 type MetadataFeature struct {
 	Entries MetadataFeatureEntries `serix:""`
 }

@@ -13,8 +13,9 @@ type StateMetadataFeatureEntriesKey string
 type StateMetadataFeatureEntriesValue []byte
 type StateMetadataFeatureEntries map[StateMetadataFeatureEntriesKey]StateMetadataFeatureEntriesValue
 
-// StateMetadataFeature is a feature which simply holds binary data to be freely
-// interpreted by higher layer applications.
+// StateMetadataFeature is a feature which holds a map of key-value pairs.
+// The keys must consist of ASCII characters only.
+// The values are arbitrary byte slices.
 type StateMetadataFeature struct {
 	Entries StateMetadataFeatureEntries `serix:""`
 }
