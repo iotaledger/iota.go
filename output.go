@@ -375,8 +375,6 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 			}
 		}
 
-		sum += amount
-
 		return nil
 	}
 }
