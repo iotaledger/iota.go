@@ -114,16 +114,16 @@ func (builder *AccountOutputBuilder) ImmutableSender(senderAddr iotago.Address) 
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *AccountOutputBuilder) Metadata(data []byte) *AccountOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *AccountOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AccountOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
 // Only call this function on a new iotago.AccountOutput.
-func (builder *AccountOutputBuilder) ImmutableMetadata(data []byte) *AccountOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *AccountOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *AccountOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

@@ -18,7 +18,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 		amount             iotago.BaseToken = 1337
 		nativeTokenFeature                  = tpkg.RandNativeTokenFeature()
 		expirationTarget                    = tpkg.RandEd25519Address()
-		metadata                            = []byte("123456")
+		metadataEntries                     = iotago.MetadataFeatureEntries{"data": []byte("123456")}
 		slotTimeProvider                    = iotago.NewTimeProvider(0, time.Now().Unix(), 10, 10)
 	)
 	timelock := slotTimeProvider.SlotFromTime(time.Now().Add(5 * time.Minute))
@@ -28,7 +28,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 		NativeToken(nativeTokenFeature).
 		Timelock(timelock).
 		Expiration(expirationTarget, expiration).
-		Metadata(metadata).
+		Metadata(metadataEntries).
 		Build()
 	require.NoError(t, err)
 
@@ -40,7 +40,7 @@ func TestBasicOutputBuilder(t *testing.T) {
 			&iotago.ExpirationUnlockCondition{ReturnAddress: expirationTarget, Slot: expiration},
 		},
 		Features: iotago.BasicOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.MetadataFeature{Entries: metadataEntries},
 			nativeTokenFeature,
 		},
 	}, basicOutput)
@@ -48,11 +48,11 @@ func TestBasicOutputBuilder(t *testing.T) {
 
 func TestAccountOutputBuilder(t *testing.T) {
 	var (
-		addr                         = tpkg.RandEd25519Address()
-		amount      iotago.BaseToken = 1337
-		metadata                     = []byte("123456")
-		immMetadata                  = []byte("654321")
-		immSender                    = tpkg.RandEd25519Address()
+		addr                                = tpkg.RandEd25519Address()
+		amount             iotago.BaseToken = 1337
+		metadataEntries                     = iotago.MetadataFeatureEntries{"data": []byte("123456")}
+		immMetadataEntries                  = iotago.MetadataFeatureEntries{"data": []byte("654321")}
+		immSender                           = tpkg.RandEd25519Address()
 
 		blockIssuerKey1    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 		blockIssuerKey2    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
@@ -62,10 +62,10 @@ func TestAccountOutputBuilder(t *testing.T) {
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(addr, amount).
-		Metadata(metadata).
+		Metadata(metadataEntries).
 		Staking(amount, 1, 1000).
 		BlockIssuer(iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3), 100000).
-		ImmutableMetadata(immMetadata).
+		ImmutableMetadata(immMetadataEntries).
 		ImmutableSender(immSender).
 		FoundriesToGenerate(5).
 		Build()
@@ -80,7 +80,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
 		Features: iotago.AccountOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.MetadataFeature{Entries: metadataEntries},
 			&iotago.BlockIssuerFeature{
 				BlockIssuerKeys: expectedBlockIssuerKeys,
 				ExpirySlot:      100000,
@@ -94,7 +94,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
 	require.True(t, expected.Equal(accountOutput), "account output should be equal")
@@ -130,7 +130,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: addr},
 		},
 		Features: iotago.AccountOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.MetadataFeature{Entries: metadataEntries},
 			&iotago.BlockIssuerFeature{
 				BlockIssuerKeys: expectedUpdatedBlockIssuerKeys,
 				ExpirySlot:      1500,
@@ -144,7 +144,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
 	require.True(t, expectedFeatures.Equal(updatedFeatures), "features should be equal")
@@ -152,50 +152,51 @@ func TestAccountOutputBuilder(t *testing.T) {
 
 func TestAnchorOutputBuilder(t *testing.T) {
 	var (
-		stateCtrl                     = tpkg.RandEd25519Address()
-		stateCtrlNew                  = tpkg.RandEd25519Address()
-		gov                           = tpkg.RandEd25519Address()
-		amount       iotago.BaseToken = 1337
-		metadata                      = []byte("123456")
-		immMetadata                   = []byte("654321")
-		immSender                     = tpkg.RandEd25519Address()
+		stateCtrl                             = tpkg.RandEd25519Address()
+		stateCtrlNew                          = tpkg.RandEd25519Address()
+		gov                                   = tpkg.RandEd25519Address()
+		amount               iotago.BaseToken = 1337
+		stateMetadataEntries                  = iotago.StateMetadataFeatureEntries{"data": []byte("123456")}
+		immMetadataEntries                    = iotago.MetadataFeatureEntries{"data": []byte("654321")}
+		immSender                             = tpkg.RandEd25519Address()
 	)
 
 	anchorOutput, err := builder.NewAnchorOutputBuilder(stateCtrl, gov, amount).
-		Metadata(metadata).
-		StateMetadata(metadata).
-		ImmutableMetadata(immMetadata).
+		StateMetadata(stateMetadataEntries).
+		ImmutableMetadata(immMetadataEntries).
 		ImmutableSender(immSender).
 		Build()
 	require.NoError(t, err)
 
 	expected := &iotago.AnchorOutput{
-		Amount:        amount,
-		StateIndex:    0,
-		StateMetadata: metadata,
+		Amount:     amount,
+		StateIndex: 0,
 		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
 		Features: iotago.AnchorOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
 	require.True(t, expected.Equal(anchorOutput), "anchor output should be equal")
 
 	const newAmount iotago.BaseToken = 7331
+	newStateMetadataEntries := iotago.StateMetadataFeatureEntries{"newData": []byte("newState")}
+
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	expectedCpy := expected.Clone().(*iotago.AnchorOutput)
 	expectedCpy.Amount = newAmount
 	expectedCpy.StateIndex++
-	expectedCpy.StateMetadata = []byte("newState")
+	expectedCpy.Features.Upsert(&iotago.StateMetadataFeature{Entries: newStateMetadataEntries})
+
 	updatedOutput, err := builder.NewAnchorOutputBuilderFromPrevious(anchorOutput).StateTransition().
 		Amount(newAmount).
-		StateMetadata([]byte("newState")).
+		StateMetadata(newStateMetadataEntries).
 		Builder().Build()
 	require.NoError(t, err)
 	require.Equal(t, expectedCpy, updatedOutput)
@@ -206,19 +207,18 @@ func TestAnchorOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedOutput2 := &iotago.AnchorOutput{
-		Amount:        amount,
-		StateIndex:    0,
-		StateMetadata: metadata,
+		Amount:     amount,
+		StateIndex: 0,
 		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrlNew},
 			&iotago.GovernorAddressUnlockCondition{Address: gov},
 		},
 		Features: iotago.AnchorOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 			&iotago.SenderFeature{Address: immSender},
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
 	require.True(t, expectedOutput2.Equal(updatedOutput2), "outputs should be equal")
@@ -286,14 +286,14 @@ func TestFoundryOutputBuilder(t *testing.T) {
 			MaximumSupply: big.NewInt(1000),
 		}
 		nativeTokenFeature = tpkg.RandNativeTokenFeature()
-		metadata           = []byte("123456")
-		immMetadata        = []byte("654321")
+		metadataEntries    = iotago.MetadataFeatureEntries{"data": []byte("123456")}
+		immMetadataEntries = iotago.MetadataFeatureEntries{"data": []byte("654321")}
 	)
 
 	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, amount).
 		NativeToken(nativeTokenFeature).
-		Metadata(metadata).
-		ImmutableMetadata(immMetadata).
+		Metadata(metadataEntries).
+		ImmutableMetadata(immMetadataEntries).
 		Build()
 	require.NoError(t, err)
 
@@ -304,26 +304,26 @@ func TestFoundryOutputBuilder(t *testing.T) {
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
 		Features: iotago.FoundryOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.MetadataFeature{Entries: metadataEntries},
 			nativeTokenFeature,
 		},
 		ImmutableFeatures: iotago.FoundryOutputImmFeatures{
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}, foundryOutput)
 }
 
 func TestNFTOutputBuilder(t *testing.T) {
 	var (
-		targetAddr                   = tpkg.RandAccountAddress()
-		amount      iotago.BaseToken = 1337
-		metadata                     = []byte("123456")
-		immMetadata                  = []byte("654321")
+		targetAddr                          = tpkg.RandAccountAddress()
+		amount             iotago.BaseToken = 1337
+		metadataEntries                     = iotago.MetadataFeatureEntries{"data": []byte("123456")}
+		immMetadataEntries                  = iotago.MetadataFeatureEntries{"data": []byte("654321")}
 	)
 
 	nftOutput, err := builder.NewNFTOutputBuilder(targetAddr, amount).
-		Metadata(metadata).
-		ImmutableMetadata(immMetadata).
+		Metadata(metadataEntries).
+		ImmutableMetadata(immMetadataEntries).
 		Build()
 	require.NoError(t, err)
 
@@ -333,10 +333,10 @@ func TestNFTOutputBuilder(t *testing.T) {
 			&iotago.AddressUnlockCondition{Address: targetAddr},
 		},
 		Features: iotago.NFTOutputFeatures{
-			&iotago.MetadataFeature{Data: metadata},
+			&iotago.MetadataFeature{Entries: metadataEntries},
 		},
 		ImmutableFeatures: iotago.NFTOutputImmFeatures{
-			&iotago.MetadataFeature{Data: immMetadata},
+			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}, nftOutput)
 }

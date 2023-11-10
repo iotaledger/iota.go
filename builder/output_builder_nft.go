@@ -92,16 +92,16 @@ func (builder *NFTOutputBuilder) Sender(senderAddr iotago.Address) *NFTOutputBui
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *NFTOutputBuilder) Metadata(data []byte) *NFTOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *NFTOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *NFTOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
 // Only call this function on a new iotago.NFTOutput.
-func (builder *NFTOutputBuilder) ImmutableMetadata(data []byte) *NFTOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *NFTOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *NFTOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

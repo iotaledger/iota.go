@@ -1,10 +1,7 @@
 package iotago
 
 import (
-	"bytes"
-
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -99,8 +96,6 @@ type AnchorOutput struct {
 	AnchorID AnchorID `serix:""`
 	// The index of the state.
 	StateIndex uint32 `serix:""`
-	// The state of the anchor which can only be mutated by the state controller.
-	StateMetadata []byte `serix:",omitempty,lenPrefix=uint16,maxLen=8192"`
 	// The unlock conditions on this output.
 	UnlockConditions AnchorOutputUnlockConditions `serix:",omitempty"`
 	// The features on the output.
@@ -123,7 +118,6 @@ func (a *AnchorOutput) Clone() Output {
 		Mana:              a.Mana,
 		AnchorID:          a.AnchorID,
 		StateIndex:        a.StateIndex,
-		StateMetadata:     lo.CopySlice(a.StateMetadata),
 		UnlockConditions:  a.UnlockConditions.Clone(),
 		Features:          a.Features.Clone(),
 		ImmutableFeatures: a.ImmutableFeatures.Clone(),
@@ -149,10 +143,6 @@ func (a *AnchorOutput) Equal(other Output) bool {
 	}
 
 	if a.StateIndex != otherOutput.StateIndex {
-		return false
-	}
-
-	if !bytes.Equal(a.StateMetadata, otherOutput.StateMetadata) {
 		return false
 	}
 
@@ -268,8 +258,6 @@ func (a *AnchorOutput) Size() int {
 		AnchorIDLength +
 		// StateIndex
 		serializer.UInt32ByteSize +
-		serializer.UInt16ByteSize +
-		len(a.StateMetadata) +
 		a.UnlockConditions.Size() +
 		a.Features.Size() +
 		a.ImmutableFeatures.Size()
