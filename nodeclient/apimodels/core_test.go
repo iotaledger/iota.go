@@ -12,7 +12,7 @@ import (
 
 func testAPI() iotago.API {
 	params := iotago.NewV3ProtocolParameters(
-		iotago.WithTimeProviderOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13),
+		iotago.WithTimeOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13, 15, 30, 10, 20, 24),
 	)
 
 	return iotago.V3API(params)

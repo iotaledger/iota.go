@@ -99,11 +99,16 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			9,
 			10,
 		),
-		iotago.WithTimeProviderOptions(
+		iotago.WithTimeOptions(
 			654978,
 			1681373293,
 			10,
 			13,
+			15,
+			30,
+			10,
+			20,
+			24,
 		),
 		iotago.WithManaOptions(
 			1,
@@ -115,13 +120,6 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			20,
 		),
 		iotago.WithStakingOptions(11, 10, 9),
-		iotago.WithLivenessOptions(
-			15,
-			30,
-			10,
-			20,
-			24,
-		),
 		iotago.WithCongestionControlOptions(
 			500,
 			500,

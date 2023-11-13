@@ -32,7 +32,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100, 100),
 			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-			WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
+			WithTimeOptions(0, time.Now().Unix(), 10, 13, 15, 30, 10, 20, 24),
 			WithManaOptions(63,
 				1,
 				17,
@@ -43,7 +43,6 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				2420916375,
 				21,
 			),
-			WithLivenessOptions(15, 30, 10, 20, 24),
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
@@ -310,17 +309,25 @@ func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExpone
 	}
 }
 
-func WithTimeProviderOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
+func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8, livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+	if livenessThresholdLowerBoundInSeconds > livenessThresholdUpperBoundInSeconds {
+		panic("livenessThresholdLowerBoundInSeconds must be smaller than livenessThresholdUpperBoundInSeconds")
+	}
+	if SlotIndex(livenessThresholdUpperBoundInSeconds) > minCommittableAge*SlotIndex(slotDurationInSeconds) {
+		panic("livenessThresholdUpperBoundInSeconds * slotDurationInSeconds must be smaller than minCommittableAge")
+	}
+	if minCommittableAge > maxCommittableAge {
+		panic("minCommittableAge must be smaller than maxCommittableAge")
+	}
+	if maxCommittableAge > epochNearingThreshold {
+		panic("maxCommittableAge must be smaller than epochNearingThreshold")
+	}
+
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.GenesisSlot = genesisSlot
 		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
 		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
 		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
-	}
-}
-
-func WithLivenessOptions(livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
-	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.LivenessThresholdLowerBoundInSeconds = livenessThresholdLowerBoundInSeconds
 		p.basicProtocolParameters.LivenessThresholdUpperBoundInSeconds = livenessThresholdUpperBoundInSeconds
 		p.basicProtocolParameters.MinCommittableAge = minCommittableAge

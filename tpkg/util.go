@@ -1032,6 +1032,11 @@ func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 
 // RandProtocolParameters produces random protocol parameters.
 func RandProtocolParameters() iotago.ProtocolParameters {
+	livenessThresholdLowerBound := RandUint16(math.MaxUint16 - 1)
+	livenessThresholdUpperBound := livenessThresholdLowerBound + 1
+	minCA := iotago.SlotIndex(livenessThresholdUpperBound)
+	maxCA := minCA + 1
+	epochNearingThreshold := maxCA + 1
 	return iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions(
 			RandString(255),
@@ -1058,8 +1063,17 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 		),
-		iotago.WithTimeProviderOptions(RandSlot(), time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlot(), RandSlot(), RandSlot()),
+		iotago.WithTimeOptions(
+			RandSlot(),
+			time.Now().Unix(),
+			RandUint8(math.MaxUint8),
+			RandUint8(math.MaxUint8),
+			livenessThresholdLowerBound,
+			livenessThresholdUpperBound,
+			minCA,
+			maxCA,
+			epochNearingThreshold,
+		),
 		iotago.WithCongestionControlOptions(
 			RandMana(iotago.MaxMana),
 			RandMana(iotago.MaxMana),
