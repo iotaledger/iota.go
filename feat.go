@@ -3,6 +3,7 @@ package iotago
 import (
 	"fmt"
 	"sort"
+	"unicode"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -15,6 +16,10 @@ var (
 	ErrNonUniqueFeatures = ierrors.New("non unique features within outputs")
 	// ErrInvalidFeatureTransition gets returned when a Feature's transition within a ChainOutput is invalid.
 	ErrInvalidFeatureTransition = ierrors.New("invalid feature transition")
+	// ErrInvalidMetadataKey gets returned when a MetadataFeature's key is invalid.
+	ErrInvalidMetadataKey = ierrors.New("invalid metadata key")
+	// ErrInvalidStateMetadataKey gets returned when a StateMetadataFeature's key is invalid.
+	ErrInvalidStateMetadataKey = ierrors.New("invalid state metadata key")
 )
 
 // Feature is an abstract building block extending the features of an Output.
@@ -39,6 +44,8 @@ const (
 	FeatureIssuer
 	// FeatureMetadata denotes a MetadataFeature.
 	FeatureMetadata
+	// FeatureStateMetadata denotes a StateMetadataFeature.
+	FeatureStateMetadata
 	// FeatureTag denotes a TagFeature.
 	FeatureTag
 	// NativeTokenFeature denotes a NativeTokenFeature.
@@ -58,7 +65,14 @@ func (featType FeatureType) String() string {
 }
 
 var featNames = [FeatureStaking + 1]string{
-	"SenderFeature", "IssuerFeature", "MetadataFeature", "TagFeature", "NativeTokenFeature", "BlockIssuerFeature", "StakingFeature",
+	"SenderFeature",
+	"IssuerFeature",
+	"MetadataFeature",
+	"StateMetadataFeature",
+	"TagFeature",
+	"NativeTokenFeature",
+	"BlockIssuerFeature",
+	"StakingFeature",
 }
 
 // Features is a slice of Feature(s).
@@ -203,28 +217,6 @@ func (f FeatureSet) Issuer() *IssuerFeature {
 	return b.(*IssuerFeature)
 }
 
-// BlockIssuer returns the BlockIssuerFeature in the set or nil.
-func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
-	b, has := f[FeatureBlockIssuer]
-	if !has {
-		return nil
-	}
-
-	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuerFeature
-	return b.(*BlockIssuerFeature)
-}
-
-// Staking returns the StakingFeature in the set or nil.
-func (f FeatureSet) Staking() *StakingFeature {
-	b, has := f[FeatureStaking]
-	if !has {
-		return nil
-	}
-
-	//nolint:forcetypeassert // we can safely assume that this is a StakingFeature
-	return b.(*StakingFeature)
-}
-
 // Metadata returns the MetadataFeature in the set or nil.
 func (f FeatureSet) Metadata() *MetadataFeature {
 	b, has := f[FeatureMetadata]
@@ -234,6 +226,17 @@ func (f FeatureSet) Metadata() *MetadataFeature {
 
 	//nolint:forcetypeassert // we can safely assume that this is a MetadataFeature
 	return b.(*MetadataFeature)
+}
+
+// StateMetadata returns the StateMetadataFeature in the set or nil.
+func (f FeatureSet) StateMetadata() *StateMetadataFeature {
+	b, has := f[FeatureStateMetadata]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a StateMetadataFeature
+	return b.(*StateMetadataFeature)
 }
 
 // Tag returns the TagFeature in the set or nil.
@@ -262,6 +265,28 @@ func (f FeatureSet) NativeToken() *NativeTokenFeature {
 
 	//nolint:forcetypeassert // we can safely assume that this is a NativeTokenFeature
 	return b.(*NativeTokenFeature)
+}
+
+// BlockIssuer returns the BlockIssuerFeature in the set or nil.
+func (f FeatureSet) BlockIssuer() *BlockIssuerFeature {
+	b, has := f[FeatureBlockIssuer]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuerFeature
+	return b.(*BlockIssuerFeature)
+}
+
+// Staking returns the StakingFeature in the set or nil.
+func (f FeatureSet) Staking() *StakingFeature {
+	b, has := f[FeatureStaking]
+	if !has {
+		return nil
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is a StakingFeature
+	return b.(*StakingFeature)
 }
 
 // EveryTuple runs f for every key which exists in both this set and other.
@@ -303,6 +328,16 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 
 	if !in.Equal(out) {
 		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s changed, in %v / out %v", featType, in, out)
+	}
+
+	return nil
+}
+
+func checkASCIIString(s string) error {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
+			return ierrors.Errorf("string contains non-ASCII character at index %d", i)
+		}
 	}
 
 	return nil

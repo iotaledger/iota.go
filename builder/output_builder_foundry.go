@@ -49,16 +49,16 @@ func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) 
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *FoundryOutputBuilder) Metadata(data []byte) *FoundryOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *FoundryOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *FoundryOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
-// Only call this function on a new iotago.AccountOutput.
-func (builder *FoundryOutputBuilder) ImmutableMetadata(data []byte) *FoundryOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
+// Only call this function on a new iotago.FoundryOutput.
+func (builder *FoundryOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *FoundryOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

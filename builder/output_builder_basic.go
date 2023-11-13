@@ -84,8 +84,8 @@ func (builder *BasicOutputBuilder) Sender(senderAddr iotago.Address) *BasicOutpu
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *BasicOutputBuilder) Metadata(data []byte) *BasicOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *BasicOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *BasicOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

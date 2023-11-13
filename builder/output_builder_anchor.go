@@ -8,11 +8,10 @@ import (
 // NewAnchorOutputBuilder creates a new AnchorOutputBuilder with the required state controller/governor addresses and base token amount.
 func NewAnchorOutputBuilder(stateCtrl iotago.Address, govAddr iotago.Address, amount iotago.BaseToken) *AnchorOutputBuilder {
 	return &AnchorOutputBuilder{output: &iotago.AnchorOutput{
-		Amount:        amount,
-		Mana:          0,
-		AnchorID:      iotago.EmptyAnchorID,
-		StateIndex:    0,
-		StateMetadata: []byte{},
+		Amount:     amount,
+		Mana:       0,
+		AnchorID:   iotago.EmptyAnchorID,
+		StateIndex: 0,
 		UnlockConditions: iotago.AnchorOutputUnlockConditions{
 			&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl},
 			&iotago.GovernorAddressUnlockCondition{Address: govAddr},
@@ -62,14 +61,6 @@ func (builder *AnchorOutputBuilder) AnchorID(anchorID iotago.AnchorID) *AnchorOu
 	return builder
 }
 
-// StateMetadata sets the state metadata of the output.
-func (builder *AnchorOutputBuilder) StateMetadata(data []byte) *AnchorOutputBuilder {
-	builder.output.StateMetadata = data
-	builder.stateCtrlReq = true
-
-	return builder
-}
-
 // StateController sets the iotago.StateControllerAddressUnlockCondition of the output.
 func (builder *AnchorOutputBuilder) StateController(stateCtrl iotago.Address) *AnchorOutputBuilder {
 	builder.output.UnlockConditions.Upsert(&iotago.StateControllerAddressUnlockCondition{Address: stateCtrl})
@@ -103,17 +94,25 @@ func (builder *AnchorOutputBuilder) ImmutableSender(senderAddr iotago.Address) *
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *AnchorOutputBuilder) Metadata(data []byte) *AnchorOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *AnchorOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AnchorOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 	builder.govCtrlReq = true
+
+	return builder
+}
+
+// StateMetadata sets/modifies an iotago.StateMetadataFeature on the output.
+func (builder *AnchorOutputBuilder) StateMetadata(entries iotago.StateMetadataFeatureEntries) *AnchorOutputBuilder {
+	builder.output.Features.Upsert(&iotago.StateMetadataFeature{Entries: entries})
+	builder.stateCtrlReq = true
 
 	return builder
 }
 
 // ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
 // Only call this function on a new iotago.AnchorOutput.
-func (builder *AnchorOutputBuilder) ImmutableMetadata(data []byte) *AnchorOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Data: data})
+func (builder *AnchorOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *AnchorOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }
@@ -171,9 +170,9 @@ func (trans *AnchorStateTransition) Mana(mana iotago.Mana) *AnchorStateTransitio
 	return trans.builder.Mana(mana).StateTransition()
 }
 
-// StateMetadata sets the state metadata of the output.
-func (trans *AnchorStateTransition) StateMetadata(data []byte) *AnchorStateTransition {
-	return trans.builder.StateMetadata(data).StateTransition()
+// StateMetadata sets/modifies an iotago.StateMetadataFeature on the output.
+func (trans *AnchorStateTransition) StateMetadata(entries iotago.StateMetadataFeatureEntries) *AnchorStateTransition {
+	return trans.builder.StateMetadata(entries).StateTransition()
 }
 
 // Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
@@ -213,8 +212,8 @@ func (trans *AnchorGovernanceTransition) Sender(senderAddr iotago.Address) *Anch
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature as a mutable feature on the output.
-func (trans *AnchorGovernanceTransition) Metadata(data []byte) *AnchorGovernanceTransition {
-	return trans.builder.Metadata(data).GovernanceTransition()
+func (trans *AnchorGovernanceTransition) Metadata(entries iotago.MetadataFeatureEntries) *AnchorGovernanceTransition {
+	return trans.builder.Metadata(entries).GovernanceTransition()
 }
 
 // Builder returns the AnchorOutputBuilder.
