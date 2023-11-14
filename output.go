@@ -268,7 +268,7 @@ func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
 	set := make(AccountOutputsSet)
 	for utxoInputID, output := range outputSet {
 		accountOutput, is := output.(*AccountOutput)
-		if !is || !accountOutput.AccountEmpty() {
+		if !is || !accountOutput.AccountID.Empty() {
 			continue
 		}
 		set[AccountIDFromOutputID(utxoInputID)] = accountOutput
@@ -450,7 +450,7 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if accountOutput.AccountEmpty() {
+		if accountOutput.AccountID.Empty() {
 			if accountOutput.FoundryCounter != 0 {
 				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
 			}
@@ -477,7 +477,7 @@ func OutputsSyntacticalAnchor() OutputsSyntacticalValidationFunc {
 			return nil
 		}
 
-		if anchorOutput.AnchorEmpty() {
+		if anchorOutput.AnchorID.Empty() {
 			if anchorOutput.StateIndex != 0 {
 				return ierrors.Wrapf(ErrAnchorOutputNonEmptyState, "output %d, state index not zero", index)
 			}
