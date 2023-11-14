@@ -476,10 +476,6 @@ func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *io
 // or one which was effectively removed and added within the same transaction.
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
-	if next.Amount < stakingFeat.StakedAmount {
-		return iotago.ErrInvalidStakingAmountMismatch
-	}
-
 	// It should already never be nil here, but for 100% safety, we'll check again.
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {

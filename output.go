@@ -443,6 +443,7 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 // OutputsSyntacticalAccount returns an OutputsSyntacticalValidationFunc which checks that AccountOutput(s)':
 //   - FoundryCounter is zero if the AccountID is zeroed
 //   - Address must be different from AccountAddress derived from AccountID
+//   - Amount must be greater than or equal to StakedAmount of staking feature if it is present
 func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		accountOutput, is := output.(*AccountOutput)
@@ -454,13 +455,16 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 			if accountOutput.FoundryCounter != 0 {
 				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
 			}
-
-			// can not be cyclic when the AccountOutput is new
-			return nil
 		}
 
 		if addr, ok := accountOutput.Ident().(*AccountAddress); ok && AccountAddress(accountOutput.AccountID) == *addr {
 			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d", index)
+		}
+
+		if stakingFeat := accountOutput.FeatureSet().Staking(); stakingFeat != nil {
+			if accountOutput.Amount < stakingFeat.StakedAmount {
+				return ierrors.Wrapf(ErrAccountOutputAmountLessThanStakedAmount, "output %d", index)
+			}
 		}
 
 		return nil

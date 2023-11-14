@@ -351,47 +351,6 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
 		},
 		{
-			name: "fail - staking genesis staked amount higher than amount",
-			next: &iotago.AccountOutput{
-				Amount:    100,
-				AccountID: iotago.AccountID{},
-				UnlockConditions: iotago.AccountOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-				},
-				Features: iotago.AccountOutputFeatures{
-					&iotago.StakingFeature{
-						StakedAmount: 500,
-						FixedCost:    5,
-						StartEpoch:   currentEpoch,
-						EndEpoch:     currentEpoch + tpkg.TestAPI.ProtocolParameters().StakingUnbondingPeriod(),
-					},
-					exampleBlockIssuerFeature,
-				},
-			},
-			input:     nil,
-			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Params{
-				API: tpkg.TestAPI,
-				WorkingSet: &vm.WorkingSet{
-					Commitment: &iotago.Commitment{
-						Slot: currentSlot,
-					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
-					},
-					Tx: &iotago.Transaction{
-						API: tpkg.TestAPI,
-						TransactionEssence: &iotago.TransactionEssence{
-							CreationSlot: currentSlot,
-							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
-						},
-					},
-					BIC: exampleBIC,
-				},
-			},
-			wantErr: iotago.ErrInvalidStakingAmountMismatch,
-		},
-		{
 			name: "fail - staking feature without block issuer feature",
 			next: &iotago.AccountOutput{
 				Amount:    100,
