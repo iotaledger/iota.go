@@ -322,6 +322,9 @@ func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDuration
 	if maxCommittableAge > epochNearingThreshold {
 		panic("maxCommittableAge must be smaller than epochNearingThreshold")
 	}
+	if (1<<slotsPerEpochExponent + 1) < epochNearingThreshold {
+		panic("epoch duration in slots must be at least 2 times epochNearingThreshold")
+	}
 
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.GenesisSlot = genesisSlot
