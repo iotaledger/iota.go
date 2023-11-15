@@ -90,7 +90,7 @@ var (
 
 	anchorOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
-		Max: 3, // Max: SenderFeature, MetadataFeature, StateMetadataFeature
+		Max: 2, // Max: MetadataFeature, StateMetadataFeature
 		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
 			serializer.ArrayValidationModeLexicalOrdering |
 			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
@@ -533,7 +533,6 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*SenderFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
 
