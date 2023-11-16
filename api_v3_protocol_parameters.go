@@ -319,8 +319,8 @@ func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDuration
 	if minCommittableAge > maxCommittableAge {
 		panic("minCommittableAge must be smaller than maxCommittableAge")
 	}
-	if maxCommittableAge > epochNearingThreshold {
-		panic("maxCommittableAge must be smaller than epochNearingThreshold")
+	if 2*maxCommittableAge > epochNearingThreshold {
+		panic("epochNearingThreshold must be at least 2 times maxCommittableAge")
 	}
 	if (1<<slotsPerEpochExponent + 1) < epochNearingThreshold {
 		panic("epoch duration in slots must be at least 2 times epochNearingThreshold")
