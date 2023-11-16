@@ -32,7 +32,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100, 100),
 			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-			WithTimeOptions(0, time.Now().Unix(), 10, 13, 15, 30, 10, 20, 24),
+			WithTimeOptions(0, time.Now().Unix(), 10, 13, 15, 30, 10, 20, 60),
 			WithManaOptions(63,
 				1,
 				17,
@@ -322,7 +322,7 @@ func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDuration
 	if 2*maxCommittableAge > epochNearingThreshold {
 		panic("epochNearingThreshold must be at least 2 times maxCommittableAge")
 	}
-	if (1<<slotsPerEpochExponent + 1) < epochNearingThreshold {
+	if (1 << slotsPerEpochExponent) < 2*epochNearingThreshold {
 		panic("epoch duration in slots must be at least 2 times epochNearingThreshold")
 	}
 

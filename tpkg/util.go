@@ -1036,7 +1036,9 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 	livenessThresholdUpperBound := livenessThresholdLowerBound + 1
 	minCA := iotago.SlotIndex(livenessThresholdUpperBound)
 	maxCA := minCA + 1
-	epochNearingThreshold := maxCA + 1
+	epochNearingThreshold := 2 * maxCA
+	slotsPerEpochExponent := uint8(31)
+
 	return iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions(
 			RandString(255),
@@ -1067,7 +1069,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandSlot(),
 			time.Now().Unix(),
 			RandUint8(math.MaxUint8),
-			RandUint8(math.MaxUint8),
+			slotsPerEpochExponent,
 			livenessThresholdLowerBound,
 			livenessThresholdUpperBound,
 			minCA,
