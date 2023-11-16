@@ -110,10 +110,8 @@ type AccountsQuery struct {
 	IndexerCreationParams
 	IndexerUnlockableByAddressParams
 
-	// Bech32-encoded state controller address that should be searched for.
-	StateControllerBech32 string `qs:"stateController,omitempty"`
-	// Bech32-encoded governor address that should be searched for.
-	GovernorBech32 string `qs:"governor,omitempty"`
+	// Bech32-encoded address that should be searched for.
+	AddressBech32 string `qs:"address,omitempty"`
 	// Filters outputs based on the presence of validated sender.
 	SenderBech32 string `qs:"sender,omitempty"`
 	// Filters outputs based on the presence of validated issuer.
@@ -125,6 +123,28 @@ func (query *AccountsQuery) SetOffset(cursor *string) {
 }
 
 func (query *AccountsQuery) URLParams() (string, error) {
+	return qs.Marshal(query)
+}
+
+// AnchorsQuery defines parameters for an anchor outputs query.
+type AnchorsQuery struct {
+	IndexerCursorParams
+	IndexerCreationParams
+	IndexerUnlockableByAddressParams
+
+	// Bech32-encoded state controller address that should be searched for.
+	StateControllerBech32 string `qs:"stateController,omitempty"`
+	// Bech32-encoded governor address that should be searched for.
+	GovernorBech32 string `qs:"governor,omitempty"`
+	// Filters outputs based on the presence of validated issuer.
+	IssuerBech32 string `qs:"issuer,omitempty"`
+}
+
+func (query *AnchorsQuery) SetOffset(cursor *string) {
+	query.Cursor = cursor
+}
+
+func (query *AnchorsQuery) URLParams() (string, error) {
 	return qs.Marshal(query)
 }
 
