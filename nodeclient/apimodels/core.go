@@ -236,8 +236,6 @@ type (
 		Subunit string `serix:",omitempty"`
 		// The base token amount of decimals.
 		Decimals uint32 `serix:""`
-		// The base token uses the metric prefix.
-		UseMetricPrefix bool `serix:""`
 	}
 
 	// IssuanceBlockHeaderResponse defines the response of a GET block issuance REST API call.
