@@ -313,8 +313,8 @@ type (
 
 	// UTXOChangesResponse defines the response for UTXO slot REST API call.
 	UTXOChangesResponse struct {
-		// Commitment is the commitment of the requested slot that contains the changes.
-		Commitment *iotago.Commitment `serix:""`
+		// CommitmentID is the commitment ID of the requested slot that contains the changes.
+		CommitmentID iotago.CommitmentID `serix:""`
 		// The outputs that are created in this slot.
 		CreatedOutputs iotago.OutputIDs `serix:""`
 		// The outputs that are consumed in this slot.

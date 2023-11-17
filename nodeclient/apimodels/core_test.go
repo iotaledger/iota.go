@@ -237,10 +237,10 @@ func Test_OutputMetadataResponse(t *testing.T) {
 func Test_UTXOChangesResponse(t *testing.T) {
 	api := testAPI()
 
+	commitmentID := iotago.NewCommitmentID(42, iotago.Identifier{})
+
 	response := &apimodels.UTXOChangesResponse{
-		Commitment: &iotago.Commitment{
-			Slot: 42,
-		},
+		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			iotago.OutputID{0x1},
 		},
@@ -252,7 +252,7 @@ func Test_UTXOChangesResponse(t *testing.T) {
 	jsonResponse, err := api.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"commitment\":{\"protocolVersion\":0,\"slot\":42,\"previousCommitmentId\":\"0x000000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"0\",\"referenceManaCost\":\"0\"},\"createdOutputs\":[\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
+	expected := "{\"commitmentId\":\"0x00000000000000000000000000000000000000000000000000000000000000002a000000\",\"createdOutputs\":[\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\"],\"consumedOutputs\":[\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(apimodels.UTXOChangesResponse)

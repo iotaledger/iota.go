@@ -550,9 +550,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Commitment: &iotago.Commitment{
-			Slot: 1337,
-		},
+		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},
@@ -595,14 +593,13 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	defer gock.Off()
 
 	var slot iotago.SlotIndex = 1337
+	commitmentID := iotago.NewCommitmentID(slot, tpkg.Rand32ByteArray())
 
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Commitment: &iotago.Commitment{
-			Slot: slot,
-		},
+		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},
