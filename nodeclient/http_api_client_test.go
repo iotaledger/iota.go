@@ -118,12 +118,11 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			},
 		},
 		BaseToken: &apimodels.InfoResBaseToken{
-			Name:            "TestCoin",
-			TickerSymbol:    "TEST",
-			Unit:            "TEST",
-			Subunit:         "testies",
-			Decimals:        6,
-			UseMetricPrefix: false,
+			Name:         "TestCoin",
+			TickerSymbol: "TEST",
+			Unit:         "TEST",
+			Subunit:      "testies",
+			Decimals:     6,
 		},
 		Metrics: &apimodels.InfoResNodeMetrics{
 			BlocksPerSecond:          20.0,
@@ -241,7 +240,7 @@ func TestClient_Validators(t *testing.T) {
 
 	originRes := &apimodels.ValidatorsResponse{Validators: []*apimodels.ValidatorResponse{
 		{
-			AccountID:                      tpkg.RandAccountID(),
+			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 			StakingEpochEnd:                iotago.EpochIndex(123),
 			PoolStake:                      iotago.BaseToken(100),
 			ValidatorStake:                 iotago.BaseToken(10),
@@ -250,7 +249,7 @@ func TestClient_Validators(t *testing.T) {
 			LatestSupportedProtocolVersion: 1,
 		},
 		{
-			AccountID:                      tpkg.RandAccountID(),
+			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 			StakingEpochEnd:                iotago.EpochIndex(124),
 			PoolStake:                      iotago.BaseToken(1000),
 			ValidatorStake:                 iotago.BaseToken(100),
@@ -273,7 +272,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 
 	accID := tpkg.RandAccountID()
 	originRes := &apimodels.ValidatorResponse{
-		AccountID:                      accID,
+		AddressBech32:                  accID.ToAddress().Bech32(iotago.PrefixTestnet),
 		StakingEpochEnd:                iotago.EpochIndex(123),
 		PoolStake:                      iotago.BaseToken(100),
 		ValidatorStake:                 iotago.BaseToken(10),
@@ -299,7 +298,7 @@ func TestClient_Committee(t *testing.T) {
 		TotalValidatorStake: 100_000,
 		Committee: []*apimodels.CommitteeMemberResponse{
 			{
-				AccountID:      tpkg.RandAccountID(),
+				AddressBech32:  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 				PoolStake:      1000_000,
 				ValidatorStake: 100_000,
 				FixedCost:      iotago.Mana(100),
@@ -551,7 +550,9 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Slot: 1337,
+		Commitment: &iotago.Commitment{
+			Slot: 1337,
+		},
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},
@@ -599,7 +600,9 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randConsumedOutput := tpkg.RandUTXOInput()
 
 	originRes := &apimodels.UTXOChangesResponse{
-		Slot: slot,
+		Commitment: &iotago.Commitment{
+			Slot: slot,
+		},
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
 		},

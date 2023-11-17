@@ -248,7 +248,7 @@ type (
 		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:""`
-		// Commitment is the commitment of the block.
+		// Commitment is the latest commitment of the node or the commitment of the optionally given slot.
 		Commitment *iotago.Commitment `serix:""`
 	}
 
@@ -284,13 +284,6 @@ type (
 		OutputIDProof *iotago.OutputIDProof  `serix:""`
 	}
 
-	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
-	OutputWithMetadataResponse struct {
-		Output        iotago.TxEssenceOutput `serix:""`
-		OutputIDProof *iotago.OutputIDProof  `serix:""`
-		Metadata      *OutputMetadata        `serix:""`
-	}
-
 	// OutputMetadata defines the response of a GET outputs metadata REST API call.
 	OutputMetadata struct {
 		// BlockID is the block ID that contains the output.
@@ -309,6 +302,13 @@ type (
 		TransactionIDSpent iotago.TransactionID `serix:",omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.
 		LatestCommitmentID iotago.CommitmentID `serix:""`
+	}
+
+	// OutputWithMetadataResponse defines the response of a GET full outputs REST API call.
+	OutputWithMetadataResponse struct {
+		Output        iotago.TxEssenceOutput `serix:""`
+		OutputIDProof *iotago.OutputIDProof  `serix:""`
+		Metadata      *OutputMetadata        `serix:""`
 	}
 
 	// UTXOChangesResponse defines the response for UTXO slot REST API call.
@@ -349,8 +349,9 @@ type (
 		// Active indicates whether the validator was active recently, and would be considered during committee selection.
 		Active bool `serix:""`
 		// LatestSupportedProtocolVersion is the latest supported protocol version of the validator.
-		LatestSupportedProtocolVersion iotago.Version    `serix:""`
-		LatestSupportedProtocolHash    iotago.Identifier `serix:""`
+		LatestSupportedProtocolVersion iotago.Version `serix:""`
+		// LatestSupportedProtocolHash is the protocol hash of the latest supported protocol of the validator.
+		LatestSupportedProtocolHash iotago.Identifier `serix:""`
 	}
 
 	// ValidatorsResponse defines the response for the staking REST API call.
