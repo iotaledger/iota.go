@@ -208,9 +208,9 @@ func TestClient_Congestion(t *testing.T) {
 		BlockIssuanceCredits: iotago.BlockIssuanceCredits(1000),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accountAddress.Bech32(iotago.PrefixTestnet)), 200, originRes)
-
 	nodeAPI := nodeClient(t)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+
 	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
@@ -281,9 +281,9 @@ func TestClient_StakingByAccountID(t *testing.T) {
 		LatestSupportedProtocolVersion: 1,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accountAddress.Bech32(iotago.PrefixTestnet)), 200, originRes)
-
 	nodeAPI := nodeClient(t)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+
 	res, err := nodeAPI.StakingAccount(context.Background(), accountAddress)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
