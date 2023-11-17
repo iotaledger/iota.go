@@ -184,12 +184,13 @@ type (
 		Features []string `serix:""`
 	}
 
+	// InfoResProtocolParameters defines the protocol parameters of a node in the InfoResponse.
 	InfoResProtocolParameters struct {
 		StartEpoch iotago.EpochIndex         `serix:""`
 		Parameters iotago.ProtocolParameters `serix:""`
 	}
 
-	// InfoResNodeStatus defines the status of the node in info response.
+	// InfoResNodeStatus defines the status of the node in the InfoResponse.
 	InfoResNodeStatus struct {
 		// Whether the node is healthy.
 		IsHealthy bool `serix:""`
@@ -213,7 +214,7 @@ type (
 		PruningEpoch iotago.EpochIndex `serix:""`
 	}
 
-	// InfoResNodeMetrics defines the metrics of a node in info response.
+	// InfoResNodeMetrics defines the metrics of a node in the InfoResponse.
 	InfoResNodeMetrics struct {
 		// The current rate of new blocks per second, it's updated when a commitment is committed.
 		BlocksPerSecond float64 `serix:""`
@@ -223,7 +224,7 @@ type (
 		ConfirmationRate float64 `serix:""`
 	}
 
-	// InfoResBaseToken defines the info res base token information.
+	// InfoResBaseToken defines the base token of the node in the InfoResponse.
 	InfoResBaseToken struct {
 		// The base token name.
 		Name string `serix:""`
@@ -273,6 +274,12 @@ type (
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
 	}
 
+	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
+	BlockWithMetadataResponse struct {
+		Block    *iotago.Block          `serix:""`
+		Metadata *BlockMetadataResponse `serix:""`
+	}
+
 	// OutputResponse defines the response of a GET outputs REST API call.
 	OutputResponse struct {
 		Output        iotago.TxEssenceOutput `serix:""`
@@ -294,14 +301,14 @@ type (
 		TransactionID iotago.TransactionID `serix:""`
 		// OutputIndex is the index of the output.
 		OutputIndex uint16 `serix:""`
+		// IncludedCommitmentID is the commitment ID that includes the output.
+		IncludedCommitmentID iotago.CommitmentID `serix:",omitempty"`
 		// IsSpent indicates whether the output is spent or not.
 		IsSpent bool `serix:""`
 		// CommitmentIDSpent is the commitment ID that includes the spent output.
 		CommitmentIDSpent iotago.CommitmentID `serix:",omitempty"`
 		// TransactionIDSpent is the transaction ID that spends the output.
 		TransactionIDSpent iotago.TransactionID `serix:",omitempty"`
-		// IncludedCommitmentID is the commitment ID that includes the output.
-		IncludedCommitmentID iotago.CommitmentID `serix:",omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.
 		LatestCommitmentID iotago.CommitmentID `serix:""`
 	}
