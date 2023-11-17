@@ -248,7 +248,7 @@ type (
 		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:""`
-		// Commitment is the latest commitment of the node or the commitment of the optionally given slot.
+		// Commitment is the latest commitment of the node.
 		Commitment *iotago.Commitment `serix:""`
 	}
 
