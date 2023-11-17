@@ -59,7 +59,7 @@ const (
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
 	RouteValidators = RootAPI + "/core/v3/validators"
 
-	// RouteValidatorsAccount is the route for getting validator by its accountID.
+	// RouteValidatorsAccount is the route for getting validator by its bech32 account address.
 	// GET returns the account details.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
@@ -386,9 +386,11 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 	return res, nil
 }
 
-func (client *Client) Congestion(ctx context.Context, accountID iotago.AccountID) (*apimodels.CongestionResponse, error) {
+func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress) (*apimodels.CongestionResponse, error) {
 	res := new(apimodels.CongestionResponse)
-	query := fmt.Sprintf(RouteCongestion, hexutil.EncodeHex(accountID[:]))
+
+	//nolint:contextcheck
+	query := fmt.Sprintf(RouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -418,9 +420,11 @@ func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResp
 	return res, nil
 }
 
-func (client *Client) StakingAccount(ctx context.Context, accountID iotago.AccountID) (*apimodels.ValidatorResponse, error) {
+func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*apimodels.ValidatorResponse, error) {
 	res := &apimodels.ValidatorResponse{}
-	query := fmt.Sprintf(RouteValidatorsAccount, hexutil.EncodeHex(accountID[:]))
+
+	//nolint:contextcheck
+	query := fmt.Sprintf(RouteValidatorsAccount, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err

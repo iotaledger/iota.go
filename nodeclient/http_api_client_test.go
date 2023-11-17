@@ -1,6 +1,6 @@
 // #nosec G404
 //
-//nolint:dupl,gosec
+//nolint:dupl,gosec,forcetypeassert
 package nodeclient_test
 
 import (
@@ -199,7 +199,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 func TestClient_Congestion(t *testing.T) {
 	defer gock.Off()
 
-	accID := tpkg.RandAccountID()
+	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
 
 	originRes := &apimodels.CongestionResponse{
 		Slot:                 iotago.SlotIndex(20),
@@ -208,10 +208,10 @@ func TestClient_Congestion(t *testing.T) {
 		BlockIssuanceCredits: iotago.BlockIssuanceCredits(1000),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accountAddress.Bech32(iotago.PrefixTestnet)), 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.Congestion(context.Background(), accID)
+	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
@@ -270,9 +270,9 @@ func TestClient_Validators(t *testing.T) {
 func TestClient_StakingByAccountID(t *testing.T) {
 	defer gock.Off()
 
-	accID := tpkg.RandAccountID()
+	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
 	originRes := &apimodels.ValidatorResponse{
-		AddressBech32:                  accID.ToAddress().Bech32(iotago.PrefixTestnet),
+		AddressBech32:                  accountAddress.Bech32(iotago.PrefixTestnet),
 		StakingEpochEnd:                iotago.EpochIndex(123),
 		PoolStake:                      iotago.BaseToken(100),
 		ValidatorStake:                 iotago.BaseToken(10),
@@ -281,10 +281,10 @@ func TestClient_StakingByAccountID(t *testing.T) {
 		LatestSupportedProtocolVersion: 1,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accountAddress.Bech32(iotago.PrefixTestnet)), 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.StakingAccount(context.Background(), accID)
+	res, err := nodeAPI.StakingAccount(context.Background(), accountAddress)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
