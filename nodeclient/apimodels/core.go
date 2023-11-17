@@ -337,7 +337,7 @@ type (
 	// ValidatorResponse defines the response used in stakers response REST API calls.
 	ValidatorResponse struct {
 		// AddressBech32 is the account address of the validator.
-		AddressBech32 string `serix:"address"`
+		AddressBech32 string `serix:"address,lenPrefix=uint8"`
 		// StakingEpochEnd is the epoch until which the validator registered to stake.
 		StakingEpochEnd iotago.EpochIndex `serix:""`
 		// PoolStake is the sum of tokens delegated to the pool and the validator stake.
@@ -374,7 +374,7 @@ type (
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
 	CommitteeMemberResponse struct {
 		// AddressBech32 is the account address of the validator.
-		AddressBech32 string `serix:"address"`
+		AddressBech32 string `serix:"address,lenPrefix=uint8"`
 		// PoolStake is the sum of tokens delegated to the pool and the validator stake.
 		PoolStake iotago.BaseToken `serix:""`
 		// ValidatorStake is the stake of the validator.
