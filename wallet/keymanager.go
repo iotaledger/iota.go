@@ -9,35 +9,39 @@ import (
 	"github.com/wollac/iota-crypto-demo/pkg/slip10/eddsa"
 
 	"github.com/iotaledger/hive.go/ierrors"
+	"github.com/iotaledger/hive.go/lo"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 const (
-	pathString = "44'/4218'/0'/%d'"
+	defaultPathPrefix = "44'/4218'/0'"
 )
 
 // KeyManager is a hierarchical deterministic key manager.
 type KeyManager struct {
 	seed  []byte
 	index uint64
+	path  bip32path.Path
 }
 
-func NewKeyManager(seed []byte, index uint64) *KeyManager {
+// NewKeyManager creates a new key manager.
+func NewKeyManager(seed []byte, index uint64, pathPrefix ...string) (*KeyManager, error) {
+	bip32Path, err := bip32path.ParsePath(fmt.Sprintf("%s/%d'", lo.Cond(len(pathPrefix) > 0, pathPrefix[0], defaultPathPrefix), index))
+	if err != nil {
+		return nil, ierrors.Wrap(err, "failed to parse path")
+	}
+
 	return &KeyManager{
 		seed:  seed,
 		index: index,
-	}
+		path:  bip32Path,
+	}, nil
 }
 
 // KeyPair calculates an ed25519 key pair by using slip10.
 func (k *KeyManager) KeyPair() (ed25519.PrivateKey, ed25519.PublicKey) {
-	path, err := bip32path.ParsePath(fmt.Sprintf(pathString, k.index))
-	if err != nil {
-		panic(err)
-	}
-
 	curve := eddsa.Ed25519()
-	key, err := slip10.DeriveKeyFromPath(k.seed, curve, path)
+	key, err := slip10.DeriveKeyFromPath(k.seed, curve, k.path)
 	if err != nil {
 		panic(err)
 	}

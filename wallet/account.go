@@ -2,9 +2,9 @@ package wallet
 
 import (
 	"crypto/ed25519"
-	"fmt"
 
 	"github.com/iotaledger/hive.go/crypto"
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -14,7 +14,10 @@ type Account interface {
 	ID() iotago.AccountID
 
 	// Address returns the account address.
-	Address() iotago.Address
+	Address() *iotago.AccountAddress
+
+	// OwnerAddress returns the account owner address.
+	OwnerAddress() iotago.Address
 
 	// PrivateKey returns the account private key for signing.
 	PrivateKey() ed25519.PrivateKey
@@ -41,8 +44,12 @@ func (e *Ed25519Account) ID() iotago.AccountID {
 	return e.accountID
 }
 
-// Address returns the account address.
-func (e *Ed25519Account) Address() iotago.Address {
+func (e *Ed25519Account) Address() *iotago.AccountAddress {
+	//nolint:forcetypeassert // we know that this is an AccountAddress
+	return e.accountID.ToAddress().(*iotago.AccountAddress)
+}
+
+func (e *Ed25519Account) OwnerAddress() iotago.Address {
 	ed25519PubKey, ok := e.privateKey.Public().(ed25519.PublicKey)
 	if !ok {
 		panic("invalid public key type")
@@ -56,16 +63,16 @@ func (e *Ed25519Account) PrivateKey() ed25519.PrivateKey {
 	return e.privateKey
 }
 
-func AccountFromParams(accountHex string, privateKey string) Account {
+func AccountFromParams(accountHex string, privateKey string) (Account, error) {
 	accountID, err := iotago.AccountIDFromHexString(accountHex)
 	if err != nil {
-		panic(fmt.Sprintln("invalid accountID hex string", err))
+		return nil, ierrors.Wrap(err, "invalid accountID hex string")
 	}
 
 	privKey, err := crypto.ParseEd25519PrivateKeyFromString(privateKey)
 	if err != nil {
-		panic(fmt.Sprintln("invalid ed25519 private key string", err))
+		return nil, ierrors.Wrap(err, "invalid ed25519 private key string")
 	}
 
-	return NewEd25519Account(accountID, privKey)
+	return NewEd25519Account(accountID, privKey), nil
 }
