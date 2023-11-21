@@ -9,7 +9,6 @@ import (
 	"github.com/wollac/iota-crypto-demo/pkg/slip10/eddsa"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -26,7 +25,12 @@ type KeyManager struct {
 
 // NewKeyManager creates a new key manager.
 func NewKeyManager(seed []byte, index uint64, pathPrefix ...string) (*KeyManager, error) {
-	bip32Path, err := bip32path.ParsePath(fmt.Sprintf("%s/%d'", lo.Cond(len(pathPrefix) > 0, pathPrefix[0], defaultPathPrefix), index))
+	path := defaultPathPrefix
+	if len(pathPrefix) > 0 {
+		path = pathPrefix[0]
+	}
+
+	bip32Path, err := bip32path.ParsePath(fmt.Sprintf("%s/%d'", path, index))
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to parse path")
 	}
