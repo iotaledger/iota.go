@@ -53,7 +53,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 	api := iotago.V3API(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithNetworkOptions("TestJungle", "tgl"),
-			iotago.WithSupplyOptions(tpkg.TestTokenSupply, 0, 0, 0, 0, 0, 0),
+			iotago.WithStorageOptions(0, 0, 0, 0, 0, 0),
 			iotago.WithWorkScoreOptions(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
 		),
 	)

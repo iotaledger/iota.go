@@ -39,10 +39,12 @@ var (
 	schedulerRate   iotago.WorkScore = 100000
 	testProtoParams                  = iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions("test", "test"),
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 100, 100, 100),
+		iotago.WithStorageOptions(100, 1, 10, 100, 100, 100),
 		iotago.WithWorkScoreOptions(1, 100, 20, 20, 20, 20, 100, 100, 100, 200),
 		iotago.WithTimeOptions(0, 100, slotDurationSeconds, slotsPerEpochExponent, 15, 30, 10, 20, 60),
-		iotago.WithManaOptions(bitsCount,
+		iotago.WithSupplyOptions(
+			tpkg.TestTokenSupply,
+			bitsCount,
 			generationRate,
 			generationRateExponent,
 			tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent),

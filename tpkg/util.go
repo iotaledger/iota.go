@@ -1044,8 +1044,7 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandString(255),
 			iotago.NetworkPrefix(RandString(255)),
 		),
-		iotago.WithSupplyOptions(
-			RandBaseToken(iotago.MaxBaseToken),
+		iotago.WithStorageOptions(
 			RandBaseToken(iotago.MaxBaseToken),
 			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
 			iotago.StorageScore(RandUint64(math.MaxUint64)),

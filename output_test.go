@@ -171,7 +171,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	nonZeroCostParams := iotago.NewV3ProtocolParameters(
-		iotago.WithSupplyOptions(tpkg.TestTokenSupply, 100, 1, 10, 10, 10, 10),
+		iotago.WithStorageOptions(100, 1, 10, 10, 10, 10),
 	)
 
 	var minAmount iotago.BaseToken = 14100

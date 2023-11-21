@@ -78,8 +78,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			"xxxNetwork",
 			"xxx",
 		),
-		iotago.WithSupplyOptions(
-			1234567890987654321,
+		iotago.WithStorageOptions(
 			6,
 			7,
 			8,
@@ -110,7 +109,8 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			20,
 			60,
 		),
-		iotago.WithManaOptions(
+		iotago.WithSupplyOptions(
+			1234567890987654321,
 			1,
 			1,
 			27,

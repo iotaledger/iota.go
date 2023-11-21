@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/runtime/options"
 )
 
@@ -30,10 +31,12 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 		append([]options.Option[V3ProtocolParameters]{
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
-			WithSupplyOptions(1813620509061365, 100, 1, 10, 100, 100, 100),
+			WithStorageOptions(100, 1, 10, 100, 100, 100),
 			WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
 			WithTimeOptions(0, time.Now().Unix(), 10, 13, 15, 30, 10, 20, 60),
-			WithManaOptions(63,
+			WithSupplyOptions(
+				1813620509061365,
+				63,
 				1,
 				17,
 				[]uint32{
@@ -255,9 +258,8 @@ func WithNetworkOptions(networkName string, bech32HRP NetworkPrefix) options.Opt
 	}
 }
 
-func WithSupplyOptions(totalSupply BaseToken, storageCost BaseToken, factorData StorageScoreFactor, offsetOutputOverhead, offsetEd25519BlockIssuerKey, offsetStakingFeature, offsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
+func WithStorageOptions(storageCost BaseToken, factorData StorageScoreFactor, offsetOutputOverhead, offsetEd25519BlockIssuerKey, offsetStakingFeature, offsetDelegation StorageScore) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.TokenSupply = totalSupply
 		p.basicProtocolParameters.StorageScoreParameters = StorageScoreParameters{
 			StorageCost:                 storageCost,
 			FactorData:                  factorData,
@@ -297,8 +299,14 @@ func WithWorkScoreOptions(
 	}
 }
 
-func WithManaOptions(bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
+func WithSupplyOptions(baseTokenSupply BaseToken, bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
+	if _, err := safemath.SafeMul(decayFactorEpochsSum, uint32(generationRate)); err != nil {
+		panic("decayFactorEpochsSum * generationRate must not require more than 32 bits")
+	}
+	//generationRatePerSlot := uint32(generationRate) >> generationRateExponent
+
 	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.TokenSupply = baseTokenSupply
 		p.basicProtocolParameters.ManaParameters.BitsCount = bitsCount
 		p.basicProtocolParameters.ManaParameters.GenerationRate = generationRate
 		p.basicProtocolParameters.ManaParameters.GenerationRateExponent = generationRateExponent
