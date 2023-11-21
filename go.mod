@@ -16,6 +16,7 @@ require (
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
+	github.com/wollac/iota-crypto-demo v0.0.0-20221117162917-b10619eccb98
 	golang.org/x/crypto v0.14.0
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
