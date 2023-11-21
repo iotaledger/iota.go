@@ -3,6 +3,7 @@ package iotago
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -26,7 +27,7 @@ type V3ProtocolParameters struct {
 
 func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3ProtocolParameters {
 	var schedulerRate WorkScore = 100000
-	return options.Apply(
+	newProtocolParams := options.Apply(
 		new(V3ProtocolParameters),
 		append([]options.Option[V3ProtocolParameters]{
 			WithVersion(apiV3Version),
@@ -55,6 +56,39 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			opts...,
 		),
 	)
+
+	// do the sanity checks here
+	decayFactorSanityCheck(newProtocolParams)
+	manaSupplySanityCheck(newProtocolParams)
+
+	return newProtocolParams
+}
+
+func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
+	// TODO: define betaPerYear in protocolParamets
+	betaPerYear := 1.0 / 3.0
+	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
+	maxManaSupply := 21.0 * float64(protocolParams.TokenSupply()) * float64(protocolParams.ManaParameters().GenerationRate) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())-float64(protocolParams.ManaParameters().GenerationRateExponent)) / (betaPerYear * epochDurationInYears)
+	if maxManaSupply >= math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount)) {
+		panic("the combination of parameters might lead to overflowing of the Mana supply")
+	}
+	// this check is specific to the way decay is calculated to prevent overflow
+	if _, err := safemath.SafeMul(protocolParams.ManaParameters().DecayFactorEpochsSum, uint32(protocolParams.ManaParameters().GenerationRate)); err != nil {
+		panic("decayFactorEpochsSum * generationRate must not require more than 32 bits")
+	}
+}
+
+func decayFactorSanityCheck(protocolParams *V3ProtocolParameters) {
+	// TODO: define betaPerYear in protocolParamets
+	betaPerYear := 1.0 / 3.0
+	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
+	for i := 0; i < len(protocolParams.ManaParameters().DecayFactors); i++ {
+		intDecayFactor := float64(protocolParams.ManaParameters().DecayFactors[i]) * math.Pow(2, -float64(protocolParams.ManaParameters().DecayFactorsExponent))
+		floatDecayFactor := math.Exp(-betaPerYear * epochDurationInYears * float64(i+1))
+		if floatDecayFactor < 0.99*intDecayFactor || floatDecayFactor > 1.01*intDecayFactor {
+			panic("lookup table for decay factors does not match betaPerYear")
+		}
+	}
 }
 
 var _ ProtocolParameters = &V3ProtocolParameters{}
@@ -300,9 +334,7 @@ func WithWorkScoreOptions(
 }
 
 func WithSupplyOptions(baseTokenSupply BaseToken, bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
-	if _, err := safemath.SafeMul(decayFactorEpochsSum, uint32(generationRate)); err != nil {
-		panic("decayFactorEpochsSum * generationRate must not require more than 32 bits")
-	}
+
 	//generationRatePerSlot := uint32(generationRate) >> generationRateExponent
 
 	return func(p *V3ProtocolParameters) {

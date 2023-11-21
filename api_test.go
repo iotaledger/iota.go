@@ -114,7 +114,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			1,
 			1,
 			27,
-			[]uint32{10, 20},
+			[]uint32{4291249941, 4287535805},
 			32,
 			1337,
 			20,
