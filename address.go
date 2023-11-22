@@ -174,7 +174,7 @@ type UTXOIDChainID interface {
 	FromOutputID(id OutputID) ChainID
 }
 
-func newAddress(addressType AddressType) (address Address, err error) {
+func NewAddress(addressType AddressType) (address Address, err error) {
 	switch addressType {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
@@ -253,7 +253,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		}
 	}
 
-	addr, err := newAddress(addrType)
+	addr, err := NewAddress(addrType)
 	if err != nil {
 		return "", nil, err
 	}
