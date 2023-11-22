@@ -243,9 +243,9 @@ type (
 		// StrongParents are the strong parents of the block.
 		StrongParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
 		// WeakParents are the weak parents of the block.
-		WeakParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
+		WeakParents iotago.BlockIDs `serix:",lenPrefix=uint8,omitempty"`
 		// ShallowLikeParents are the shallow like parents of the block.
-		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8"`
+		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8,omitempty"`
 		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:""`
 		// Commitment is the latest commitment of the node.

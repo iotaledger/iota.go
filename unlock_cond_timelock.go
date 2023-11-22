@@ -9,7 +9,7 @@ import (
 //   - the output can only be consumed, if T is bigger than the one defined in the condition.
 type TimelockUnlockCondition struct {
 	// The slot index until which the timelock applies (inclusive).
-	Slot SlotIndex `serix:",omitempty"`
+	Slot SlotIndex `serix:""`
 }
 
 func (s *TimelockUnlockCondition) Clone() UnlockCondition {

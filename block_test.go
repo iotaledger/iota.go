@@ -564,7 +564,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 		Signature: signature,
 	}
 
-	blockJSON := fmt.Sprintf(`{"header":{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s"},"body":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
+	blockJSON := fmt.Sprintf(`{"header":{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s"},"body":{"type":%d,"strongParents":["%s"],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
 		tpkg.TestAPI.Version(),
 		networkID,
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),

@@ -335,8 +335,8 @@ type BasicBlockBody struct {
 
 	// The parents the block references.
 	StrongParents      BlockIDs `serix:",lenPrefix=uint8,minLen=1,maxLen=8"`
-	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8"`
-	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8"`
+	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8,omitempty"`
+	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=8,omitempty"`
 
 	// The inner payload of the block. Can be nil.
 	Payload ApplicationPayload `serix:",optional,omitempty"`
@@ -454,8 +454,8 @@ type ValidationBlockBody struct {
 	API API
 	// The parents the block references.
 	StrongParents      BlockIDs `serix:",lenPrefix=uint8,minLen=1,maxLen=50"`
-	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50"`
-	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50"`
+	WeakParents        BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50,omitempty"`
+	ShallowLikeParents BlockIDs `serix:",lenPrefix=uint8,minLen=0,maxLen=50,omitempty"`
 
 	HighestSupportedVersion Version `serix:""`
 	// ProtocolParametersHash is the hash of the protocol parameters for the HighestSupportedVersion.
