@@ -56,7 +56,7 @@ func TestBlockIssuerClient_Info(t *testing.T) {
 	}
 
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(nodeclient.BlockIssuerAPIRouteInfo, 200, infoResponse)
+	mockGetJSON(nodeclient.BlockIssuerRouteInfo, 200, infoResponse)
 
 	client := nodeClient(t)
 

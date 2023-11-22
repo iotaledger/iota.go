@@ -97,7 +97,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
-	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(nodeclient.IndexerRouteBasicOutputs, 200, &apimodels.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -106,7 +106,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag": "some-tag",
 	})
 
-	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(nodeclient.IndexerRouteBasicOutputs, 200, &apimodels.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -115,7 +115,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag":    "some-tag",
 	})
 
-	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID.ToHex())
+	outputRoute := fmt.Sprintf(nodeclient.CoreRouteOutput, fakeOutputID.ToHex())
 	mockGetBinary(outputRoute, 200, &apimodels.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,

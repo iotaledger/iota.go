@@ -20,8 +20,8 @@ const (
 
 // BlockIssuer plugin routes.
 var (
-	BlockIssuerAPIRouteInfo         = RootAPI + "/" + BlockIssuerPluginName + "/info"
-	BlockIssuerAPIRouteIssuePayload = RootAPI + "/" + BlockIssuerPluginName + "/issue"
+	BlockIssuerRouteInfo         = RootAPI + "/" + BlockIssuerPluginName + "/info"
+	BlockIssuerRouteIssuePayload = RootAPI + "/" + BlockIssuerPluginName + "/issue"
 )
 
 type (
@@ -56,7 +56,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssu
 	res := new(apimodels.BlockIssuerInfo)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerAPIRouteInfo, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerRouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 
 	res := new(apimodels.BlockCreatedResponse)
 	//nolint:bodyclose // false positive
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerAPIRouteIssuePayload, requestHeaderHook, req, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerRouteIssuePayload, requestHeaderHook, req, res); err != nil {
 		return nil, ierrors.Wrap(err, "failed to send the payload issuance request")
 	}
 

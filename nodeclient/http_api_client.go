@@ -18,6 +18,12 @@ import (
 const (
 	RootAPI = "/api"
 
+	// CorePluginName is the name for the core API plugin.
+	CorePluginName = "core/v3"
+
+	// ManagementPluginName is the name for the management plugin.
+	ManagementPluginName = "management/v1"
+
 	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v2"
 
@@ -36,115 +42,115 @@ const (
 	// GET returns the nodes routes.
 	RouteRoutes = RootAPI + "/routes"
 
-	// RouteInfo is the route for getting the node info.
+	// CoreRouteInfo is the route for getting the node info.
 	// GET returns the node info.
-	RouteInfo = RootAPI + "/core/v3/info"
+	CoreRouteInfo = RootAPI + "/core/v3/info"
 
-	// RouteCongestion is the route for getting congestion details for the account.
+	// CoreRouteCongestion is the route for getting congestion details for the account.
 	// GET returns the congestion details for the account.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteCongestion = RootAPI + "/core/v3/accounts/%s/congestion"
+	CoreRouteCongestion = RootAPI + "/core/v3/accounts/%s/congestion"
 
-	// RouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
+	// CoreRouteRewards is the route for getting the rewards for staking or delegation based on the provided output.
 	// Rewards are decayed up to returned epochEnd index.
 	// GET returns the rewards for the output.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteRewards = RootAPI + "/core/v3/rewards/%s"
+	CoreRouteRewards = RootAPI + "/core/v3/rewards/%s"
 
-	// RouteValidators is the route for getting the information about current registered validators.
+	// CoreRouteValidators is the route for getting the information about current registered validators.
 	// GET returns the paginated information about about registered validators.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteValidators = RootAPI + "/core/v3/validators"
+	CoreRouteValidators = RootAPI + "/core/v3/validators"
 
-	// RouteValidatorsAccount is the route for getting validator by its bech32 account address.
+	// CoreRouteValidatorsAccount is the route for getting validator by its bech32 account address.
 	// GET returns the account details.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteValidatorsAccount = RootAPI + "/core/v3/validators/%s"
+	CoreRouteValidatorsAccount = RootAPI + "/core/v3/validators/%s"
 
-	// RouteCommittee is the route for getting the information about the current committee.
+	// CoreRouteCommittee is the route for getting the information about the current committee.
 	// GET returns the information about the current committee.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteCommittee = RootAPI + "/core/v3/committee"
+	CoreRouteCommittee = RootAPI + "/core/v3/committee"
 
-	// RouteBlockIssuance is the route for getting all needed information for block creation.
+	// CoreRouteBlockIssuance is the route for getting all needed information for block creation.
 	// GET returns the data needed toa attach block.
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlockIssuance = RootAPI + "/core/v3/blocks/issuance"
+	CoreRouteBlockIssuance = RootAPI + "/core/v3/blocks/issuance"
 
-	// RouteBlock is the route for getting a block by its ID.
+	// CoreRouteBlock is the route for getting a block by its ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlock = RootAPI + "/core/v3/blocks/%s"
+	CoreRouteBlock = RootAPI + "/core/v3/blocks/%s"
 
-	// RouteBlockMetadata is the route for getting block metadata by its ID.
+	// CoreRouteBlockMetadata is the route for getting block metadata by its ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
-	RouteBlockMetadata = RootAPI + "/core/v3/blocks/%s/metadata"
+	CoreRouteBlockMetadata = RootAPI + "/core/v3/blocks/%s/metadata"
 
-	// RouteBlocks is the route for creating new blocks.
+	// CoreRouteBlocks is the route for creating new blocks.
 	// POST creates a single new block and returns the ID.
 	// The block is parsed based on the given type in the request "Content-Type" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteBlocks = RootAPI + "/core/v3/blocks"
+	CoreRouteBlocks = RootAPI + "/core/v3/blocks"
 
-	// RouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
+	// CoreRouteTransactionsIncludedBlock is the route for getting the block that was included in the ledger for a given transaction ID.
 	// GET returns the block based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteTransactionsIncludedBlock = RootAPI + "/core/v3/transactions/%s/included-block"
+	CoreRouteTransactionsIncludedBlock = RootAPI + "/core/v3/transactions/%s/included-block"
 
-	// RouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
+	// CoreRouteTransactionsIncludedBlockMetadata is the route for getting the block metadata that was first confirmed in the ledger for a given transaction ID.
 	// GET returns block metadata (including info about "promotion/reattachment needed").
 	// MIMEApplicationJSON => json.
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteTransactionsIncludedBlockMetadata = RootAPI + "/core/v3/transactions/%s/included-block/metadata"
+	CoreRouteTransactionsIncludedBlockMetadata = RootAPI + "/core/v3/transactions/%s/included-block/metadata"
 
-	// RouteCommitmentByID is the route for getting a commitment by its ID.
+	// CoreRouteCommitmentByID is the route for getting a commitment by its ID.
 	// GET returns the commitment.
-	RouteCommitmentByID = RootAPI + "/core/v3/commitments/%s"
+	CoreRouteCommitmentByID = RootAPI + "/core/v3/commitments/%s"
 
-	// RouteCommitmentByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
+	// CoreRouteCommitmentByIDUTXOChanges is the route for getting all UTXO changes of a milestone by its ID.
 	// GET returns the output IDs of all UTXO changes.
-	RouteCommitmentByIDUTXOChanges = RootAPI + "/core/v3/commitments/%s/utxo-changes"
+	CoreRouteCommitmentByIDUTXOChanges = RootAPI + "/core/v3/commitments/%s/utxo-changes"
 
-	// RouteCommitmentByIndex is the route for getting a milestone by its milestoneIndex.
+	// CoreRouteCommitmentByIndex is the route for getting a milestone by its milestoneIndex.
 	// GET returns the milestone.
-	RouteCommitmentByIndex = RootAPI + "/core/v3/commitments/by-index/%d"
+	CoreRouteCommitmentByIndex = RootAPI + "/core/v3/commitments/by-index/%d"
 
-	// RouteCommitmentByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
+	// CoreRouteCommitmentByIndexUTXOChanges is the route for getting all UTXO changes of a milestone by its milestoneIndex.
 	// GET returns the output IDs of all UTXO changes.
-	RouteCommitmentByIndexUTXOChanges = RootAPI + "/core/v3/commitments/by-index/%d/utxo-changes"
+	CoreRouteCommitmentByIndexUTXOChanges = RootAPI + "/core/v3/commitments/by-index/%d/utxo-changes"
 
-	// RouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
+	// CoreRouteOutput is the route for getting an output by its outputID (transactionHash + outputIndex).
 	// GET returns the output based on the given type in the request "Accept" header.
 	// MIMEApplicationJSON => json
 	// MIMEApplicationVendorIOTASerializerV2 => bytes.
-	RouteOutput = RootAPI + "/core/v3/outputs/%s"
+	CoreRouteOutput = RootAPI + "/core/v3/outputs/%s"
 
-	// RouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
+	// CoreRouteOutputMetadata is the route for getting output metadata by its outputID (transactionHash + outputIndex) without getting the data again.
 	// GET returns the output metadata.
-	RouteOutputMetadata = RootAPI + "/core/v3/outputs/%s/metadata"
+	CoreRouteOutputMetadata = RootAPI + "/core/v3/outputs/%s/metadata"
 
-	// RouteOutputWithMetadata is the route for getting output and its metadata by its outputID (transactionHash + outputIndex).
+	// CoreRouteOutputWithMetadata is the route for getting output and its metadata by its outputID (transactionHash + outputIndex).
 	// GET returns the output metadata.
-	RouteOutputWithMetadata = RootAPI + "/core/v3/outputs/%s/full"
+	CoreRouteOutputWithMetadata = RootAPI + "/core/v3/outputs/%s/full"
 
-	// RoutePeer is the route for getting peers by their peerID.
+	// ManagementRoutePeer is the route for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
-	RoutePeer = RootAPI + "/core/v3/peers/%s"
+	ManagementRoutePeer = RootAPI + "/core/v3/peers/%s"
 
-	// RoutePeers is the route for getting all peers of the node.
+	// ManagementRoutePeers is the route for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
-	RoutePeers = RootAPI + "/core/v3/peers"
+	ManagementRoutePeers = RootAPI + "/core/v3/peers"
 )
 
 var (
@@ -365,7 +371,7 @@ func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, er
 func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
 	res := new(apimodels.InfoResponse)
 	//nolint:bodyclose
-	if _, err := do(ctx, iotago.CommonSerixAPI(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, http.MethodGet, RouteInfo, client.opts.requestURLHook, nil, nil, res); err != nil {
+	if _, err := do(ctx, iotago.CommonSerixAPI(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, http.MethodGet, CoreRouteInfo, client.opts.requestURLHook, nil, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -379,7 +385,7 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 	res := new(apimodels.IssuanceBlockHeaderResponse)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RouteBlockIssuance, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, CoreRouteBlockIssuance, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -390,7 +396,7 @@ func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.Acc
 	res := new(apimodels.CongestionResponse)
 
 	//nolint:contextcheck
-	query := fmt.Sprintf(RouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
+	query := fmt.Sprintf(CoreRouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -401,7 +407,7 @@ func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.Acc
 
 func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*apimodels.ManaRewardsResponse, error) {
 	res := &apimodels.ManaRewardsResponse{}
-	query := fmt.Sprintf(RouteRewards, hexutil.EncodeHex(outputID[:]))
+	query := fmt.Sprintf(CoreRouteRewards, hexutil.EncodeHex(outputID[:]))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -413,7 +419,7 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResponse, error) {
 	res := &apimodels.ValidatorsResponse{}
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RouteValidators, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, CoreRouteValidators, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -424,7 +430,7 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 	res := &apimodels.ValidatorResponse{}
 
 	//nolint:contextcheck
-	query := fmt.Sprintf(RouteValidatorsAccount, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
+	query := fmt.Sprintf(CoreRouteValidatorsAccount, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -434,7 +440,7 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 }
 
 func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*apimodels.CommitteeResponse, error) {
-	query := RouteCommittee
+	query := CoreRouteCommittee
 	if len(optEpochIndex) > 0 {
 		query += fmt.Sprintf("?epochIndex=%d", optEpochIndex[0])
 	}
@@ -485,7 +491,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 
 	req := &RawDataEnvelope{Data: data}
 	//nolint:bodyclose
-	res, err := client.Do(ctx, http.MethodPost, RouteBlocks, req, nil)
+	res, err := client.Do(ctx, http.MethodPost, CoreRouteBlocks, req, nil)
 	if err != nil {
 		return iotago.EmptyBlockID, err
 	}
@@ -500,7 +506,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
 func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*apimodels.BlockMetadataResponse, error) {
-	query := fmt.Sprintf(RouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
+	query := fmt.Sprintf(CoreRouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
 	res := new(apimodels.BlockMetadataResponse)
 	//nolint:bodyclose
@@ -513,7 +519,7 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 
 // BlockByBlockID get a block by its block ID from the node.
 func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
-	query := fmt.Sprintf(RouteBlock, hexutil.EncodeHex(blockID[:]))
+	query := fmt.Sprintf(CoreRouteBlock, hexutil.EncodeHex(blockID[:]))
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
@@ -531,7 +537,7 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
 func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
-	query := fmt.Sprintf(RouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
+	query := fmt.Sprintf(CoreRouteTransactionsIncludedBlock, hexutil.EncodeHex(txID[:]))
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
@@ -549,7 +555,7 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 
 // TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
 func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
-	query := fmt.Sprintf(RouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
+	query := fmt.Sprintf(CoreRouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
 	res := new(apimodels.BlockMetadataResponse)
 	//nolint:bodyclose
@@ -562,7 +568,7 @@ func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID
 
 // OutputByID gets an output by its ID from the node.
 func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, error) {
-	query := fmt.Sprintf(RouteOutput, outputID.ToHex())
+	query := fmt.Sprintf(CoreRouteOutput, outputID.ToHex())
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
@@ -589,7 +595,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 
 // OutputWithMetadataByID gets an output by its ID, together with the metadata from the node.
 func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *apimodels.OutputMetadata, error) {
-	query := fmt.Sprintf(RouteOutputWithMetadata, outputID.ToHex())
+	query := fmt.Sprintf(CoreRouteOutputWithMetadata, outputID.ToHex())
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
@@ -616,7 +622,7 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
 func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadata, error) {
-	query := fmt.Sprintf(RouteOutputMetadata, outputID.ToHex())
+	query := fmt.Sprintf(CoreRouteOutputMetadata, outputID.ToHex())
 
 	res := new(apimodels.OutputMetadata)
 	//nolint:bodyclose
@@ -629,7 +635,7 @@ func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.Ou
 
 // CommitmentByID gets a commitment details by its ID.
 func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID) (*iotago.Commitment, error) {
-	query := fmt.Sprintf(RouteCommitmentByID, id.ToHex())
+	query := fmt.Sprintf(CoreRouteCommitmentByID, id.ToHex())
 
 	res := new(iotago.Commitment)
 	//nolint:bodyclose
@@ -642,7 +648,7 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 
 // CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
 func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*apimodels.UTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteCommitmentByIDUTXOChanges, id.ToHex())
+	query := fmt.Sprintf(CoreRouteCommitmentByIDUTXOChanges, id.ToHex())
 
 	res := new(apimodels.UTXOChangesResponse)
 	//nolint:bodyclose
@@ -655,7 +661,7 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.C
 
 // CommitmentByIndex gets a commitment details by its index.
 func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIndex) (*iotago.Commitment, error) {
-	query := fmt.Sprintf(RouteCommitmentByIndex, index)
+	query := fmt.Sprintf(CoreRouteCommitmentByIndex, index)
 
 	res := new(iotago.Commitment)
 	//nolint:bodyclose
@@ -668,7 +674,7 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
 func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*apimodels.UTXOChangesResponse, error) {
-	query := fmt.Sprintf(RouteCommitmentByIndexUTXOChanges, index)
+	query := fmt.Sprintf(CoreRouteCommitmentByIndexUTXOChanges, index)
 
 	res := new(apimodels.UTXOChangesResponse)
 	//nolint:bodyclose
@@ -681,7 +687,7 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index io
 
 // PeerByID gets a peer by its identifier.
 func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerInfo, error) {
-	query := fmt.Sprintf(RoutePeer, id)
+	query := fmt.Sprintf(ManagementRoutePeer, id)
 
 	res := new(apimodels.PeerInfo)
 	//nolint:bodyclose
@@ -694,7 +700,7 @@ func (client *Client) PeerByID(ctx context.Context, id string) (*apimodels.PeerI
 
 // RemovePeerByID removes a peer by its identifier.
 func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
-	query := fmt.Sprintf(RoutePeer, id)
+	query := fmt.Sprintf(ManagementRoutePeer, id)
 
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodDelete, query, nil, nil); err != nil {
@@ -708,7 +714,7 @@ func (client *Client) RemovePeerByID(ctx context.Context, id string) error {
 func (client *Client) Peers(ctx context.Context) (*apimodels.PeersResponse, error) {
 	res := new(apimodels.PeersResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, RoutePeers, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, ManagementRoutePeers, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -727,7 +733,7 @@ func (client *Client) AddPeer(ctx context.Context, multiAddress string, alias ..
 
 	res := new(apimodels.PeerInfo)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodPost, RoutePeers, req, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodPost, ManagementRoutePeers, req, res); err != nil {
 		return nil, err
 	}
 

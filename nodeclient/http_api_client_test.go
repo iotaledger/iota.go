@@ -132,7 +132,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 		Features: []string{"Lazers"},
 	}
 
-	mockGetJSON(nodeclient.RouteInfo, 200, originInfo)
+	mockGetJSON(nodeclient.CoreRouteInfo, 200, originInfo)
 
 	client, err := nodeclient.New(nodeAPIUrl)
 	require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		CumulativeWeight:     100_000,
 	}
 
-	mockGetJSON(nodeclient.RouteBlockIssuance, 200, originRes)
+	mockGetJSON(nodeclient.CoreRouteBlockIssuance, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.BlockIssuance(context.Background())
@@ -209,7 +209,7 @@ func TestClient_Congestion(t *testing.T) {
 	}
 
 	nodeAPI := nodeClient(t)
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCongestion, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCongestion, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
 	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
 	require.NoError(t, err)
@@ -227,7 +227,7 @@ func TestClient_Rewards(t *testing.T) {
 		Rewards:    iotago.Mana(1000),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteRewards, outID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteRewards, outID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Rewards(context.Background(), outID)
@@ -259,7 +259,7 @@ func TestClient_Validators(t *testing.T) {
 		},
 	}}
 
-	mockGetJSON(nodeclient.RouteValidators, 200, originRes)
+	mockGetJSON(nodeclient.CoreRouteValidators, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Validators(context.Background())
@@ -282,7 +282,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 	}
 
 	nodeAPI := nodeClient(t)
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteValidatorsAccount, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteValidatorsAccount, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
 	res, err := nodeAPI.StakingAccount(context.Background(), accountAddress)
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestClient_Committee(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(nodeclient.RouteCommittee, 200, originRes)
+	mockGetJSON(nodeclient.CoreRouteCommittee, 200, originRes)
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Committee(context.Background())
 	require.NoError(t, err)
@@ -338,7 +338,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Post(nodeclient.RouteBlocks).
+		Post(nodeclient.CoreRouteBlocks).
 		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV2).
 		Body(bytes.NewReader(serializedIncompleteBlock)).
 		Reply(200).
@@ -361,7 +361,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 		TransactionState: apimodels.TransactionStateConfirmed.String(),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteBlockMetadata, identifier.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteBlockMetadata, identifier.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	meta, err := nodeAPI.BlockMetadataByBlockID(context.Background(), identifier)
@@ -392,7 +392,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		},
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteBlock, queryHash), 200, originBlock)
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteBlock, queryHash), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
@@ -423,7 +423,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		},
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteTransactionsIncludedBlock, queryHash), 200, originBlock)
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteTransactionsIncludedBlock, queryHash), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
@@ -442,7 +442,7 @@ func TestClient_OutputByID(t *testing.T) {
 	outputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 	})
@@ -476,7 +476,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 		LatestCommitmentID:   tpkg.Rand36ByteArray(),
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.RouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 		Metadata:      originMetadata,
@@ -508,7 +508,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteOutputMetadata, utxoInputID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteOutputMetadata, utxoInputID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputID)
@@ -533,7 +533,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByID(context.Background(), commitmentID)
@@ -559,7 +559,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIDUTXOChanges, commitmentID.ToHex()), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIDUTXOChanges, commitmentID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentUTXOChangesByID(context.Background(), commitmentID)
@@ -581,7 +581,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndex, slot), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIndex, slot), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slot)
@@ -608,7 +608,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RouteCommitmentByIndexUTXOChanges, slot), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIndexUTXOChanges, slot), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slot)
@@ -650,7 +650,7 @@ func TestClient_PeerByID(t *testing.T) {
 		Gossip:         sampleGossipInfo,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.RoutePeer, peerID), 200, originRes)
+	mockGetJSON(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.PeerByID(context.Background(), peerID)
@@ -662,7 +662,7 @@ func TestClient_RemovePeerByID(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(nodeAPIUrl).
-		Delete(fmt.Sprintf(nodeclient.RoutePeer, peerID)).
+		Delete(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID)).
 		Reply(200).
 		Status(200)
 
@@ -696,7 +696,7 @@ func TestClient_Peers(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(nodeclient.RoutePeers, 200, originRes)
+	mockGetJSON(nodeclient.ManagementRoutePeers, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.Peers(context.Background())
@@ -719,7 +719,7 @@ func TestClient_AddPeer(t *testing.T) {
 
 	req := &apimodels.AddPeerRequest{MultiAddress: multiAddr}
 
-	mockPostJSON(nodeclient.RoutePeers, 201, req, originRes)
+	mockPostJSON(nodeclient.ManagementRoutePeers, 201, req, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.AddPeer(context.Background(), multiAddr)

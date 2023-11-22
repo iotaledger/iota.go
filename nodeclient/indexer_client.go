@@ -13,18 +13,18 @@ import (
 
 // Indexer plugin routes.
 var (
-	IndexerAPIRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
-	IndexerAPIRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
-	IndexerAPIRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerAPIRouteAnchors           = RootAPI + "/" + IndexerPluginName + "/outputs/anchor"
-	IndexerAPIRouteAnchor            = RootAPI + "/" + IndexerPluginName + "/outputs/anchor/%s"
-	IndexerAPIRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
-	IndexerAPIRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerAPIRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
-	IndexerAPIRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
-	IndexerAPIRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
-	IndexerAPIRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
+	IndexerRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
+	IndexerRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
+	IndexerRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
+	IndexerRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
+	IndexerRouteAnchors           = RootAPI + "/" + IndexerPluginName + "/outputs/anchor"
+	IndexerRouteAnchor            = RootAPI + "/" + IndexerPluginName + "/outputs/anchor/%s"
+	IndexerRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
+	IndexerRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
+	IndexerRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
+	IndexerRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
+	IndexerRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
+	IndexerRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
 )
 
 var (
@@ -132,19 +132,19 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 	var baseRoute string
 	switch query.(type) {
 	case *apimodels.OutputsQuery:
-		baseRoute = IndexerAPIRouteOutputs
+		baseRoute = IndexerRouteOutputs
 	case *apimodels.BasicOutputsQuery:
-		baseRoute = IndexerAPIRouteBasicOutputs
+		baseRoute = IndexerRouteBasicOutputs
 	case *apimodels.AccountsQuery:
-		baseRoute = IndexerAPIRouteAccounts
+		baseRoute = IndexerRouteAccounts
 	case *apimodels.AnchorsQuery:
-		baseRoute = IndexerAPIRouteAnchors
+		baseRoute = IndexerRouteAnchors
 	case *apimodels.FoundriesQuery:
-		baseRoute = IndexerAPIRouteFoundries
+		baseRoute = IndexerRouteFoundries
 	case *apimodels.NFTsQuery:
-		baseRoute = IndexerAPIRouteNFTs
+		baseRoute = IndexerRouteNFTs
 	case *apimodels.DelegationOutputsQuery:
-		baseRoute = IndexerAPIRouteDelegationOutputs
+		baseRoute = IndexerRouteDelegationOutputs
 	default:
 		return nil, ierrors.Errorf("unsupported query type: %T", query)
 	}
@@ -190,7 +190,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 }
 
 func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAccount, hexutil.EncodeHex(accountID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteAccount, hexutil.EncodeHex(accountID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -200,7 +200,7 @@ func (client *indexerClient) Account(ctx context.Context, accountID iotago.Accou
 }
 
 func (client *indexerClient) Anchor(ctx context.Context, anchorID iotago.AnchorID) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAnchor, hexutil.EncodeHex(anchorID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteAnchor, hexutil.EncodeHex(anchorID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -210,7 +210,7 @@ func (client *indexerClient) Anchor(ctx context.Context, anchorID iotago.AnchorI
 }
 
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, hexutil.EncodeHex(foundryID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteFoundry, hexutil.EncodeHex(foundryID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -220,7 +220,7 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 }
 
 func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, hexutil.EncodeHex(nftID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteNFT, hexutil.EncodeHex(nftID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -230,7 +230,7 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 }
 
 func (client *indexerClient) Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteDelegationOutput, hexutil.EncodeHex(delegationID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteDelegationOutput, hexutil.EncodeHex(delegationID[:])))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
