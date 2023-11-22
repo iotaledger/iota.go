@@ -26,8 +26,8 @@ func VersionFromBytes(b []byte) (Version, int, error) {
 	return Version(b[0]), 1, nil
 }
 
-// VersionSignaling defines the parameters used by signaling protocol parameters upgrade.
-type VersionSignaling struct {
+// VersionSignalingParameters defines the parameters used by signaling protocol parameters upgrade.
+type VersionSignalingParameters struct {
 	// WindowSize is the size of the window in epochs to find which version of protocol parameters was most signaled, from currentEpoch - windowSize to currentEpoch.
 	WindowSize uint8 `serix:""`
 	// WindowTargetRatio is the target number of supporters for a version to win in a windowSize.
@@ -36,7 +36,7 @@ type VersionSignaling struct {
 	ActivationOffset uint8 `serix:""`
 }
 
-func (s VersionSignaling) Equals(signaling VersionSignaling) bool {
+func (s VersionSignalingParameters) Equals(signaling VersionSignalingParameters) bool {
 	return s.WindowSize == signaling.WindowSize &&
 		s.WindowTargetRatio == signaling.WindowTargetRatio &&
 		s.ActivationOffset == signaling.ActivationOffset
@@ -151,7 +151,7 @@ type ProtocolParameters interface {
 	// CongestionControlParameters returns the parameters used to calculate reference Mana cost.
 	CongestionControlParameters() *CongestionControlParameters
 
-	VersionSignaling() *VersionSignaling
+	VersionSignalingParameters() *VersionSignalingParameters
 
 	RewardsParameters() *RewardsParameters
 
