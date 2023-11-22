@@ -171,6 +171,17 @@ func (f *Features[T]) Upsert(feature T) {
 	*f = append(*f, feature)
 }
 
+// Remove removes the feature with the given type.
+func (f *Features[T]) Remove(featureType FeatureType) {
+	for i, ele := range *f {
+		if ele.Type() == featureType {
+			*f = append((*f)[:i], (*f)[i+1:]...)
+
+			return
+		}
+	}
+}
+
 // Sort sorts the Features in place by type.
 func (f Features[T]) Sort() {
 	sort.Slice(f, func(i, j int) bool { return f[i].Type() < f[j].Type() })
