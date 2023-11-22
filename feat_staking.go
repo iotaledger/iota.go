@@ -12,9 +12,6 @@ var (
 	// ErrInvalidStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
 	// is not at least set to the transaction epoch plus the unbonding period.
 	ErrInvalidStakingEndEpochTooEarly = ierrors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")
-	// ErrInvalidStakingAmountMismatch gets returned when a new Staking Feature's Staked Amount
-	// is not less or equal to the account's amount.
-	ErrInvalidStakingAmountMismatch = ierrors.New("staking amount must be less or equal to the amount on the account")
 	// ErrInvalidStakingBlockIssuerRequired gets returned when an account contains a Staking Feature
 	// but no Block Issuer Feature.
 	ErrInvalidStakingBlockIssuerRequired = ierrors.New("staking feature requires a block issuer feature")

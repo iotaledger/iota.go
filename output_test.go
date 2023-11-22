@@ -540,6 +540,57 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 			},
 			wantErr: iotago.ErrAccountOutputCyclicAddress,
 		},
+		{
+			name: "ok - staked amount equal to amount",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "ok - staked amount less than amount",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA + 1,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - staked amount greater than amount",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{StakedAmount: OneIOTA + 1},
+					},
+				},
+			},
+			wantErr: iotago.ErrAccountOutputAmountLessThanStakedAmount,
+		},
 	}
 	valFunc := iotago.OutputsSyntacticalAccount()
 	for _, tt := range tests {

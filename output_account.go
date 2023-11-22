@@ -205,10 +205,6 @@ func (a *AccountOutput) ChainID() ChainID {
 	return a.AccountID
 }
 
-func (a *AccountOutput) AccountEmpty() bool {
-	return a.AccountID == EmptyAccountID
-}
-
 func (a *AccountOutput) FeatureSet() FeatureSet {
 	return a.Features.MustSet()
 }

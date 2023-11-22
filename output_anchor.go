@@ -215,10 +215,6 @@ func (a *AnchorOutput) ChainID() ChainID {
 	return a.AnchorID
 }
 
-func (a *AnchorOutput) AnchorEmpty() bool {
-	return a.AnchorID == EmptyAnchorID
-}
-
 func (a *AnchorOutput) FeatureSet() FeatureSet {
 	return a.Features.MustSet()
 }
