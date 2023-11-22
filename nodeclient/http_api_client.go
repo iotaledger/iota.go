@@ -466,11 +466,16 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 	return res, nil
 }
 
-func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress) (*apimodels.CongestionResponse, error) {
+func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, optCommitmentID ...iotago.CommitmentID) (*apimodels.CongestionResponse, error) {
 	res := new(apimodels.CongestionResponse)
 
 	//nolint:contextcheck
 	query := fmt.Sprintf(CoreRouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
+
+	if len(optCommitmentID) > 0 {
+		query += fmt.Sprintf("?commitmentID=%s", optCommitmentID[0].ToHex())
+	}
+
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -518,7 +523,6 @@ func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.Epo
 	if len(optEpochIndex) > 0 {
 		query += fmt.Sprintf("?epochIndex=%d", optEpochIndex[0])
 	}
-	fmt.Printf("query: %s\n", query)
 
 	res := &apimodels.CommitteeResponse{}
 	//nolint:bodyclose
