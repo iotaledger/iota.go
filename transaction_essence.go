@@ -38,13 +38,13 @@ type TransactionEssence struct {
 	// The slot index in which the transaction was created by the client.
 	CreationSlot SlotIndex `serix:""`
 	// The commitment references of this transaction.
-	ContextInputs TxEssenceContextInputs `serix:""`
+	ContextInputs TxEssenceContextInputs `serix:",omitempty"`
 	// The inputs of this transaction.
 	Inputs TxEssenceInputs `serix:""`
 	// The optional accounts map with corresponding allotment values.
-	Allotments TxEssenceAllotments `serix:""`
+	Allotments TxEssenceAllotments `serix:",omitempty"`
 	// The capabilities of the transaction.
-	Capabilities TransactionCapabilitiesBitMask `serix:""`
+	Capabilities TransactionCapabilitiesBitMask `serix:",omitempty"`
 	// The optional embedded payload.
 	Payload TxEssencePayload `serix:",optional"`
 }
