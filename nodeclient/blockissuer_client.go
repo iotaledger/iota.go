@@ -14,14 +14,29 @@ import (
 )
 
 const (
-	HeaderBlockIssuerProofOfWorkNonce = "X-IOTA-BlockIssuer-PoW-Nonce"
-	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
+	// BlockIssuerRouteInfo is the endpoint for getting the info of the block issuer.
+	// GET returns the info.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	BlockIssuerEndpointInfo = "/info"
+
+	// BlockIssuerRouteIssuePayload is the endpoint for issuing an ApplicationPayload.
+	// POST issues the ApplicationPayload.
+	// "Content-Type" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	BlockIssuerEndpointIssuePayload = "/issue"
 )
 
-// BlockIssuer plugin routes.
 var (
-	BlockIssuerAPIRouteInfo         = RootAPI + "/" + BlockIssuerPluginName + "/info"
-	BlockIssuerAPIRouteIssuePayload = RootAPI + "/" + BlockIssuerPluginName + "/issue"
+	BlockIssuerRouteInfo         = route(BlockIssuerPluginName, BlockIssuerEndpointInfo)
+	BlockIssuerRouteIssuePayload = route(BlockIssuerPluginName, BlockIssuerEndpointIssuePayload)
+)
+
+const (
+	HeaderBlockIssuerProofOfWorkNonce = "X-IOTA-BlockIssuer-PoW-Nonce"
+	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
 )
 
 type (
@@ -56,7 +71,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssu
 	res := new(apimodels.BlockIssuerInfo)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerAPIRouteInfo, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerRouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +101,7 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 
 	res := new(apimodels.BlockCreatedResponse)
 	//nolint:bodyclose // false positive
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerAPIRouteIssuePayload, requestHeaderHook, req, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerRouteIssuePayload, requestHeaderHook, req, res); err != nil {
 		return nil, ierrors.Wrap(err, "failed to send the payload issuance request")
 	}
 

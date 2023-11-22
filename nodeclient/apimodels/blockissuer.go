@@ -1,6 +1,6 @@
 package apimodels
 
-// BlockIssuerInfo is the response to the BlockIssuerAPIRouteInfo endpoint.
+// BlockIssuerInfo is the response to the BlockIssuerRouteInfo endpoint.
 type BlockIssuerInfo struct {
 	// The account address of the block issuer.
 	BlockIssuerAddress string `serix:""`
