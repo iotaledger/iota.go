@@ -15,8 +15,17 @@ import (
 
 const (
 	// BlockIssuerRouteInfo is the endpoint for getting the info of the block issuer.
+	// GET returns the info.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	BlockIssuerEndpointInfo = "/info"
-	// BlockIssuerRouteIssuePayload is the endpoint for issuing a payload.
+
+	// BlockIssuerRouteIssuePayload is the endpoint for issuing an ApplicationPayload.
+	// POST issues the ApplicationPayload.
+	// "Content-Type" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	BlockIssuerEndpointIssuePayload = "/issue"
 )
 

@@ -10,21 +10,36 @@ import (
 
 const (
 	// ManagementEndpointPeer is the endpoint for getting peers by their peerID.
-	// GET returns the peer
+	// GET returns the peer.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	// DELETE deletes the peer.
 	ManagementEndpointPeer = "/peers/%s"
 
 	// ManagementEndpointPeers is the endpoint for getting all peers of the node.
 	// GET returns a list of all peers.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	// POST adds a new peer.
+	// "Content-Type" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	ManagementEndpointPeers = "/peers"
 
 	// ManagementEndpointDatabasePrune is the endpoint to manually prune the database.
 	// POST prunes the database.
+	// "Content-Type" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	ManagementEndpointDatabasePrune = "/database/prune"
 
 	// ManagementEndpointSnapshotsCreate is the endpoint to manually create a snapshot files.
 	// POST creates a full snapshot.
+	// "Content-Type" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	ManagementEndpointSnapshotsCreate = "/snapshots/create"
 )
 
