@@ -11,20 +11,34 @@ import (
 	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
-// Indexer plugin routes.
+const (
+	IndexerEndpointOutputs           = "/outputs"
+	IndexerEndpointBasicOutputs      = "/outputs/basic"
+	IndexerEndpointAccounts          = "/outputs/account"
+	IndexerEndpointAccount           = "/outputs/account/%s"
+	IndexerEndpointAnchors           = "/outputs/anchor"
+	IndexerEndpointAnchor            = "/outputs/anchor/%s"
+	IndexerEndpointFoundries         = "/outputs/foundry"
+	IndexerEndpointFoundry           = "/outputs/foundry/%s"
+	IndexerEndpointNFTs              = "/outputs/nft"
+	IndexerEndpointNFT               = "/outputs/nft/%s"
+	IndexerEndpointDelegationOutputs = "/outputs/delegation"
+	IndexerEndpointDelegationOutput  = "/outputs/delegation/%s"
+)
+
 var (
-	IndexerRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
-	IndexerRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
-	IndexerRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
-	IndexerRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerRouteAnchors           = RootAPI + "/" + IndexerPluginName + "/outputs/anchor"
-	IndexerRouteAnchor            = RootAPI + "/" + IndexerPluginName + "/outputs/anchor/%s"
-	IndexerRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
-	IndexerRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
-	IndexerRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
-	IndexerRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
-	IndexerRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
+	IndexerRouteOutputs           = route(IndexerPluginName, IndexerEndpointOutputs)
+	IndexerRouteBasicOutputs      = route(IndexerPluginName, IndexerEndpointBasicOutputs)
+	IndexerRouteAccounts          = route(IndexerPluginName, IndexerEndpointAccounts)
+	IndexerRouteAccount           = route(IndexerPluginName, IndexerEndpointAccount)
+	IndexerRouteAnchors           = route(IndexerPluginName, IndexerEndpointAnchors)
+	IndexerRouteAnchor            = route(IndexerPluginName, IndexerEndpointAnchor)
+	IndexerRouteFoundries         = route(IndexerPluginName, IndexerEndpointFoundries)
+	IndexerRouteFoundry           = route(IndexerPluginName, IndexerEndpointFoundry)
+	IndexerRouteNFTs              = route(IndexerPluginName, IndexerEndpointNFTs)
+	IndexerRouteNFT               = route(IndexerPluginName, IndexerEndpointNFT)
+	IndexerRouteDelegationOutputs = route(IndexerPluginName, IndexerEndpointDelegationOutputs)
+	IndexerRouteDelegationOutput  = route(IndexerPluginName, IndexerEndpointDelegationOutput)
 )
 
 var (

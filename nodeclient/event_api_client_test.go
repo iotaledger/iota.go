@@ -24,7 +24,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{"mqtt/v2"},
+		Routes: []string{nodeclient.MQTTPluginName},
 	}
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 

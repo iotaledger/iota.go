@@ -14,14 +14,20 @@ import (
 )
 
 const (
-	HeaderBlockIssuerProofOfWorkNonce = "X-IOTA-BlockIssuer-PoW-Nonce"
-	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
+	// BlockIssuerRouteInfo is the route for getting the info of the block issuer.
+	BlockIssuerEndpointInfo = "/info"
+	// BlockIssuerRouteIssuePayload is the route for issuing a payload.
+	BlockIssuerEndpointIssuePayload = "/issue"
 )
 
-// BlockIssuer plugin routes.
 var (
-	BlockIssuerRouteInfo         = RootAPI + "/" + BlockIssuerPluginName + "/info"
-	BlockIssuerRouteIssuePayload = RootAPI + "/" + BlockIssuerPluginName + "/issue"
+	BlockIssuerRouteInfo         = route(BlockIssuerPluginName, BlockIssuerEndpointInfo)
+	BlockIssuerRouteIssuePayload = route(BlockIssuerPluginName, BlockIssuerEndpointIssuePayload)
+)
+
+const (
+	HeaderBlockIssuerProofOfWorkNonce = "X-IOTA-BlockIssuer-PoW-Nonce"
+	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
 )
 
 type (

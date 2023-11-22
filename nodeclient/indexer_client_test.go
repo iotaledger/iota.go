@@ -55,7 +55,7 @@ func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{"indexer/v2"},
+		Routes: []string{nodeclient.IndexerPluginName},
 	}
 
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
@@ -92,7 +92,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{"indexer/v2"},
+		Routes: []string{nodeclient.IndexerPluginName},
 	}
 
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
