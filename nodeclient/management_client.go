@@ -9,21 +9,21 @@ import (
 )
 
 const (
-	// ManagementRoutePeer is the route for getting peers by their peerID.
+	// ManagementEndpointPeer is the endpoint for getting peers by their peerID.
 	// GET returns the peer
 	// DELETE deletes the peer.
 	ManagementEndpointPeer = "/peers/%s"
 
-	// ManagementRoutePeers is the route for getting all peers of the node.
+	// ManagementEndpointPeers is the endpoint for getting all peers of the node.
 	// GET returns a list of all peers.
 	// POST adds a new peer.
 	ManagementEndpointPeers = "/peers"
 
-	// RouteDatabasePrune is the route to manually prune the database.
+	// ManagementEndpointDatabasePrune is the endpoint to manually prune the database.
 	// POST prunes the database.
 	ManagementEndpointDatabasePrune = "/database/prune"
 
-	// RouteSnapshotsCreate is the route to manually create a snapshot files.
+	// ManagementEndpointSnapshotsCreate is the endpoint to manually create a snapshot files.
 	// POST creates a full snapshot.
 	ManagementEndpointSnapshotsCreate = "/snapshots/create"
 )

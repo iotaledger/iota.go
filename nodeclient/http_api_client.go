@@ -35,6 +35,14 @@ const (
 )
 
 const (
+	// QueryParameterEpochIndex is used to identify an epoch by index.
+	QueryParameterEpochIndex = "epochIndex"
+
+	// QueryParameterCommitmentID is used to identify a slot commitment by its ID.
+	QueryParameterCommitmentID = "commitmentID"
+)
+
+const (
 	// CoreEndpointInfo is the endpoint for getting the node info.
 	// GET returns the node info.
 	// "Accept" header:
@@ -141,7 +149,7 @@ const (
 	CoreEndpointCommitmentByIndexUTXOChanges = "/commitments/by-index/%s/utxo-changes"
 
 	// CoreEndpointCongestion is the endpoint for getting the current congestion state and all account related useful details as block issuance credits.
-	// GET returns the congestion state related to the specified account. (optional query parameters: "commitmentID" to specify the used commitment)
+	// GET returns the congestion state related to the specified account. (optional query parameters: "QueryParameterCommitmentID" to specify the used commitment)
 	// "Accept" header:
 	// 		MIMEApplicationJSON => json.
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
@@ -170,7 +178,7 @@ const (
 	CoreEndpointRewards = "/rewards/%s"
 
 	// CoreEndpointCommittee is the endpoint for getting information about the current committee.
-	// GET returns the information about the current committee.
+	// GET returns the information about the current committee. (optional query parameters: "QueryParameterEpochIndex" to specify the epoch)
 	// "Accept" header:
 	// 		MIMEApplicationJSON => json.
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
@@ -473,7 +481,7 @@ func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.Acc
 	query := fmt.Sprintf(CoreRouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
 
 	if len(optCommitmentID) > 0 {
-		query += fmt.Sprintf("?commitmentID=%s", optCommitmentID[0].ToHex())
+		query += fmt.Sprintf("?%s=%s", QueryParameterCommitmentID, optCommitmentID[0].ToHex())
 	}
 
 	//nolint:bodyclose
@@ -521,7 +529,7 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*apimodels.CommitteeResponse, error) {
 	query := CoreRouteCommittee
 	if len(optEpochIndex) > 0 {
-		query += fmt.Sprintf("?epochIndex=%d", optEpochIndex[0])
+		query += fmt.Sprintf("?%s=%d", QueryParameterEpochIndex, optEpochIndex[0])
 	}
 
 	res := &apimodels.CommitteeResponse{}

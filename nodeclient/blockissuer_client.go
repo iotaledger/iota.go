@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	// BlockIssuerRouteInfo is the route for getting the info of the block issuer.
+	// BlockIssuerRouteInfo is the endpoint for getting the info of the block issuer.
 	BlockIssuerEndpointInfo = "/info"
-	// BlockIssuerRouteIssuePayload is the route for issuing a payload.
+	// BlockIssuerRouteIssuePayload is the endpoint for issuing a payload.
 	BlockIssuerEndpointIssuePayload = "/issue"
 )
 
