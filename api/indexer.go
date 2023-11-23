@@ -1,4 +1,4 @@
-package apimodels
+package api
 
 import (
 	"github.com/pasztorpisti/qs"

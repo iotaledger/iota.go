@@ -10,8 +10,8 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 const (
@@ -437,9 +437,9 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 }
 
 // Routes gets the routes the node supports.
-func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, error) {
+func (client *Client) Routes(ctx context.Context) (*api.RoutesResponse, error) {
 	//nolint:bodyclose
-	res := new(apimodels.RoutesResponse)
+	res := new(api.RoutesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, RouteRoutes, nil, res); err != nil {
 		return nil, err
@@ -449,8 +449,8 @@ func (client *Client) Routes(ctx context.Context) (*apimodels.RoutesResponse, er
 }
 
 // Info gets the info of the node.
-func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error) {
-	res := new(apimodels.InfoResponse)
+func (client *Client) Info(ctx context.Context) (*api.InfoResponse, error) {
+	res := new(api.InfoResponse)
 	//nolint:bodyclose
 	if _, err := do(ctx, iotago.CommonSerixAPI(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, http.MethodGet, CoreRouteInfo, client.opts.requestURLHook, nil, nil, res); err != nil {
 		return nil, err
@@ -462,8 +462,8 @@ func (client *Client) Info(ctx context.Context) (*apimodels.InfoResponse, error)
 }
 
 // BlockIssuance gets the info to issue a block.
-func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlockHeaderResponse, error) {
-	res := new(apimodels.IssuanceBlockHeaderResponse)
+func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHeaderResponse, error) {
+	res := new(api.IssuanceBlockHeaderResponse)
 
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, CoreRouteBlockIssuance, nil, res); err != nil {
@@ -473,8 +473,8 @@ func (client *Client) BlockIssuance(ctx context.Context) (*apimodels.IssuanceBlo
 	return res, nil
 }
 
-func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, optCommitmentID ...iotago.CommitmentID) (*apimodels.CongestionResponse, error) {
-	res := new(apimodels.CongestionResponse)
+func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
+	res := new(api.CongestionResponse)
 
 	//nolint:contextcheck
 	query := fmt.Sprintf(CoreRouteCongestion, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
@@ -491,8 +491,8 @@ func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.Acc
 	return res, nil
 }
 
-func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*apimodels.ManaRewardsResponse, error) {
-	res := &apimodels.ManaRewardsResponse{}
+func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*api.ManaRewardsResponse, error) {
+	res := &api.ManaRewardsResponse{}
 	query := fmt.Sprintf(CoreRouteRewards, hexutil.EncodeHex(outputID[:]))
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
@@ -502,8 +502,8 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 	return res, nil
 }
 
-func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResponse, error) {
-	res := &apimodels.ValidatorsResponse{}
+func (client *Client) Validators(ctx context.Context) (*api.ValidatorsResponse, error) {
+	res := &api.ValidatorsResponse{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, CoreRouteValidators, nil, res); err != nil {
 		return nil, err
@@ -512,8 +512,8 @@ func (client *Client) Validators(ctx context.Context) (*apimodels.ValidatorsResp
 	return res, nil
 }
 
-func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*apimodels.ValidatorResponse, error) {
-	res := &apimodels.ValidatorResponse{}
+func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {
+	res := &api.ValidatorResponse{}
 
 	//nolint:contextcheck
 	query := fmt.Sprintf(CoreRouteValidatorsAccount, accountAddress.Bech32(client.CommittedAPI().ProtocolParameters().Bech32HRP()))
@@ -525,13 +525,13 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 	return res, nil
 }
 
-func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*apimodels.CommitteeResponse, error) {
+func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*api.CommitteeResponse, error) {
 	query := CoreRouteCommittee
 	if len(optEpochIndex) > 0 {
 		query += fmt.Sprintf("?%s=%d", QueryParameterEpochIndex, optEpochIndex[0])
 	}
 
-	res := &apimodels.CommitteeResponse{}
+	res := &api.CommitteeResponse{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -590,10 +590,10 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 }
 
 // BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
-func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*apimodels.BlockMetadataResponse, error) {
+func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*api.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(CoreRouteBlockMetadata, hexutil.EncodeHex(blockID[:]))
 
-	res := new(apimodels.BlockMetadataResponse)
+	res := new(api.BlockMetadataResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -639,10 +639,10 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 }
 
 // TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
-func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*apimodels.BlockMetadataResponse, error) {
+func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*api.BlockMetadataResponse, error) {
 	query := fmt.Sprintf(CoreRouteTransactionsIncludedBlockMetadata, hexutil.EncodeHex(txID[:]))
 
-	res := new(apimodels.BlockMetadataResponse)
+	res := new(api.BlockMetadataResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -661,7 +661,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 		return nil, err
 	}
 
-	var outputResponse apimodels.OutputResponse
+	var outputResponse api.OutputResponse
 	if _, err := client.CommittedAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
 		return nil, err
 	}
@@ -679,7 +679,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 }
 
 // OutputWithMetadataByID gets an output by its ID, together with the metadata from the node.
-func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *apimodels.OutputMetadata, error) {
+func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *api.OutputMetadata, error) {
 	query := fmt.Sprintf(CoreRouteOutputWithMetadata, outputID.ToHex())
 
 	res := new(RawDataEnvelope)
@@ -688,7 +688,7 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 		return nil, nil, err
 	}
 
-	var outputResponse apimodels.OutputWithMetadataResponse
+	var outputResponse api.OutputWithMetadataResponse
 	if _, err := client.CommittedAPI().Decode(res.Data, &outputResponse, serix.WithValidation()); err != nil {
 		return nil, nil, err
 	}
@@ -706,10 +706,10 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 }
 
 // OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
-func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*apimodels.OutputMetadata, error) {
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*api.OutputMetadata, error) {
 	query := fmt.Sprintf(CoreRouteOutputMetadata, outputID.ToHex())
 
-	res := new(apimodels.OutputMetadata)
+	res := new(api.OutputMetadata)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -732,10 +732,10 @@ func (client *Client) CommitmentByID(ctx context.Context, id iotago.CommitmentID
 }
 
 // CommitmentUTXOChangesByID returns all UTXO changes of a commitment by its ID.
-func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*apimodels.UTXOChangesResponse, error) {
+func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, id iotago.CommitmentID) (*api.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(CoreRouteCommitmentByIDUTXOChanges, id.ToHex())
 
-	res := new(apimodels.UTXOChangesResponse)
+	res := new(api.UTXOChangesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -758,10 +758,10 @@ func (client *Client) CommitmentByIndex(ctx context.Context, index iotago.SlotIn
 }
 
 // CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its index.
-func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*apimodels.UTXOChangesResponse, error) {
+func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, index iotago.SlotIndex) (*api.UTXOChangesResponse, error) {
 	query := fmt.Sprintf(CoreRouteCommitmentByIndexUTXOChanges, index)
 
-	res := new(apimodels.UTXOChangesResponse)
+	res := new(api.UTXOChangesResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err

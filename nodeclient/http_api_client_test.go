@@ -18,9 +18,9 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -96,10 +96,10 @@ func mockGetBinary(route string, status int, body interface{}, persist ...bool) 
 func nodeClient(t *testing.T) *nodeclient.Client {
 
 	ts := time.Now()
-	originInfo := &apimodels.InfoResponse{
+	originInfo := &api.InfoResponse{
 		Name:    "HORNET",
 		Version: "1.0.0",
-		Status: &apimodels.InfoResNodeStatus{
+		Status: &api.InfoResNodeStatus{
 			IsHealthy:                   true,
 			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
 			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
@@ -111,20 +111,20 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			LatestCommitmentID:          tpkg.Rand36ByteArray(),
 			PruningEpoch:                iotago.EpochIndex(142800),
 		},
-		ProtocolParameters: []*apimodels.InfoResProtocolParameters{
+		ProtocolParameters: []*api.InfoResProtocolParameters{
 			{
 				StartEpoch: 0,
 				Parameters: protoParams,
 			},
 		},
-		BaseToken: &apimodels.InfoResBaseToken{
+		BaseToken: &api.InfoResBaseToken{
 			Name:         "TestCoin",
 			TickerSymbol: "TEST",
 			Unit:         "TEST",
 			Subunit:      "testies",
 			Decimals:     6,
 		},
-		Metrics: &apimodels.InfoResNodeMetrics{
+		Metrics: &api.InfoResNodeMetrics{
 			BlocksPerSecond:          20.0,
 			ConfirmedBlocksPerSecond: 10.0,
 			ConfirmationRate:         50.0,
@@ -168,7 +168,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 	parents, err := iotago.BlockIDsFromHexString(parentsHex)
 	require.NoError(t, err)
 
-	originRes := &apimodels.IssuanceBlockHeaderResponse{
+	originRes := &api.IssuanceBlockHeaderResponse{
 		StrongParents:       parents,
 		WeakParents:         parents,
 		ShallowLikeParents:  parents,
@@ -201,7 +201,7 @@ func TestClient_Congestion(t *testing.T) {
 
 	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
 
-	originRes := &apimodels.CongestionResponse{
+	originRes := &api.CongestionResponse{
 		Slot:                 iotago.SlotIndex(20),
 		Ready:                true,
 		ReferenceManaCost:    iotago.Mana(1000),
@@ -221,7 +221,7 @@ func TestClient_Rewards(t *testing.T) {
 
 	outID := tpkg.RandOutputID(1)
 
-	originRes := &apimodels.ManaRewardsResponse{
+	originRes := &api.ManaRewardsResponse{
 		EpochStart: iotago.EpochIndex(20),
 		EpochEnd:   iotago.EpochIndex(30),
 		Rewards:    iotago.Mana(1000),
@@ -238,7 +238,7 @@ func TestClient_Rewards(t *testing.T) {
 func TestClient_Validators(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.ValidatorsResponse{Validators: []*apimodels.ValidatorResponse{
+	originRes := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
 		{
 			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 			StakingEpochEnd:                iotago.EpochIndex(123),
@@ -271,7 +271,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 	defer gock.Off()
 
 	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
-	originRes := &apimodels.ValidatorResponse{
+	originRes := &api.ValidatorResponse{
 		AddressBech32:                  accountAddress.Bech32(iotago.PrefixTestnet),
 		StakingEpochEnd:                iotago.EpochIndex(123),
 		PoolStake:                      iotago.BaseToken(100),
@@ -292,11 +292,11 @@ func TestClient_StakingByAccountID(t *testing.T) {
 func TestClient_Committee(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.CommitteeResponse{
+	originRes := &api.CommitteeResponse{
 		Epoch:               iotago.EpochIndex(123),
 		TotalStake:          1000_1000,
 		TotalValidatorStake: 100_000,
-		Committee: []*apimodels.CommitteeMemberResponse{
+		Committee: []*api.CommitteeMemberResponse{
 			{
 				AddressBech32:  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 				PoolStake:      1000_000,
@@ -355,10 +355,10 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 
 	identifier := tpkg.RandBlockID()
 
-	originRes := &apimodels.BlockMetadataResponse{
+	originRes := &api.BlockMetadataResponse{
 		BlockID:          identifier,
-		BlockState:       apimodels.BlockStateConfirmed.String(),
-		TransactionState: apimodels.TransactionStateConfirmed.String(),
+		BlockState:       api.BlockStateConfirmed.String(),
+		TransactionState: api.TransactionStateConfirmed.String(),
 	}
 
 	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteBlockMetadata, identifier.ToHex()), 200, originRes)
@@ -442,7 +442,7 @@ func TestClient_OutputByID(t *testing.T) {
 	outputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutput, outputID.ToHex()), 200, &api.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 	})
@@ -465,7 +465,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	outputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	originMetadata := &apimodels.OutputMetadata{
+	originMetadata := &api.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        outputID.TransactionID(),
 		OutputIndex:          outputID.Index(),
@@ -476,7 +476,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 		LatestCommitmentID:   tpkg.Rand36ByteArray(),
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
+	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutputWithMetadata, outputID.ToHex()), 200, &api.OutputWithMetadataResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 		Metadata:      originMetadata,
@@ -494,7 +494,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand36ByteArray()
-	originRes := &apimodels.OutputMetadata{
+	originRes := &api.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
@@ -549,7 +549,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &apimodels.UTXOChangesResponse{
+	originRes := &api.UTXOChangesResponse{
 		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
@@ -598,7 +598,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &apimodels.UTXOChangesResponse{
+	originRes := &api.UTXOChangesResponse{
 		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
@@ -616,15 +616,15 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
-var sampleGossipInfo = &apimodels.GossipInfo{
-	Heartbeat: &apimodels.GossipHeartbeat{
+var sampleGossipInfo = &api.GossipInfo{
+	Heartbeat: &api.GossipHeartbeat{
 		SolidSlot:      234,
 		PrunedSlot:     5872,
 		LatestSlot:     1294,
 		ConnectedPeers: 2392,
 		SyncedPeers:    1234,
 	},
-	Metrics: &apimodels.PeerGossipMetrics{
+	Metrics: &api.PeerGossipMetrics{
 		NewBlocks:             40,
 		KnownBlocks:           60,
 		ReceivedBlocks:        100,

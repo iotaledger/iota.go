@@ -1,4 +1,4 @@
-package apimodels
+package api
 
 // BlockIssuerInfo is the response to the BlockIssuerRouteInfo endpoint.
 type BlockIssuerInfo struct {

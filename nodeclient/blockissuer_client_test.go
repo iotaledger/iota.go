@@ -8,15 +8,15 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestBlockIssuerClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{nodeclient.BlockIssuerPluginName},
 	}
 
@@ -31,7 +31,7 @@ func TestBlockIssuerClient_Enabled(t *testing.T) {
 func TestBlockIssuerClient_Disabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
@@ -46,12 +46,12 @@ func TestBlockIssuerClient_Disabled(t *testing.T) {
 func TestBlockIssuerClient_Info(t *testing.T) {
 	defer gock.Off()
 
-	infoResponse := &apimodels.BlockIssuerInfo{
+	infoResponse := &api.BlockIssuerInfo{
 		BlockIssuerAddress:     tpkg.RandAccountAddress().Bech32(iotago.PrefixTestnet),
 		PowTargetTrailingZeros: 25,
 	}
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{nodeclient.BlockIssuerPluginName},
 	}
 

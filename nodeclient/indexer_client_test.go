@@ -9,36 +9,36 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestOutputsQuery_Build(t *testing.T) {
 	trueCondition := true
-	query := &apimodels.BasicOutputsQuery{
-		IndexerTimelockParams: apimodels.IndexerTimelockParams{
+	query := &api.BasicOutputsQuery{
+		IndexerTimelockParams: api.IndexerTimelockParams{
 			HasTimelock:      &trueCondition,
 			TimelockedBefore: 1,
 			TimelockedAfter:  2,
 		},
-		IndexerExpirationParams: apimodels.IndexerExpirationParams{
+		IndexerExpirationParams: api.IndexerExpirationParams{
 			HasExpiration: &trueCondition,
 			ExpiresBefore: 5,
 			ExpiresAfter:  6,
 		},
-		IndexerCreationParams: apimodels.IndexerCreationParams{
+		IndexerCreationParams: api.IndexerCreationParams{
 			CreatedBefore: 9,
 			CreatedAfter:  10,
 		},
-		IndexerStorageDepositParams: apimodels.IndexerStorageDepositParams{
+		IndexerStorageDepositParams: api.IndexerStorageDepositParams{
 			HasStorageDepositReturn:           &trueCondition,
 			StorageDepositReturnAddressBech32: "",
 		},
 		AddressBech32: "alice",
 		SenderBech32:  "bob",
 		Tag:           "charlie",
-		IndexerCursorParams: apimodels.IndexerCursorParams{
+		IndexerCursorParams: api.IndexerCursorParams{
 			Cursor: func() *string {
 				str := "dave"
 
@@ -54,7 +54,7 @@ func TestOutputsQuery_Build(t *testing.T) {
 func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{nodeclient.IndexerPluginName},
 	}
 
@@ -69,7 +69,7 @@ func Test_IndexerEnabled(t *testing.T) {
 func Test_IndexerDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
@@ -91,13 +91,13 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	fakeOutputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{nodeclient.IndexerPluginName},
 	}
 
 	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
 
-	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -106,7 +106,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag": "some-tag",
 	})
 
-	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -116,7 +116,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	})
 
 	outputRoute := fmt.Sprintf(nodeclient.CoreRouteOutput, fakeOutputID.ToHex())
-	mockGetBinary(outputRoute, 200, &apimodels.OutputResponse{
+	mockGetBinary(outputRoute, 200, &api.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 	}, true)
@@ -126,7 +126,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	indexer, err := client.Indexer(context.TODO())
 	require.NoError(t, err)
 
-	resultSet, err := indexer.Outputs(context.TODO(), &apimodels.BasicOutputsQuery{Tag: "some-tag"})
+	resultSet, err := indexer.Outputs(context.TODO(), &api.BasicOutputsQuery{Tag: "some-tag"})
 	require.NoError(t, err)
 
 	var runs int

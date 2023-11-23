@@ -12,8 +12,8 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 const (
@@ -230,9 +230,9 @@ func (eac *EventAPIClient) subscribeToOutputsTopic(topic string) (<-chan iotago.
 	})
 }
 
-func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *apimodels.BlockMetadataResponse, *EventAPIClientSubscription) {
-	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.BlockMetadataResponse, error) {
-		response := new(apimodels.BlockMetadataResponse)
+func (eac *EventAPIClient) subscribeToBlockMetadataTopic(topic string) (<-chan *api.BlockMetadataResponse, *EventAPIClientSubscription) {
+	return subscribeToTopic(eac, topic, func(payload []byte) (*api.BlockMetadataResponse, error) {
+		response := new(api.BlockMetadataResponse)
 		if err := eac.Client.CommittedAPI().JSONDecode(payload, response); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err
@@ -310,7 +310,7 @@ func (eac *EventAPIClient) TaggedDataWithTagBlocks(tag []byte) (<-chan *iotago.B
 }
 
 // BlockMetadataChange returns a channel of BlockMetadataResponse each time the given block's state changes.
-func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *apimodels.BlockMetadataResponse, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) BlockMetadataChange(blockID iotago.BlockID) (<-chan *api.BlockMetadataResponse, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIBlockMetadata, "{blockId}", blockID.ToHex(), 1)
 
 	return eac.subscribeToBlockMetadataTopic(topic)
@@ -368,11 +368,11 @@ func (eac *EventAPIClient) Output(outputID iotago.OutputID) (<-chan iotago.Outpu
 }
 
 // OutputMetadata returns a channel which immediately returns the output metadata with the given ID and afterward when its state changes.
-func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *apimodels.OutputMetadata, *EventAPIClientSubscription) {
+func (eac *EventAPIClient) OutputMetadata(outputID iotago.OutputID) (<-chan *api.OutputMetadata, *EventAPIClientSubscription) {
 	topic := strings.Replace(EventAPIOutputMetadata, "{outputId}", hexutil.EncodeHex(outputID[:]), 1)
 
-	return subscribeToTopic(eac, topic, func(payload []byte) (*apimodels.OutputMetadata, error) {
-		response := new(apimodels.OutputMetadata)
+	return subscribeToTopic(eac, topic, func(payload []byte) (*api.OutputMetadata, error) {
+		response := new(api.OutputMetadata)
 		if err := eac.Client.CommittedAPI().JSONDecode(payload, response); err != nil {
 			sendErrOrDrop(eac.Errors, err)
 			return nil, err

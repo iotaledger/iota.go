@@ -8,9 +8,9 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/blockissuer/pow"
 	"github.com/iotaledger/iota.go/v4/builder"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 const (
@@ -43,11 +43,11 @@ type (
 	// BlockIssuerClient is a client which queries the optional blockissuer functionality of a node.
 	BlockIssuerClient interface {
 		// Info returns the info of the block issuer.
-		Info(ctx context.Context) (*apimodels.BlockIssuerInfo, error)
+		Info(ctx context.Context) (*api.BlockIssuerInfo, error)
 		// SendPayload sends an ApplicationPayload to the block issuer.
-		SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error)
+		SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*api.BlockCreatedResponse, error)
 		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends an ApplicationPayload to the block issuer.
-		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *apimodels.BlockCreatedResponse, error)
+		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error)
 	}
 
 	blockIssuerClient struct {
@@ -67,8 +67,8 @@ func (client *blockIssuerClient) DoWithRequestHeaderHook(ctx context.Context, me
 	return client.core.DoWithRequestHeaderHook(ctx, method, route, requestHeaderHook, reqObj, resObj)
 }
 
-func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssuerInfo, error) {
-	res := new(apimodels.BlockIssuerInfo)
+func (client *blockIssuerClient) Info(ctx context.Context) (*api.BlockIssuerInfo, error) {
+	res := new(api.BlockIssuerInfo)
 
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerRouteInfo, nil, res); err != nil {
@@ -78,7 +78,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*apimodels.BlockIssu
 	return res, nil
 }
 
-func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, powTargetTrailingZeros uint8, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, powTargetTrailingZeros uint8, numPoWWorkers ...int) (*api.BlockCreatedResponse, error) {
 	payloadBytes, err := client.core.CommittedAPI().Encode(payload, serix.WithValidation())
 	if err != nil {
 		return nil, ierrors.Wrap(err, "failed to encode the payload")
@@ -99,7 +99,7 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 
 	req := &RawDataEnvelope{Data: payloadBytes}
 
-	res := new(apimodels.BlockCreatedResponse)
+	res := new(api.BlockCreatedResponse)
 	//nolint:bodyclose // false positive
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerRouteIssuePayload, requestHeaderHook, req, res); err != nil {
 		return nil, ierrors.Wrap(err, "failed to send the payload issuance request")
@@ -108,7 +108,7 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 	return res, nil
 }
 
-func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*api.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {
@@ -118,7 +118,7 @@ func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago
 	return client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
 }
 
-func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *apimodels.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {

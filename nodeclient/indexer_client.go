@@ -7,8 +7,8 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 const (
@@ -189,7 +189,7 @@ type IndexerResultSet struct {
 	// The error which has occurred during querying.
 	Error error
 	// The response from the indexer after calling Next().
-	Response *apimodels.IndexerResponse
+	Response *api.IndexerResponse
 }
 
 // Next runs the next query against the indexer.
@@ -247,19 +247,19 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 	var baseRoute string
 	switch query.(type) {
-	case *apimodels.OutputsQuery:
+	case *api.OutputsQuery:
 		baseRoute = IndexerRouteOutputs
-	case *apimodels.BasicOutputsQuery:
+	case *api.BasicOutputsQuery:
 		baseRoute = IndexerRouteOutputsBasic
-	case *apimodels.AccountsQuery:
+	case *api.AccountsQuery:
 		baseRoute = IndexerRouteOutputsAccounts
-	case *apimodels.AnchorsQuery:
+	case *api.AnchorsQuery:
 		baseRoute = IndexerRouteOutputsAnchors
-	case *apimodels.FoundriesQuery:
+	case *api.FoundriesQuery:
 		baseRoute = IndexerRouteOutputsFoundries
-	case *apimodels.NFTsQuery:
+	case *api.NFTsQuery:
 		baseRoute = IndexerRouteOutputsNFTs
-	case *apimodels.DelegationOutputsQuery:
+	case *api.DelegationOutputsQuery:
 		baseRoute = IndexerRouteOutputsDelegations
 	default:
 		return nil, ierrors.Errorf("unsupported query type: %T", query)
@@ -267,7 +267,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 	// this gets executed on every Next()
 	nextFunc := func() error {
-		res.Response = &apimodels.IndexerResponse{}
+		res.Response = &api.IndexerResponse{}
 
 		urlParams, err := query.URLParams()
 		if err != nil {
@@ -286,7 +286,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 }
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
-	res := &apimodels.IndexerResponse{}
+	res := &api.IndexerResponse{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, nil, 0, err
