@@ -278,6 +278,14 @@ type (
 		Metadata *BlockMetadataResponse `serix:""`
 	}
 
+	// TransactionMetadataResponse defines the response of a GET transaction metadata REST API call.
+	TransactionMetadataResponse struct {
+		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
+		TransactionState string `serix:""`
+		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
+		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
+	}
+
 	// OutputResponse defines the response of a GET outputs REST API call.
 	OutputResponse struct {
 		Output        iotago.TxEssenceOutput `serix:""`
