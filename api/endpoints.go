@@ -246,6 +246,7 @@ var (
 	CoreRouteOutputWithMetadata                = route(CorePluginName, CoreEndpointOutputWithMetadata)
 	CoreRouteTransactionsIncludedBlock         = route(CorePluginName, CoreEndpointTransactionsIncludedBlock)
 	CoreRouteTransactionsIncludedBlockMetadata = route(CorePluginName, CoreEndpointTransactionsIncludedBlockMetadata)
+	CoreRouteTransactionsMetadata              = route(CorePluginName, CoreEndpointTransactionsMetadata)
 	CoreRouteCommitmentByID                    = route(CorePluginName, CoreEndpointCommitmentByID)
 	CoreRouteCommitmentByIDUTXOChanges         = route(CorePluginName, CoreEndpointCommitmentByIDUTXOChanges)
 	CoreRouteCommitmentBySlot                  = route(CorePluginName, CoreEndpointCommitmentBySlot)
