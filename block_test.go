@@ -14,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -49,7 +48,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLikeParent iotago.BlockIDs, apiProvider *api.EpochBasedProvider) error {
+func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLikeParent iotago.BlockIDs, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.LatestAPI()
@@ -66,7 +65,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
-func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -81,7 +80,7 @@ func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotInde
 	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
-func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, version iotago.Version, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, version iotago.Version, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -97,7 +96,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 }
 
 //nolint:unparam // in the test we always issue at blockIndex=100, but let's keep this flexibility.
-func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.ApplicationPayload, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.ApplicationPayload, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -114,8 +113,8 @@ func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iota
 }
 
 func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
-	apiProvider := api.NewEpochBasedProvider(
-		api.WithAPIForMissingVersionCallback(
+	apiProvider := iotago.NewEpochBasedProvider(
+		iotago.WithAPIForMissingVersionCallback(
 			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
 				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
@@ -151,7 +150,7 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 func TestBlock_Commitments(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
@@ -171,7 +170,7 @@ func TestBlock_Commitments(t *testing.T) {
 
 func TestBlock_Commitments1(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
@@ -196,7 +195,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	}
 	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
 	// commitments between 90 and slot that the block commits to (100 at most)
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
@@ -263,7 +262,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 
 func TestBlock_WeakParents(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
@@ -322,7 +321,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	}
 	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
 	// commitments between 90 and slot that the block commits to (100 at most)
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),

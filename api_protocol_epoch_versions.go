@@ -1,4 +1,4 @@
-package api
+package iotago
 
 import (
 	"fmt"
@@ -7,22 +7,21 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/stringify"
-	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 type ProtocolEpochVersions struct {
 	versionsPerEpoch []ProtocolEpochVersion
-	knownVersions    map[iotago.Version]iotago.EpochIndex
+	knownVersions    map[Version]EpochIndex
 }
 
 func NewProtocolEpochVersions() *ProtocolEpochVersions {
 	return &ProtocolEpochVersions{
 		versionsPerEpoch: make([]ProtocolEpochVersion, 0),
-		knownVersions:    make(map[iotago.Version]iotago.EpochIndex),
+		knownVersions:    make(map[Version]EpochIndex),
 	}
 }
 
-func (p *ProtocolEpochVersions) VersionForEpoch(epoch iotago.EpochIndex) iotago.Version {
+func (p *ProtocolEpochVersions) VersionForEpoch(epoch EpochIndex) Version {
 	for i := len(p.versionsPerEpoch) - 1; i >= 0; i-- {
 		if p.versionsPerEpoch[i].StartEpoch <= epoch {
 			return p.versionsPerEpoch[i].Version
@@ -33,7 +32,7 @@ func (p *ProtocolEpochVersions) VersionForEpoch(epoch iotago.EpochIndex) iotago.
 	panic(ierrors.Errorf("could not find a protocol version for epoch %d", epoch))
 }
 
-func (p *ProtocolEpochVersions) Add(version iotago.Version, epoch iotago.EpochIndex) {
+func (p *ProtocolEpochVersions) Add(version Version, epoch EpochIndex) {
 	if _, exists := p.knownVersions[version]; exists {
 		return
 	}
@@ -54,7 +53,7 @@ func (p *ProtocolEpochVersions) Slice() []ProtocolEpochVersion {
 	return lo.CopySlice(p.versionsPerEpoch)
 }
 
-func (p *ProtocolEpochVersions) EpochForVersion(version iotago.Version) (iotago.EpochIndex, bool) {
+func (p *ProtocolEpochVersions) EpochForVersion(version Version) (EpochIndex, bool) {
 	startEpoch, exists := p.knownVersions[version]
 	return startEpoch, exists
 }
@@ -79,8 +78,8 @@ func (p *ProtocolEpochVersions) String() string {
 }
 
 type ProtocolEpochVersion struct {
-	Version    iotago.Version
-	StartEpoch iotago.EpochIndex
+	Version    Version
+	StartEpoch EpochIndex
 }
 
 func (p *ProtocolEpochVersion) Bytes() []byte {
