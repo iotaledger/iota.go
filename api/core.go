@@ -280,6 +280,8 @@ type (
 
 	// TransactionMetadataResponse defines the response of a GET transaction metadata REST API call.
 	TransactionMetadataResponse struct {
+		// TransactionID is the hex encoded transaction ID of the transaction.
+		TransactionID iotago.TransactionID `serix:""`
 		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
 		TransactionState string `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
