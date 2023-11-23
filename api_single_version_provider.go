@@ -1,39 +1,37 @@
-package api
+package iotago
 
 import (
 	"time"
-
-	iotago "github.com/iotaledger/iota.go/v4"
 )
 
-func SingleVersionProvider(api iotago.API) iotago.APIProvider {
+func SingleVersionProvider(api API) APIProvider {
 	return &singleVersionProvider{api: api}
 }
 
 type singleVersionProvider struct {
-	api iotago.API
+	api API
 }
 
-func (t *singleVersionProvider) APIForVersion(iotago.Version) (iotago.API, error) {
+func (t *singleVersionProvider) APIForVersion(Version) (API, error) {
 	return t.api, nil
 }
 
-func (t *singleVersionProvider) APIForTime(time.Time) iotago.API {
+func (t *singleVersionProvider) APIForTime(time.Time) API {
 	return t.api
 }
 
-func (t *singleVersionProvider) APIForSlot(iotago.SlotIndex) iotago.API {
+func (t *singleVersionProvider) APIForSlot(SlotIndex) API {
 	return t.api
 }
 
-func (t *singleVersionProvider) APIForEpoch(iotago.EpochIndex) iotago.API {
+func (t *singleVersionProvider) APIForEpoch(EpochIndex) API {
 	return t.api
 }
 
-func (t *singleVersionProvider) LatestAPI() iotago.API {
+func (t *singleVersionProvider) LatestAPI() API {
 	return t.api
 }
 
-func (t *singleVersionProvider) CommittedAPI() iotago.API {
+func (t *singleVersionProvider) CommittedAPI() API {
 	return t.api
 }

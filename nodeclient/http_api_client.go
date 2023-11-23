@@ -10,7 +10,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
@@ -308,7 +307,7 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 
 	client := &Client{
 		BaseURL:     baseURL,
-		apiProvider: api.NewEpochBasedProvider(),
+		apiProvider: iotago.NewEpochBasedProvider(),
 		opts:        options,
 	}
 
@@ -330,7 +329,7 @@ type Client struct {
 	// The base URL for all API calls.
 	BaseURL string
 
-	apiProvider *api.EpochBasedProvider
+	apiProvider *iotago.EpochBasedProvider
 
 	// holds the Client options.
 	opts *ClientOptions
