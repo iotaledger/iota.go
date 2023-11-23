@@ -6,9 +6,9 @@ package nodeclient_test
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -18,9 +18,9 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -47,7 +47,7 @@ func mockGetJSON(route string, status int, body interface{}, persist ...bool) {
 		m.Persist()
 	}
 
-	m.Reply(status).SetHeader("Content-Type", nodeclient.MIMEApplicationJSON).
+	m.Reply(status).SetHeader("Content-Type", api.MIMEApplicationJSON).
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(body))))
 }
 
@@ -62,7 +62,7 @@ func mockGetJSONWithParams(route string, status int, body interface{}, params ma
 	}
 
 	m.Reply(status).
-		SetHeader("Content-Type", nodeclient.MIMEApplicationJSON).
+		SetHeader("Content-Type", api.MIMEApplicationJSON).
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(body))))
 }
 
@@ -70,10 +70,10 @@ func mockGetJSONWithParams(route string, status int, body interface{}, params ma
 func mockPostJSON(route string, status int, req interface{}, resp interface{}) {
 	gock.New(nodeAPIUrl).
 		Post(route).
-		MatchHeader("Content-Type", nodeclient.MIMEApplicationJSON).
+		MatchHeader("Content-Type", api.MIMEApplicationJSON).
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(req)))).
 		Reply(status).
-		SetHeader("Content-Type", nodeclient.MIMEApplicationJSON).
+		SetHeader("Content-Type", api.MIMEApplicationJSON).
 		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(resp))))
 }
 
@@ -81,14 +81,14 @@ func mockPostJSON(route string, status int, req interface{}, resp interface{}) {
 func mockGetBinary(route string, status int, body interface{}, persist ...bool) {
 	m := gock.New(nodeAPIUrl).
 		Get(route).
-		MatchHeader("Accept", nodeclient.MIMEApplicationVendorIOTASerializerV2)
+		MatchHeader("Accept", api.MIMEApplicationVendorIOTASerializerV2)
 
 	if len(persist) > 0 && persist[0] {
 		m.Persist()
 	}
 
 	m.Reply(status).
-		SetHeader("Content-Type", nodeclient.MIMEApplicationVendorIOTASerializerV2).
+		SetHeader("Content-Type", api.MIMEApplicationVendorIOTASerializerV2).
 		BodyString(string(lo.PanicOnErr(mockAPI.Encode(body))))
 }
 
@@ -96,10 +96,10 @@ func mockGetBinary(route string, status int, body interface{}, persist ...bool) 
 func nodeClient(t *testing.T) *nodeclient.Client {
 
 	ts := time.Now()
-	originInfo := &apimodels.InfoResponse{
+	originInfo := &api.InfoResponse{
 		Name:    "HORNET",
 		Version: "1.0.0",
-		Status: &apimodels.InfoResNodeStatus{
+		Status: &api.InfoResNodeStatus{
 			IsHealthy:                   true,
 			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
 			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
@@ -111,20 +111,20 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			LatestCommitmentID:          tpkg.Rand36ByteArray(),
 			PruningEpoch:                iotago.EpochIndex(142800),
 		},
-		ProtocolParameters: []*apimodels.InfoResProtocolParameters{
+		ProtocolParameters: []*api.InfoResProtocolParameters{
 			{
 				StartEpoch: 0,
 				Parameters: protoParams,
 			},
 		},
-		BaseToken: &apimodels.InfoResBaseToken{
+		BaseToken: &api.InfoResBaseToken{
 			Name:         "TestCoin",
 			TickerSymbol: "TEST",
 			Unit:         "TEST",
 			Subunit:      "testies",
 			Decimals:     6,
 		},
-		Metrics: &apimodels.InfoResNodeMetrics{
+		Metrics: &api.InfoResNodeMetrics{
 			BlocksPerSecond:          20.0,
 			ConfirmedBlocksPerSecond: 10.0,
 			ConfirmationRate:         50.0,
@@ -132,7 +132,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 		Features: []string{"Lazers"},
 	}
 
-	mockGetJSON(nodeclient.CoreRouteInfo, 200, originInfo)
+	mockGetJSON(api.CoreRouteInfo, 200, originInfo)
 
 	client, err := nodeclient.New(nodeAPIUrl)
 	require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestClient_Health(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteHealth).
+		Get(api.RouteHealth).
 		Reply(200)
 
 	nodeAPI := nodeClient(t)
@@ -153,7 +153,7 @@ func TestClient_Health(t *testing.T) {
 	require.True(t, healthy)
 
 	gock.New(nodeAPIUrl).
-		Get(nodeclient.RouteHealth).
+		Get(api.RouteHealth).
 		Reply(503)
 
 	healthy, err = nodeAPI.Health(context.Background())
@@ -168,7 +168,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 	parents, err := iotago.BlockIDsFromHexString(parentsHex)
 	require.NoError(t, err)
 
-	originRes := &apimodels.IssuanceBlockHeaderResponse{
+	originRes := &api.IssuanceBlockHeaderResponse{
 		StrongParents:       parents,
 		WeakParents:         parents,
 		ShallowLikeParents:  parents,
@@ -188,7 +188,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		CumulativeWeight:     100_000,
 	}
 
-	mockGetJSON(nodeclient.CoreRouteBlockIssuance, 200, originRes)
+	mockGetJSON(api.CoreRouteBlockIssuance, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.BlockIssuance(context.Background())
@@ -201,7 +201,7 @@ func TestClient_Congestion(t *testing.T) {
 
 	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
 
-	originRes := &apimodels.CongestionResponse{
+	originRes := &api.CongestionResponse{
 		Slot:                 iotago.SlotIndex(20),
 		Ready:                true,
 		ReferenceManaCost:    iotago.Mana(1000),
@@ -209,7 +209,7 @@ func TestClient_Congestion(t *testing.T) {
 	}
 
 	nodeAPI := nodeClient(t)
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCongestion, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCongestion, api.ParameterBech32Address, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
 	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
 	require.NoError(t, err)
@@ -221,13 +221,13 @@ func TestClient_Rewards(t *testing.T) {
 
 	outID := tpkg.RandOutputID(1)
 
-	originRes := &apimodels.ManaRewardsResponse{
+	originRes := &api.ManaRewardsResponse{
 		EpochStart: iotago.EpochIndex(20),
 		EpochEnd:   iotago.EpochIndex(30),
 		Rewards:    iotago.Mana(1000),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteRewards, outID.ToHex()), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteRewards, api.ParameterOutputID, outID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Rewards(context.Background(), outID)
@@ -238,7 +238,7 @@ func TestClient_Rewards(t *testing.T) {
 func TestClient_Validators(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.ValidatorsResponse{Validators: []*apimodels.ValidatorResponse{
+	originRes := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
 		{
 			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 			StakingEpochEnd:                iotago.EpochIndex(123),
@@ -259,7 +259,7 @@ func TestClient_Validators(t *testing.T) {
 		},
 	}}
 
-	mockGetJSON(nodeclient.CoreRouteValidators, 200, originRes)
+	mockGetJSON(api.CoreRouteValidators, 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Validators(context.Background())
@@ -271,7 +271,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 	defer gock.Off()
 
 	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
-	originRes := &apimodels.ValidatorResponse{
+	originRes := &api.ValidatorResponse{
 		AddressBech32:                  accountAddress.Bech32(iotago.PrefixTestnet),
 		StakingEpochEnd:                iotago.EpochIndex(123),
 		PoolStake:                      iotago.BaseToken(100),
@@ -282,7 +282,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 	}
 
 	nodeAPI := nodeClient(t)
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteValidatorsAccount, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteValidatorsAccount, api.ParameterBech32Address, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
 	res, err := nodeAPI.StakingAccount(context.Background(), accountAddress)
 	require.NoError(t, err)
@@ -292,11 +292,11 @@ func TestClient_StakingByAccountID(t *testing.T) {
 func TestClient_Committee(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.CommitteeResponse{
+	originRes := &api.CommitteeResponse{
 		Epoch:               iotago.EpochIndex(123),
 		TotalStake:          1000_1000,
 		TotalValidatorStake: 100_000,
-		Committee: []*apimodels.CommitteeMemberResponse{
+		Committee: []*api.CommitteeMemberResponse{
 			{
 				AddressBech32:  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 				PoolStake:      1000_000,
@@ -306,7 +306,7 @@ func TestClient_Committee(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(nodeclient.CoreRouteCommittee, 200, originRes)
+	mockGetJSON(api.CoreRouteCommittee, 200, originRes)
 	nodeAPI := nodeClient(t)
 	res, err := nodeAPI.Committee(context.Background())
 	require.NoError(t, err)
@@ -338,8 +338,8 @@ func TestClient_SubmitBlock(t *testing.T) {
 	require.NoError(t, err)
 
 	gock.New(nodeAPIUrl).
-		Post(nodeclient.CoreRouteBlocks).
-		MatchType(nodeclient.MIMEApplicationVendorIOTASerializerV2).
+		Post(api.CoreRouteBlocks).
+		MatchType(api.MIMEApplicationVendorIOTASerializerV2).
 		Body(bytes.NewReader(serializedIncompleteBlock)).
 		Reply(200).
 		AddHeader("Location", blockHashStr)
@@ -355,13 +355,13 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 
 	identifier := tpkg.RandBlockID()
 
-	originRes := &apimodels.BlockMetadataResponse{
+	originRes := &api.BlockMetadataResponse{
 		BlockID:          identifier,
-		BlockState:       apimodels.BlockStateConfirmed.String(),
-		TransactionState: apimodels.TransactionStateConfirmed.String(),
+		BlockState:       api.BlockStateConfirmed.String(),
+		TransactionState: api.TransactionStateConfirmed.String(),
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteBlockMetadata, identifier.ToHex()), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteBlockMetadata, api.ParameterBlockID, identifier.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	meta, err := nodeAPI.BlockMetadataByBlockID(context.Background(), identifier)
@@ -372,8 +372,7 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
-	identifier := tpkg.Rand36ByteArray()
-	queryHash := hexutil.EncodeHex(identifier[:])
+	blockID := tpkg.RandBlockID()
 
 	originBlock := &iotago.Block{
 		API: mockAPI,
@@ -392,10 +391,10 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		},
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteBlock, queryHash), 200, originBlock)
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteBlock, api.ParameterBlockID, blockID.ToHex()), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
-	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), identifier)
+	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), blockID)
 	require.NoError(t, err)
 	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
 }
@@ -403,8 +402,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand36ByteArray()
-	queryHash := hexutil.EncodeHex(txID[:])
+	txID := tpkg.RandTransactionID()
 
 	originBlock := &iotago.Block{
 		API: mockAPI,
@@ -423,7 +421,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		},
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteTransactionsIncludedBlock, queryHash), 200, originBlock)
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteTransactionsIncludedBlock, api.ParameterTransactionID, txID.ToHex()), 200, originBlock)
 
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
@@ -442,7 +440,7 @@ func TestClient_OutputByID(t *testing.T) {
 	outputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutput, outputID.ToHex()), 200, &apimodels.OutputResponse{
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteOutput, api.ParameterOutputID, outputID.ToHex()), 200, &api.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 	})
@@ -465,7 +463,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	outputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	originMetadata := &apimodels.OutputMetadata{
+	originMetadata := &api.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        outputID.TransactionID(),
 		OutputIndex:          outputID.Index(),
@@ -476,7 +474,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 		LatestCommitmentID:   tpkg.Rand36ByteArray(),
 	}
 
-	mockGetBinary(fmt.Sprintf(nodeclient.CoreRouteOutputWithMetadata, outputID.ToHex()), 200, &apimodels.OutputWithMetadataResponse{
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteOutputWithMetadata, api.ParameterOutputID, outputID.ToHex()), 200, &api.OutputWithMetadataResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 		Metadata:      originMetadata,
@@ -494,7 +492,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
 	txID := tpkg.Rand36ByteArray()
-	originRes := &apimodels.OutputMetadata{
+	originRes := &api.OutputMetadata{
 		BlockID:              tpkg.RandBlockID(),
 		TransactionID:        txID,
 		OutputIndex:          3,
@@ -508,7 +506,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteOutputMetadata, utxoInputID.ToHex()), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteOutputMetadata, api.ParameterOutputID, utxoInputID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.OutputMetadataByID(context.Background(), utxoInputID)
@@ -533,7 +531,7 @@ func TestClient_CommitmentByID(t *testing.T) {
 		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByID, commitmentID.ToHex()), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentByID, api.ParameterCommitmentID, commitmentID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByID(context.Background(), commitmentID)
@@ -549,7 +547,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &apimodels.UTXOChangesResponse{
+	originRes := &api.UTXOChangesResponse{
 		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
@@ -559,7 +557,7 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIDUTXOChanges, commitmentID.ToHex()), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentByIDUTXOChanges, api.ParameterCommitmentID, commitmentID.ToHex()), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentUTXOChangesByID(context.Background(), commitmentID)
@@ -581,7 +579,7 @@ func TestClient_CommitmentByIndex(t *testing.T) {
 		CumulativeWeight:     commitment.CumulativeWeight,
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIndex, slot), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentBySlot, api.ParameterSlot, strconv.Itoa(int(slot))), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentByIndex(context.Background(), slot)
@@ -598,7 +596,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	randCreatedOutput := tpkg.RandUTXOInput()
 	randConsumedOutput := tpkg.RandUTXOInput()
 
-	originRes := &apimodels.UTXOChangesResponse{
+	originRes := &api.UTXOChangesResponse{
 		CommitmentID: commitmentID,
 		CreatedOutputs: iotago.OutputIDs{
 			randCreatedOutput.OutputID(),
@@ -608,7 +606,7 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 		},
 	}
 
-	mockGetJSON(fmt.Sprintf(nodeclient.CoreRouteCommitmentByIndexUTXOChanges, slot), 200, originRes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentBySlotUTXOChanges, api.ParameterSlot, strconv.Itoa(int(slot))), 200, originRes)
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slot)
@@ -616,15 +614,15 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
-var sampleGossipInfo = &apimodels.GossipInfo{
-	Heartbeat: &apimodels.GossipHeartbeat{
+var sampleGossipInfo = &api.GossipInfo{
+	Heartbeat: &api.GossipHeartbeat{
 		SolidSlot:      234,
 		PrunedSlot:     5872,
 		LatestSlot:     1294,
 		ConnectedPeers: 2392,
 		SyncedPeers:    1234,
 	},
-	Metrics: &apimodels.PeerGossipMetrics{
+	Metrics: &api.PeerGossipMetrics{
 		NewBlocks:             40,
 		KnownBlocks:           60,
 		ReceivedBlocks:        100,

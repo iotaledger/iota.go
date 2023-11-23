@@ -8,18 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 )
 
 func TestManagementClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -30,11 +30,11 @@ func TestManagementClient_Enabled(t *testing.T) {
 func TestManagementClient_Disabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -45,7 +45,7 @@ func TestManagementClient_Disabled(t *testing.T) {
 func TestManagementClient_PeerByID(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &apimodels.PeerInfo{
+	originRes := &api.PeerInfo{
 		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 		ID:             peerID,
 		Connected:      true,
@@ -53,12 +53,12 @@ func TestManagementClient_PeerByID(t *testing.T) {
 		Gossip:         sampleGossipInfo,
 	}
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID), 200, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, peerID), 200, originRes)
 
 	client := nodeClient(t)
 
@@ -74,15 +74,15 @@ func TestManagementClient_RemovePeerByID(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(nodeAPIUrl).
-		Delete(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID)).
+		Delete(api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, peerID)).
 		Reply(200).
 		Status(200)
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -98,8 +98,8 @@ func TestManagementClient_Peers(t *testing.T) {
 
 	peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
 
-	originRes := &apimodels.PeersResponse{
-		Peers: []*apimodels.PeerInfo{
+	originRes := &api.PeersResponse{
+		Peers: []*api.PeerInfo{
 			{
 				ID:             peerID,
 				MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
@@ -118,12 +118,12 @@ func TestManagementClient_Peers(t *testing.T) {
 		},
 	}
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(nodeclient.ManagementRoutePeers, 200, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.ManagementRoutePeers, 200, originRes)
 
 	client := nodeClient(t)
 
@@ -140,7 +140,7 @@ func TestManagementClient_AddPeer(t *testing.T) {
 
 	multiAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)
 
-	originRes := &apimodels.PeerInfo{
+	originRes := &api.PeerInfo{
 		ID:             peerID,
 		MultiAddresses: []string{multiAddr},
 		Relation:       "autopeered",
@@ -148,14 +148,14 @@ func TestManagementClient_AddPeer(t *testing.T) {
 		Gossip:         sampleGossipInfo,
 	}
 
-	req := &apimodels.AddPeerRequest{MultiAddress: multiAddr}
+	req := &api.AddPeerRequest{MultiAddress: multiAddr}
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockPostJSON(nodeclient.ManagementRoutePeers, 201, req, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockPostJSON(api.ManagementRoutePeers, 201, req, originRes)
 
 	client := nodeClient(t)
 
