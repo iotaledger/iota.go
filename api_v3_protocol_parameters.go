@@ -159,8 +159,8 @@ func (p *V3ProtocolParameters) CongestionControlParameters() *CongestionControlP
 	return &p.basicProtocolParameters.CongestionControlParameters
 }
 
-func (p *V3ProtocolParameters) VersionSignaling() *VersionSignaling {
-	return &p.basicProtocolParameters.VersionSignaling
+func (p *V3ProtocolParameters) VersionSignalingParameters() *VersionSignalingParameters {
+	return &p.basicProtocolParameters.VersionSignalingParameters
 }
 
 func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
@@ -229,7 +229,7 @@ func (p *V3ProtocolParameters) String() string {
 		p.basicProtocolParameters.MaxCommittableAge,
 		p.basicProtocolParameters.EpochNearingThreshold,
 		p.basicProtocolParameters.CongestionControlParameters,
-		p.basicProtocolParameters.VersionSignaling,
+		p.basicProtocolParameters.VersionSignalingParameters,
 		p.basicProtocolParameters.RewardsParameters,
 	)
 }
@@ -352,7 +352,7 @@ func WithStakingOptions(unbondingPeriod EpochIndex, validationBlocksPerSlot uint
 
 func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, activationOffset uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
-		p.basicProtocolParameters.VersionSignaling = VersionSignaling{
+		p.basicProtocolParameters.VersionSignalingParameters = VersionSignalingParameters{
 			WindowSize:        windowSize,
 			WindowTargetRatio: windowTargetRatio,
 			ActivationOffset:  activationOffset,

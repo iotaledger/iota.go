@@ -2,65 +2,22 @@ package nodeclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
-)
-
-const (
-	// ManagementEndpointPeer is the endpoint for getting peers by their peerID.
-	// GET returns the peer.
-	// "Accept" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// DELETE deletes the peer.
-	ManagementEndpointPeer = "/peers/%s"
-
-	// ManagementEndpointPeers is the endpoint for getting all peers of the node.
-	// GET returns a list of all peers.
-	// "Accept" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// POST adds a new peer.
-	// "Content-Type" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	ManagementEndpointPeers = "/peers"
-
-	// ManagementEndpointDatabasePrune is the endpoint to manually prune the database.
-	// POST prunes the database.
-	// "Content-Type" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	ManagementEndpointDatabasePrune = "/database/prune"
-
-	// ManagementEndpointSnapshotsCreate is the endpoint to manually create a snapshot files.
-	// POST creates a full snapshot.
-	// "Content-Type" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	ManagementEndpointSnapshotsCreate = "/snapshots/create"
-)
-
-var (
-	ManagementRoutePeer            = route(ManagementPluginName, ManagementEndpointPeer)
-	ManagementRoutePeers           = route(ManagementPluginName, ManagementEndpointPeers)
-	ManagementRouteDatabasePrune   = route(ManagementPluginName, ManagementEndpointDatabasePrune)
-	ManagementRouteSnapshotsCreate = route(ManagementPluginName, ManagementEndpointSnapshotsCreate)
+	"github.com/iotaledger/iota.go/v4/api"
 )
 
 type (
 	// ManagementClient is a client which queries the optional management functionality of a node.
 	ManagementClient interface {
 		// PeerByID gets a peer by its identifier.
-		PeerByID(ctx context.Context, id string) (*apimodels.PeerInfo, error)
+		PeerByID(ctx context.Context, id string) (*api.PeerInfo, error)
 		// RemovePeerByID removes a peer by its identifier.
 		RemovePeerByID(ctx context.Context, id string) error
 		// Peers returns a list of all peers.
-		Peers(ctx context.Context) (*apimodels.PeersResponse, error)
+		Peers(ctx context.Context) (*api.PeersResponse, error)
 		// AddPeer adds a new peer by libp2p multi address with optional alias.
-		AddPeer(ctx context.Context, multiAddress string, alias ...string) (*apimodels.PeerInfo, error)
+		AddPeer(ctx context.Context, multiAddress string, alias ...string) (*api.PeerInfo, error)
 	}
 
 	managementClient struct {
@@ -81,10 +38,10 @@ func (client *managementClient) DoWithRequestHeaderHook(ctx context.Context, met
 }
 
 // PeerByID gets a peer by its identifier.
-func (client *managementClient) PeerByID(ctx context.Context, id string) (*apimodels.PeerInfo, error) {
-	query := fmt.Sprintf(ManagementRoutePeer, id)
+func (client *managementClient) PeerByID(ctx context.Context, id string) (*api.PeerInfo, error) {
+	query := api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, id)
 
-	res := new(apimodels.PeerInfo)
+	res := new(api.PeerInfo)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
@@ -95,7 +52,7 @@ func (client *managementClient) PeerByID(ctx context.Context, id string) (*apimo
 
 // RemovePeerByID removes a peer by its identifier.
 func (client *managementClient) RemovePeerByID(ctx context.Context, id string) error {
-	query := fmt.Sprintf(ManagementRoutePeer, id)
+	query := api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, id)
 
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodDelete, query, nil, nil); err != nil {
@@ -106,10 +63,10 @@ func (client *managementClient) RemovePeerByID(ctx context.Context, id string) e
 }
 
 // Peers returns a list of all peers.
-func (client *managementClient) Peers(ctx context.Context) (*apimodels.PeersResponse, error) {
-	res := new(apimodels.PeersResponse)
+func (client *managementClient) Peers(ctx context.Context) (*api.PeersResponse, error) {
+	res := new(api.PeersResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, ManagementRoutePeers, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, api.ManagementRoutePeers, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -117,8 +74,8 @@ func (client *managementClient) Peers(ctx context.Context) (*apimodels.PeersResp
 }
 
 // AddPeer adds a new peer by libp2p multi address with optional alias.
-func (client *managementClient) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*apimodels.PeerInfo, error) {
-	req := &apimodels.AddPeerRequest{
+func (client *managementClient) AddPeer(ctx context.Context, multiAddress string, alias ...string) (*api.PeerInfo, error) {
+	req := &api.AddPeerRequest{
 		MultiAddress: multiAddress,
 	}
 
@@ -126,9 +83,9 @@ func (client *managementClient) AddPeer(ctx context.Context, multiAddress string
 		req.Alias = alias[0]
 	}
 
-	res := new(apimodels.PeerInfo)
+	res := new(api.PeerInfo)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodPost, ManagementRoutePeers, req, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodPost, api.ManagementRoutePeers, req, res); err != nil {
 		return nil, err
 	}
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/iota.go/v4/api"
 )
 
 var (
@@ -40,10 +41,6 @@ var (
 )
 
 const (
-	MIMEApplicationJSON                   = "application/json"
-	MIMEApplicationVendorIOTASerializerV1 = "application/vnd.iota.serializer-v1"
-	MIMEApplicationVendorIOTASerializerV2 = "application/vnd.iota.serializer-v2"
-
 	locationHeader = "Location"
 )
 
@@ -155,9 +152,9 @@ func do(
 
 	if data != nil {
 		if !raw {
-			req.Header.Set("Content-Type", MIMEApplicationJSON)
+			req.Header.Set("Content-Type", api.MIMEApplicationJSON)
 		} else {
-			req.Header.Set("Content-Type", MIMEApplicationVendorIOTASerializerV2)
+			req.Header.Set("Content-Type", api.MIMEApplicationVendorIOTASerializerV2)
 		}
 	}
 

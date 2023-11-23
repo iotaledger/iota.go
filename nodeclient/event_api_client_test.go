@@ -11,8 +11,8 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -23,10 +23,10 @@ func TestMain(m *testing.M) { // call the tests
 func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{nodeclient.MQTTPluginName},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.MQTTPluginName},
 	}
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.NoError(t, err)
@@ -35,11 +35,11 @@ func Test_EventAPIEnabled(t *testing.T) {
 func Test_EventAPIDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)

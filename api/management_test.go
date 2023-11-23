@@ -1,4 +1,4 @@
-package apimodels_test
+package api_test
 
 import (
 	"fmt"
@@ -6,30 +6,30 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
+	"github.com/iotaledger/iota.go/v4/api"
 )
 
 func Test_PeersResponse(t *testing.T) {
-	api := testAPI()
+	testAPI := testAPI()
 	{
 		peerID := "12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32"
 		peerID2 := "12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32"
 
-		response := &apimodels.PeersResponse{
-			Peers: []*apimodels.PeerInfo{
+		response := &api.PeersResponse{
+			Peers: []*api.PeerInfo{
 				{
 					ID:             peerID,
 					MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
 					Relation:       "autopeered",
-					Gossip: &apimodels.GossipInfo{
-						Heartbeat: &apimodels.GossipHeartbeat{
+					Gossip: &api.GossipInfo{
+						Heartbeat: &api.GossipHeartbeat{
 							SolidSlot:      1,
 							PrunedSlot:     2,
 							LatestSlot:     3,
 							ConnectedPeers: 4,
 							SyncedPeers:    5,
 						},
-						Metrics: &apimodels.PeerGossipMetrics{
+						Metrics: &api.PeerGossipMetrics{
 							NewBlocks:             1,
 							KnownBlocks:           2,
 							ReceivedBlocks:        3,
@@ -55,14 +55,14 @@ func Test_PeersResponse(t *testing.T) {
 			},
 		}
 
-		jsonResponse, err := api.JSONEncode(response)
+		jsonResponse, err := testAPI.JSONEncode(response)
 		require.NoError(t, err)
 
 		expected := "{\"peers\":[{\"id\":\"12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32\",\"multiAddresses\":[\"/ip4/127.0.0.1/tcp/15600/p2p/12D3KooWFJ8Nq6gHLLvigTpPSbyMmLk35k1TcpJof8Y4y8yFAB32\"],\"relation\":\"autopeered\",\"connected\":true,\"gossip\":{\"heartbeat\":{\"solidSlot\":1,\"prunedSlot\":2,\"latestSlot\":3,\"connectedPeers\":4,\"syncedPeers\":5},\"metrics\":{\"newBlocks\":1,\"knownBlocks\":2,\"receivedBlocks\":3,\"receivedBlockRequests\":4,\"receivedSlotRequests\":5,\"receivedHeartbeats\":6,\"sentBlocks\":7,\"sentBlockRequests\":8,\"sentSlotRequests\":9,\"sentHeartbeats\":10,\"droppedPackets\":11}}},{\"id\":\"12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32\",\"multiAddresses\":[\"/ip4/127.0.0.1/tcp/15600/p2p/12D3KooWFJ8Nq6gHLLvigTpPdddddsadsadscpJof8Y4y8yFAB32\"],\"alias\":\"Peer2\",\"relation\":\"static\",\"connected\":false}]}"
 		require.Equal(t, expected, string(jsonResponse))
 
-		decoded := new(apimodels.PeersResponse)
-		require.NoError(t, api.JSONDecode(jsonResponse, decoded))
+		decoded := new(api.PeersResponse)
+		require.NoError(t, testAPI.JSONDecode(jsonResponse, decoded))
 		require.EqualValues(t, response, decoded)
 	}
 }
