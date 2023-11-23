@@ -162,6 +162,13 @@ const (
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointTransactionsIncludedBlockMetadata = "/transactions/{transactionId}/included-block/metadata"
 
+	// CoreEndpointTransactionsMetadata is the endpoint for getting the metadata for the given transaction ID.
+	// GET returns transaction metadata.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	CoreEndpointTransactionsMetadata = "/transactions/{transactionId}/metadata"
+
 	// CoreEndpointCommitmentByID is the endpoint for getting a slot commitment by its ID.
 	// GET returns the commitment.
 	// "Accept" header:
@@ -239,6 +246,7 @@ var (
 	CoreRouteOutputWithMetadata                = route(CorePluginName, CoreEndpointOutputWithMetadata)
 	CoreRouteTransactionsIncludedBlock         = route(CorePluginName, CoreEndpointTransactionsIncludedBlock)
 	CoreRouteTransactionsIncludedBlockMetadata = route(CorePluginName, CoreEndpointTransactionsIncludedBlockMetadata)
+	CoreRouteTransactionsMetadata              = route(CorePluginName, CoreEndpointTransactionsMetadata)
 	CoreRouteCommitmentByID                    = route(CorePluginName, CoreEndpointCommitmentByID)
 	CoreRouteCommitmentByIDUTXOChanges         = route(CorePluginName, CoreEndpointCommitmentByIDUTXOChanges)
 	CoreRouteCommitmentBySlot                  = route(CorePluginName, CoreEndpointCommitmentBySlot)

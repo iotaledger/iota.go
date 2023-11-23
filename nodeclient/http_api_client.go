@@ -450,6 +450,19 @@ func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID
 	return res, nil
 }
 
+// TransactionMetadata gets the metadata of a transaction by its ID from the node.
+func (client *Client) TransactionMetadata(ctx context.Context, txID iotago.TransactionID) (*api.TransactionMetadataResponse, error) {
+	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsMetadata, txID)
+
+	res := new(api.TransactionMetadataResponse)
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // OutputByID gets an output by its ID from the node.
 func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, error) {
 	query := client.endpointReplaceOutputIDParameter(api.CoreRouteOutput, outputID)
