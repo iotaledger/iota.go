@@ -24,9 +24,9 @@ func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.MQTTPluginName},
+		Routes: []string{api.MQTTPluginName},
 	}
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	_, err := nodeClient(t).EventAPI(context.TODO())
 	require.ErrorIs(t, err, nodeclient.ErrMQTTPluginNotAvailable)

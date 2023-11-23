@@ -17,10 +17,10 @@ func TestBlockIssuerClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.BlockIssuerPluginName},
+		Routes: []string{api.BlockIssuerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -35,7 +35,7 @@ func TestBlockIssuerClient_Disabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -52,11 +52,11 @@ func TestBlockIssuerClient_Info(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.BlockIssuerPluginName},
+		Routes: []string{api.BlockIssuerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(nodeclient.BlockIssuerRouteInfo, 200, infoResponse)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.BlockIssuerRouteInfo, 200, infoResponse)
 
 	client := nodeClient(t)
 

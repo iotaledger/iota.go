@@ -2,7 +2,6 @@ package nodeclient_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -55,10 +54,10 @@ func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.IndexerPluginName},
+		Routes: []string{api.IndexerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -73,7 +72,7 @@ func Test_IndexerDisabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -92,12 +91,12 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.IndexerPluginName},
+		Routes: []string{api.IndexerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
-	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
+	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -106,7 +105,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag": "some-tag",
 	})
 
-	mockGetJSONWithParams(nodeclient.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
+	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -115,7 +114,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag":    "some-tag",
 	})
 
-	outputRoute := fmt.Sprintf(nodeclient.CoreRouteOutput, fakeOutputID.ToHex())
+	outputRoute := api.EndpointWithNamedParameterValue(api.CoreRouteOutput, api.ParameterOutputID, fakeOutputID.ToHex())
 	mockGetBinary(outputRoute, 200, &api.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,

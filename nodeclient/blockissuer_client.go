@@ -13,32 +13,6 @@ import (
 	"github.com/iotaledger/iota.go/v4/builder"
 )
 
-const (
-	// BlockIssuerRouteInfo is the endpoint for getting the info of the block issuer.
-	// GET returns the info.
-	// "Accept" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	BlockIssuerEndpointInfo = "/info"
-
-	// BlockIssuerRouteIssuePayload is the endpoint for issuing an ApplicationPayload.
-	// POST issues the ApplicationPayload.
-	// "Content-Type" header:
-	// 		MIMEApplicationJSON => json.
-	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	BlockIssuerEndpointIssuePayload = "/issue"
-)
-
-var (
-	BlockIssuerRouteInfo         = route(BlockIssuerPluginName, BlockIssuerEndpointInfo)
-	BlockIssuerRouteIssuePayload = route(BlockIssuerPluginName, BlockIssuerEndpointIssuePayload)
-)
-
-const (
-	HeaderBlockIssuerProofOfWorkNonce = "X-IOTA-BlockIssuer-PoW-Nonce"
-	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
-)
-
 type (
 	// BlockIssuerClient is a client which queries the optional blockissuer functionality of a node.
 	BlockIssuerClient interface {
@@ -71,7 +45,7 @@ func (client *blockIssuerClient) Info(ctx context.Context) (*api.BlockIssuerInfo
 	res := new(api.BlockIssuerInfo)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, BlockIssuerRouteInfo, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, api.BlockIssuerRouteInfo, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -93,15 +67,15 @@ func (client *blockIssuerClient) mineNonceAndSendPayload(ctx context.Context, pa
 	requestHeaderHook := func(header http.Header) {
 		RequestHeaderHookContentTypeIOTASerializerV2(header)
 
-		header.Set(HeaderBlockIssuerCommitmentID, commitmentID.ToHex())
-		header.Set(HeaderBlockIssuerProofOfWorkNonce, strconv.FormatUint(nonce, 10))
+		header.Set(api.HeaderBlockIssuerCommitmentID, commitmentID.ToHex())
+		header.Set(api.HeaderBlockIssuerProofOfWorkNonce, strconv.FormatUint(nonce, 10))
 	}
 
 	req := &RawDataEnvelope{Data: payloadBytes}
 
 	res := new(api.BlockCreatedResponse)
 	//nolint:bodyclose // false positive
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, BlockIssuerRouteIssuePayload, requestHeaderHook, req, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, api.BlockIssuerRouteIssuePayload, requestHeaderHook, req, res); err != nil {
 		return nil, ierrors.Wrap(err, "failed to send the payload issuance request")
 	}
 

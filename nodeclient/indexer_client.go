@@ -8,139 +8,6 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
-	"github.com/iotaledger/iota.go/v4/hexutil"
-)
-
-const (
-	// IndexerEndpointOutputs is the endpoint for getting basic, account, anchor, foundry, nft and delegation outputs filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "hasNativeToken", "nativeToken", "unlockableByAddress", "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputs = "/outputs"
-
-	// IndexerEndpointOutputsBasic is the endpoint for getting basic outputs filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "hasNativeToken", "nativeToken", "address", "unlockableByAddress", "hasStorageDepositReturn", "storageDepositReturnAddress",
-	// 					 "hasExpiration", "expiresBefore", "expiresAfter", "expirationReturnAddress",
-	//					 "hasTimelock", "timelockedBefore", "timelockedAfter", "sender", "tag",
-	//					 "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsBasic = "/outputs/basic"
-
-	// IndexerEndpointOutputsAccounts is the endpoint for getting accounts filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "address", "issuer", "sender",
-	//					 "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsAccounts = "/outputs/account"
-
-	// IndexerEndpointOutputsAccountByID is the endpoint for getting accounts by their accountID.
-	// GET returns the outputIDs or 404 if no record is found.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointOutputsAccountByID = "/outputs/account/%s"
-
-	// IndexerEndpointOutputsAnchors is the endpoint for getting anchors filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "unlockableByAddress", "stateController", "governor", "issuer", "sender",
-	//					 "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsAnchors = "/outputs/anchor"
-
-	// IndexerEndpointOutputsAnchorByID is the endpoint for getting anchors by their anchorID.
-	// GET returns the outputIDs or 404 if no record is found.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointOutputsAnchorByID = "/outputs/anchor/%s"
-
-	// IndexerEndpointOutputsFoundries is the endpoint for getting foundries filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "hasNativeToken", "nativeToken", "account", "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsFoundries = "/outputs/foundry"
-
-	// IndexerEndpointOutputsFoundryByID is the endpoint for getting foundries by their foundryID.
-	// GET returns the outputIDs or 404 if no record is found.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointOutputsFoundryByID = "/outputs/foundry/%s"
-
-	// IndexerEndpointOutputsNFTs is the endpoint for getting NFT filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "address", "unlockableByAddress", "hasStorageDepositReturn", "storageDepositReturnAddress",
-	// 					 "hasExpiration", "expiresBefore", "expiresAfter", "expirationReturnAddress",
-	//					 "hasTimelock", "timelockedBefore", "timelockedAfter", "issuer", "sender", "tag",
-	//					 "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsNFTs = "/outputs/nft"
-
-	// IndexerEndpointOutputsNFTByID is the endpoint for getting NFT by their nftID.
-	// GET returns the outputIDs or 404 if no record is found.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointOutputsNFTByID = "/outputs/nft/%s"
-
-	// IndexerEndpointOutputsDelegations is the endpoint for getting delegations filtered by the given parameters.
-	// GET with query parameter returns all outputIDs that fit these filter criteria.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	// Query parameters: "address", "validator", "createdBefore", "createdAfter"
-	// Returns an empty list if no results are found.
-	IndexerEndpointOutputsDelegations = "/outputs/delegation"
-
-	// IndexerEndpointOutputsDelegationByID is the endpoint for getting delegations by their delegationID.
-	// GET returns the outputIDs or 404 if no record is found.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointOutputsDelegationByID = "/outputs/delegation/%s"
-
-	// IndexerEndpointMultiAddressByAddress is the endpoint for getting the multi address unlock condition
-	// of an MultiAddressReference (can be contained in a RestrictedAddress).
-	// GET returns a MultiAddress.
-	// "Accept" header:
-	//		MIMEApplicationJSON => json.
-	//		MIMEApplicationVendorIOTASerializerV2 => bytes.
-	IndexerEndpointMultiAddressByAddress = "/multiaddress/%s"
-)
-
-var (
-	IndexerRouteOutputs               = route(IndexerPluginName, IndexerEndpointOutputs)
-	IndexerRouteOutputsBasic          = route(IndexerPluginName, IndexerEndpointOutputsBasic)
-	IndexerRouteOutputsAccounts       = route(IndexerPluginName, IndexerEndpointOutputsAccounts)
-	IndexerRouteOutputsAccountByID    = route(IndexerPluginName, IndexerEndpointOutputsAccountByID)
-	IndexerRouteOutputsAnchors        = route(IndexerPluginName, IndexerEndpointOutputsAnchors)
-	IndexerRouteOutputsAnchorByID     = route(IndexerPluginName, IndexerEndpointOutputsAnchorByID)
-	IndexerRouteOutputsFoundries      = route(IndexerPluginName, IndexerEndpointOutputsFoundries)
-	IndexerRouteOutputsFoundryByID    = route(IndexerPluginName, IndexerEndpointOutputsFoundryByID)
-	IndexerRouteOutputsNFTs           = route(IndexerPluginName, IndexerEndpointOutputsNFTs)
-	IndexerRouteOutputsNFTByID        = route(IndexerPluginName, IndexerEndpointOutputsNFTByID)
-	IndexerRouteOutputsDelegations    = route(IndexerPluginName, IndexerEndpointOutputsDelegations)
-	IndexerRouteOutputsDelegationByID = route(IndexerPluginName, IndexerEndpointOutputsDelegationByID)
-	IndexerRouteMultiAddressByAddress = route(IndexerPluginName, IndexerEndpointMultiAddressByAddress)
 )
 
 var (
@@ -155,14 +22,14 @@ type (
 	IndexerClient interface {
 		// Outputs returns a handle to query for outputs.
 		Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error)
-		// Account queries for a specific iotago.AccountOutput by its identifier and returns the ledger index at which this output where available at.
-		Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error)
-		// Anchor queries for a specific iotago.AnchorOutput by its identifier and returns the ledger index at which this output where available at.
-		Anchor(ctx context.Context, anchorID iotago.AnchorID) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error)
+		// Account queries for a specific iotago.AccountOutput by its address and returns the ledger index at which this output where available at.
+		Account(ctx context.Context, accountAddress *iotago.AccountAddress) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error)
+		// Anchor queries for a specific iotago.AnchorOutput by its address and returns the ledger index at which this output where available at.
+		Anchor(ctx context.Context, anchorAddress *iotago.AnchorAddress) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error)
 		// Foundry queries for a specific iotago.FoundryOutput by its identifier and returns the ledger index at which this output where available at.
 		Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error)
-		// NFT queries for a specific iotago.NFTOutput by its identifier and returns the ledger index at which this output where available at.
-		NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error)
+		// NFT queries for a specific iotago.NFTOutput by its address and returns the ledger index at which this output where available at.
+		NFT(ctx context.Context, nftAddress *iotago.NFTAddress) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error)
 		// Delegation queries for a specific iotago.DelegationOutout by its identifier and returns the ledger index at which this output where available at.
 		Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error)
 	}
@@ -248,19 +115,19 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 	var baseRoute string
 	switch query.(type) {
 	case *api.OutputsQuery:
-		baseRoute = IndexerRouteOutputs
+		baseRoute = api.IndexerRouteOutputs
 	case *api.BasicOutputsQuery:
-		baseRoute = IndexerRouteOutputsBasic
+		baseRoute = api.IndexerRouteOutputsBasic
 	case *api.AccountsQuery:
-		baseRoute = IndexerRouteOutputsAccounts
+		baseRoute = api.IndexerRouteOutputsAccounts
 	case *api.AnchorsQuery:
-		baseRoute = IndexerRouteOutputsAnchors
+		baseRoute = api.IndexerRouteOutputsAnchors
 	case *api.FoundriesQuery:
-		baseRoute = IndexerRouteOutputsFoundries
+		baseRoute = api.IndexerRouteOutputsFoundries
 	case *api.NFTsQuery:
-		baseRoute = IndexerRouteOutputsNFTs
+		baseRoute = api.IndexerRouteOutputsNFTs
 	case *api.DelegationOutputsQuery:
-		baseRoute = IndexerRouteOutputsDelegations
+		baseRoute = api.IndexerRouteOutputsDelegations
 	default:
 		return nil, ierrors.Errorf("unsupported query type: %T", query)
 	}
@@ -305,8 +172,8 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	return &outputID, output, res.CommittedSlot, err
 }
 
-func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteOutputsAccountByID, hexutil.EncodeHex(accountID[:])))
+func (client *indexerClient) Account(ctx context.Context, accountAddress *iotago.AccountAddress) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsAccountByAddress, accountAddress))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -315,8 +182,8 @@ func (client *indexerClient) Account(ctx context.Context, accountID iotago.Accou
 	return outputID, output.(*iotago.AccountOutput), ledgerIndex, nil
 }
 
-func (client *indexerClient) Anchor(ctx context.Context, anchorID iotago.AnchorID) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteOutputsAnchorByID, hexutil.EncodeHex(anchorID[:])))
+func (client *indexerClient) Anchor(ctx context.Context, anchorAddress *iotago.AnchorAddress) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsAnchorByAddress, anchorAddress))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -326,7 +193,7 @@ func (client *indexerClient) Anchor(ctx context.Context, anchorID iotago.AnchorI
 }
 
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteOutputsFoundryByID, hexutil.EncodeHex(foundryID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, api.EndpointWithNamedParameterValue(api.IndexerRouteOutputsFoundryByID, api.ParameterFoundryID, foundryID.ToHex()))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -335,8 +202,8 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 	return outputID, output.(*iotago.FoundryOutput), ledgerIndex, nil
 }
 
-func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteOutputsNFTByID, hexutil.EncodeHex(nftID[:])))
+func (client *indexerClient) NFT(ctx context.Context, nftAddress *iotago.NFTAddress) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsNFTByAddress, nftAddress))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -346,7 +213,7 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 }
 
 func (client *indexerClient) Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerRouteOutputsDelegationByID, hexutil.EncodeHex(delegationID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, api.EndpointWithNamedParameterValue(api.IndexerRouteOutputsDelegationByID, api.ParameterDelegationID, delegationID.ToHex()))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}

@@ -16,10 +16,10 @@ func TestManagementClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -34,7 +34,7 @@ func TestManagementClient_Disabled(t *testing.T) {
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -54,11 +54,11 @@ func TestManagementClient_PeerByID(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID), 200, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, peerID), 200, originRes)
 
 	client := nodeClient(t)
 
@@ -74,15 +74,15 @@ func TestManagementClient_RemovePeerByID(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(nodeAPIUrl).
-		Delete(fmt.Sprintf(nodeclient.ManagementRoutePeer, peerID)).
+		Delete(api.EndpointWithNamedParameterValue(api.ManagementRoutePeer, api.ParameterPeerID, peerID)).
 		Reply(200).
 		Status(200)
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -119,11 +119,11 @@ func TestManagementClient_Peers(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockGetJSON(nodeclient.ManagementRoutePeers, 200, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.ManagementRoutePeers, 200, originRes)
 
 	client := nodeClient(t)
 
@@ -151,11 +151,11 @@ func TestManagementClient_AddPeer(t *testing.T) {
 	req := &api.AddPeerRequest{MultiAddress: multiAddr}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{nodeclient.ManagementPluginName},
+		Routes: []string{api.ManagementPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
-	mockPostJSON(nodeclient.ManagementRoutePeers, 201, req, originRes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
+	mockPostJSON(api.ManagementRoutePeers, 201, req, originRes)
 
 	client := nodeClient(t)
 
