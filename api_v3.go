@@ -478,19 +478,19 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
 		must(api.RegisterTypeSettings(BasicOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*TagFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*basicOutputFeature)(nil), (*NativeTokenFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*BasicOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 	}
 
 	{
@@ -500,23 +500,23 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*accountOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
 
 		must(api.RegisterTypeSettings(AccountOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*BlockIssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*accountOutputFeature)(nil), (*StakingFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*BlockIssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*StakingFeature)(nil)))
 
 		must(api.RegisterTypeSettings(AccountOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*accountOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AccountOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 	}
 
 	{
@@ -526,22 +526,22 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*anchorOutputUnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*anchorOutputUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputUnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
 
 		must(api.RegisterTypeSettings(AnchorOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*anchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
 
 		must(api.RegisterTypeSettings(AnchorOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*anchorOutputImmFeature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*anchorOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*AnchorOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 	}
 
 	{
@@ -553,20 +553,20 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*foundryOutputUnlockCondition)(nil), (*ImmutableAccountUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*FoundryOutputUnlockCondition)(nil), (*ImmutableAccountUnlockCondition)(nil)))
 
 		must(api.RegisterTypeSettings(FoundryOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*foundryOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*foundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 
 		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*foundryOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*FoundryOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 
 		must(api.RegisterTypeSettings(SimpleTokenScheme{}, serix.TypeSettings{}.WithObjectType(uint8(TokenSchemeSimple))))
 		must(api.RegisterInterfaceObjects((*TokenScheme)(nil), (*SimpleTokenScheme)(nil)))
@@ -581,25 +581,25 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
 		must(api.RegisterTypeSettings(NFTOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3FeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputFeature)(nil), (*TagFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*SenderFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*TagFeature)(nil)))
 
 		must(api.RegisterTypeSettings(NFTOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3ImmFeatBlocksArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*nftOutputImmFeature)(nil), (*MetadataFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputImmFeature)(nil), (*IssuerFeature)(nil)))
+		must(api.RegisterInterfaceObjects((*NFTOutputImmFeature)(nil), (*MetadataFeature)(nil)))
 	}
 
 	{
@@ -609,7 +609,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
 		))
 
-		must(api.RegisterInterfaceObjects((*delegationOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
+		must(api.RegisterInterfaceObjects((*DelegationOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
 	}
 
 	{
