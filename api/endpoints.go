@@ -73,7 +73,11 @@ var (
 )
 
 func route(pluginName, endpoint string) string {
-	return fmt.Sprintf("%s/%s%s", APIRoot, pluginName, endpoint)
+	if len(pluginName) > 0 {
+		return fmt.Sprintf("%s/%s%s", APIRoot, pluginName, endpoint)
+	}
+
+	return fmt.Sprintf("%s%s", APIRoot, endpoint)
 }
 
 func EndpointWithNamedParameterValue(endpoint string, parameter string, value string) string {
