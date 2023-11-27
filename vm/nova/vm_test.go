@@ -23,14 +23,14 @@ import (
 const (
 	OneIOTA iotago.BaseToken = 1_000_000
 
-	betaPerYear                  float64 = 1 / 3.0
-	slotsPerEpochExponent                = 13
-	slotDurationSeconds                  = 10
-	bitsCount                            = 63
-	generationRate                       = 1
-	generationRateExponent               = 27
-	decayFactorsExponent                 = 32
-	decayFactorEpochsSumExponent         = 20
+	slotsPerEpochExponent        = 13
+	slotDurationSeconds          = 10
+	bitsCount                    = 63
+	generationRate               = 1
+	generationRateExponent       = 27
+	decayFactorsExponent         = 32
+	decayFactorEpochsSumExponent = 20
+	annualDecayFactorPercentage  = 71
 )
 
 var (
@@ -47,10 +47,9 @@ var (
 			bitsCount,
 			generationRate,
 			generationRateExponent,
-			tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent),
 			decayFactorsExponent,
-			tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent),
 			decayFactorEpochsSumExponent,
+			annualDecayFactorPercentage,
 		),
 		iotago.WithStakingOptions(10, 10, 10),
 		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),

@@ -9,18 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 const (
-	betaPerYear                  float64 = 1 / 3.0
-	slotsPerEpochExponent                = 13
-	slotDurationSeconds                  = 10
-	bitsCount                            = 63
-	generationRate                       = 1
-	generationRateExponent               = 27
-	decayFactorsExponent                 = 32
-	decayFactorEpochsSumExponent         = 20
+	slotsPerEpochExponent        = 13
+	slotDurationSeconds          = 10
+	bitsCount                    = 63
+	generationRate               = 1
+	generationRateExponent       = 27
+	decayFactorsExponent         = 32
+	decayFactorEpochsSumExponent = 20
+	annualDecayFactorPercentage  = 70
 )
 
 var (
@@ -36,8 +35,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	testManaDecayFactors = tpkg.ManaDecayFactors(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent)
-	testManaDecayFactorEpochsSum = tpkg.ManaDecayFactorEpochsSum(betaPerYear, 1<<slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
+	testManaDecayFactors = iotago.DeriveManaDecayFactors(annualDecayFactorPercentage, slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent)
+	testManaDecayFactorEpochsSum = iotago.DeriveManaDecayFactorEpochsSum(annualDecayFactorPercentage, slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
 
 	testTimeProvider = iotago.NewTimeProvider(0, 0, slotDurationSeconds, slotsPerEpochExponent)
 	manaStruct := &iotago.ManaParameters{

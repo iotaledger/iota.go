@@ -2,6 +2,7 @@
 package iotago_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -328,6 +329,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 					runErr = err
 				}
 			}
+			fmt.Println(tt.name)
 			require.ErrorIs(t, runErr, tt.wantErr, tt.name)
 		})
 	}

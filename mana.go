@@ -24,6 +24,8 @@ type ManaParameters struct {
 	DecayFactorEpochsSum uint32 `serix:""`
 	// DecayFactorEpochsSumExponent is the scaling of DecayFactorEpochsSum expressed as an exponent of 2.
 	DecayFactorEpochsSumExponent uint8 `serix:""`
+	// AnnualDecayFactorPercentage is the decay factor for 1 year.
+	AnnualDecayFactorPercentage uint8 `serix:""`
 }
 
 func (m ManaParameters) Equals(other ManaParameters) bool {
@@ -33,7 +35,8 @@ func (m ManaParameters) Equals(other ManaParameters) bool {
 		lo.Equal(m.DecayFactors, other.DecayFactors) &&
 		m.DecayFactorsExponent == other.DecayFactorsExponent &&
 		m.DecayFactorEpochsSum == other.DecayFactorEpochsSum &&
-		m.DecayFactorEpochsSumExponent == other.DecayFactorEpochsSumExponent
+		m.DecayFactorEpochsSumExponent == other.DecayFactorEpochsSumExponent &&
+		m.AnnualDecayFactorPercentage == other.AnnualDecayFactorPercentage
 }
 
 type RewardsParameters struct {

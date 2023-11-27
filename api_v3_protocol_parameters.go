@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/iotaledger/hive.go/core/safemath"
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 )
 
@@ -40,35 +41,46 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 				63,
 				1,
 				17,
-				[]uint32{
-					4291249941, 4287535805, 4283824883, 4280117173, 4276412671, 4272711377, 4269013285, 4265318395, 4261626702, 4257938205, 4254252900, 4250570785, 4246891856, 4243216112, 4239543550, 4235874166, 4232207957, 4228544922, 4224885058, 4221228361, 4217574829, 4213924459, 4210277249, 4206633195, 4202992295, 4199354547, 4195719947, 4192088493, 4188460182, 4184835011, 4181212978, 4177594080, 4173978314, 4170365677, 4166756168, 4163149782, 4159546518, 4155946372, 4152349343, 4148755427, 4145164621, 4141576923, 4137992331, 4134410840, 4130832450, 4127257157, 4123684959, 4120115852, 4116549834, 4112986903, 4109427055, 4105870289, 4102316601, 4098765988, 4095218449, 4091673981, 4088132580, 4084594244, 4081058971, 4077526757, 4073997601, 4070471499, 4066948449, 4063428449, 4059911495, 4056397585, 4052886716, 4049378886, 4045874092, 4042372332, 4038873602, 4035377901, 4031885225, 4028395572, 4024908939, 4021425325, 4017944725, 4014467138, 4010992560, 4007520990, 4004052425, 4000586862, 3997124298, 3993664731, 3990208159, 3986754578, 3983303986, 3979856381, 3976411760, 3972970120, 3969531459, 3966095774, 3962663063, 3959233323, 3955806551, 3952382745, 3948961903, 3945544021, 3942129098, 3938717130, 3935308116, 3931902052, 3928498936, 3925098765, 3921701537, 3918307250, 3914915900, 3911527486, 3908142004, 3904759453, 3901379829, 3898003131, 3894629355, 3891258499, 3887890560, 3884525537, 3881163426, 3877804224, 3874447931, 3871094542, 3867744056, 3864396469, 3861051780, 3857709986, 3854371084, 3851035072, 3847701948, 3844371708, 3841044351, 3837719873, 3834398273, 3831079548, 3827763695, 3824450713, 3821140597, 3817833347, 3814528959, 3811227431, 3807928760, 3804632945, 3801339982, 3798049869, 3794762604, 3791478184, 3788196607, 3784917870, 3781641970, 3778368907, 3775098676, 3771831275, 3768566702, 3765304955, 3762046031, 3758789928, 3755536643, 3752286174, 3749038518, 3745793673, 3742551636, 3739312405, 3736075978, 3732842352, 3729611525, 3726383494, 3723158258, 3719935812, 3716716156, 3713499286, 3710285201, 3707073897, 3703865373, 3700659626, 3697456653, 3694256453, 3691059023, 3687864360, 3684672462, 3681483326, 3678296951, 3675113334, 3671932472, 3668754363, 3665579005, 3662406395, 3659236531, 3656069411, 3652905032, 3649743392, 3646584488, 3643428318, 3640274880, 3637124172, 3633976190, 3630830933, 3627688398, 3624548583, 3621411486, 3618277104, 3615145434, 3612016476, 3608890225, 3605766680, 3602645839, 3599527699, 3596412257, 3593299512, 3590189461, 3587082102, 3583977433, 3580875450, 3577776153, 3574679537, 3571585602, 3568494345, 3565405764, 3562319855, 3559236618, 3556156049, 3553078146, 3550002907, 3546930330, 3543860413, 3540793152, 3537728546, 3534666593, 3531607290, 3528550634, 3525496624, 3522445258, 3519396533, 3516350446, 3513306995, 3510266179, 3507227995, 3504192440, 3501159513, 3498129210, 3495101531, 3492076472, 3489054031, 3486034206, 3483016995, 3480002395, 3476990404, 3473981020, 3470974241, 3467970065, 3464968488, 3461969510, 3458973127, 3455979337, 3452988139, 3449999530, 3447013507, 3444030069, 3441049213, 3438070937, 3435095238, 3432122115, 3429151566, 3426183587, 3423218178, 3420255335, 3417295056, 3414337339, 3411382183, 3408429584, 3405479541, 3402532051, 3399587112, 3396644722, 3393704878, 3390767579, 3387832823, 3384900606, 3381970927, 3379043784, 3376119175, 3373197097, 3370277548, 3367360525, 3364446028, 3361534053, 3358624598, 3355717662, 3352813241, 3349911335, 3347011940, 3344115054, 3341220676, 3338328803, 3335439433, 3332552563, 3329668193, 3326786318, 3323906939, 3321030051, 3318155653, 3315283743, 3312414319, 3309547378, 3306682918, 3303820938, 3300961435, 3298104407, 3295249852, 3292397767, 3289548151, 3286701001, 3283856315, 3281014092, 3278174328, 3275337023, 3272502173, 3269669777, 3266839832, 3264012336, 3261187288, 3258364685, 3255544525, 3252726806, 3249911526, 3247098682, 3244288273, 3241480296, 3238674749, 3235871631, 3233070939, 3230272671, 3227476825, 3224683399, 3221892391, 3219103798, 3216317619, 3213533851, 3210752492, 3207973541, 3205196995, 3202422853, 3199651111, 3196881768, 3194114823, 3191350272, 3188588114, 3185828346, 3183070967, 3180315975, 3177563367, 3174813142, 3172065297, 3169319830, 3166576739, 3163836023, 3161097679, 3158361705, 3155628099, 3152896859, 3150167982, 3147441468, 3144717314, 3141995517, 3139276076, 3136558989, 3133844253, 3131131867,
-				},
 				32,
-				2420916375,
 				21,
+				70,
 			),
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 31, 1154, 2, 1),
+			WithRewardsOptions(8, 8, 31, 1080, 2, 1),
 			WithTargetCommitteeSize(32),
 		},
 			opts...,
 		),
 	)
 
-	// do the sanity checks here
-	decayFactorSanityCheck(newProtocolParams)
+	// Compute derived parameters
+	newProtocolParams.basicProtocolParameters.ManaParameters.DecayFactors = DeriveManaDecayFactors(
+		newProtocolParams.ManaParameters().AnnualDecayFactorPercentage,
+		newProtocolParams.SlotsPerEpochExponent(),
+		newProtocolParams.SlotDurationInSeconds(),
+		newProtocolParams.ManaParameters().DecayFactorsExponent,
+	)
+	newProtocolParams.basicProtocolParameters.ManaParameters.DecayFactorEpochsSum = DeriveManaDecayFactorEpochsSum(
+		newProtocolParams.ManaParameters().AnnualDecayFactorPercentage,
+		newProtocolParams.SlotsPerEpochExponent(),
+		newProtocolParams.SlotDurationInSeconds(),
+		newProtocolParams.ManaParameters().DecayFactorEpochsSumExponent,
+	)
+
+	// Sanity checks
 	manaSupplySanityCheck(newProtocolParams)
+	timeSanityCheck(newProtocolParams)
+	congestionControlSanityCheck(newProtocolParams)
 
 	return newProtocolParams
 }
 
 func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
-	// TODO: define betaPerYear in protocolParamets
-	betaPerYear := 1.0 / 3.0
+	beta := -math.Log(float64(protocolParams.ManaParameters().AnnualDecayFactorPercentage))
 	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
-	maxManaSupply := 21.0 * float64(protocolParams.TokenSupply()) * float64(protocolParams.ManaParameters().GenerationRate) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())-float64(protocolParams.ManaParameters().GenerationRateExponent)) / (betaPerYear * epochDurationInYears)
+	maxManaSupply := 21.0 * float64(protocolParams.TokenSupply()) * float64(protocolParams.ManaParameters().GenerationRate) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())-float64(protocolParams.ManaParameters().GenerationRateExponent)) / (beta * epochDurationInYears)
 	if maxManaSupply >= math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount)) {
 		panic("the combination of parameters might lead to overflowing of the Mana supply")
 	}
@@ -78,17 +90,36 @@ func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
 	}
 }
 
-func decayFactorSanityCheck(protocolParams *V3ProtocolParameters) {
-	// TODO: define betaPerYear in protocolParamets
-	betaPerYear := 1.0 / 3.0
-	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
-	for i := 0; i < len(protocolParams.ManaParameters().DecayFactors); i++ {
-		intDecayFactor := float64(protocolParams.ManaParameters().DecayFactors[i]) * math.Pow(2, -float64(protocolParams.ManaParameters().DecayFactorsExponent))
-		floatDecayFactor := math.Exp(-betaPerYear * epochDurationInYears * float64(i+1))
-		if floatDecayFactor < 0.99*intDecayFactor || floatDecayFactor > 1.01*intDecayFactor {
-			panic("lookup table for decay factors does not match betaPerYear")
-		}
+func timeSanityCheck(protocolParams *V3ProtocolParameters) {
+	if protocolParams.LivenessThresholdLowerBoundInSeconds > protocolParams.LivenessThresholdUpperBoundInSeconds {
+		panic("LivenessThresholdLowerBoundInSeconds must be less than or equal to LivenessThresholdUpperBoundInSeconds")
 	}
+	if SlotIndex(protocolParams.LivenessThresholdUpperBoundInSeconds) >= protocolParams.MinCommittableAge()*SlotIndex(protocolParams.SlotDurationInSeconds()) {
+		panic("LivenessThresholdUpperBoundInSeconds * SlotDurationInSeconds must be less than MinCommittableAge")
+	}
+	if protocolParams.MinCommittableAge() >= protocolParams.MaxCommittableAge() {
+		panic("MinCommittableAge must be strictly less than MaxCommittableAge")
+	}
+	if lo.PanicOnErr(safemath.SafeMul(2, protocolParams.MaxCommittableAge())) > protocolParams.EpochNearingThreshold() {
+		panic("EpochNearingThreshold must be at least 2 times MaxCommittableAge")
+	}
+	if (1 << protocolParams.SlotsPerEpochExponent()) < 2*protocolParams.EpochNearingThreshold() {
+		panic("Epoch duration in slots must be at least 2 times EpochNearingThreshold")
+	}
+}
+
+func congestionControlSanityCheck(protocolParams *V3ProtocolParameters) {
+	if protocolParams.CongestionControlParameters().IncreaseThreshold > WorkScore(protocolParams.SlotDurationInSeconds())*protocolParams.CongestionControlParameters().SchedulerRate {
+		fmt.Printf("IncreaseThreshold: %d, SchedulerRate: %d, SlotDurationSeconds: %d\n", protocolParams.CongestionControlParameters().IncreaseThreshold, protocolParams.CongestionControlParameters().SchedulerRate, protocolParams.SlotDurationInSeconds())
+		panic("IncreaseThreshold must be less than or equal to SchedulerRate*SlotDurationInSeconds")
+	}
+	if protocolParams.CongestionControlParameters().DecreaseThreshold > WorkScore(protocolParams.SlotDurationInSeconds())*protocolParams.CongestionControlParameters().SchedulerRate {
+		panic("DecreaseThreshold must be less than or equal to SchedulerRate*SlotDurationInSeconds")
+	}
+	if protocolParams.CongestionControlParameters().DecreaseThreshold > protocolParams.CongestionControlParameters().IncreaseThreshold {
+		panic("DecreaseThreshold must be less than or equal to IncreaseThreshold")
+	}
+
 }
 
 var _ ProtocolParameters = &V3ProtocolParameters{}
@@ -333,39 +364,19 @@ func WithWorkScoreOptions(
 	}
 }
 
-func WithSupplyOptions(baseTokenSupply BaseToken, bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactors []uint32, decayFactorsExponent uint8, decayFactorEpochsSum uint32, decayFactorEpochsSumExponent uint8) options.Option[V3ProtocolParameters] {
-
-	//generationRatePerSlot := uint32(generationRate) >> generationRateExponent
-
+func WithSupplyOptions(baseTokenSupply BaseToken, bitsCount uint8, generationRate uint8, generationRateExponent uint8, decayFactorsExponent uint8, decayFactorEpochsSumExponent uint8, annualDecayFactorPercentage uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TokenSupply = baseTokenSupply
 		p.basicProtocolParameters.ManaParameters.BitsCount = bitsCount
 		p.basicProtocolParameters.ManaParameters.GenerationRate = generationRate
 		p.basicProtocolParameters.ManaParameters.GenerationRateExponent = generationRateExponent
-		p.basicProtocolParameters.ManaParameters.DecayFactors = decayFactors
 		p.basicProtocolParameters.ManaParameters.DecayFactorsExponent = decayFactorsExponent
-		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSum = decayFactorEpochsSum
 		p.basicProtocolParameters.ManaParameters.DecayFactorEpochsSumExponent = decayFactorEpochsSumExponent
+		p.basicProtocolParameters.ManaParameters.AnnualDecayFactorPercentage = annualDecayFactorPercentage
 	}
 }
 
 func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8, livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
-	if livenessThresholdLowerBoundInSeconds > livenessThresholdUpperBoundInSeconds {
-		panic("livenessThresholdLowerBoundInSeconds must be smaller than livenessThresholdUpperBoundInSeconds")
-	}
-	if SlotIndex(livenessThresholdUpperBoundInSeconds) > minCommittableAge*SlotIndex(slotDurationInSeconds) {
-		panic("livenessThresholdUpperBoundInSeconds * slotDurationInSeconds must be smaller than minCommittableAge")
-	}
-	if minCommittableAge > maxCommittableAge {
-		panic("minCommittableAge must be smaller than maxCommittableAge")
-	}
-	if 2*maxCommittableAge > epochNearingThreshold {
-		panic("epochNearingThreshold must be at least 2 times maxCommittableAge")
-	}
-	if (1 << slotsPerEpochExponent) < 2*epochNearingThreshold {
-		panic("epoch duration in slots must be at least 2 times epochNearingThreshold")
-	}
-
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.GenesisSlot = genesisSlot
 		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
@@ -425,4 +436,27 @@ func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3Protoco
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TargetCommitteeSize = targetCommitteeSize
 	}
+}
+
+// DeriveManaDecayFactors computes a lookup table of mana decay factors using floating point arithmetic.
+func DeriveManaDecayFactors(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8, decayFactorsExponent uint8) []uint32 {
+	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotDurationSeconds)) / math.Pow(2, float64(slotsPerEpochExponent))
+	decayFactors := make([]uint32, int(epochsPerYear))
+
+	decayFactorPerEpoch := math.Pow(float64(annualDecayFactorPercentage)/100.0, 1.0/epochsPerYear)
+
+	for epoch := 1; epoch <= int(epochsPerYear); epoch++ {
+		decayFactor := math.Pow(decayFactorPerEpoch, float64(epoch)) * (math.Pow(2, float64(decayFactorsExponent)))
+		decayFactors[epoch-1] = uint32(decayFactor)
+	}
+
+	return decayFactors
+}
+
+// DeriveManaDecayFactorEpochsSum computes mana decay factor epochs sum parameter using floating point arithmetic.
+func DeriveManaDecayFactorEpochsSum(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8, decayFactorEpochsSumExponent uint8) uint32 {
+	delta := math.Pow(2, float64(slotsPerEpochExponent)) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotDurationSeconds)
+	annualDecayFactor := float64(annualDecayFactorPercentage) / 100.0
+
+	return uint32((math.Pow(annualDecayFactor, delta) / (1 - math.Pow(annualDecayFactor, delta)) * (math.Pow(2, float64(decayFactorEpochsSumExponent)))))
 }

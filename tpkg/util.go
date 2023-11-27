@@ -1031,13 +1031,11 @@ func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 }
 
 // RandProtocolParameters produces random protocol parameters.
+// Some protocol parameters are subject to sanity checks when the protocol parameters are created
+// so we used fixed values here to avoid panics rather than random ones.
 func RandProtocolParameters() iotago.ProtocolParameters {
-	livenessThresholdLowerBound := RandUint16(math.MaxUint16 - 1)
-	livenessThresholdUpperBound := livenessThresholdLowerBound + 1
-	minCA := iotago.SlotIndex(livenessThresholdUpperBound)
-	maxCA := minCA + 1
-	epochNearingThreshold := 2 * maxCA
-	slotsPerEpochExponent := uint8(31)
+	var slotDurationSeconds uint8 = 10
+	var schedulerRate iotago.WorkScore = 1000
 
 	return iotago.NewV3ProtocolParameters(
 		iotago.WithNetworkOptions(
@@ -1067,45 +1065,32 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 		iotago.WithTimeOptions(
 			RandSlot(),
 			time.Now().Unix(),
-			RandUint8(math.MaxUint8),
-			slotsPerEpochExponent,
-			livenessThresholdLowerBound,
-			livenessThresholdUpperBound,
-			minCA,
-			maxCA,
-			epochNearingThreshold,
+			slotDurationSeconds,
+			13,
+			15,
+			30,
+			10,
+			20,
+			40,
+		),
+		iotago.WithSupplyOptions(
+			1813620509061365,
+			63,
+			1,
+			17,
+			32,
+			21,
+			71,
 		),
 		iotago.WithCongestionControlOptions(
 			RandMana(iotago.MaxMana),
 			RandMana(iotago.MaxMana),
 			RandMana(iotago.MaxMana),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
+			8*schedulerRate,
+			5*schedulerRate,
+			schedulerRate,
 			RandUint32(math.MaxUint32),
 			RandUint32(math.MaxUint32),
 		),
 	)
-}
-
-// ManaDecayFactors calculates mana decay factors that can be used in the tests.
-func ManaDecayFactors(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorsExponent uint64) []uint32 {
-	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotTimeSeconds)) / float64(slotsPerEpoch)
-	decayFactors := make([]uint32, int(epochsPerYear))
-
-	betaPerEpochIndex := betaPerYear / epochsPerYear
-
-	for epoch := 1; epoch <= int(epochsPerYear); epoch++ {
-		decayFactor := math.Exp(-betaPerEpochIndex*float64(epoch)) * (math.Pow(2, float64(decayFactorsExponent)))
-		decayFactors[epoch-1] = uint32(decayFactor)
-	}
-
-	return decayFactors
-}
-
-// ManaDecayFactorEpochsSum calculates mana decay factor epochs sum parameter that can be used in the tests.
-func ManaDecayFactorEpochsSum(betaPerYear float64, slotsPerEpoch int, slotTimeSeconds int, decayFactorEpochsSumExponent uint64) uint32 {
-	delta := float64(slotsPerEpoch) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(slotTimeSeconds)
-
-	return uint32((math.Exp(-betaPerYear*delta) / (1 - math.Exp(-betaPerYear*delta)) * (math.Pow(2, float64(decayFactorEpochsSumExponent)))))
 }
