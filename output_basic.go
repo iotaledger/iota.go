@@ -5,10 +5,10 @@ import (
 )
 
 type (
-	basicOutputUnlockCondition  interface{ UnlockCondition }
-	basicOutputFeature          interface{ Feature }
-	BasicOutputUnlockConditions = UnlockConditions[basicOutputUnlockCondition]
-	BasicOutputFeatures         = Features[basicOutputFeature]
+	BasicOutputUnlockCondition  interface{ UnlockCondition }
+	BasicOutputFeature          interface{ Feature }
+	BasicOutputUnlockConditions = UnlockConditions[BasicOutputUnlockCondition]
+	BasicOutputFeatures         = Features[BasicOutputFeature]
 )
 
 // BasicOutputs is a slice of BasicOutput(s).

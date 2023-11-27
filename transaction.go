@@ -39,6 +39,8 @@ var (
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the address field within the output.
 	ErrAccountOutputCyclicAddress = ierrors.New("account output's ID corresponds to address field")
+	// ErrAccountOutputAmountLessThanStakedAmount gets returned if an AccountOutput's amount is less than the StakedAmount field of its staking feature.
+	ErrAccountOutputAmountLessThanStakedAmount = ierrors.New("account output's amount is less than the staked amount")
 	// ErrAnchorOutputNonEmptyState gets returned if an AnchorOutput with zeroed AnchorID contains state (counters non-zero etc.).
 	ErrAnchorOutputNonEmptyState = ierrors.New("anchor output is not empty state")
 	// ErrAnchorOutputCyclicAddress gets returned if an AnchorOutput's AnchorID results into the same address as the State/Governance controller.

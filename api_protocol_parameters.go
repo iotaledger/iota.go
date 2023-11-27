@@ -54,8 +54,8 @@ type basicProtocolParameters struct {
 	EpochNearingThreshold SlotIndex `serix:""`
 	// RMCParameters defines the parameters used by to calculate the Reference Mana Cost (RMC).
 	CongestionControlParameters CongestionControlParameters `serix:""`
-	// VersionSignaling defines the parameters used for version upgrades.
-	VersionSignaling VersionSignaling `serix:""`
+	// VersionSignalingParameters defines the parameters used for version upgrades.
+	VersionSignalingParameters VersionSignalingParameters `serix:""`
 	// RewardsParameters defines the parameters used for reward calculation.
 	RewardsParameters RewardsParameters `serix:""`
 
@@ -84,7 +84,7 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.MaxCommittableAge == other.MaxCommittableAge &&
 		b.EpochNearingThreshold == other.EpochNearingThreshold &&
 		b.CongestionControlParameters.Equals(other.CongestionControlParameters) &&
-		b.VersionSignaling.Equals(other.VersionSignaling) &&
+		b.VersionSignalingParameters.Equals(other.VersionSignalingParameters) &&
 		b.RewardsParameters.Equals(other.RewardsParameters) &&
 		b.TargetCommitteeSize == other.TargetCommitteeSize
 }

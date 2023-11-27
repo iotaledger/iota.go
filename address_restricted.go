@@ -13,7 +13,7 @@ import (
 
 type RestrictedAddress struct {
 	Address             Address                    `serix:""`
-	AllowedCapabilities AddressCapabilitiesBitMask `serix:""`
+	AllowedCapabilities AddressCapabilitiesBitMask `serix:",omitempty"`
 }
 
 func (addr *RestrictedAddress) Clone() Address {

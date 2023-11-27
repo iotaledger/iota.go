@@ -1,4 +1,4 @@
-package api
+package iotago
 
 import (
 	"sync"
@@ -8,26 +8,25 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2/stream"
-	iotago "github.com/iotaledger/iota.go/v4"
 )
 
 type EpochBasedProvider struct {
 	mutex                             sync.RWMutex
-	protocolParametersByVersion       map[iotago.Version]iotago.ProtocolParameters
-	futureProtocolParametersByVersion map[iotago.Version]iotago.Identifier
+	protocolParametersByVersion       map[Version]ProtocolParameters
+	futureProtocolParametersByVersion map[Version]Identifier
 	protocolVersions                  *ProtocolEpochVersions
 
-	latestAPI iotago.API
+	latestAPI API
 
-	committedAPI iotago.API
+	committedAPI API
 
 	committedSlotMutex sync.RWMutex
-	committedSlot      iotago.SlotIndex
+	committedSlot      SlotIndex
 
-	optsAPIForMissingVersionCallback func(protocolParameters iotago.ProtocolParameters) (iotago.API, error)
+	optsAPIForMissingVersionCallback func(protocolParameters ProtocolParameters) (API, error)
 }
 
-func WithAPIForMissingVersionCallback(callback func(protocolParameters iotago.ProtocolParameters) (iotago.API, error)) options.Option[EpochBasedProvider] {
+func WithAPIForMissingVersionCallback(callback func(protocolParameters ProtocolParameters) (API, error)) options.Option[EpochBasedProvider] {
 	return func(provider *EpochBasedProvider) {
 		provider.optsAPIForMissingVersionCallback = callback
 	}
@@ -35,13 +34,13 @@ func WithAPIForMissingVersionCallback(callback func(protocolParameters iotago.Pr
 
 func NewEpochBasedProvider(opts ...options.Option[EpochBasedProvider]) *EpochBasedProvider {
 	return options.Apply(&EpochBasedProvider{
-		protocolParametersByVersion:       make(map[iotago.Version]iotago.ProtocolParameters),
-		futureProtocolParametersByVersion: make(map[iotago.Version]iotago.Identifier),
+		protocolParametersByVersion:       make(map[Version]ProtocolParameters),
+		futureProtocolParametersByVersion: make(map[Version]Identifier),
 		protocolVersions:                  NewProtocolEpochVersions(),
 	}, opts)
 }
 
-func (e *EpochBasedProvider) SetCommittedSlot(slot iotago.SlotIndex) {
+func (e *EpochBasedProvider) SetCommittedSlot(slot SlotIndex) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
 
@@ -52,12 +51,12 @@ func (e *EpochBasedProvider) SetCommittedSlot(slot iotago.SlotIndex) {
 	e.updateCommittedAPI(slot)
 }
 
-func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters iotago.ProtocolParameters, epoch iotago.EpochIndex) {
+func (e *EpochBasedProvider) AddProtocolParametersAtEpoch(protocolParameters ProtocolParameters, epoch EpochIndex) {
 	e.AddProtocolParameters(protocolParameters)
 	e.AddVersion(protocolParameters.Version(), epoch)
 }
 
-func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters iotago.ProtocolParameters) {
+func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters ProtocolParameters) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
 
@@ -69,7 +68,7 @@ func (e *EpochBasedProvider) AddProtocolParameters(protocolParameters iotago.Pro
 	}
 }
 
-func (e *EpochBasedProvider) AddVersion(version iotago.Version, epoch iotago.EpochIndex) {
+func (e *EpochBasedProvider) AddVersion(version Version, epoch EpochIndex) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
 
@@ -81,7 +80,7 @@ func (e *EpochBasedProvider) AddVersion(version iotago.Version, epoch iotago.Epo
 	e.updateCommittedAPI(e.committedSlot)
 }
 
-func (e *EpochBasedProvider) AddFutureVersion(version iotago.Version, protocolParamsHash iotago.Identifier, epoch iotago.EpochIndex) {
+func (e *EpochBasedProvider) AddFutureVersion(version Version, protocolParamsHash Identifier, epoch EpochIndex) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
 
@@ -89,7 +88,7 @@ func (e *EpochBasedProvider) AddFutureVersion(version iotago.Version, protocolPa
 	e.futureProtocolParametersByVersion[version] = protocolParamsHash
 }
 
-func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, error) {
+func (e *EpochBasedProvider) apiForVersion(version Version) (API, error) {
 	if e.latestAPI != nil && e.latestAPI.Version() == version {
 		return e.latestAPI, nil
 	}
@@ -106,7 +105,7 @@ func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, 
 	//nolint:gocritic // further version will be added here
 	switch protocolParams.Version() {
 	case 3:
-		return iotago.V3API(protocolParams), nil
+		return V3API(protocolParams), nil
 	}
 
 	if e.optsAPIForMissingVersionCallback != nil {
@@ -116,14 +115,14 @@ func (e *EpochBasedProvider) apiForVersion(version iotago.Version) (iotago.API, 
 	return nil, ierrors.Errorf("no api available for parameters with version %d", protocolParams.Version())
 }
 
-func (e *EpochBasedProvider) APIForVersion(version iotago.Version) (iotago.API, error) {
+func (e *EpochBasedProvider) APIForVersion(version Version) (API, error) {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return e.apiForVersion(version)
 }
 
-func (e *EpochBasedProvider) APIForTime(t time.Time) iotago.API {
+func (e *EpochBasedProvider) APIForTime(t time.Time) API {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
@@ -133,7 +132,7 @@ func (e *EpochBasedProvider) APIForTime(t time.Time) iotago.API {
 	return lo.PanicOnErr(e.apiForVersion(e.protocolVersions.VersionForEpoch(epoch)))
 }
 
-func (e *EpochBasedProvider) APIForSlot(slot iotago.SlotIndex) iotago.API {
+func (e *EpochBasedProvider) APIForSlot(slot SlotIndex) API {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
@@ -142,28 +141,28 @@ func (e *EpochBasedProvider) APIForSlot(slot iotago.SlotIndex) iotago.API {
 	return lo.PanicOnErr(e.apiForVersion(e.protocolVersions.VersionForEpoch(epoch)))
 }
 
-func (e *EpochBasedProvider) APIForEpoch(epoch iotago.EpochIndex) iotago.API {
+func (e *EpochBasedProvider) APIForEpoch(epoch EpochIndex) API {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return lo.PanicOnErr(e.apiForVersion(e.protocolVersions.VersionForEpoch(epoch)))
 }
 
-func (e *EpochBasedProvider) LatestAPI() iotago.API {
+func (e *EpochBasedProvider) LatestAPI() API {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return e.latestAPI
 }
 
-func (e *EpochBasedProvider) CommittedAPI() iotago.API {
+func (e *EpochBasedProvider) CommittedAPI() API {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return e.committedAPI
 }
 
-func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identifier, error) {
+func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (Identifier, error) {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
@@ -171,42 +170,42 @@ func (e *EpochBasedProvider) VersionsAndProtocolParametersHash() (iotago.Identif
 
 	for _, version := range e.protocolVersions.Slice() {
 		if err := stream.Write(byteBuffer, version.Version); err != nil {
-			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write Version")
+			return Identifier{}, ierrors.Wrap(err, "failed to write Version")
 		}
 		if err := stream.Write(byteBuffer, version.StartEpoch); err != nil {
-			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write StartEpoch")
+			return Identifier{}, ierrors.Wrap(err, "failed to write StartEpoch")
 		}
 
-		var paramsHash iotago.Identifier
+		var paramsHash Identifier
 		params, paramsExist := e.protocolParametersByVersion[version.Version]
 		if paramsExist {
 			var err error
 			if paramsHash, err = params.Hash(); err != nil {
-				return iotago.Identifier{}, ierrors.Wrap(err, "failed to get protocol parameters hash")
+				return Identifier{}, ierrors.Wrap(err, "failed to get protocol parameters hash")
 			}
 		} else {
 			var hashExists bool
 			if paramsHash, hashExists = e.futureProtocolParametersByVersion[version.Version]; !hashExists {
-				return iotago.Identifier{}, ierrors.Errorf("protocol parameters for version %d are not set", version.Version)
+				return Identifier{}, ierrors.Errorf("protocol parameters for version %d are not set", version.Version)
 			}
 		}
 
 		if err := stream.Write(byteBuffer, paramsHash); err != nil {
-			return iotago.Identifier{}, ierrors.Wrap(err, "failed to write protocol parameters hash bytes")
+			return Identifier{}, ierrors.Wrap(err, "failed to write protocol parameters hash bytes")
 		}
 	}
 
-	return iotago.IdentifierFromData(lo.PanicOnErr(byteBuffer.Bytes())), nil
+	return IdentifierFromData(lo.PanicOnErr(byteBuffer.Bytes())), nil
 }
 
-func (e *EpochBasedProvider) ProtocolParameters(version iotago.Version) iotago.ProtocolParameters {
+func (e *EpochBasedProvider) ProtocolParameters(version Version) ProtocolParameters {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return e.protocolParametersByVersion[version]
 }
 
-func (e *EpochBasedProvider) ProtocolParametersHash(version iotago.Version) iotago.Identifier {
+func (e *EpochBasedProvider) ProtocolParametersHash(version Version) Identifier {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
@@ -221,14 +220,14 @@ func (e *EpochBasedProvider) ProtocolEpochVersions() []ProtocolEpochVersion {
 	return e.protocolVersions.Slice()
 }
 
-func (e *EpochBasedProvider) EpochForVersion(version iotago.Version) (iotago.EpochIndex, bool) {
+func (e *EpochBasedProvider) EpochForVersion(version Version) (EpochIndex, bool) {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
 	return e.protocolVersions.EpochForVersion(version)
 }
 
-func (e *EpochBasedProvider) VersionForSlot(slot iotago.SlotIndex) iotago.Version {
+func (e *EpochBasedProvider) VersionForSlot(slot SlotIndex) Version {
 	e.mutex.RLock()
 	defer e.mutex.RUnlock()
 
@@ -237,7 +236,7 @@ func (e *EpochBasedProvider) VersionForSlot(slot iotago.SlotIndex) iotago.Versio
 	return e.protocolVersions.VersionForEpoch(epoch)
 }
 
-func (e *EpochBasedProvider) updateCommittedAPI(slot iotago.SlotIndex) {
+func (e *EpochBasedProvider) updateCommittedAPI(slot SlotIndex) {
 	if e.latestAPI == nil {
 		return
 	}
@@ -250,6 +249,6 @@ func (e *EpochBasedProvider) updateCommittedAPI(slot iotago.SlotIndex) {
 	}
 }
 
-func (e *EpochBasedProvider) versionForEpoch(epoch iotago.EpochIndex) iotago.Version {
+func (e *EpochBasedProvider) versionForEpoch(epoch EpochIndex) Version {
 	return e.protocolVersions.VersionForEpoch(epoch)
 }

@@ -78,12 +78,12 @@ func (set AnchorOutputsSet) Merge(other AnchorOutputsSet) (AnchorOutputsSet, err
 }
 
 type (
-	anchorOutputUnlockCondition  interface{ UnlockCondition }
-	anchorOutputFeature          interface{ Feature }
-	anchorOutputImmFeature       interface{ Feature }
-	AnchorOutputUnlockConditions = UnlockConditions[anchorOutputUnlockCondition]
-	AnchorOutputFeatures         = Features[anchorOutputFeature]
-	AnchorOutputImmFeatures      = Features[anchorOutputImmFeature]
+	AnchorOutputUnlockCondition  interface{ UnlockCondition }
+	AnchorOutputFeature          interface{ Feature }
+	AnchorOutputImmFeature       interface{ Feature }
+	AnchorOutputUnlockConditions = UnlockConditions[AnchorOutputUnlockCondition]
+	AnchorOutputFeatures         = Features[AnchorOutputFeature]
+	AnchorOutputImmFeatures      = Features[AnchorOutputImmFeature]
 )
 
 // AnchorOutput is an output type which represents an anchor.
@@ -213,10 +213,6 @@ func (a *AnchorOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 
 func (a *AnchorOutput) ChainID() ChainID {
 	return a.AnchorID
-}
-
-func (a *AnchorOutput) AnchorEmpty() bool {
-	return a.AnchorID == EmptyAnchorID
 }
 
 func (a *AnchorOutput) FeatureSet() FeatureSet {

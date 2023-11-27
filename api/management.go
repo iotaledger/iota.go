@@ -1,4 +1,4 @@
-package apimodels
+package api
 
 import (
 	iotago "github.com/iotaledger/iota.go/v4"

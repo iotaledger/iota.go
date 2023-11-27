@@ -26,6 +26,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 		},
 		inputOwner: map[iotago.OutputID]iotago.Address{},
 		inputs:     iotago.OutputSet{},
+		rewards:    iotago.Mana(0),
 	}
 }
 
@@ -36,6 +37,7 @@ type TransactionBuilder struct {
 	transaction      *iotago.Transaction
 	inputs           iotago.OutputSet
 	inputOwner       map[iotago.OutputID]iotago.Address
+	rewards          iotago.Mana
 }
 
 // TxInput defines an input with the address to unlock.
@@ -77,9 +79,24 @@ func (b *TransactionBuilder) AddInput(input *TxInput) *TransactionBuilder {
 // be used to accumulate data over the set of inputs, i.e. the input sum etc.
 type TransactionBuilderInputFilter func(outputID iotago.OutputID, input iotago.Output) bool
 
-// AddContextInput adds the given context input to the builder.
-func (b *TransactionBuilder) AddContextInput(contextInput iotago.Input) *TransactionBuilder {
-	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, contextInput)
+// AddCommitmentInput adds the given commitment input to the builder.
+func (b *TransactionBuilder) AddCommitmentInput(commitmentInput *iotago.CommitmentInput) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, commitmentInput)
+
+	return b
+}
+
+// AddBlockIssuanceCreditInput adds the given block issuance credit input to the builder.
+func (b *TransactionBuilder) AddBlockIssuanceCreditInput(blockIssuanceCreditInput *iotago.BlockIssuanceCreditInput) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, blockIssuanceCreditInput)
+
+	return b
+}
+
+// AddRewardInput adds the given reward input to the builder.
+func (b *TransactionBuilder) AddRewardInput(rewardInput *iotago.RewardInput, mana iotago.Mana) *TransactionBuilder {
+	b.transaction.TransactionEssence.ContextInputs = append(b.transaction.TransactionEssence.ContextInputs, rewardInput)
+	b.rewards += mana
 
 	return b
 }
@@ -139,6 +156,36 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
+
+func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+	setBuildError := func(err error) *TransactionBuilder {
+		b.occurredBuildErr = err
+		return b
+	}
+
+	if storedManaOutputIndex >= len(b.transaction.Outputs) {
+		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
+	}
+
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	if err != nil {
+		return setBuildError(err)
+	}
+
+	// move the remaining mana to stored mana on the specified output index
+	switch output := b.transaction.Outputs[storedManaOutputIndex].(type) {
+	case *iotago.BasicOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	case *iotago.AccountOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	case *iotago.NFTOutput:
+		output.Mana += unboundManaInputsLeftoverBalance
+	default:
+		return setBuildError(ierrors.Wrapf(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output))
+	}
+
+	return b
+}
 
 func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targetSlot iotago.SlotIndex, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
@@ -324,6 +371,7 @@ type AvailableManaResult struct {
 	UnboundPotentialMana iotago.Mana
 	UnboundStoredMana    iotago.Mana
 	AccountBoundMana     map[iotago.AccountID]iotago.Mana
+	Rewards              iotago.Mana
 }
 
 func (a *AvailableManaResult) addTotalMana(value iotago.Mana) error {
@@ -382,6 +430,16 @@ func (a *AvailableManaResult) AddUnboundStoredMana(value iotago.Mana) error {
 		return ierrors.Wrap(err, "failed to add unbound stored mana")
 	}
 	a.UnboundStoredMana = unboundStoredMana
+
+	return a.addUnboundMana(value)
+}
+
+func (a *AvailableManaResult) AddRewards(value iotago.Mana) error {
+	rewards, err := safemath.SafeAdd(a.Rewards, value)
+	if err != nil {
+		return ierrors.Wrap(err, "failed to add rewards")
+	}
+	a.Rewards = rewards
 
 	return a.addUnboundMana(value)
 }
@@ -454,6 +512,11 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 				return nil, err
 			}
 		}
+	}
+
+	// add the rewards (unbound)
+	if err := result.AddRewards(b.rewards); err != nil {
+		return nil, err
 	}
 
 	return result, nil

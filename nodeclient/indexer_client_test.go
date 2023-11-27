@@ -2,43 +2,42 @@ package nodeclient_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func TestOutputsQuery_Build(t *testing.T) {
 	trueCondition := true
-	query := &apimodels.BasicOutputsQuery{
-		IndexerTimelockParams: apimodels.IndexerTimelockParams{
+	query := &api.BasicOutputsQuery{
+		IndexerTimelockParams: api.IndexerTimelockParams{
 			HasTimelock:      &trueCondition,
 			TimelockedBefore: 1,
 			TimelockedAfter:  2,
 		},
-		IndexerExpirationParams: apimodels.IndexerExpirationParams{
+		IndexerExpirationParams: api.IndexerExpirationParams{
 			HasExpiration: &trueCondition,
 			ExpiresBefore: 5,
 			ExpiresAfter:  6,
 		},
-		IndexerCreationParams: apimodels.IndexerCreationParams{
+		IndexerCreationParams: api.IndexerCreationParams{
 			CreatedBefore: 9,
 			CreatedAfter:  10,
 		},
-		IndexerStorageDepositParams: apimodels.IndexerStorageDepositParams{
+		IndexerStorageDepositParams: api.IndexerStorageDepositParams{
 			HasStorageDepositReturn:           &trueCondition,
 			StorageDepositReturnAddressBech32: "",
 		},
 		AddressBech32: "alice",
 		SenderBech32:  "bob",
 		Tag:           "charlie",
-		IndexerCursorParams: apimodels.IndexerCursorParams{
+		IndexerCursorParams: api.IndexerCursorParams{
 			Cursor: func() *string {
 				str := "dave"
 
@@ -54,11 +53,11 @@ func TestOutputsQuery_Build(t *testing.T) {
 func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{"indexer/v2"},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.IndexerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -69,11 +68,11 @@ func Test_IndexerEnabled(t *testing.T) {
 func Test_IndexerDisabled(t *testing.T) {
 	defer gock.Off()
 
-	originRoutes := &apimodels.RoutesResponse{
+	originRoutes := &api.RoutesResponse{
 		Routes: []string{"someplugin/v1"},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
 	client := nodeClient(t)
 
@@ -91,13 +90,13 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	fakeOutputID, err := originOutputProof.OutputID(originOutput)
 	require.NoError(t, err)
 
-	originRoutes := &apimodels.RoutesResponse{
-		Routes: []string{"indexer/v2"},
+	originRoutes := &api.RoutesResponse{
+		Routes: []string{api.IndexerPluginName},
 	}
 
-	mockGetJSON(nodeclient.RouteRoutes, 200, originRoutes)
+	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
-	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -106,7 +105,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag": "some-tag",
 	})
 
-	mockGetJSONWithParams(nodeclient.IndexerAPIRouteBasicOutputs, 200, &apimodels.IndexerResponse{
+	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
 		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
@@ -115,8 +114,8 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 		"tag":    "some-tag",
 	})
 
-	outputRoute := fmt.Sprintf(nodeclient.RouteOutput, fakeOutputID.ToHex())
-	mockGetBinary(outputRoute, 200, &apimodels.OutputResponse{
+	outputRoute := api.EndpointWithNamedParameterValue(api.CoreRouteOutput, api.ParameterOutputID, fakeOutputID.ToHex())
+	mockGetBinary(outputRoute, 200, &api.OutputResponse{
 		Output:        originOutput,
 		OutputIDProof: originOutputProof,
 	}, true)
@@ -126,7 +125,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	indexer, err := client.Indexer(context.TODO())
 	require.NoError(t, err)
 
-	resultSet, err := indexer.Outputs(context.TODO(), &apimodels.BasicOutputsQuery{Tag: "some-tag"})
+	resultSet, err := indexer.Outputs(context.TODO(), &api.BasicOutputsQuery{Tag: "some-tag"})
 	require.NoError(t, err)
 
 	var runs int

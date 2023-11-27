@@ -8,6 +8,10 @@ import (
 
 // Errors used for block failures.
 var (
+	// ErrBlockParentNotFound gets returned when the block parent could not be found.
+	ErrBlockParentNotFound = ierrors.New("block parent not found")
+	// ErrBlockIssuingTimeNonMonotonic gets returned when the block issuing time is not monotonically increasing compared to the block's parents.
+	ErrBlockIssuingTimeNonMonotonic = ierrors.New("block issuing time is not monotonically increasing compared to parents")
 	// ErrIssuerAccountNotFound gets returned when the issuer account could not be found.
 	ErrIssuerAccountNotFound = ierrors.New("could not retrieve account information for block issuer")
 	// ErrBurnedInsufficientMana gets returned when the issuer account burned insufficient Mana for a block.

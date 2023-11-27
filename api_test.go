@@ -78,7 +78,8 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			"xxxNetwork",
 			"xxx",
 		),
-		iotago.WithStorageOptions(
+		iotago.WithSupplyOptions(
+			1234567890987654321,
 			6,
 			7,
 			8,
@@ -98,28 +99,29 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 			9,
 			10,
 		),
-		iotago.WithTimeOptions(
+		iotago.WithTimeProviderOptions(
 			654978,
 			1681373293,
 			10,
 			13,
-			15,
-			30,
-			10,
-			20,
-			60,
 		),
-		iotago.WithSupplyOptions(
-			1234567890987654321,
+		iotago.WithManaOptions(
 			1,
 			1,
 			27,
-			[]uint32{4291249941, 4287535805},
+			[]uint32{10, 20},
 			32,
 			1337,
 			20,
 		),
 		iotago.WithStakingOptions(11, 10, 9),
+		iotago.WithLivenessOptions(
+			15,
+			30,
+			10,
+			20,
+			24,
+		),
 		iotago.WithCongestionControlOptions(
 			500,
 			500,
@@ -134,7 +136,7 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		iotago.WithRewardsOptions(8, 8, 31, 1154, 2, 1),
 	)
 
-	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","storageScoreParameters":{"storageCost":"6","factorData":7,"offsetOutputOverhead":"8","offsetEd25519BlockIssuerKey":"9","offsetStakingFeature":"10","offsetDelegation":"10"},"workScoreParameters":{"dataByte":1,"block":2,"input":3,"contextInput":4,"output":5,"nativeToken":6,"staking":7,"blockIssuer":8,"allotment":9,"signatureEd25519":10},"manaParameters":{"bitsCount":1,"generationRate":1,"generationRateExponent":27,"decayFactors":[10,20],"decayFactorsExponent":32,"decayFactorEpochsSum":1337,"decayFactorEpochsSumExponent":20},"tokenSupply":"1234567890987654321","genesisSlot":654978,"genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"stakingUnbondingPeriod":11,"validationBlocksPerSlot":10,"punishmentEpochs":9,"livenessThresholdLowerBound":15,"livenessThresholdUpperBound":30,"minCommittableAge":10,"maxCommittableAge":20,"epochNearingThreshold":60,"congestionControlParameters":{"minReferenceManaCost":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"maxBufferSize":1000,"maxValidationBufferSize":100},"versionSignaling":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1},"rewardsParameters":{"profitMarginExponent":8,"bootstrappingDuration":1154,"manaShareCoefficient":"2","decayBalancingConstantExponent":8,"decayBalancingConstant":"1","poolCoefficientExponent":31},"targetCommitteeSize":32}`
+	protoParamsJSON := `{"type":0,"version":3,"networkName":"xxxNetwork","bech32Hrp":"xxx","storageScoreParameters":{"storageCost":"6","factorData":7,"offsetOutputOverhead":"8","offsetEd25519BlockIssuerKey":"9","offsetStakingFeature":"10","offsetDelegation":"10"},"workScoreParameters":{"dataByte":1,"block":2,"input":3,"contextInput":4,"output":5,"nativeToken":6,"staking":7,"blockIssuer":8,"allotment":9,"signatureEd25519":10},"manaParameters":{"bitsCount":1,"generationRate":1,"generationRateExponent":27,"decayFactors":[10,20],"decayFactorsExponent":32,"decayFactorEpochsSum":1337,"decayFactorEpochsSumExponent":20},"tokenSupply":"1234567890987654321","genesisSlot":654978,"genesisUnixTimestamp":"1681373293","slotDurationInSeconds":10,"slotsPerEpochExponent":13,"stakingUnbondingPeriod":11,"validationBlocksPerSlot":10,"punishmentEpochs":9,"livenessThresholdLowerBound":15,"livenessThresholdUpperBound":30,"minCommittableAge":10,"maxCommittableAge":20,"epochNearingThreshold":24,"congestionControlParameters":{"minReferenceManaCost":"500","increase":"500","decrease":"500","increaseThreshold":800000,"decreaseThreshold":500000,"schedulerRate":100000,"maxBufferSize":1000,"maxValidationBufferSize":100},"versionSignalingParameters":{"windowSize":3,"windowTargetRatio":4,"activationOffset":1},"rewardsParameters":{"profitMarginExponent":8,"bootstrappingDuration":1154,"manaShareCoefficient":"2","decayBalancingConstantExponent":8,"decayBalancingConstant":"1","poolCoefficientExponent":31},"targetCommitteeSize":32}`
 
 	jsonProtoParams, err := tpkg.TestAPI.JSONEncode(protoParams)
 	require.NoError(t, err)

@@ -7,22 +7,7 @@ import (
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/hexutil"
-	"github.com/iotaledger/iota.go/v4/nodeclient/apimodels"
-)
-
-// Indexer plugin routes.
-var (
-	IndexerAPIRouteOutputs           = RootAPI + "/" + IndexerPluginName + "/outputs"
-	IndexerAPIRouteBasicOutputs      = RootAPI + "/" + IndexerPluginName + "/outputs/basic"
-	IndexerAPIRouteAccounts          = RootAPI + "/" + IndexerPluginName + "/outputs/account"
-	IndexerAPIRouteAccount           = RootAPI + "/" + IndexerPluginName + "/outputs/account/%s"
-	IndexerAPIRouteFoundries         = RootAPI + "/" + IndexerPluginName + "/outputs/foundry"
-	IndexerAPIRouteFoundry           = RootAPI + "/" + IndexerPluginName + "/outputs/foundry/%s"
-	IndexerAPIRouteNFTs              = RootAPI + "/" + IndexerPluginName + "/outputs/nft"
-	IndexerAPIRouteNFT               = RootAPI + "/" + IndexerPluginName + "/outputs/nft/%s"
-	IndexerAPIRouteDelegationOutputs = RootAPI + "/" + IndexerPluginName + "/outputs/delegation"
-	IndexerAPIRouteDelegationOutput  = RootAPI + "/" + IndexerPluginName + "/outputs/delegation/%s"
+	"github.com/iotaledger/iota.go/v4/api"
 )
 
 var (
@@ -37,12 +22,16 @@ type (
 	IndexerClient interface {
 		// Outputs returns a handle to query for outputs.
 		Outputs(ctx context.Context, query IndexerQuery) (*IndexerResultSet, error)
-		// Account queries for a specific iotago.AccountOutput by its identifier and returns the ledger index at which this output where available at.
-		Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error)
+		// Account queries for a specific iotago.AccountOutput by its address and returns the ledger index at which this output where available at.
+		Account(ctx context.Context, accountAddress *iotago.AccountAddress) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error)
+		// Anchor queries for a specific iotago.AnchorOutput by its address and returns the ledger index at which this output where available at.
+		Anchor(ctx context.Context, anchorAddress *iotago.AnchorAddress) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error)
 		// Foundry queries for a specific iotago.FoundryOutput by its identifier and returns the ledger index at which this output where available at.
 		Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error)
-		// NFT queries for a specific iotago.NFTOutput by its identifier and returns the ledger index at which this output where available at.
-		NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error)
+		// NFT queries for a specific iotago.NFTOutput by its address and returns the ledger index at which this output where available at.
+		NFT(ctx context.Context, nftAddress *iotago.NFTAddress) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error)
+		// Delegation queries for a specific iotago.DelegationOutout by its identifier and returns the ledger index at which this output where available at.
+		Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error)
 	}
 
 	// IndexerQuery is a query executed against the indexer.
@@ -67,7 +56,7 @@ type IndexerResultSet struct {
 	// The error which has occurred during querying.
 	Error error
 	// The response from the indexer after calling Next().
-	Response *apimodels.IndexerResponse
+	Response *api.IndexerResponse
 }
 
 // Next runs the next query against the indexer.
@@ -125,25 +114,27 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 	var baseRoute string
 	switch query.(type) {
-	case *apimodels.OutputsQuery:
-		baseRoute = IndexerAPIRouteOutputs
-	case *apimodels.BasicOutputsQuery:
-		baseRoute = IndexerAPIRouteBasicOutputs
-	case *apimodels.AccountsQuery:
-		baseRoute = IndexerAPIRouteAccounts
-	case *apimodels.FoundriesQuery:
-		baseRoute = IndexerAPIRouteFoundries
-	case *apimodels.NFTsQuery:
-		baseRoute = IndexerAPIRouteNFTs
-	case *apimodels.DelegationOutputsQuery:
-		baseRoute = IndexerAPIRouteDelegationOutputs
+	case *api.OutputsQuery:
+		baseRoute = api.IndexerRouteOutputs
+	case *api.BasicOutputsQuery:
+		baseRoute = api.IndexerRouteOutputsBasic
+	case *api.AccountsQuery:
+		baseRoute = api.IndexerRouteOutputsAccounts
+	case *api.AnchorsQuery:
+		baseRoute = api.IndexerRouteOutputsAnchors
+	case *api.FoundriesQuery:
+		baseRoute = api.IndexerRouteOutputsFoundries
+	case *api.NFTsQuery:
+		baseRoute = api.IndexerRouteOutputsNFTs
+	case *api.DelegationOutputsQuery:
+		baseRoute = api.IndexerRouteOutputsDelegations
 	default:
 		return nil, ierrors.Errorf("unsupported query type: %T", query)
 	}
 
 	// this gets executed on every Next()
 	nextFunc := func() error {
-		res.Response = &apimodels.IndexerResponse{}
+		res.Response = &api.IndexerResponse{}
 
 		urlParams, err := query.URLParams()
 		if err != nil {
@@ -162,7 +153,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 }
 
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
-	res := &apimodels.IndexerResponse{}
+	res := &api.IndexerResponse{}
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
 		return nil, nil, 0, err
@@ -181,8 +172,8 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	return &outputID, output, res.CommittedSlot, err
 }
 
-func (client *indexerClient) Account(ctx context.Context, accountID iotago.AccountID) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteAccount, hexutil.EncodeHex(accountID[:])))
+func (client *indexerClient) Account(ctx context.Context, accountAddress *iotago.AccountAddress) (*iotago.OutputID, *iotago.AccountOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsAccountByAddress, accountAddress))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -191,8 +182,18 @@ func (client *indexerClient) Account(ctx context.Context, accountID iotago.Accou
 	return outputID, output.(*iotago.AccountOutput), ledgerIndex, nil
 }
 
+func (client *indexerClient) Anchor(ctx context.Context, anchorAddress *iotago.AnchorAddress) (*iotago.OutputID, *iotago.AnchorOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsAnchorByAddress, anchorAddress))
+	if err != nil {
+		return nil, nil, ledgerIndex, err
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
+	return outputID, output.(*iotago.AnchorOutput), ledgerIndex, nil
+}
+
 func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.FoundryID) (*iotago.OutputID, *iotago.FoundryOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteFoundry, hexutil.EncodeHex(foundryID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, api.EndpointWithNamedParameterValue(api.IndexerRouteOutputsFoundryByID, api.ParameterFoundryID, foundryID.ToHex()))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -201,8 +202,8 @@ func (client *indexerClient) Foundry(ctx context.Context, foundryID iotago.Found
 	return outputID, output.(*iotago.FoundryOutput), ledgerIndex, nil
 }
 
-func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteNFT, hexutil.EncodeHex(nftID[:])))
+func (client *indexerClient) NFT(ctx context.Context, nftAddress *iotago.NFTAddress) (*iotago.OutputID, *iotago.NFTOutput, iotago.SlotIndex, error) {
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, client.core.endpointReplaceAddressParameter(api.IndexerRouteOutputsNFTByAddress, nftAddress))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}
@@ -212,7 +213,7 @@ func (client *indexerClient) NFT(ctx context.Context, nftID iotago.NFTID) (*iota
 }
 
 func (client *indexerClient) Delegation(ctx context.Context, delegationID iotago.DelegationID) (*iotago.OutputID, *iotago.DelegationOutput, iotago.SlotIndex, error) {
-	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, fmt.Sprintf(IndexerAPIRouteDelegationOutput, hexutil.EncodeHex(delegationID[:])))
+	outputID, output, ledgerIndex, err := client.singleOutputQuery(ctx, api.EndpointWithNamedParameterValue(api.IndexerRouteOutputsDelegationByID, api.ParameterDelegationID, delegationID.ToHex()))
 	if err != nil {
 		return nil, nil, ledgerIndex, err
 	}

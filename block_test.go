@@ -14,7 +14,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
-	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -49,7 +48,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLikeParent iotago.BlockIDs, apiProvider *api.EpochBasedProvider) error {
+func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLikeParent iotago.BlockIDs, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.LatestAPI()
@@ -66,7 +65,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
-func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -81,7 +80,7 @@ func createBlockAtSlot(t *testing.T, blockIndex, commitmentIndex iotago.SlotInde
 	return lo.Return2(apiForSlot.Encode(block, serix.WithValidation()))
 }
 
-func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, version iotago.Version, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, version iotago.Version, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -97,7 +96,7 @@ func createBlockAtSlotWithVersion(t *testing.T, blockIndex iotago.SlotIndex, ver
 }
 
 //nolint:unparam // in the test we always issue at blockIndex=100, but let's keep this flexibility.
-func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.ApplicationPayload, apiProvider *api.EpochBasedProvider) error {
+func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iotago.SlotIndex, payload iotago.ApplicationPayload, apiProvider *iotago.EpochBasedProvider) error {
 	t.Helper()
 
 	apiForSlot := apiProvider.APIForSlot(blockIndex)
@@ -114,8 +113,8 @@ func createBlockAtSlotWithPayload(t *testing.T, blockIndex, commitmentIndex iota
 }
 
 func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
-	apiProvider := api.NewEpochBasedProvider(
-		api.WithAPIForMissingVersionCallback(
+	apiProvider := iotago.NewEpochBasedProvider(
+		iotago.WithAPIForMissingVersionCallback(
 			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
 				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
@@ -151,7 +150,7 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 func TestBlock_Commitments(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 11, 21, 60),
@@ -170,7 +169,7 @@ func TestBlock_Commitments(t *testing.T) {
 
 func TestBlock_Commitments1(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 7, 21, 60),
@@ -194,7 +193,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	}
 	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
 	// commitments between 90 and slot that the block commits to (100 at most)
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 7, 21, 60),
@@ -208,7 +207,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 		}).
 		AddOutput(output).
 		SetCreationSlot(101).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -260,7 +259,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 
 func TestBlock_WeakParents(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 10, 20, 60),
@@ -318,7 +317,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	}
 	// with the following parameters, block issued in slot 110 can contain a transaction with commitment input referencing
 	// commitments between 90 and slot that the block commits to (100 at most)
-	apiProvider := api.NewEpochBasedProvider()
+	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
 		iotago.NewV3ProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 11, 21, 60),
@@ -331,7 +330,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -345,7 +344,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(90, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(90, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -359,7 +358,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -373,7 +372,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -387,7 +386,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -401,7 +400,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(89, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(89, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -415,7 +414,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			Input:        output,
 		}).
 		AddOutput(output).
-		AddContextInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
+		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 
 	require.NoError(t, err)
@@ -559,7 +558,7 @@ func TestBlockJSONMarshalling(t *testing.T) {
 		Signature: signature,
 	}
 
-	blockJSON := fmt.Sprintf(`{"header":{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s"},"body":{"type":%d,"strongParents":["%s"],"weakParents":[],"shallowLikeParents":[],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
+	blockJSON := fmt.Sprintf(`{"header":{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s"},"body":{"type":%d,"strongParents":["%s"],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
 		tpkg.TestAPI.Version(),
 		networkID,
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),

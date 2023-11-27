@@ -101,12 +101,12 @@ type FoundryOutputs []*FoundryOutput
 type FoundryOutputsSet map[FoundryID]*FoundryOutput
 
 type (
-	foundryOutputUnlockCondition  interface{ UnlockCondition }
-	foundryOutputFeature          interface{ Feature }
-	foundryOutputImmFeature       interface{ Feature }
-	FoundryOutputUnlockConditions = UnlockConditions[foundryOutputUnlockCondition]
-	FoundryOutputFeatures         = Features[foundryOutputFeature]
-	FoundryOutputImmFeatures      = Features[foundryOutputImmFeature]
+	FoundryOutputUnlockCondition  interface{ UnlockCondition }
+	FoundryOutputFeature          interface{ Feature }
+	FoundryOutputImmFeature       interface{ Feature }
+	FoundryOutputUnlockConditions = UnlockConditions[FoundryOutputUnlockCondition]
+	FoundryOutputFeatures         = Features[FoundryOutputFeature]
+	FoundryOutputImmFeatures      = Features[FoundryOutputImmFeature]
 )
 
 // FoundryOutput is an output type which controls the supply of user defined native tokens.

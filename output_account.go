@@ -90,12 +90,12 @@ func (set AccountOutputsSet) Merge(other AccountOutputsSet) (AccountOutputsSet, 
 }
 
 type (
-	accountOutputUnlockCondition  interface{ UnlockCondition }
-	accountOutputFeature          interface{ Feature }
-	accountOutputImmFeature       interface{ Feature }
-	AccountOutputUnlockConditions = UnlockConditions[accountOutputUnlockCondition]
-	AccountOutputFeatures         = Features[accountOutputFeature]
-	AccountOutputImmFeatures      = Features[accountOutputImmFeature]
+	AccountOutputUnlockCondition  interface{ UnlockCondition }
+	AccountOutputFeature          interface{ Feature }
+	AccountOutputImmFeature       interface{ Feature }
+	AccountOutputUnlockConditions = UnlockConditions[AccountOutputUnlockCondition]
+	AccountOutputFeatures         = Features[AccountOutputFeature]
+	AccountOutputImmFeatures      = Features[AccountOutputImmFeature]
 )
 
 // AccountOutput is an output type which represents an account.
@@ -203,10 +203,6 @@ func (a *AccountOutput) Ident() Address {
 
 func (a *AccountOutput) ChainID() ChainID {
 	return a.AccountID
-}
-
-func (a *AccountOutput) AccountEmpty() bool {
-	return a.AccountID == EmptyAccountID
 }
 
 func (a *AccountOutput) FeatureSet() FeatureSet {
