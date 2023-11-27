@@ -394,6 +394,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - valid staking transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -452,6 +453,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - adding staking feature in account state transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -502,6 +504,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - adding staking feature in account state transition with start epoch set too early",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -553,6 +556,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - negative BIC during account state transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -602,6 +606,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - removing staking feature before end epoch",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -655,6 +660,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - changing staking feature's staked amount",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -714,6 +720,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - reducing staking feature's end epoch by more than the unbonding period",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -773,6 +780,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - account removes block issuer feature while having a staking feature",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -834,6 +842,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - expired staking feature removed without specifying reward input",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -887,6 +896,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - changing an expired staking feature without claiming",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1037,6 +1047,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - destroy block issuer account with negative BIC",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1154,6 +1165,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - expired block issuer destroy transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1196,6 +1208,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "failed - remove non-expired block issuer feature transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1245,6 +1258,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - remove expired block issuer feature transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1372,6 +1386,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - update expired block issuer feature without extending expiration after MCA",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1476,6 +1491,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - update expired block issuer feature with extending expiration before MCA",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1533,6 +1549,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - update expired block issuer feature with extending expiration to the past before MCA",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1590,6 +1607,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - update block issuer account with negative BIC",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1702,6 +1720,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - update block issuer feature expiration to earlier slot",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1759,6 +1778,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "ok - non-expired block issuer replace key",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,

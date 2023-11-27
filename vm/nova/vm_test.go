@@ -1173,16 +1173,16 @@ func TestNovaTransactionExecution(t *testing.T) {
 
 		// ok - destroy block issuer account
 		func() *test {
-			accountAddr1 := tpkg.RandAccountAddress()
-
 			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
 
 			inputIDs := tpkg.RandOutputIDs(1)
+			// Simulate the scenario where the input account's ID is unset.
+			accountID := iotago.AccountIDFromOutputID(inputIDs[0])
 
 			inputs := vm.InputSet{
 				inputIDs[0]: &iotago.AccountOutput{
 					Amount:    100,
-					AccountID: accountAddr1.AccountID(),
+					AccountID: iotago.EmptyAccountID,
 					Features: iotago.AccountOutputFeatures{
 						&iotago.BlockIssuerFeature{
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
@@ -1201,7 +1201,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 					CreationSlot: 110,
 					ContextInputs: iotago.TxEssenceContextInputs{
 						&iotago.BlockIssuanceCreditInput{
-							AccountID: accountAddr1.AccountID(),
+							AccountID: accountID,
 						},
 					},
 					Inputs:       inputIDs.UTXOInputs(),
@@ -1218,7 +1218,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 			}
 
 			bicInputs := vm.BlockIssuanceCreditInputSet{
-				accountAddr1.AccountID(): 0,
+				accountID: 0,
 			}
 
 			commitment := &iotago.Commitment{
