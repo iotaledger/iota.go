@@ -1096,6 +1096,86 @@ func TestNovaTransactionExecution(t *testing.T) {
 			}
 		}(),
 
+		// ok - remove expired block issuer feature from new account
+		func() *test {
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+
+			creationSlot := iotago.SlotIndex(110)
+			inputIDs := tpkg.RandOutputIDs(1)
+			accountID := iotago.AccountIDFromOutputID(inputIDs[0])
+
+			inputs := vm.InputSet{
+				inputIDs[0]: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: iotago.EmptyAccountID,
+					Features: iotago.AccountOutputFeatures{
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
+							ExpirySlot:      100,
+						},
+					},
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			transaction := &iotago.Transaction{
+				API: testAPI,
+				TransactionEssence: &iotago.TransactionEssence{
+					CreationSlot: creationSlot,
+					ContextInputs: iotago.TxEssenceContextInputs{
+						&iotago.BlockIssuanceCreditInput{
+							AccountID: accountID,
+						},
+					},
+					Inputs:       inputIDs.UTXOInputs(),
+					Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+				},
+				Outputs: iotago.TxEssenceOutputs{
+					&iotago.AccountOutput{
+						Amount:    100,
+						AccountID: accountID,
+						Features:  iotago.AccountOutputFeatures{},
+						UnlockConditions: iotago.AccountOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: ident1},
+						},
+					},
+				},
+			}
+
+			bicInputs := vm.BlockIssuanceCreditInputSet{
+				accountID: 0,
+			}
+
+			commitmentInput := &iotago.Commitment{
+				Slot: creationSlot,
+			}
+
+			sigs, err := transaction.Sign(ident1AddressKeys)
+			require.NoError(t, err)
+
+			return &test{
+				name: "ok - remove expired block issuer feature from new account",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{
+					InputSet:                    inputs,
+					BlockIssuanceCreditInputSet: bicInputs,
+					CommitmentInput:             commitmentInput,
+				},
+				tx: &iotago.SignedTransaction{
+					API:         testAPI,
+					Transaction: transaction,
+					Unlocks: iotago.Unlocks{
+						&iotago.SignatureUnlock{Signature: sigs[0]},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
+
 		// fail - destroy block issuer account with expiry at slot with max value
 		func() *test {
 			accountAddr1 := tpkg.RandAccountAddress()
