@@ -13,9 +13,9 @@ import (
 
 var (
 	benchLargeTx = &iotago.SignedTransaction{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Transaction: &iotago.Transaction{
-			API: tpkg.TestAPI,
+			API: tpkg.ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     tpkg.TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
@@ -62,7 +62,7 @@ var (
 )
 
 func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
-	data, err := tpkg.TestAPI.Encode(benchLargeTx, serix.WithValidation())
+	data, err := tpkg.ZeroCostTestAPI.Encode(benchLargeTx, serix.WithValidation())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Decode(data, target, serix.WithValidation())
+			_, _ = tpkg.ZeroCostTestAPI.Decode(data, target, serix.WithValidation())
 		}
 	})
 
@@ -79,13 +79,13 @@ func BenchmarkDeserializationLargeTxPayload(b *testing.B) {
 		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Decode(data, target)
+			_, _ = tpkg.ZeroCostTestAPI.Decode(data, target)
 		}
 	})
 }
 
 func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
-	data, err := tpkg.TestAPI.Encode(tpkg.OneInputOutputTransaction(), serix.WithValidation())
+	data, err := tpkg.ZeroCostTestAPI.Encode(tpkg.OneInputOutputTransaction(), serix.WithValidation())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Decode(data, target, serix.WithValidation())
+			_, _ = tpkg.ZeroCostTestAPI.Decode(data, target, serix.WithValidation())
 		}
 	})
 
@@ -102,7 +102,7 @@ func BenchmarkDeserializationOneIOTxPayload(b *testing.B) {
 		target := &iotago.SignedTransaction{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Decode(data, target)
+			_, _ = tpkg.ZeroCostTestAPI.Decode(data, target)
 		}
 	})
 }
@@ -113,7 +113,7 @@ func BenchmarkSerializationOneIOTxPayload(b *testing.B) {
 		txPayload := tpkg.OneInputOutputTransaction()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Encode(txPayload, serix.WithValidation())
+			_, _ = tpkg.ZeroCostTestAPI.Encode(txPayload, serix.WithValidation())
 		}
 	})
 
@@ -121,7 +121,7 @@ func BenchmarkSerializationOneIOTxPayload(b *testing.B) {
 		txPayload := tpkg.OneInputOutputTransaction()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = tpkg.TestAPI.Encode(txPayload)
+			_, _ = tpkg.ZeroCostTestAPI.Encode(txPayload)
 		}
 	})
 }
@@ -165,12 +165,12 @@ func BenchmarkSerializeAndHashBlockWithTransactionPayload(b *testing.B) {
 	txPayload := tpkg.OneInputOutputTransaction()
 
 	m := &iotago.Block{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
-			ProtocolVersion: tpkg.TestAPI.Version(),
+			ProtocolVersion: tpkg.ZeroCostTestAPI.Version(),
 		},
 		Body: &iotago.BasicBlockBody{
-			API:                tpkg.TestAPI,
+			API:                tpkg.ZeroCostTestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(2),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},

@@ -171,9 +171,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 }
 
 func TestOutputsSyntacticalDepositAmount(t *testing.T) {
-	nonZeroCostParams := iotago.NewV3ProtocolParameters(
-		iotago.WithStorageOptions(100, 1, 10, 10, 10, 10),
-	)
+	protoParams := tpkg.IOTAMainnetV3TestProtocolParameters
 
 	var minAmount iotago.BaseToken = 14100
 
@@ -185,10 +183,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 	}{
 		{
 			name:        "ok",
-			protoParams: tpkg.TestAPI.ProtocolParameters(),
+			protoParams: tpkg.ZeroCostTestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount:           tpkg.TestTokenSupply,
+					Amount:           protoParams.TokenSupply(),
 					UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()}},
 					Mana:             500,
 				},
@@ -197,7 +195,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "ok - storage deposit covered",
-			protoParams: nonZeroCostParams,
+			protoParams: protoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount:           minAmount, // min amount
@@ -208,7 +206,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "ok - storage deposit return",
-			protoParams: nonZeroCostParams,
+			protoParams: protoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 100000,
@@ -226,7 +224,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - storage deposit return less than min storage deposit",
-			protoParams: nonZeroCostParams,
+			protoParams: protoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 100000,
@@ -243,7 +241,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - storage deposit more than target output deposit",
-			protoParams: nonZeroCostParams,
+			protoParams: protoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: OneIOTA,
@@ -262,7 +260,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - storage deposit not covered",
-			protoParams: nonZeroCostParams,
+			protoParams: protoParams,
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: minAmount - 1,
@@ -275,7 +273,7 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - zero deposit",
-			protoParams: tpkg.TestAPI.ProtocolParameters(),
+			protoParams: tpkg.ZeroCostTestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
 					Amount: 0,
@@ -288,10 +286,10 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - more than total supply on single output",
-			protoParams: tpkg.TestAPI.ProtocolParameters(),
+			protoParams: tpkg.ZeroCostTestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: tpkg.TestTokenSupply + 1,
+					Amount: protoParams.TokenSupply() + 1,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
@@ -301,16 +299,16 @@ func TestOutputsSyntacticalDepositAmount(t *testing.T) {
 		},
 		{
 			name:        "fail - sum more than total supply over multiple outputs",
-			protoParams: tpkg.TestAPI.ProtocolParameters(),
+			protoParams: tpkg.ZeroCostTestAPI.ProtocolParameters(),
 			outputs: iotago.Outputs[iotago.Output]{
 				&iotago.BasicOutput{
-					Amount: tpkg.TestTokenSupply - 1,
+					Amount: protoParams.TokenSupply() - 1,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
 				&iotago.BasicOutput{
-					Amount: tpkg.TestTokenSupply - 1,
+					Amount: protoParams.TokenSupply() - 1,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},

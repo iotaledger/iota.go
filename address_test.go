@@ -294,12 +294,12 @@ func assertRestrictedAddresses(t *testing.T, addresses []*iotago.RestrictedAddre
 	for i, addr := range addresses {
 		// fmt.Println(addr.Bech32(iotago.PrefixMainnet))
 
-		j, err := tpkg.TestAPI.JSONEncode(addr)
+		j, err := tpkg.ZeroCostTestAPI.JSONEncode(addr)
 		_ = j
 		require.NoError(t, err)
 		// fmt.Println(string(j))
 
-		b, err := tpkg.TestAPI.Encode(addr)
+		b, err := tpkg.ZeroCostTestAPI.Encode(addr)
 		require.NoError(t, err)
 		// fmt.Println(hexutil.Encode(b))
 
@@ -479,7 +479,7 @@ func TestRestrictedAddressCapabilitiesBitMask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := tpkg.TestAPI.Encode(test.addr, serix.WithValidation())
+			_, err := tpkg.ZeroCostTestAPI.Encode(test.addr, serix.WithValidation())
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 
@@ -634,9 +634,7 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 		}(),
 	}
 
-	testAPI := iotago.V3API(iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions("test", "test"),
-	))
+	testAPI := tpkg.ZeroCostTestAPI
 
 	for _, tt := range tests {
 		runOutputsSyntacticalValidationTest(t, testAPI, tt)
@@ -920,9 +918,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 		}(),
 	}
 
-	testAPI := iotago.V3API(iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions("test", "test"),
-	))
+	testAPI := tpkg.ZeroCostTestAPI
 
 	for _, tt := range tests {
 		runOutputsSyntacticalValidationTest(t, testAPI, tt)

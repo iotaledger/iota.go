@@ -711,7 +711,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 		return &iotago.Block{
 			API: api,
 			Header: iotago.BlockHeader{
-				ProtocolVersion:  TestAPI.Version(),
+				ProtocolVersion:  ZeroCostTestAPI.Version(),
 				IssuingTime:      RandUTCTime(),
 				SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
 				IssuerID:         RandAccountID(),
@@ -724,7 +724,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	return &iotago.Block{
 		API: api,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  TestAPI.Version(),
+			ProtocolVersion:  ZeroCostTestAPI.Version(),
 			IssuingTime:      RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
 			IssuerID:         RandAccountID(),
@@ -763,14 +763,14 @@ func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
 		StrongParents:           SortedRandBlockIDs(1 + rand.Intn(iotago.ValidationBlockMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
 		ShallowLikeParents:      iotago.BlockIDs{},
-		HighestSupportedVersion: TestAPI.Version() + 1,
+		HighestSupportedVersion: ZeroCostTestAPI.Version() + 1,
 	}
 }
 
 func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
 	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
 
-	block := RandBlock(basicBlock, TestAPI, rmc)
+	block := RandBlock(basicBlock, ZeroCostTestAPI, rmc)
 	block.Header.IssuerID = issuerID
 
 	return block
@@ -887,9 +887,9 @@ func RandSortAllotment(count int) iotago.Allotments {
 // OneInputOutputTransaction generates a random transaction with one input and output.
 func OneInputOutputTransaction() *iotago.SignedTransaction {
 	return &iotago.SignedTransaction{
-		API: TestAPI,
+		API: ZeroCostTestAPI,
 		Transaction: &iotago.Transaction{
-			API: TestAPI,
+			API: ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
 				NetworkID:     14147312347886322761,
 				ContextInputs: iotago.TxEssenceContextInputs{},
@@ -1028,69 +1028,4 @@ func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 		Allotment:        RandWorkScore(math.MaxUint32),
 		SignatureEd25519: RandWorkScore(math.MaxUint32),
 	}
-}
-
-// RandProtocolParameters produces random protocol parameters.
-// Some protocol parameters are subject to sanity checks when the protocol parameters are created
-// so we used fixed values here to avoid panics rather than random ones.
-func RandProtocolParameters() iotago.ProtocolParameters {
-	var slotDurationSeconds uint8 = 10
-	var schedulerRate iotago.WorkScore = 1000
-
-	return iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions(
-			RandString(255),
-			iotago.NetworkPrefix(RandString(255)),
-		),
-		iotago.WithStorageOptions(
-			RandBaseToken(iotago.MaxBaseToken),
-			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-		),
-		iotago.WithWorkScoreOptions(
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-		),
-		iotago.WithTimeOptions(
-			RandSlot(),
-			time.Now().Unix(),
-			slotDurationSeconds,
-			13,
-			15,
-			30,
-			10,
-			20,
-			40,
-		),
-		iotago.WithSupplyOptions(
-			1813620509061365,
-			63,
-			1,
-			17,
-			32,
-			21,
-			71,
-		),
-		iotago.WithCongestionControlOptions(
-			RandMana(iotago.MaxMana),
-			RandMana(iotago.MaxMana),
-			RandMana(iotago.MaxMana),
-			8*schedulerRate,
-			5*schedulerRate,
-			schedulerRate,
-			RandUint32(math.MaxUint32),
-			RandUint32(math.MaxUint32),
-		),
-	)
 }

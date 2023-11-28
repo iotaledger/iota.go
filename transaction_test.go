@@ -16,8 +16,8 @@ func TestTransactionEssence_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok",
-			source: tpkg.RandTransaction(tpkg.TestAPI),
-			target: &iotago.Transaction{API: tpkg.TestAPI},
+			source: tpkg.RandTransaction(tpkg.ZeroCostTestAPI),
+			target: &iotago.Transaction{API: tpkg.ZeroCostTestAPI},
 		},
 	}
 
@@ -44,9 +44,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Account twice
 			name: "transition the same Account twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
-					API: tpkg.TestAPI,
+					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
 						ContextInputs: iotago.TxEssenceContextInputs{},
@@ -80,9 +80,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Anchor twice
 			name: "transition the same Anchor twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
-					API: tpkg.TestAPI,
+					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
 						ContextInputs: iotago.TxEssenceContextInputs{},
@@ -118,9 +118,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same NFT twice
 			name: "transition the same NFT twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
-					API: tpkg.TestAPI,
+					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:    tpkg.TestNetworkID,
 						Inputs:       inputIDs.UTXOInputs(),
@@ -152,9 +152,9 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 		{
 			// we transition the same Foundry twice
 			name: "transition the same Foundry twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
-					API: tpkg.TestAPI,
+					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:    tpkg.TestNetworkID,
 						Inputs:       inputIDs.UTXOInputs(),
@@ -217,9 +217,9 @@ func TestAllotmentUniqueness(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name: "allot to the same account twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.TestAPI,
+			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
-					API: tpkg.TestAPI,
+					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
 						NetworkID:     tpkg.TestNetworkID,
 						ContextInputs: iotago.TxEssenceContextInputs{},
@@ -264,7 +264,7 @@ func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
 	}
 
 	randTransactionWithCapabilities := func(capabilities iotago.TransactionCapabilitiesBitMask) *iotago.Transaction {
-		tx := tpkg.RandTransaction(tpkg.TestAPI)
+		tx := tpkg.RandTransaction(tpkg.ZeroCostTestAPI)
 		tx.Capabilities = capabilities
 		return tx
 	}
@@ -289,7 +289,7 @@ func TestTransactionEssenceCapabilitiesBitMask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			err := test.tx.SyntacticallyValidate(tpkg.ZeroCostTestAPI)
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 
@@ -326,11 +326,11 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		}
 	}
 
-	var maxManaValue iotago.Mana = (1 << tpkg.TestAPI.ProtocolParameters().ManaParameters().BitsCount) - 1
+	var maxManaValue iotago.Mana = (1 << tpkg.ZeroCostTestAPI.ProtocolParameters().ManaParameters().BitsCount) - 1
 	tests := []*test{
 		{
 			name: "ok - stored mana sum below max value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(1), basicOutputWithMana(maxManaValue - 1)}
 				},
@@ -339,7 +339,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		},
 		{
 			name: "fail - one output's stored mana exceeds max mana value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue + 1)}
 				},
@@ -348,7 +348,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		},
 		{
 			name: "fail - sum of stored mana exceeds max mana value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Outputs = iotago.TxEssenceOutputs{basicOutputWithMana(maxManaValue - 1), basicOutputWithMana(maxManaValue - 1)}
 				},
@@ -357,7 +357,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		},
 		{
 			name: "ok - allotted mana sum below max value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(1), allotmentWithMana(maxManaValue - 1)}
 				},
@@ -366,7 +366,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		},
 		{
 			name: "fail - one allotment's mana exceeds max value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue + 1)}
 				},
@@ -375,7 +375,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 		},
 		{
 			name: "fail - sum of allotted mana exceeds max value",
-			tx: tpkg.RandTransactionWithOptions(tpkg.TestAPI,
+			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue - 1), allotmentWithMana(maxManaValue - 1)}
 				},
@@ -386,7 +386,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.tx.SyntacticallyValidate(tpkg.TestAPI)
+			err := test.tx.SyntacticallyValidate(tpkg.ZeroCostTestAPI)
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 

@@ -23,22 +23,22 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.TestAPI, 255), tpkg.TestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadSignedTransaction), tpkg.TestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTaggedData), tpkg.TestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - validation block",
-			source: tpkg.RandBlock(tpkg.RandValidationBlock(tpkg.TestAPI), tpkg.TestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandValidationBlock(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 	}
@@ -116,12 +116,12 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 	apiProvider := iotago.NewEpochBasedProvider(
 		iotago.WithAPIForMissingVersionCallback(
 			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
-				return iotago.V3API(iotago.NewV3ProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
+				return iotago.V3API(iotago.NewV3TestProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
 		),
 	)
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(), 0)
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(4)), 3)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(), 0)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(iotago.WithVersion(4)), 3)
 
 	timeProvider := apiProvider.CommittedAPI().TimeProvider()
 
@@ -139,7 +139,7 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(5), 4, apiProvider))
 
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3ProtocolParameters(iotago.WithVersion(5)), 10)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(iotago.WithVersion(5)), 10)
 
 	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(9), 4, apiProvider))
 
@@ -152,7 +152,7 @@ func TestBlock_Commitments(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3ProtocolParameters(
+		iotago.NewV3TestProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 11, 21, 60),
 		), 0)
 
@@ -171,7 +171,7 @@ func TestBlock_Commitments1(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3ProtocolParameters(
+		iotago.NewV3TestProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 7, 21, 60),
 		), 0)
 
@@ -195,7 +195,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	// commitments between 90 and slot that the block commits to (100 at most)
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3ProtocolParameters(
+		iotago.NewV3TestProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 7, 21, 60),
 		), 0)
 
@@ -261,7 +261,7 @@ func TestBlock_WeakParents(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3ProtocolParameters(
+		iotago.NewV3TestProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 10, 20, 60),
 		), 0)
 	strongParent1 := tpkg.RandBlockID()
@@ -319,7 +319,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	// commitments between 90 and slot that the block commits to (100 at most)
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3ProtocolParameters(
+		iotago.NewV3TestProtocolParameters(
 			iotago.WithTimeOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13, 15, 30, 11, 21, 60),
 		), 0)
 
@@ -423,24 +423,24 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 }
 
 func TestBlock_DeserializationNotEnoughData(t *testing.T) {
-	blockBytes := []byte{byte(tpkg.TestAPI.Version()), 1}
+	blockBytes := []byte{byte(tpkg.ZeroCostTestAPI.Version()), 1}
 
 	block := &iotago.Block{}
-	_, err := tpkg.TestAPI.Decode(blockBytes, block)
+	_, err := tpkg.ZeroCostTestAPI.Decode(blockBytes, block)
 	require.ErrorIs(t, err, serializer.ErrDeserializationNotEnoughData)
 }
 
 func TestBasicBlock_MinSize(t *testing.T) {
 	minBlock := &iotago.Block{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Body: &iotago.BasicBlockBody{
-			API:                tpkg.TestAPI,
+			API:                tpkg.ZeroCostTestAPI,
 			StrongParents:      tpkg.SortedRandBlockIDs(1),
 			WeakParents:        iotago.BlockIDs{},
 			ShallowLikeParents: iotago.BlockIDs{},
@@ -448,11 +448,11 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		},
 	}
 
-	blockBytes, err := tpkg.TestAPI.Encode(minBlock)
+	blockBytes, err := tpkg.ZeroCostTestAPI.Encode(minBlock)
 	require.NoError(t, err)
 
 	block2 := &iotago.Block{}
-	consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+	consumedBytes, err := tpkg.ZeroCostTestAPI.Decode(blockBytes, block2, serix.WithValidation())
 	require.NoError(t, err)
 	require.Equal(t, minBlock, block2)
 	require.Equal(t, len(blockBytes), consumedBytes)
@@ -460,27 +460,27 @@ func TestBasicBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_MinSize(t *testing.T) {
 	minBlock := &iotago.Block{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 		Body: &iotago.ValidationBlockBody{
-			API:                     tpkg.TestAPI,
+			API:                     tpkg.ZeroCostTestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
-			HighestSupportedVersion: tpkg.TestAPI.Version(),
+			HighestSupportedVersion: tpkg.ZeroCostTestAPI.Version(),
 		},
 	}
 
-	blockBytes, err := tpkg.TestAPI.Encode(minBlock)
+	blockBytes, err := tpkg.ZeroCostTestAPI.Encode(minBlock)
 	require.NoError(t, err)
 
 	block2 := &iotago.Block{}
-	consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+	consumedBytes, err := tpkg.ZeroCostTestAPI.Decode(blockBytes, block2, serix.WithValidation())
 	require.NoError(t, err)
 	require.Equal(t, minBlock, block2)
 	require.Equal(t, len(blockBytes), consumedBytes)
@@ -488,11 +488,11 @@ func TestValidationBlock_MinSize(t *testing.T) {
 
 func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	block := &iotago.Block{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
 			IssuingTime:      tpkg.RandUTCTime(),
-			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},
 		Signature: tpkg.RandEd25519Signature(),
 	}
@@ -500,34 +500,34 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 	// Invalid HighestSupportedVersion.
 	{
 		block.Body = &iotago.ValidationBlockBody{
-			API:                     tpkg.TestAPI,
+			API:                     tpkg.ZeroCostTestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
-			HighestSupportedVersion: tpkg.TestAPI.Version() - 1,
+			HighestSupportedVersion: tpkg.ZeroCostTestAPI.Version() - 1,
 		}
-		blockBytes, err := tpkg.TestAPI.Encode(block)
+		blockBytes, err := tpkg.ZeroCostTestAPI.Encode(block)
 		require.NoError(t, err)
 
 		block2 := &iotago.Block{}
-		_, err = tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+		_, err = tpkg.ZeroCostTestAPI.Decode(blockBytes, block2, serix.WithValidation())
 		require.ErrorContains(t, err, "highest supported version")
 	}
 
 	// Valid HighestSupportedVersion.
 	{
 		block.Body = &iotago.ValidationBlockBody{
-			API:                     tpkg.TestAPI,
+			API:                     tpkg.ZeroCostTestAPI,
 			StrongParents:           tpkg.SortedRandBlockIDs(1),
 			WeakParents:             iotago.BlockIDs{},
 			ShallowLikeParents:      iotago.BlockIDs{},
-			HighestSupportedVersion: tpkg.TestAPI.Version(),
+			HighestSupportedVersion: tpkg.ZeroCostTestAPI.Version(),
 		}
-		blockBytes, err := tpkg.TestAPI.Encode(block)
+		blockBytes, err := tpkg.ZeroCostTestAPI.Encode(block)
 		require.NoError(t, err)
 
 		block2 := &iotago.Block{}
-		consumedBytes, err := tpkg.TestAPI.Decode(blockBytes, block2, serix.WithValidation())
+		consumedBytes, err := tpkg.ZeroCostTestAPI.Decode(blockBytes, block2, serix.WithValidation())
 		require.NoError(t, err)
 		require.Equal(t, block, block2)
 		require.Equal(t, len(blockBytes), consumedBytes)
@@ -537,42 +537,42 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 func TestBlockJSONMarshalling(t *testing.T) {
 	networkID := iotago.NetworkIDFromString("xxxNetwork")
 	issuingTime := tpkg.RandUTCTime()
-	commitmentID := iotago.NewEmptyCommitment(tpkg.TestAPI).MustID()
+	commitmentID := iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID()
 	issuerID := tpkg.RandAccountID()
 	signature := tpkg.RandEd25519Signature()
 	strongParents := tpkg.SortedRandBlockIDs(1)
 	validationBlock := &iotago.Block{
-		API: tpkg.TestAPI,
+		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  tpkg.TestAPI.Version(),
+			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
 			IssuingTime:      issuingTime,
 			IssuerID:         issuerID,
 			NetworkID:        networkID,
 			SlotCommitmentID: commitmentID,
 		},
 		Body: &iotago.ValidationBlockBody{
-			API:                     tpkg.TestAPI,
+			API:                     tpkg.ZeroCostTestAPI,
 			StrongParents:           strongParents,
-			HighestSupportedVersion: tpkg.TestAPI.Version(),
+			HighestSupportedVersion: tpkg.ZeroCostTestAPI.Version(),
 		},
 		Signature: signature,
 	}
 
 	blockJSON := fmt.Sprintf(`{"header":{"protocolVersion":%d,"networkId":"%d","issuingTime":"%s","slotCommitmentId":"%s","latestFinalizedSlot":0,"issuerId":"%s"},"body":{"type":%d,"strongParents":["%s"],"highestSupportedVersion":%d,"protocolParametersHash":"0x0000000000000000000000000000000000000000000000000000000000000000"},"signature":{"type":%d,"publicKey":"%s","signature":"%s"}}`,
-		tpkg.TestAPI.Version(),
+		tpkg.ZeroCostTestAPI.Version(),
 		networkID,
 		strconv.FormatUint(serializer.TimeToUint64(issuingTime), 10),
 		commitmentID.ToHex(),
 		issuerID.ToHex(),
 		iotago.BlockBodyTypeValidation,
 		strongParents[0].ToHex(),
-		tpkg.TestAPI.Version(),
+		tpkg.ZeroCostTestAPI.Version(),
 		iotago.SignatureEd25519,
 		hexutil.EncodeHex(signature.PublicKey[:]),
 		hexutil.EncodeHex(signature.Signature[:]),
 	)
 
-	jsonEncode, err := tpkg.TestAPI.JSONEncode(validationBlock)
+	jsonEncode, err := tpkg.ZeroCostTestAPI.JSONEncode(validationBlock)
 
 	fmt.Println(string(jsonEncode))
 

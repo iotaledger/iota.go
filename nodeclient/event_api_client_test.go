@@ -46,8 +46,8 @@ func Test_EventAPIDisabled(t *testing.T) {
 }
 
 func Test_NewEventAPIClient(t *testing.T) {
-	block := tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.TestAPI, iotago.PayloadTaggedData), tpkg.TestAPI, 0)
-	originBlockBytes, err := tpkg.TestAPI.Encode(block)
+	block := tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0)
+	originBlockBytes, err := tpkg.ZeroCostTestAPI.Encode(block)
 	require.NoError(t, err)
 	mock := &mockMqttClient{payload: originBlockBytes}
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -64,7 +64,7 @@ func Test_NewEventAPIClient(t *testing.T) {
 	require.Eventually(t, func() bool {
 		select {
 		case recBlock := <-blockChan:
-			gottenBlockBytes, err := tpkg.TestAPI.Encode(recBlock)
+			gottenBlockBytes, err := tpkg.ZeroCostTestAPI.Encode(recBlock)
 			require.NoError(t, err)
 			require.Equal(t, originBlockBytes, gottenBlockBytes)
 

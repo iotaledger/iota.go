@@ -31,7 +31,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
-			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -84,7 +84,7 @@ func TestTransactionBuilder(t *testing.T) {
 				}
 			)
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.OutputID(), Input: basicOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.OutputID(), Input: nftOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: nftOutput.ChainID().ToAddress(), InputID: inputID3.OutputID(), Input: accountOwnedByNFT}).
@@ -107,7 +107,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -128,7 +128,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -155,7 +155,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.TestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,

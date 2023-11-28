@@ -9,24 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	iotago "github.com/iotaledger/iota.go/v4"
-)
-
-const (
-	slotsPerEpochExponent        = 13
-	slotDurationSeconds          = 10
-	bitsCount                    = 63
-	generationRate               = 1
-	generationRateExponent       = 27
-	decayFactorsExponent         = 32
-	decayFactorEpochsSumExponent = 20
-	annualDecayFactorPercentage  = 70
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 var (
-	testManaDecayFactors         []uint32
-	testManaDecayFactorEpochsSum uint32
-
-	testTimeProvider           *iotago.TimeProvider
+	testProtoParams            = tpkg.IOTAMainnetV3TestProtocolParameters
+	testAPI                    = iotago.V3API(testProtoParams)
+	testTimeProvider           = testAPI.TimeProvider()
 	testManaDecayProvider      *iotago.ManaDecayProvider
 	testFloatManaDecayProvider *TestFloatManaDecayProvider
 
@@ -35,24 +24,12 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	testManaDecayFactors = iotago.DeriveManaDecayFactors(annualDecayFactorPercentage, slotsPerEpochExponent, slotDurationSeconds, decayFactorsExponent)
-	testManaDecayFactorEpochsSum = iotago.DeriveManaDecayFactorEpochsSum(annualDecayFactorPercentage, slotsPerEpochExponent, slotDurationSeconds, decayFactorEpochsSumExponent)
-
-	testTimeProvider = iotago.NewTimeProvider(0, 0, slotDurationSeconds, slotsPerEpochExponent)
-	manaStruct := &iotago.ManaParameters{
-		BitsCount:                    bitsCount,
-		GenerationRate:               generationRate,
-		GenerationRateExponent:       generationRateExponent,
-		DecayFactors:                 testManaDecayFactors,
-		DecayFactorsExponent:         decayFactorsExponent,
-		DecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
-		DecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
-	}
-	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, manaStruct)
+	manaParams := testProtoParams.ManaParameters()
+	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, testProtoParams.SlotsPerEpochExponent(), manaParams)
 	testFloatManaDecayProvider = &TestFloatManaDecayProvider{
 		timeProvider:           testTimeProvider,
-		generationRate:         uint64(manaStruct.GenerationRate),
-		generationRateExponent: uint64(manaStruct.GenerationRateExponent),
+		generationRate:         uint64(manaParams.GenerationRate),
+		generationRateExponent: uint64(manaParams.GenerationRateExponent),
 	}
 
 	// call the tests
@@ -60,7 +37,7 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkManaWithDecay_Single(b *testing.B) {
-	endSlot := iotago.SlotIndex(300 << slotsPerEpochExponent)
+	endSlot := iotago.SlotIndex(300 << testProtoParams.SlotsPerEpochExponent())
 
 	b.ResetTimer()
 
@@ -74,15 +51,15 @@ func BenchmarkManaWithDecay_Range(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		value := iotago.MaxMana
-		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
-			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
+		for epoch := 1; epoch <= 5*len(testProtoParams.ManaParameters().DecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epoch)<<testProtoParams.SlotsPerEpochExponent())
 		}
 		benchmarkResult = value
 	}
 }
 
 func BenchmarkManaGenerationWithDecay_Single(b *testing.B) {
-	endIndex := iotago.SlotIndex(300 << slotsPerEpochExponent)
+	endIndex := iotago.SlotIndex(300 << testProtoParams.SlotsPerEpochExponent())
 
 	b.ResetTimer()
 
@@ -96,24 +73,16 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var value iotago.Mana
-		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
-			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
+		for epoch := 1; epoch <= 5*len(testProtoParams.ManaParameters().DecayFactors); epoch++ {
+			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<testProtoParams.SlotsPerEpochExponent())
 		}
 		benchmarkResult = value
 	}
 }
 
 func TestManaDecay_NoFactorsGiven(t *testing.T) {
-	manaStruct := &iotago.ManaParameters{
-		BitsCount:                    bitsCount,
-		GenerationRate:               generationRate,
-		GenerationRateExponent:       decayFactorEpochsSumExponent,
-		DecayFactors:                 []uint32{},
-		DecayFactorsExponent:         decayFactorsExponent,
-		DecayFactorEpochsSum:         testManaDecayFactorEpochsSum,
-		DecayFactorEpochsSumExponent: decayFactorEpochsSumExponent,
-	}
-	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, manaStruct)
+	manaParams := testProtoParams.ManaParameters()
+	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, testProtoParams.SlotsPerEpochExponent(), manaParams)
 
 	// no mana decay if no decay parameters are given
 	value, err := manaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochStart(100))
@@ -167,7 +136,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			name:        "check if mana decay works for exactly the amount of epochs in the lookup table",
 			storedMana:  iotago.MaxMana,
 			createdSlot: testTimeProvider.EpochStart(1),
-			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1)),
 			result:      13228672242897911807,
 			wantErr:     nil,
 		},
@@ -175,7 +144,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			name:        "check if mana decay works for multiples of the available epochs in the lookup table",
 			storedMana:  iotago.MaxMana,
 			createdSlot: testTimeProvider.EpochStart(1),
-			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testProtoParams.ManaParameters().DecayFactors) + 1)),
 			result:      6803138682699798504,
 			wantErr:     nil,
 		},
@@ -241,7 +210,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			name:        "check if mana decay works for exactly the amount of epochs in the lookup table",
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
-			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testManaDecayFactors) + 1)),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1)),
 			result:      183827295065703076,
 			wantErr:     nil,
 		},
@@ -249,7 +218,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			name:        "check if mana decay works for multiples of the available epochs in the lookup table",
 			amount:      math.MaxInt64,
 			createdSlot: testTimeProvider.EpochStart(1),
-			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testManaDecayFactors) + 1)),
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(3*len(testProtoParams.ManaParameters().DecayFactors) + 1)),
 			result:      410192223115924783,
 			wantErr:     nil,
 		},
@@ -355,15 +324,15 @@ func TestManaDecay_Rewards(t *testing.T) {
 			name:         "check if mana decay works for exactly the amount of epochs in the lookup table",
 			rewards:      iotago.MaxMana,
 			rewardEpoch:  1,
-			claimedEpoch: iotago.EpochIndex(len(testManaDecayFactors) + 1),
-			result:       13228672242897911807,
+			claimedEpoch: iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1),
+			result:       13228672242897911807, // insert a 256-bit calculation here.
 			wantErr:      nil,
 		},
 		{
 			name:         "check if mana decay works for multiples of the available epochs in the lookup table",
 			rewards:      iotago.MaxMana,
 			rewardEpoch:  1,
-			claimedEpoch: iotago.EpochIndex(3*len(testManaDecayFactors) + 1),
+			claimedEpoch: iotago.EpochIndex(3*len(testProtoParams.ManaParameters().DecayFactors) + 1),
 			result:       6803138682699798504,
 			wantErr:      nil,
 		},

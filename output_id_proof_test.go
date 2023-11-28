@@ -25,7 +25,7 @@ func TestOutputIDProof(t *testing.T) {
 		{
 			name: "single output",
 			tx: &iotago.Transaction{
-				API: tpkg.TestAPI,
+				API: tpkg.ZeroCostTestAPI,
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: tpkg.RandSlot(),
 					NetworkID:    tpkg.TestNetworkID,
@@ -45,7 +45,7 @@ func TestOutputIDProof(t *testing.T) {
 		{
 			name: "two outputs",
 			tx: &iotago.Transaction{
-				API: tpkg.TestAPI,
+				API: tpkg.ZeroCostTestAPI,
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: tpkg.RandSlot(),
 					NetworkID:    tpkg.TestNetworkID,
@@ -65,7 +65,7 @@ func TestOutputIDProof(t *testing.T) {
 		{
 			name: "three outputs",
 			tx: &iotago.Transaction{
-				API: tpkg.TestAPI,
+				API: tpkg.ZeroCostTestAPI,
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: tpkg.RandSlot(),
 					NetworkID:    tpkg.TestNetworkID,
@@ -85,7 +85,7 @@ func TestOutputIDProof(t *testing.T) {
 		{
 			name: "max outputs",
 			tx: &iotago.Transaction{
-				API: tpkg.TestAPI,
+				API: tpkg.ZeroCostTestAPI,
 				TransactionEssence: &iotago.TransactionEssence{
 					CreationSlot: tpkg.RandSlot(),
 					NetworkID:    tpkg.TestNetworkID,
@@ -120,11 +120,11 @@ func (p *outputIDProofTest) testOutputs(t *testing.T) {
 		serializedProof, err := proof.Bytes()
 		require.NoError(t, err)
 
-		jsonEncoded, err := tpkg.TestAPI.JSONEncode(proof)
+		jsonEncoded, err := tpkg.ZeroCostTestAPI.JSONEncode(proof)
 		require.NoError(t, err)
 		fmt.Println(string(jsonEncoded))
 
-		deserializedProof, consumedBytes, err := iotago.OutputIDProofFromBytes(tpkg.TestAPI)(serializedProof)
+		deserializedProof, consumedBytes, err := iotago.OutputIDProofFromBytes(tpkg.ZeroCostTestAPI)(serializedProof)
 		require.NoError(t, err)
 		require.Equal(t, len(serializedProof), consumedBytes)
 

@@ -8,12 +8,11 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
 func testAPI() iotago.API {
-	params := iotago.NewV3ProtocolParameters(
-		iotago.WithTimeOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13, 15, 30, 10, 20, 60),
-	)
+	params := tpkg.FixedGenesisV3TestProtocolParameters
 
 	return iotago.V3API(params)
 }

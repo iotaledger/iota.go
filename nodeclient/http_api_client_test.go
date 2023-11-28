@@ -30,12 +30,7 @@ const (
 )
 
 var (
-	protoParams = iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions("alphanet", "atoi"),
-		iotago.WithStorageOptions(500, 1, 10, 100, 100, 100),
-	)
-
-	mockAPI = iotago.V3API(protoParams)
+	mockAPI = iotago.V3API(tpkg.IOTAMainnetV3TestProtocolParameters)
 )
 
 //nolint:unparam // false positive
@@ -114,7 +109,7 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 		ProtocolParameters: []*api.InfoResProtocolParameters{
 			{
 				StartEpoch: 0,
-				Parameters: protoParams,
+				Parameters: tpkg.IOTAMainnetV3TestProtocolParameters,
 			},
 		},
 		BaseToken: &api.InfoResBaseToken{
@@ -434,7 +429,7 @@ func TestClient_OutputByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.ZeroCostTestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
 	require.NoError(t, err)
 
 	outputID, err := originOutputProof.OutputID(originOutput)
@@ -457,7 +452,7 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
 
-	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.ZeroCostTestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
 	require.NoError(t, err)
 
 	outputID, err := originOutputProof.OutputID(originOutput)

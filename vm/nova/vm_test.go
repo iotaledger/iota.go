@@ -22,38 +22,12 @@ import (
 
 const (
 	OneIOTA iotago.BaseToken = 1_000_000
-
-	slotsPerEpochExponent        = 13
-	slotDurationSeconds          = 10
-	bitsCount                    = 63
-	generationRate               = 1
-	generationRateExponent       = 27
-	decayFactorsExponent         = 32
-	decayFactorEpochsSumExponent = 20
-	annualDecayFactorPercentage  = 71
 )
 
 var (
 	novaVM = nova.NewVirtualMachine()
 
-	schedulerRate   iotago.WorkScore = 100000
-	testProtoParams                  = iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions("test", "test"),
-		iotago.WithStorageOptions(100, 1, 10, 100, 100, 100),
-		iotago.WithWorkScoreOptions(1, 100, 20, 20, 20, 20, 100, 100, 100, 200),
-		iotago.WithTimeOptions(0, 100, slotDurationSeconds, slotsPerEpochExponent, 15, 30, 10, 20, 60),
-		iotago.WithSupplyOptions(
-			tpkg.TestTokenSupply,
-			bitsCount,
-			generationRate,
-			generationRateExponent,
-			decayFactorsExponent,
-			decayFactorEpochsSumExponent,
-			annualDecayFactorPercentage,
-		),
-		iotago.WithStakingOptions(10, 10, 10),
-		iotago.WithCongestionControlOptions(500, 500, 500, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
-	)
+	testProtoParams = tpkg.IOTAMainnetV3TestProtocolParameters
 
 	testAPI = iotago.V3API(testProtoParams)
 )
