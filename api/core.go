@@ -248,8 +248,8 @@ type (
 		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8,omitempty"`
 		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:""`
-		// Commitment is the latest commitment of the node.
-		Commitment *iotago.Commitment `serix:""`
+		// LatestCommitment is the latest commitment of the node.
+		LatestCommitment *iotago.Commitment `serix:""`
 	}
 
 	// BlockCreatedResponse defines the response of a POST blocks REST API call.
@@ -266,10 +266,8 @@ type (
 		BlockState string `serix:""`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
-		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
-		TransactionState string `serix:",omitempty"`
-		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
-		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
+		// TransactionMetadata is the metadata of the transaction that is contained in the block.
+		TransactionMetadata *TransactionMetadataResponse `serix:",omitempty"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
@@ -294,22 +292,34 @@ type (
 		OutputIDProof *iotago.OutputIDProof  `serix:""`
 	}
 
-	// OutputMetadata defines the response of a GET outputs metadata REST API call.
-	OutputMetadata struct {
-		// BlockID is the block ID that contains the output.
-		BlockID iotago.BlockID `serix:""`
+	OutputInclusionMetadata struct {
+		// Slot is the slot in which the output was included.
+		Slot iotago.SlotIndex `serix:""`
 		// TransactionID is the transaction ID that creates the output.
 		TransactionID iotago.TransactionID `serix:""`
-		// OutputIndex is the index of the output.
-		OutputIndex uint16 `serix:""`
-		// IncludedCommitmentID is the commitment ID that includes the output.
-		IncludedCommitmentID iotago.CommitmentID `serix:",omitempty"`
-		// IsSpent indicates whether the output is spent or not.
-		IsSpent bool `serix:""`
-		// CommitmentIDSpent is the commitment ID that includes the spent output.
-		CommitmentIDSpent iotago.CommitmentID `serix:",omitempty"`
-		// TransactionIDSpent is the transaction ID that spends the output.
-		TransactionIDSpent iotago.TransactionID `serix:",omitempty"`
+		// CommitmentID is the commitment ID that includes the creation of the output.
+		CommitmentID iotago.CommitmentID `serix:",omitempty"`
+	}
+
+	OutputConsumptionMetadata struct {
+		// Slot is the slot in which the output was spent.
+		Slot iotago.SlotIndex `serix:""`
+		// TransactionID is the transaction ID that spends the output.
+		TransactionID iotago.TransactionID `serix:""`
+		// CommitmentID is the commitment ID that includes the spending of the output.
+		CommitmentID iotago.CommitmentID `serix:",omitempty"`
+	}
+
+	// OutputMetadata defines the response of a GET outputs metadata REST API call.
+	OutputMetadata struct {
+		// OutputID is the hex encoded output ID.
+		OutputID iotago.OutputID `serix:""`
+		// BlockID is the block ID that contains the output.
+		BlockID iotago.BlockID `serix:""`
+		// Included is the metadata of the output if it is included in the ledger.
+		Included *OutputInclusionMetadata `serix:""`
+		// Spent is the metadata of the output if it is marked as spent in the ledger.
+		Spent *OutputConsumptionMetadata `serix:",omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.
 		LatestCommitmentID iotago.CommitmentID `serix:""`
 	}
@@ -333,7 +343,7 @@ type (
 
 	// CongestionResponse defines the response for the congestion REST API call.
 	CongestionResponse struct {
-		// Slot is the slot for which the estimate is provided
+		// Slot is the slot for which the estimate is provided.
 		Slot iotago.SlotIndex `serix:""`
 		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
 		Ready bool `serix:""`
@@ -348,8 +358,8 @@ type (
 	ValidatorResponse struct {
 		// AddressBech32 is the account address of the validator.
 		AddressBech32 string `serix:"address,lenPrefix=uint8"`
-		// StakingEpochEnd is the epoch until which the validator registered to stake.
-		StakingEpochEnd iotago.EpochIndex `serix:""`
+		// StakingEndEpoch is the epoch until which the validator registered to stake.
+		StakingEndEpoch iotago.EpochIndex `serix:""`
 		// PoolStake is the sum of tokens delegated to the pool and the validator stake.
 		PoolStake iotago.BaseToken `serix:""`
 		// ValidatorStake is the stake of the validator.
@@ -373,10 +383,10 @@ type (
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
-		// EpochStart is the starting epoch for the range for which the mana rewards are returned.
-		EpochStart iotago.EpochIndex `serix:""`
-		// EpochEnd is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
-		EpochEnd iotago.EpochIndex `serix:""`
+		// StartEpoch is the starting epoch for the range for which the mana rewards are returned.
+		StartEpoch iotago.EpochIndex `serix:""`
+		// EndEpoch is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
+		EndEpoch iotago.EpochIndex `serix:""`
 		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
 		Rewards iotago.Mana `serix:""`
 	}
