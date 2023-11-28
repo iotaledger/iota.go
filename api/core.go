@@ -319,7 +319,7 @@ type (
 		// Included is the metadata of the output if it is included in the ledger.
 		Included *OutputInclusionMetadata `serix:""`
 		// Spent is the metadata of the output if it is marked as spent in the ledger.
-		Spent *OutputConsumptionMetadata `serix:",omitempty"`
+		Spent *OutputConsumptionMetadata `serix:",optional,omitempty"`
 		// LatestCommitmentID is the latest commitment ID of a node.
 		LatestCommitmentID iotago.CommitmentID `serix:""`
 	}
