@@ -1089,7 +1089,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - destroy block issuer account no BIC provided",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
-				ChainID: exampleAccountID,
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
@@ -1667,7 +1667,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			name: "fail - update block issuer account without BIC provided",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
-				ChainID: exampleAccountID,
+				ChainID:  exampleAccountID,
 				Output: &iotago.AccountOutput{
 					Amount:    100,
 					AccountID: exampleAccountID,
