@@ -300,7 +300,8 @@ func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	if current.FeatureSet().BlockIssuer() != nil {
 		accountID, is := input.ChainID.(iotago.AccountID)
 		if !is {
-			return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID to account ID")
+			return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID %s to account ID",
+				input.ChainID.ToHex())
 		}
 
 		if bic, exists := vmParams.WorkingSet.BIC[accountID]; exists {
@@ -630,7 +631,8 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) 
 		}
 		accountID, is := input.ChainID.(iotago.AccountID)
 		if !is {
-			return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID to account ID")
+			return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID %s to account ID",
+				input.ChainID.ToHex())
 		}
 
 		if bic, exists := vmParams.WorkingSet.BIC[accountID]; exists {
