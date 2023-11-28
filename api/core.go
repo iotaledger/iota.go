@@ -295,7 +295,7 @@ type (
 	OutputInclusionMetadata struct {
 		// Slot is the slot in which the output was included.
 		Slot iotago.SlotIndex `serix:""`
-		// TransactionID is the transaction ID that creates the output.
+		// TransactionID is the transaction ID that created the output.
 		TransactionID iotago.TransactionID `serix:""`
 		// CommitmentID is the commitment ID that includes the creation of the output.
 		CommitmentID iotago.CommitmentID `serix:",omitempty"`
@@ -304,7 +304,7 @@ type (
 	OutputConsumptionMetadata struct {
 		// Slot is the slot in which the output was spent.
 		Slot iotago.SlotIndex `serix:""`
-		// TransactionID is the transaction ID that spends the output.
+		// TransactionID is the transaction ID that spent the output.
 		TransactionID iotago.TransactionID `serix:""`
 		// CommitmentID is the commitment ID that includes the spending of the output.
 		CommitmentID iotago.CommitmentID `serix:",omitempty"`
