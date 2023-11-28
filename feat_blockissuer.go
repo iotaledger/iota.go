@@ -14,12 +14,15 @@ const (
 // BlockIssuerFeature is a feature which indicates that this account can issue blocks.
 // The feature includes a block issuer address as well as an expiry slot.
 type BlockIssuerFeature struct {
-	BlockIssuerKeys BlockIssuerKeys `serix:",lenPrefix=uint8"`
 	ExpirySlot      SlotIndex       `serix:""`
+	BlockIssuerKeys BlockIssuerKeys `serix:",lenPrefix=uint8"`
 }
 
 func (s *BlockIssuerFeature) Clone() Feature {
-	return &BlockIssuerFeature{BlockIssuerKeys: s.BlockIssuerKeys, ExpirySlot: s.ExpirySlot}
+	return &BlockIssuerFeature{
+		ExpirySlot:      s.ExpirySlot,
+		BlockIssuerKeys: s.BlockIssuerKeys,
+	}
 }
 
 func (s *BlockIssuerFeature) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
@@ -36,6 +39,11 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 	if !is {
 		return false
 	}
+
+	if s.ExpirySlot != otherFeat.ExpirySlot {
+		return false
+	}
+
 	if len(s.BlockIssuerKeys) != len(otherFeat.BlockIssuerKeys) {
 		return false
 	}
@@ -45,7 +53,7 @@ func (s *BlockIssuerFeature) Equal(other Feature) bool {
 		}
 	}
 
-	return s.ExpirySlot == otherFeat.ExpirySlot
+	return true
 }
 
 func (s *BlockIssuerFeature) Type() FeatureType {
@@ -53,6 +61,6 @@ func (s *BlockIssuerFeature) Type() FeatureType {
 }
 
 func (s *BlockIssuerFeature) Size() int {
-	// FeatureType + BlockIssuerKeys + ExpirySlot
-	return serializer.SmallTypeDenotationByteSize + s.BlockIssuerKeys.Size() + SlotIndexLength
+	// FeatureType + ExpirySlot + BlockIssuerKeys
+	return serializer.SmallTypeDenotationByteSize + SlotIndexLength + s.BlockIssuerKeys.Size()
 }
