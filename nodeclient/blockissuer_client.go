@@ -121,11 +121,11 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 
 	// set the commitment slot as the creation slot of the transaction if no slot was set yet.
 	if builder.CreationSlot() == 0 {
-		builder.SetCreationSlot(blockIssuance.Commitment.Slot)
+		builder.SetCreationSlot(blockIssuance.LatestCommitment.Slot)
 	}
 
 	// allot the required mana to the block issuer
-	builder.AllotRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.Commitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
+	builder.AllotRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.LatestCommitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
 
 	// sign the transaction
 	payload, err := builder.Build(signer)
@@ -134,7 +134,7 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 	}
 
 	//nolint:contextcheck // false positive
-	commitmentID, err := blockIssuance.Commitment.ID()
+	commitmentID, err := blockIssuance.LatestCommitment.ID()
 	if err != nil {
 		return nil, nil, ierrors.Wrap(err, "failed to calculate the commitment ID")
 	}

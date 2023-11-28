@@ -180,7 +180,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)
 
-	originRes.Commitment = &iotago.Commitment{
+	originRes.LatestCommitment = &iotago.Commitment{
 		ProtocolVersion:      1,
 		Slot:                 iotago.SlotIndex(25),
 		PreviousCommitmentID: prevID,
@@ -222,8 +222,8 @@ func TestClient_Rewards(t *testing.T) {
 	outID := tpkg.RandOutputID(1)
 
 	originRes := &api.ManaRewardsResponse{
-		EpochStart: iotago.EpochIndex(20),
-		EpochEnd:   iotago.EpochIndex(30),
+		StartEpoch: iotago.EpochIndex(20),
+		EndEpoch:   iotago.EpochIndex(30),
 		Rewards:    iotago.Mana(1000),
 	}
 
@@ -241,7 +241,7 @@ func TestClient_Validators(t *testing.T) {
 	originRes := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
 		{
 			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
-			StakingEpochEnd:                iotago.EpochIndex(123),
+			StakingEndEpoch:                iotago.EpochIndex(123),
 			PoolStake:                      iotago.BaseToken(100),
 			ValidatorStake:                 iotago.BaseToken(10),
 			FixedCost:                      iotago.Mana(10),
@@ -250,7 +250,7 @@ func TestClient_Validators(t *testing.T) {
 		},
 		{
 			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
-			StakingEpochEnd:                iotago.EpochIndex(124),
+			StakingEndEpoch:                iotago.EpochIndex(124),
 			PoolStake:                      iotago.BaseToken(1000),
 			ValidatorStake:                 iotago.BaseToken(100),
 			FixedCost:                      iotago.Mana(20),
@@ -273,7 +273,7 @@ func TestClient_StakingByAccountID(t *testing.T) {
 	accountAddress := tpkg.RandAccountID().ToAddress().(*iotago.AccountAddress)
 	originRes := &api.ValidatorResponse{
 		AddressBech32:                  accountAddress.Bech32(iotago.PrefixTestnet),
-		StakingEpochEnd:                iotago.EpochIndex(123),
+		StakingEndEpoch:                iotago.EpochIndex(123),
 		PoolStake:                      iotago.BaseToken(100),
 		ValidatorStake:                 iotago.BaseToken(10),
 		FixedCost:                      iotago.Mana(10),
@@ -356,9 +356,11 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	identifier := tpkg.RandBlockID()
 
 	originRes := &api.BlockMetadataResponse{
-		BlockID:          identifier,
-		BlockState:       api.BlockStateConfirmed.String(),
-		TransactionState: api.TransactionStateConfirmed.String(),
+		BlockID:    identifier,
+		BlockState: api.BlockStateConfirmed.String(),
+		TransactionMetadata: &api.TransactionMetadataResponse{
+			TransactionState: api.TransactionStateConfirmed.String(),
+		},
 	}
 
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteBlockMetadata, api.ParameterBlockID, identifier.ToHex()), 200, originRes)
@@ -464,14 +466,19 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	require.NoError(t, err)
 
 	originMetadata := &api.OutputMetadata{
-		BlockID:              tpkg.RandBlockID(),
-		TransactionID:        outputID.TransactionID(),
-		OutputIndex:          outputID.Index(),
-		IsSpent:              true,
-		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
-		TransactionIDSpent:   tpkg.Rand36ByteArray(),
-		IncludedCommitmentID: tpkg.Rand36ByteArray(),
-		LatestCommitmentID:   tpkg.Rand36ByteArray(),
+		OutputID: outputID,
+		BlockID:  tpkg.RandBlockID(),
+		Included: &api.OutputInclusionMetadata{
+			Slot:          outputID.Slot(),
+			TransactionID: outputID.TransactionID(),
+			CommitmentID:  tpkg.Rand36ByteArray(),
+		},
+		Spent: &api.OutputConsumptionMetadata{
+			Slot:          tpkg.RandSlot(),
+			TransactionID: tpkg.Rand36ByteArray(),
+			CommitmentID:  tpkg.Rand36ByteArray(),
+		},
+		LatestCommitmentID: tpkg.Rand36ByteArray(),
 	}
 
 	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteOutputWithMetadata, api.ParameterOutputID, outputID.ToHex()), 200, &api.OutputWithMetadataResponse{
@@ -491,19 +498,25 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 func TestClient_OutputMetadataByID(t *testing.T) {
 	defer gock.Off()
 
-	txID := tpkg.Rand36ByteArray()
+	outputID := tpkg.RandOutputID(3)
+
 	originRes := &api.OutputMetadata{
-		BlockID:              tpkg.RandBlockID(),
-		TransactionID:        txID,
-		OutputIndex:          3,
-		IsSpent:              true,
-		CommitmentIDSpent:    tpkg.Rand36ByteArray(),
-		TransactionIDSpent:   tpkg.Rand36ByteArray(),
-		IncludedCommitmentID: tpkg.Rand36ByteArray(),
-		LatestCommitmentID:   tpkg.Rand36ByteArray(),
+		OutputID: outputID,
+		BlockID:  tpkg.RandBlockID(),
+		Included: &api.OutputInclusionMetadata{
+			Slot:          outputID.Slot(),
+			TransactionID: outputID.TransactionID(),
+			CommitmentID:  tpkg.Rand36ByteArray(),
+		},
+		Spent: &api.OutputConsumptionMetadata{
+			Slot:          tpkg.RandSlot(),
+			TransactionID: tpkg.Rand36ByteArray(),
+			CommitmentID:  tpkg.Rand36ByteArray(),
+		},
+		LatestCommitmentID: tpkg.Rand36ByteArray(),
 	}
 
-	utxoInput := &iotago.UTXOInput{TransactionID: txID, TransactionOutputIndex: 3}
+	utxoInput := &iotago.UTXOInput{TransactionID: outputID.TransactionID(), TransactionOutputIndex: 3}
 	utxoInputID := utxoInput.OutputID()
 
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteOutputMetadata, api.ParameterOutputID, utxoInputID.ToHex()), 200, originRes)
@@ -513,7 +526,7 @@ func TestClient_OutputMetadataByID(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 
-	require.EqualValues(t, txID, resp.TransactionID)
+	require.EqualValues(t, outputID.TransactionID(), resp.Included.TransactionID)
 }
 
 func TestClient_CommitmentByID(t *testing.T) {
