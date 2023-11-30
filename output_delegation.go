@@ -181,7 +181,12 @@ func (d *DelegationOutput) StorageScore(storageScoreStruct *StorageScoreStructur
 }
 
 func (d *DelegationOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	return d.UnlockConditions.WorkScore(workScoreParameters)
+	workScoreConditions, err := d.UnlockConditions.WorkScore(workScoreParameters)
+	if err != nil {
+		return 0, err
+	}
+
+	return workScoreParameters.Output.Add(workScoreConditions)
 }
 
 func (d *DelegationOutput) ChainID() ChainID {

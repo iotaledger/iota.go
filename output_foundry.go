@@ -208,7 +208,7 @@ func (f *FoundryOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 		return 0, err
 	}
 
-	return workScoreTokenScheme.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreParameters.Output.Add(workScoreTokenScheme, workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (f *FoundryOutput) ChainID() ChainID {
