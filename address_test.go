@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -276,7 +276,7 @@ func TestParseBech32(t *testing.T) {
 }
 
 func TestImplicitAccountCreationAddressCapabilities(t *testing.T) {
-	address := iotago.ImplicitAccountCreationAddressFromPubKey(ed25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519())
+	address := iotago.ImplicitAccountCreationAddressFromPubKey(hiveEd25519.PublicKey(tpkg.Rand32ByteArray()).ToEd25519())
 	require.False(t, address.CannotReceiveNativeTokens())
 	require.False(t, address.CannotReceiveMana())
 	require.True(t, address.CannotReceiveOutputsWithTimelockUnlockCondition())
