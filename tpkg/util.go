@@ -829,6 +829,25 @@ func RandUTXOInput() *iotago.UTXOInput {
 	return RandUTXOInputWithIndex(uint16(rand.Intn(iotago.RefUTXOIndexMax)))
 }
 
+func RandCommitmentID() iotago.CommitmentID {
+	return Rand36ByteArray()
+}
+
+func RandIdentifier() iotago.Identifier {
+	return Rand32ByteArray()
+}
+
+func RandCommitment() *iotago.Commitment {
+	return &iotago.Commitment{
+		ProtocolVersion:      iotago.LatestProtocolVersion(),
+		Slot:                 RandSlot(),
+		PreviousCommitmentID: RandCommitmentID(),
+		RootsID:              RandIdentifier(),
+		CumulativeWeight:     RandUint64(math.MaxUint64),
+		ReferenceManaCost:    RandMana(iotago.MaxMana),
+	}
+}
+
 // RandCommitmentInput returns a random Commitment input.
 func RandCommitmentInput() *iotago.CommitmentInput {
 	return &iotago.CommitmentInput{
