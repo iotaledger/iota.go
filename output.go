@@ -302,6 +302,25 @@ func outputUnlockableBy(output Output, next TransDepIdentOutput, target Address,
 	return true, nil
 }
 
+// Computes the Potential Mana that the output generates between creationSlot and targetSlot,
+// while deducting the minimum deposit of the output which does not generate Mana.
+//
+// Returns 0 if the output does not have the minimum storage deposit covered.
+func PotentialMana(manaDecayProvider *ManaDecayProvider, storageScoreStructure *StorageScoreStructure, output Output, creationSlot, targetSlot SlotIndex) (Mana, error) {
+	minDeposit, err := storageScoreStructure.MinDeposit(output)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to calculate min deposit for potential mana calculation")
+	}
+
+	excessBaseTokens, err := safemath.SafeSub(output.BaseTokenAmount(), minDeposit)
+	// An underflow means no potential mana is generated and hence no error is returned.
+	if err != nil {
+		return 0, nil
+	}
+
+	return manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
+}
+
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
 // of any transition the output does (without considering Feature(s)).
 type TransIndepIdentOutput interface {
