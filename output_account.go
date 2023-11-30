@@ -194,7 +194,7 @@ func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 		return 0, err
 	}
 
-	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreParameters.Output.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AccountOutput) Ident() Address {

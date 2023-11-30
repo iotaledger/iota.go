@@ -88,7 +88,7 @@ func (e *BasicOutput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkS
 		return 0, err
 	}
 
-	return workScoreConditions.Add(workScoreFeatures)
+	return workScoreParameters.Output.Add(workScoreConditions, workScoreFeatures)
 }
 
 func (e *BasicOutput) FeatureSet() FeatureSet {
