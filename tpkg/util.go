@@ -554,12 +554,14 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 }
 
 // RandTransaction returns a random transaction essence.
-func RandTransaction(api iotago.API) *iotago.Transaction {
+func RandTransaction(api iotago.API, opts ...options.Option[iotago.Transaction]) *iotago.Transaction {
 	return RandTransactionWithOptions(
 		api,
-		WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount)+1),
-		WithOutputCount(rand.Intn(iotago.MaxOutputsCount)+1),
-		WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount)+1),
+		append([]options.Option[iotago.Transaction]{
+			WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount) + 1),
+			WithOutputCount(rand.Intn(iotago.MaxOutputsCount) + 1),
+			WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount) + 1),
+		}, opts...)...,
 	)
 }
 
@@ -848,8 +850,8 @@ func RandSignedTransactionWithTransaction(api iotago.API, transaction *iotago.Tr
 }
 
 // RandSignedTransaction returns a random transaction.
-func RandSignedTransaction(api iotago.API) *iotago.SignedTransaction {
-	return RandSignedTransactionWithTransaction(api, RandTransaction(api))
+func RandSignedTransaction(api iotago.API, opts ...options.Option[iotago.Transaction]) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransaction(api, opts...))
 }
 
 // RandSignedTransactionWithUTXOInputCount returns a random transaction with a specific amount of inputs.
