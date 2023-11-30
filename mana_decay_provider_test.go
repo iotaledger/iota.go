@@ -266,9 +266,9 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			}
 
 			// calculate the bounds
-			upperBound := testFloatManaDecayProvider.UpperBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
-			lowerBound := testFloatManaDecayProvider.LowerBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
-			floatResult := testFloatManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
+			upperBound := testFloatManaDecayProvider.UpperBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot, testProtoParams)
+			lowerBound := testFloatManaDecayProvider.LowerBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot, testProtoParams)
+			floatResult := testFloatManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot, testProtoParams)
 
 			// check if the result is in the bounds
 			require.LessOrEqual(t, float64(result), upperBound)
@@ -325,7 +325,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 			rewards:      iotago.MaxMana,
 			rewardEpoch:  1,
 			claimedEpoch: iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1),
-			result:       13228672242897911807, // insert a 256-bit calculation here.
+			result:       13228672242897911807, // TODO Olivia: insert a 256-bit calculation here.
 			wantErr:      nil,
 		},
 		{
@@ -371,12 +371,12 @@ type TestFloatManaDecayProvider struct {
 	generationRateExponent uint64
 }
 
-func (p *TestFloatManaDecayProvider) ManaGenerationWithDecay(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+func (p *TestFloatManaDecayProvider) ManaGenerationWithDecay(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 	floatAmount := float64(amount)
 	floatGenerationRate := float64(p.generationRate) * math.Pow(2, -float64(p.generationRateExponent))
-	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(10)
+	delta := float64(1<<protoParams.SlotsPerEpochExponent()) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(protoParams.SlotDurationInSeconds())
 	epochDiff := targetEpoch - creationEpoch
 
 	//nolint:exhaustive // false-positive, we have a default case
@@ -398,7 +398,8 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecay(amount iotago.BaseT
 		slotsBeforeNextEpoch := p.timeProvider.SlotsBeforeNextEpoch(creationSlot)
 		slotsSinceEpochStart := p.timeProvider.SlotsSinceEpochStart(targetSlot)
 		epochDiffFloat := float64(epochDiff)
-		slotsPerEpochFloat := math.Pow(2, 13)
+		slotsPerEpochFloat := math.Pow(2, float64(protoParams.SlotsPerEpochExponent()))
+		// TODO Olivia: check if the magic number 3 is the mana share coefficient and replace it.
 		constant := math.Exp(-delta/3) * (1 - math.Exp(-(epochDiffFloat-1)*delta/3)) / (1 - math.Exp(-delta/3))
 		potentialMana_n := float64(slotsBeforeNextEpoch) * floatAmount * floatGenerationRate * math.Exp(-epochDiffFloat*delta/3)
 		potentialMana_n_1 := constant * floatAmount * floatGenerationRate * slotsPerEpochFloat
@@ -408,12 +409,28 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecay(amount iotago.BaseT
 	}
 }
 
-func (p *TestFloatManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
-	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(10)
-	constant := math.Exp(-delta/3) / (1 - math.Exp(-delta/3))
-	return p.ManaGenerationWithDecay(amount, creationSlot, targetSlot) - (4 + float64(amount)*math.Pow(2, float64(13-27))*(1+constant*math.Pow(2, -float64(32))))
+func (p *TestFloatManaDecayProvider) ManaWithDecay(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
+	// TODO Olivia: implement me
+	return 0
 }
 
-func (p *TestFloatManaDecayProvider) UpperBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
-	return p.ManaGenerationWithDecay(amount, creationSlot, targetSlot) + 2 - math.Pow(2, -float64(32-1))
+func (p *TestFloatManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
+	// TODO Olivia: remove magic numbers
+	delta := float64(1<<13) * (1.0 / (365.0 * 24.0 * 60.0 * 60.0)) * float64(10)
+	constant := math.Exp(-delta/3) / (1 - math.Exp(-delta/3))
+	return p.ManaGenerationWithDecay(amount, creationSlot, targetSlot, protoParams) - (4 + float64(amount)*math.Pow(2, float64(13-27))*(1+constant*math.Pow(2, -float64(32))))
+}
+
+func (p *TestFloatManaDecayProvider) UpperBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
+	// TODO Olivia: remove magic numbers
+	return p.ManaGenerationWithDecay(amount, creationSlot, targetSlot, protoParams) + 2 - math.Pow(2, -float64(32-1))
+}
+
+func (p *TestFloatManaDecayProvider) LowerBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
+	// TODO Olivia: implement me
+	return 0
+}
+
+func (p *TestFloatManaDecayProvider) UpperBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex, protoParams *iotago.V3ProtocolParameters) float64 {
+	return p.ManaWithDecay(mana, creationSlot, targetSlot, protoParams)
 }
