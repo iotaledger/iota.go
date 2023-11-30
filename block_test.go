@@ -440,6 +440,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		API: tpkg.TestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
+			NetworkID:        tpkg.TestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
@@ -468,6 +469,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		API: tpkg.TestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
+			NetworkID:        tpkg.TestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
@@ -496,6 +498,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 		API: tpkg.TestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.TestAPI.Version(),
+			NetworkID:        tpkg.TestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.TestAPI).MustID(),
 		},
