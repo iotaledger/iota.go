@@ -41,14 +41,20 @@ func RandByte() byte {
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
-		b = append(b, byte(RandInt(256)))
+		b = append(b, RandByte())
 	}
 
 	return b
 }
 
 func RandString(length int) string {
-	return string(RandBytes(length))
+	var b []byte
+	for i := 0; i < length; i++ {
+		// 128 because we want to have printable ASCII characters
+		b = append(b, byte(RandInt(128)))
+	}
+
+	return string(b)
 }
 
 // RandInt returns a random int.
