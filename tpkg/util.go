@@ -27,6 +27,10 @@ func Must(err error) {
 	}
 }
 
+func RandomRead(p []byte) (n int, err error) {
+	return cryptorand.Read(p)
+}
+
 // RandByte returns a random byte.
 func RandByte() byte {
 	return byte(rand.Intn(256))
@@ -36,7 +40,7 @@ func RandByte() byte {
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
-		b = append(b, byte(rand.Intn(127)))
+		b = append(b, byte(RandInt(256)))
 	}
 
 	return b
@@ -51,29 +55,49 @@ func RandInt(max int) int {
 	return rand.Intn(max)
 }
 
-// RandUint8 returns a random uint8.
-func RandUint8(max uint8) uint8 {
-	return uint8(rand.Int31n(int32(max)))
+// RandInt8 returns a random int8.
+func RandInt8(max int8) int8 {
+	return int8(RandInt32(uint32(max)))
 }
 
-// RandUint16 returns a random uint16.
-func RandUint16(max uint16) uint16 {
-	return uint16(rand.Int31n(int32(max)))
+// RandInt16 returns a random int16.
+func RandInt16(max int16) int16 {
+	return int16(RandInt32(uint32(max)))
 }
 
-// RandUint32 returns a random uint32.
-func RandUint32(max uint32) uint32 {
-	return uint32(rand.Int63n(int64(max)))
-}
-
-// RandUint64 returns a random uint64.
-func RandUint64(max uint64) uint64 {
-	return uint64(rand.Int63n(int64(uint32(max))))
+// RandInt32 returns a random int32.
+func RandInt32(max uint32) int32 {
+	return rand.Int31n(int32(max))
 }
 
 // RandInt64 returns a random int64.
 func RandInt64(max uint64) int64 {
 	return rand.Int63n(int64(uint32(max)))
+}
+
+// RandUint returns a random uint.
+func RandUint(max uint) uint {
+	return uint(RandInt(int(max)))
+}
+
+// RandUint8 returns a random uint8.
+func RandUint8(max uint8) uint8 {
+	return uint8(RandInt32(uint32(max)))
+}
+
+// RandUint16 returns a random uint16.
+func RandUint16(max uint16) uint16 {
+	return uint16(RandInt32(uint32(max)))
+}
+
+// RandUint32 returns a random uint32.
+func RandUint32(max uint32) uint32 {
+	return uint32(RandInt64(uint64(max)))
+}
+
+// RandUint64 returns a random uint64.
+func RandUint64(max uint64) uint64 {
+	return uint64(RandInt64(max))
 }
 
 // RandUTCTime returns a random time from current year until now in UTC.
