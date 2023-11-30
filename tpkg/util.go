@@ -655,6 +655,12 @@ func WithAllotments(allotments iotago.TxEssenceAllotments) options.Option[iotago
 	}
 }
 
+func WithTxEssencePayload(payload iotago.TxEssencePayload) options.Option[iotago.Transaction] {
+	return func(tx *iotago.Transaction) {
+		tx.Payload = payload
+	}
+}
+
 // RandTaggedData returns a random tagged data payload.
 func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
