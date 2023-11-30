@@ -740,6 +740,17 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	}
 }
 
+func RandBasicBlockWithPayload(api iotago.API, payload iotago.ApplicationPayload) *iotago.BasicBlockBody {
+	return &iotago.BasicBlockBody{
+		API:                api,
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+		Payload:            payload,
+		MaxBurnedMana:      RandMana(1000),
+	}
+}
+
 func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
 	var payload iotago.ApplicationPayload
 
@@ -753,14 +764,16 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = &iotago.CandidacyAnnouncement{}
 	}
 
-	return &iotago.BasicBlockBody{
-		API:                api,
-		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
-		WeakParents:        iotago.BlockIDs{},
-		ShallowLikeParents: iotago.BlockIDs{},
-		Payload:            payload,
-		MaxBurnedMana:      RandMana(1000),
-	}
+	return RandBasicBlockWithPayload(api, payload)
+}
+
+func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
+	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
+
+	block := RandBlock(basicBlock, TestAPI, rmc)
+	block.Header.IssuerID = issuerID
+
+	return block
 }
 
 func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
@@ -771,15 +784,6 @@ func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
 		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
-}
-
-func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
-	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
-
-	block := RandBlock(basicBlock, TestAPI, rmc)
-	block.Header.IssuerID = issuerID
-
-	return block
 }
 
 // RandSignedTransactionWithTransaction returns a random transaction with a specific essence.
