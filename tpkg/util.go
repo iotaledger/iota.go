@@ -924,11 +924,16 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 }
 
 // RandBasicOutput returns a random basic output (with no features).
-func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
+func RandBasicOutput(addressType ...iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
 		Amount:           0,
 		UnlockConditions: iotago.BasicOutputUnlockConditions{},
 		Features:         iotago.BasicOutputFeatures{},
+	}
+
+	addrType := iotago.AddressEd25519
+	if len(addressType) > 0 {
+		addrType = addressType[0]
 	}
 
 	//nolint:exhaustive
