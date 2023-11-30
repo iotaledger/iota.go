@@ -23,6 +23,7 @@ func NewBasicBlockBuilder(api iotago.API) *BasicBlockBuilder {
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.EmptyCommitmentID,
+			NetworkID:        api.ProtocolParameters().NetworkID(),
 			IssuingTime:      time.Now().UTC(),
 		},
 		Signature: &iotago.Ed25519Signature{},
@@ -205,6 +206,7 @@ func NewValidationBlockBuilder(api iotago.API) *ValidationBlockBuilder {
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  api.ProtocolParameters().Version(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
+			NetworkID:        api.ProtocolParameters().NetworkID(),
 			IssuingTime:      time.Now().UTC(),
 		},
 		Signature: &iotago.Ed25519Signature{},
