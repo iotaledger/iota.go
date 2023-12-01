@@ -323,6 +323,7 @@ func TestClient_SubmitBlock(t *testing.T) {
 		API: mockAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
+			NetworkID:        mockAPI.ProtocolParameters().NetworkID(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI).MustID(),
 		},
 		Signature: &iotago.Ed25519Signature{},
@@ -380,6 +381,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 		API: mockAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
+			NetworkID:        mockAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI).MustID(),
 		},
@@ -410,6 +412,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 		API: mockAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  mockAPI.Version(),
+			NetworkID:        mockAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI).MustID(),
 		},
