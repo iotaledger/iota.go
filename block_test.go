@@ -38,7 +38,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 		},
 		{
 			name:   "ok - validation block",
-			source: tpkg.RandBlock(tpkg.RandValidationBlock(tpkg.TestAPI), tpkg.TestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandValidationBlockBody(tpkg.TestAPI), tpkg.TestAPI, 0),
 			target: &iotago.Block{},
 		},
 	}
