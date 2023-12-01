@@ -463,21 +463,9 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 		// calculate the potential mana of the input
 		var inputPotentialMana iotago.Mana
 
-		// we need to ignore the storage deposit, because it doesn't generate mana
-		minDeposit, err := b.api.StorageScoreStructure().MinDeposit(input)
+		inputPotentialMana, err := iotago.PotentialMana(b.api.ManaDecayProvider(), b.api.StorageScoreStructure(), input, inputID.CreationSlot(), targetSlot)
 		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to calculate min deposit")
-		}
-		if input.BaseTokenAmount() > minDeposit {
-			excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to calculate excessBaseTokens of the input")
-			}
-
-			inputPotentialMana, err = b.api.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, inputID.CreationSlot(), targetSlot)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to calculate potential mana generation and decay")
-			}
+			return nil, ierrors.Wrap(err, "failed to calculate potential mana")
 		}
 
 		if err := result.AddPotentialMana(inputPotentialMana); err != nil {

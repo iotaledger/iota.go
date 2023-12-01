@@ -84,17 +84,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		if err != nil {
 			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
 		}
-		// potential Mana
-		// the storage deposit does not generate potential mana, so we only use the excess base tokens to calculate the potential mana
-		minDeposit, err := storageScoreStructure.MinDeposit(input)
-		if err != nil {
-			return 0, ierrors.Wrapf(err, "input %s min deposit calculation failed", outputID)
-		}
-		excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
-		if err != nil {
-			continue
-		}
-		manaPotential, err := manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, outputID.CreationSlot(), txCreationSlot)
+		manaPotential, err := iotago.PotentialMana(manaDecayProvider, storageScoreStructure, input, outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s potential mana calculation failed", outputID)
 		}
