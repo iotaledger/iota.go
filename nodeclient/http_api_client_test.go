@@ -358,9 +358,9 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 
 	originRes := &api.BlockMetadataResponse{
 		BlockID:    identifier,
-		BlockState: api.BlockStateConfirmed.String(),
+		BlockState: api.BlockStateConfirmed,
 		TransactionMetadata: &api.TransactionMetadataResponse{
-			TransactionState: api.TransactionStateConfirmed.String(),
+			TransactionState: api.TransactionStateConfirmed,
 		},
 	}
 

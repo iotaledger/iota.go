@@ -50,6 +50,46 @@ func BlockStateFromBytes(b []byte) (BlockState, int, error) {
 	return BlockState(b[0]), BlockStateLength, nil
 }
 
+func (b BlockState) EncodeJSON() (any, error) {
+	if b > BlockStateFailed {
+		return nil, ierrors.Errorf("invalid block state: %d", b)
+	}
+
+	return b.String(), nil
+}
+
+func (b *BlockState) DecodeJSON(state any) error {
+	if state == nil {
+		return ierrors.New("given block state is nil")
+	}
+
+	blockState, ok := state.(string)
+	if !ok {
+		return ierrors.Errorf("invalid type: %T", state)
+	}
+
+	switch blockState {
+	case "unknown":
+		*b = BlockStateUnknown
+	case "pending":
+		*b = BlockStatePending
+	case "accepted":
+		*b = BlockStateAccepted
+	case "confirmed":
+		*b = BlockStateConfirmed
+	case "finalized":
+		*b = BlockStateFinalized
+	case "rejected":
+		*b = BlockStateRejected
+	case "failed":
+		*b = BlockStateFailed
+	default:
+		return ierrors.Errorf("invalid block state: %s", blockState)
+	}
+
+	return nil
+}
+
 const (
 	BlockFailureNone                      BlockFailureReason = 0
 	BlockFailureIsTooOld                  BlockFailureReason = 1
@@ -120,6 +160,44 @@ func TransactionStateFromBytes(b []byte) (TransactionState, int, error) {
 	}
 
 	return TransactionState(b[0]), TransactionStateLength, nil
+}
+
+func (t TransactionState) EncodeJSON() (any, error) {
+	if t > TransactionStateFailed {
+		return nil, ierrors.Errorf("invalid transaction state: %d", t)
+	}
+
+	return t.String(), nil
+}
+
+func (t *TransactionState) DecodeJSON(state any) error {
+	if state == nil {
+		return ierrors.New("given transaction state is nil")
+	}
+
+	transactionState, ok := state.(string)
+	if !ok {
+		return ierrors.Errorf("invalid type: %T", state)
+	}
+
+	switch transactionState {
+	case "noTransaction":
+		*t = TransactionStateNoTransaction
+	case "pending":
+		*t = TransactionStatePending
+	case "accepted":
+		*t = TransactionStateAccepted
+	case "confirmed":
+		*t = TransactionStateConfirmed
+	case "finalized":
+		*t = TransactionStateFinalized
+	case "failed":
+		*t = TransactionStateFailed
+	default:
+		return ierrors.Errorf("invalid transaction state: %s", transactionState)
+	}
+
+	return nil
 }
 
 const (
@@ -263,7 +341,7 @@ type (
 		// BlockID The hex encoded block ID of the block.
 		BlockID iotago.BlockID `serix:""`
 		// BlockState might be pending, rejected, failed, confirmed, finalized.
-		BlockState string `serix:""`
+		BlockState BlockState `serix:""`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
 		// TransactionMetadata is the metadata of the transaction that is contained in the block.
@@ -281,7 +359,7 @@ type (
 		// TransactionID is the hex encoded transaction ID of the transaction.
 		TransactionID iotago.TransactionID `serix:""`
 		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
-		TransactionState string `serix:""`
+		TransactionState TransactionState `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
 	}
