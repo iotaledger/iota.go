@@ -6935,7 +6935,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	currentSlot := testAPI.TimeProvider().EpochStart(currentEpoch)
 
 	blockIssuerFeature := &iotago.BlockIssuerFeature{
-		BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
+		BlockIssuerKeys: tpkg.RandBlockIssuerKeys(1),
 		ExpirySlot:      currentSlot + 500,
 	}
 
