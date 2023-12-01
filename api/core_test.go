@@ -150,11 +150,11 @@ func Test_BlockMetadataResponse(t *testing.T) {
 	{
 		response := &api.BlockMetadataResponse{
 			BlockID:            iotago.BlockID{0x9},
-			BlockState:         api.BlockStateFailed.String(),
+			BlockState:         api.BlockStateFailed,
 			BlockFailureReason: api.BlockFailureParentNotFound,
 			TransactionMetadata: &api.TransactionMetadataResponse{
 				TransactionID:            iotago.TransactionID{0x1},
-				TransactionState:         api.TransactionStateFailed.String(),
+				TransactionState:         api.TransactionStateFailed,
 				TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
 			},
 		}
@@ -174,7 +174,7 @@ func Test_BlockMetadataResponse(t *testing.T) {
 	{
 		response := &api.BlockMetadataResponse{
 			BlockID:    iotago.BlockID{0x9},
-			BlockState: api.BlockStateConfirmed.String(),
+			BlockState: api.BlockStateConfirmed,
 		}
 
 		jsonResponse, err := testAPI.JSONEncode(response)
