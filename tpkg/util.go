@@ -50,8 +50,8 @@ func RandBytes(length int) []byte {
 func RandString(length int) string {
 	var b []byte
 	for i := 0; i < length; i++ {
-		// 128 because we want to have printable ASCII characters
-		b = append(b, byte(RandInt(128)))
+		// Generate random printable ASCII values between 32 and 126 (inclusive)
+		b = append(b, byte(RandInt(95)+32)) // 95 printable ASCII characters (126 - 32 + 1)
 	}
 
 	return string(b)
@@ -796,7 +796,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	}
 }
 
-func RandBasicBlockWithPayload(api iotago.API, payload iotago.ApplicationPayload) *iotago.BasicBlockBody {
+func RandBasicBlockBodyWithPayload(api iotago.API, payload iotago.ApplicationPayload) *iotago.BasicBlockBody {
 	return &iotago.BasicBlockBody{
 		API:                api,
 		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
@@ -807,7 +807,7 @@ func RandBasicBlockWithPayload(api iotago.API, payload iotago.ApplicationPayload
 	}
 }
 
-func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
+func RandBasicBlockBody(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
 	var payload iotago.ApplicationPayload
 
 	//nolint:exhaustive
@@ -820,11 +820,11 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = &iotago.CandidacyAnnouncement{}
 	}
 
-	return RandBasicBlockWithPayload(api, payload)
+	return RandBasicBlockBodyWithPayload(api, payload)
 }
 
 func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
-	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
+	basicBlock := RandBasicBlockBody(api, iotago.PayloadSignedTransaction)
 
 	block := RandBlock(basicBlock, TestAPI, rmc)
 	block.Header.IssuerID = issuerID
