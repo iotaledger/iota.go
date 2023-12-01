@@ -14,6 +14,7 @@ import (
 	"sort"
 	"time"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -27,6 +28,10 @@ func Must(err error) {
 	}
 }
 
+func RandomRead(p []byte) (n int, err error) {
+	return cryptorand.Read(p)
+}
+
 // RandByte returns a random byte.
 func RandByte() byte {
 	return byte(rand.Intn(256))
@@ -36,14 +41,20 @@ func RandByte() byte {
 func RandBytes(length int) []byte {
 	var b []byte
 	for i := 0; i < length; i++ {
-		b = append(b, byte(rand.Intn(127)))
+		b = append(b, RandByte())
 	}
 
 	return b
 }
 
 func RandString(length int) string {
-	return string(RandBytes(length))
+	var b []byte
+	for i := 0; i < length; i++ {
+		// Generate random printable ASCII values between 32 and 126 (inclusive)
+		b = append(b, byte(RandInt(95)+32)) // 95 printable ASCII characters (126 - 32 + 1)
+	}
+
+	return string(b)
 }
 
 // RandInt returns a random int.
@@ -51,29 +62,49 @@ func RandInt(max int) int {
 	return rand.Intn(max)
 }
 
-// RandUint8 returns a random uint8.
-func RandUint8(max uint8) uint8 {
-	return uint8(rand.Int31n(int32(max)))
+// RandInt8 returns a random int8.
+func RandInt8(max int8) int8 {
+	return int8(RandInt32(uint32(max)))
 }
 
-// RandUint16 returns a random uint16.
-func RandUint16(max uint16) uint16 {
-	return uint16(rand.Int31n(int32(max)))
+// RandInt16 returns a random int16.
+func RandInt16(max int16) int16 {
+	return int16(RandInt32(uint32(max)))
 }
 
-// RandUint32 returns a random uint32.
-func RandUint32(max uint32) uint32 {
-	return uint32(rand.Int63n(int64(max)))
-}
-
-// RandUint64 returns a random uint64.
-func RandUint64(max uint64) uint64 {
-	return uint64(rand.Int63n(int64(uint32(max))))
+// RandInt32 returns a random int32.
+func RandInt32(max uint32) int32 {
+	return rand.Int31n(int32(max))
 }
 
 // RandInt64 returns a random int64.
 func RandInt64(max uint64) int64 {
 	return rand.Int63n(int64(uint32(max)))
+}
+
+// RandUint returns a random uint.
+func RandUint(max uint) uint {
+	return uint(RandInt(int(max)))
+}
+
+// RandUint8 returns a random uint8.
+func RandUint8(max uint8) uint8 {
+	return uint8(RandInt32(uint32(max)))
+}
+
+// RandUint16 returns a random uint16.
+func RandUint16(max uint16) uint16 {
+	return uint16(RandInt32(uint32(max)))
+}
+
+// RandUint32 returns a random uint32.
+func RandUint32(max uint32) uint32 {
+	return uint32(RandInt64(uint64(max)))
+}
+
+// RandUint64 returns a random uint64.
+func RandUint64(max uint64) uint64 {
+	return uint64(RandInt64(max))
 }
 
 // RandUTCTime returns a random time from current year until now in UTC.
@@ -100,18 +131,23 @@ func RandFloat64(max float64) float64 {
 	return rand.Float64() * max
 }
 
-func RandOutputIDWithCreationSlot(slot iotago.SlotIndex, index uint16) iotago.OutputID {
+func RandOutputIDWithCreationSlot(slot iotago.SlotIndex, index ...uint16) iotago.OutputID {
 	txID := RandTransactionIDWithCreationSlot(slot)
+
+	idx := RandUint16(126)
+	if len(index) > 0 {
+		idx = index[0]
+	}
 
 	var outputID iotago.OutputID
 	copy(outputID[:], txID[:])
-	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], index)
+	binary.LittleEndian.PutUint16(outputID[iotago.TransactionIDLength:], idx)
 
 	return outputID
 }
 
-func RandOutputID(index uint16) iotago.OutputID {
-	return RandOutputIDWithCreationSlot(0, index)
+func RandOutputID(index ...uint16) iotago.OutputID {
+	return RandOutputIDWithCreationSlot(0, index...)
 }
 
 func RandOutputIDsWithCreationSlot(slot iotago.SlotIndex, count uint16) iotago.OutputIDs {
@@ -415,13 +451,17 @@ func RandRestrictedMultiAddress(capabilities iotago.AddressCapabilitiesBitMask) 
 }
 
 // RandAddress returns a random address (Ed25519, Account, NFT, Anchor).
-func RandAddress() iotago.Address {
-	addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT, iotago.AddressAnchor}
-
-	addressType := addressTypes[RandInt(len(addressTypes))]
+func RandAddress(addressType ...iotago.AddressType) iotago.Address {
+	var addrType iotago.AddressType
+	if len(addressType) > 0 {
+		addrType = addressType[0]
+	} else {
+		addressTypes := []iotago.AddressType{iotago.AddressEd25519, iotago.AddressAccount, iotago.AddressNFT, iotago.AddressAnchor}
+		addrType = addressTypes[RandInt(len(addressTypes))]
+	}
 
 	//nolint:exhaustive
-	switch addressType {
+	switch addrType {
 	case iotago.AddressEd25519:
 		return RandEd25519Address()
 	case iotago.AddressAccount:
@@ -431,7 +471,7 @@ func RandAddress() iotago.Address {
 	case iotago.AddressAnchor:
 		return RandAnchorAddress()
 	default:
-		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
+		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addrType))
 	}
 }
 
@@ -520,12 +560,14 @@ func ReferenceUnlock(index uint16) *iotago.ReferenceUnlock {
 }
 
 // RandTransaction returns a random transaction essence.
-func RandTransaction(api iotago.API) *iotago.Transaction {
+func RandTransaction(api iotago.API, opts ...options.Option[iotago.Transaction]) *iotago.Transaction {
 	return RandTransactionWithOptions(
 		api,
-		WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount)+1),
-		WithOutputCount(rand.Intn(iotago.MaxOutputsCount)+1),
-		WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount)+1),
+		append([]options.Option[iotago.Transaction]{
+			WithUTXOInputCount(rand.Intn(iotago.MaxInputsCount) + 1),
+			WithOutputCount(rand.Intn(iotago.MaxOutputsCount) + 1),
+			WithAllotmentCount(rand.Intn(iotago.MaxAllotmentCount) + 1),
+		}, opts...)...,
 	)
 }
 
@@ -655,6 +697,12 @@ func WithAllotments(allotments iotago.TxEssenceAllotments) options.Option[iotago
 	}
 }
 
+func WithTxEssencePayload(payload iotago.TxEssencePayload) options.Option[iotago.Transaction] {
+	return func(tx *iotago.Transaction) {
+		tx.Payload = payload
+	}
+}
+
 // RandTaggedData returns a random tagged data payload.
 func RandTaggedData(tag []byte, dataLength ...int) *iotago.TaggedData {
 	var data []byte
@@ -673,6 +721,20 @@ func RandAccountID() iotago.AccountID {
 	copy(alias[:], RandBytes(iotago.AccountIDLength))
 
 	return alias
+}
+
+func RandAnchorID() iotago.AnchorID {
+	anchorID := iotago.AnchorID{}
+	copy(anchorID[:], RandBytes(iotago.AnchorIDLength))
+
+	return anchorID
+}
+
+func RandNFTID() iotago.NFTID {
+	nft := iotago.NFTID{}
+	copy(nft[:], RandBytes(iotago.NFTIDLength))
+
+	return nft
 }
 
 func RandDelegationID() iotago.DelegationID {
@@ -736,7 +798,18 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	}
 }
 
-func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
+func RandBasicBlockBodyWithPayload(api iotago.API, payload iotago.ApplicationPayload) *iotago.BasicBlockBody {
+	return &iotago.BasicBlockBody{
+		API:                api,
+		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
+		WeakParents:        iotago.BlockIDs{},
+		ShallowLikeParents: iotago.BlockIDs{},
+		Payload:            payload,
+		MaxBurnedMana:      RandMana(1000),
+	}
+}
+
+func RandBasicBlockBody(api iotago.API, withPayloadType iotago.PayloadType) *iotago.BasicBlockBody {
 	var payload iotago.ApplicationPayload
 
 	//nolint:exhaustive
@@ -749,14 +822,16 @@ func RandBasicBlock(api iotago.API, withPayloadType iotago.PayloadType) *iotago.
 		payload = &iotago.CandidacyAnnouncement{}
 	}
 
-	return &iotago.BasicBlockBody{
-		API:                api,
-		StrongParents:      SortedRandBlockIDs(1 + rand.Intn(iotago.BasicBlockMaxParents)),
-		WeakParents:        iotago.BlockIDs{},
-		ShallowLikeParents: iotago.BlockIDs{},
-		Payload:            payload,
-		MaxBurnedMana:      RandMana(1000),
-	}
+	return RandBasicBlockBodyWithPayload(api, payload)
+}
+
+func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
+	basicBlock := RandBasicBlockBody(api, iotago.PayloadSignedTransaction)
+
+	block := RandBlock(basicBlock, TestAPI, rmc)
+	block.Header.IssuerID = issuerID
+
+	return block
 }
 
 func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
@@ -767,15 +842,6 @@ func RandValidationBlock(api iotago.API) *iotago.ValidationBlockBody {
 		ShallowLikeParents:      iotago.BlockIDs{},
 		HighestSupportedVersion: TestAPI.Version() + 1,
 	}
-}
-
-func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
-	basicBlock := RandBasicBlock(api, iotago.PayloadSignedTransaction)
-
-	block := RandBlock(basicBlock, TestAPI, rmc)
-	block.Header.IssuerID = issuerID
-
-	return block
 }
 
 // RandSignedTransactionWithTransaction returns a random transaction with a specific essence.
@@ -792,8 +858,8 @@ func RandSignedTransactionWithTransaction(api iotago.API, transaction *iotago.Tr
 }
 
 // RandSignedTransaction returns a random transaction.
-func RandSignedTransaction(api iotago.API) *iotago.SignedTransaction {
-	return RandSignedTransactionWithTransaction(api, RandTransaction(api))
+func RandSignedTransaction(api iotago.API, opts ...options.Option[iotago.Transaction]) *iotago.SignedTransaction {
+	return RandSignedTransactionWithTransaction(api, RandTransaction(api, opts...))
 }
 
 // RandSignedTransactionWithUTXOInputCount returns a random transaction with a specific amount of inputs.
@@ -819,6 +885,25 @@ func RandSignedTransactionWithInputOutputCount(api iotago.API, inputCount int, o
 // RandUTXOInput returns a random UTXO input.
 func RandUTXOInput() *iotago.UTXOInput {
 	return RandUTXOInputWithIndex(uint16(rand.Intn(iotago.RefUTXOIndexMax)))
+}
+
+func RandCommitmentID() iotago.CommitmentID {
+	return Rand36ByteArray()
+}
+
+func RandIdentifier() iotago.Identifier {
+	return Rand32ByteArray()
+}
+
+func RandCommitment() *iotago.Commitment {
+	return &iotago.Commitment{
+		ProtocolVersion:      iotago.LatestProtocolVersion(),
+		Slot:                 RandSlot(),
+		PreviousCommitmentID: RandCommitmentID(),
+		RootsID:              RandIdentifier(),
+		CumulativeWeight:     RandUint64(math.MaxUint64),
+		ReferenceManaCost:    RandMana(iotago.MaxMana),
+	}
 }
 
 // RandCommitmentInput returns a random Commitment input.
@@ -847,11 +932,16 @@ func RandUTXOInputWithIndex(index uint16) *iotago.UTXOInput {
 }
 
 // RandBasicOutput returns a random basic output (with no features).
-func RandBasicOutput(addrType iotago.AddressType) *iotago.BasicOutput {
+func RandBasicOutput(addressType ...iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
 		Amount:           0,
 		UnlockConditions: iotago.BasicOutputUnlockConditions{},
 		Features:         iotago.BasicOutputFeatures{},
+	}
+
+	addrType := iotago.AddressEd25519
+	if len(addressType) > 0 {
+		addrType = addressType[0]
 	}
 
 	//nolint:exhaustive
@@ -1073,6 +1163,151 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandUint32(math.MaxUint32),
 		),
 	)
+}
+
+func RandOutputType() iotago.OutputType {
+	outputTypes := []iotago.OutputType{iotago.OutputBasic, iotago.OutputAccount, iotago.OutputAnchor, iotago.OutputFoundry, iotago.OutputNFT, iotago.OutputDelegation}
+
+	return outputTypes[RandInt(len(outputTypes)-1)]
+}
+
+func RandOutput(outputType iotago.OutputType) iotago.Output {
+	var addr iotago.Address
+	if outputType == iotago.OutputFoundry {
+		addr = RandAddress(iotago.AddressAccount)
+	} else {
+		addr = RandAddress(iotago.AddressEd25519)
+	}
+
+	return RandOutputOnAddress(outputType, addr)
+}
+
+func RandOutputOnAddress(outputType iotago.OutputType, address iotago.Address) iotago.Output {
+	return RandOutputOnAddressWithAmount(outputType, address, RandBaseToken(iotago.MaxBaseToken))
+}
+
+func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.Address, amount iotago.BaseToken) iotago.Output {
+	var iotaOutput iotago.Output
+
+	switch outputType {
+	case iotago.OutputBasic:
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.BasicOutput{
+			Amount: amount,
+			UnlockConditions: iotago.BasicOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: address,
+				},
+			},
+			Features: iotago.BasicOutputFeatures{},
+		}
+
+	case iotago.OutputAccount:
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.AccountOutput{
+			Amount:    amount,
+			AccountID: RandAccountID(),
+			UnlockConditions: iotago.AccountOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: address,
+				},
+			},
+			Features:          iotago.AccountOutputFeatures{},
+			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+		}
+
+	case iotago.OutputAnchor:
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.AnchorOutput{
+			Amount:   amount,
+			AnchorID: RandAnchorID(),
+			UnlockConditions: iotago.AnchorOutputUnlockConditions{
+				&iotago.StateControllerAddressUnlockCondition{
+					Address: address,
+				},
+				&iotago.GovernorAddressUnlockCondition{
+					Address: address,
+				},
+			},
+			Features:          iotago.AnchorOutputFeatures{},
+			ImmutableFeatures: iotago.AnchorOutputImmFeatures{},
+		}
+
+	case iotago.OutputFoundry:
+		if address.Type() != iotago.AddressAccount {
+			panic("not an alias address")
+		}
+		supply := new(big.Int).SetUint64(RandUint64(math.MaxUint64))
+
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.FoundryOutput{
+			Amount:       amount,
+			SerialNumber: 0,
+			TokenScheme: &iotago.SimpleTokenScheme{
+				MintedTokens:  supply,
+				MeltedTokens:  new(big.Int).SetBytes([]byte{0}),
+				MaximumSupply: supply,
+			},
+			UnlockConditions: iotago.FoundryOutputUnlockConditions{
+				&iotago.ImmutableAccountUnlockCondition{
+					Address: address.(*iotago.AccountAddress),
+				},
+			},
+			Features:          iotago.FoundryOutputFeatures{},
+			ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+		}
+
+	case iotago.OutputNFT:
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.NFTOutput{
+			Amount: amount,
+			NFTID:  RandNFTID(),
+			UnlockConditions: iotago.NFTOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: address,
+				},
+			},
+			Features:          iotago.NFTOutputFeatures{},
+			ImmutableFeatures: iotago.NFTOutputImmFeatures{},
+		}
+
+	case iotago.OutputDelegation:
+		//nolint:forcetypeassert // we already checked the type
+		iotaOutput = &iotago.DelegationOutput{
+			Amount:           amount,
+			DelegatedAmount:  amount,
+			DelegationID:     RandDelegationID(),
+			ValidatorAddress: RandAccountAddress(),
+			StartEpoch:       RandEpoch(),
+			EndEpoch:         iotago.MaxEpochIndex,
+			UnlockConditions: iotago.DelegationOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: address,
+				},
+			},
+		}
+
+	default:
+		panic("unhandled output type")
+	}
+
+	return iotaOutput
+}
+
+func RandBlockIssuerKey() iotago.BlockIssuerKey {
+	return iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(hiveEd25519.PublicKey(RandBytes(32)))
+}
+
+func RandBlockIssuerKeys() iotago.BlockIssuerKeys {
+	// We always generate at least one key.
+	length := RandInt(10) + 1
+
+	blockIssuerKeys := iotago.NewBlockIssuerKeys()
+	for i := 0; i < length; i++ {
+		blockIssuerKeys.Add(RandBlockIssuerKey())
+	}
+
+	return blockIssuerKeys
 }
 
 // ManaDecayFactors calculates mana decay factors that can be used in the tests.

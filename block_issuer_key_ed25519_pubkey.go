@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/iotaledger/hive.go/crypto/ed25519"
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-const Ed25519PublicKeyBlockIssuerKeyLength = serializer.SmallTypeDenotationByteSize + ed25519.PublicKeySize
+const Ed25519PublicKeyBlockIssuerKeyLength = serializer.SmallTypeDenotationByteSize + hiveEd25519.PublicKeySize
 
 // A Ed25519 public key Block Issuer Key.
 type Ed25519PublicKeyBlockIssuerKey struct {
-	PublicKey ed25519.PublicKey `serix:""`
+	PublicKey hiveEd25519.PublicKey `serix:""`
 }
 
 // Ed25519PublicKeyBlockIssuerKeyFromPublicKey creates a block issuer key from an Ed25519 public key.
-func Ed25519PublicKeyBlockIssuerKeyFromPublicKey(publicKey ed25519.PublicKey) *Ed25519PublicKeyBlockIssuerKey {
+func Ed25519PublicKeyBlockIssuerKeyFromPublicKey(publicKey hiveEd25519.PublicKey) *Ed25519PublicKeyBlockIssuerKey {
 	return &Ed25519PublicKeyBlockIssuerKey{PublicKey: publicKey}
 }
 
@@ -27,7 +27,7 @@ func (key *Ed25519PublicKeyBlockIssuerKey) Clone() BlockIssuerKey {
 }
 
 // ToEd25519PublicKey returns the underlying Ed25519 Public Key.
-func (key *Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() ed25519.PublicKey {
+func (key *Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() hiveEd25519.PublicKey {
 	return key.PublicKey
 }
 
