@@ -82,6 +82,14 @@ func deriveManaDecayFactorEpochsSum(annualDecayFactorPercentage uint8, slotsPerE
 	return uint32((math.Pow(annualDecayFactor, delta) / (1 - math.Pow(annualDecayFactor, delta)) * (math.Pow(2, float64(decayFactorEpochsSumExponent)))))
 }
 
+// deriveBootstrappingDuration computes the bootstrapping duration using floating point arithmetic.
+func deriveBootstrappingDuration(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8) uint32 {
+	epochsPerYear := (365.0 * 24.0 * 60.0 * 60.0) / (math.Pow(2, float64(slotsPerEpochExponent)) * float64(slotDurationSeconds))
+	annualDecayFactor := float64(annualDecayFactorPercentage) / 100.0
+	beta := -math.Log(annualDecayFactor)
+	return uint32(epochsPerYear / beta)
+}
+
 func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
 	beta := -math.Log(float64(protocolParams.ManaParameters().AnnualDecayFactorPercentage))
 	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
