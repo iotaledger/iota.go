@@ -99,7 +99,6 @@ func TestManaDecay_NoFactorsGiven(t *testing.T) {
 	// no mana decay if no decay parameters are given
 	value, err := manaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochStart(100))
 	require.NoError(t, err)
-	fmt.Println(value)
 	require.Equal(t, iotago.Mana(100), value)
 }
 
