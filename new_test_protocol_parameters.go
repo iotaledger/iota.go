@@ -97,6 +97,9 @@ func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
 	if maxManaSupply >= math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount)) {
 		panic("the combination of parameters might lead to overflowing of the Mana supply")
 	}
+	if maxManaSupply < math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount-1)) {
+		panic("the mana generation can be increased")
+	}
 	// this check is specific to the way decay is calculated to prevent overflow
 	if _, err := safemath.SafeMul(protocolParams.ManaParameters().DecayFactorEpochsSum, uint32(protocolParams.ManaParameters().GenerationRate)); err != nil {
 		panic("decayFactorEpochsSum * generationRate must not require more than 32 bits")
