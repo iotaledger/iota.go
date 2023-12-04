@@ -1,7 +1,6 @@
 package tpkg
 
 import (
-	"math"
 	"time"
 
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -41,31 +40,3 @@ var ZeroCostTestAPI = iotago.V3API(ZeroCostV3TestProtocolParameters)
 
 // TestNetworkID is a test network ID.
 var TestNetworkID = IOTAMainnetV3TestProtocolParameters.NetworkID()
-
-// RandProtocolParameters produces random protocol parameters.
-// Some protocol parameters are subject to sanity checks when the protocol parameters are created
-// so we use default values here to avoid panics rather than random ones.
-func RandProtocolParameters() iotago.ProtocolParameters {
-	return iotago.NewV3TestProtocolParameters(
-		iotago.WithStorageOptions(
-			RandBaseToken(iotago.MaxBaseToken),
-			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-			iotago.StorageScore(RandUint64(math.MaxUint64)),
-		),
-		iotago.WithWorkScoreOptions(
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-		),
-	)
-}
