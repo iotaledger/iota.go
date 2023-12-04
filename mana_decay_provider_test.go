@@ -19,7 +19,7 @@ var (
 	testAPI                    = iotago.V3API(testProtoParams)
 	testTimeProvider           = testAPI.TimeProvider()
 	testManaDecayProvider      *iotago.ManaDecayProvider
-	testFloatManaDecayProvider *TestFloatManaDecayProvider
+	testFloatManaDecayProvider *TestReferenceManaDecayProvider
 
 	// These global variables are needed, otherwise the compiler will optimize away the actual tests.
 	benchmarkResult iotago.Mana
@@ -28,7 +28,7 @@ var (
 func TestMain(m *testing.M) {
 	manaParams := testProtoParams.ManaParameters()
 	testManaDecayProvider = iotago.NewManaDecayProvider(testTimeProvider, testProtoParams.SlotsPerEpochExponent(), manaParams)
-	testFloatManaDecayProvider = &TestFloatManaDecayProvider{
+	testFloatManaDecayProvider = &TestReferenceManaDecayProvider{
 		timeProvider:                 testTimeProvider,
 		generationRate:               uint64(manaParams.GenerationRate),
 		generationRateExponent:       uint64(manaParams.GenerationRateExponent),
@@ -152,22 +152,23 @@ func TestManaDecay_StoredMana(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.ManaWithDecay(tt.storedMana, tt.createdSlot, tt.targetSlot)
-			result256 := testFloatManaDecayProvider.StoredManaDecayUsing256(tt.storedMana, tt.createdSlot, tt.targetSlot)
+			fixedPointResult, err := testManaDecayProvider.ManaWithDecay(tt.storedMana, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 
-			// calculate the bounds
+			// calculate the bounds of the float result.
 			upperBound := testFloatManaDecayProvider.UpperBoundStoredMana(tt.storedMana, tt.createdSlot, tt.targetSlot)
 			lowerBound := testFloatManaDecayProvider.LowerBoundStoredMana(tt.storedMana, tt.createdSlot, tt.targetSlot)
 
-			// check if the result is in the bounds
-			require.LessOrEqual(t, float64(result), upperBound)
-			require.GreaterOrEqual(t, float64(result), lowerBound)
+			// check if the fixed point result is in the bounds.
+			require.LessOrEqual(t, float64(fixedPointResult), upperBound)
+			require.GreaterOrEqual(t, float64(fixedPointResult), lowerBound)
 
-			require.Equal(t, uint64(result), uint64(result256))
+			// check the fixed point result is exactly equal to the 256-bit integer result.
+			result256 := testFloatManaDecayProvider.ManaDecay256(tt.storedMana, tt.createdSlot, tt.targetSlot)
+			require.Equal(t, uint64(fixedPointResult), uint64(result256))
 
 		})
 	}
@@ -243,30 +244,30 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// calculate the result
-			result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
+			// calculate the fixedPointResult
+			fixedPointResult, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 
-			// calculate the bounds
+			// calculate the bounds of the float result.
 			upperBound := testFloatManaDecayProvider.UpperBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
 			lowerBound := testFloatManaDecayProvider.LowerBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
-			floatResult := testFloatManaDecayProvider.ManaGenerationWithDecayFloat(tt.amount, tt.createdSlot, tt.targetSlot)
 
-			// check if the result is in the bounds
-			require.LessOrEqual(t, float64(result), upperBound)
-			require.GreaterOrEqual(t, float64(result), lowerBound)
+			// check if the fixed point result is in the bounds.
+			require.LessOrEqual(t, float64(fixedPointResult), upperBound)
+			require.GreaterOrEqual(t, float64(fixedPointResult), lowerBound)
 
-			// for epsilon check it must not be zero
-			if result != 0 {
-				require.InEpsilon(t, floatResult, float64(result), float64(0.001))
+			// check the fixed point result is within epsilon of float result (must not be zero)
+			if fixedPointResult != 0 {
+				floatResult := testFloatManaDecayProvider.ManaGenerationWithDecayFloat(tt.amount, tt.createdSlot, tt.targetSlot)
+				require.InEpsilon(t, floatResult, float64(fixedPointResult), float64(0.001))
 			}
 
-			// check against the 256-bit implementation
-			result256 := testFloatManaDecayProvider.ManaGenerationWithDecayUsing256(tt.amount, tt.createdSlot, tt.targetSlot)
-			require.Equal(t, result, result256)
+			// check the fixed point result is exactly equal to the 256-bit integer result
+			result256 := testFloatManaDecayProvider.ManaGenerationWithDecay256(tt.amount, tt.createdSlot, tt.targetSlot)
+			require.Equal(t, fixedPointResult, result256)
 
 		})
 	}
@@ -328,33 +329,34 @@ func TestManaDecay_Rewards(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.rewardEpoch, tt.claimedEpoch)
+			fixedPointResult, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.rewardEpoch, tt.claimedEpoch)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 
 				return
 			}
 
-			// calculate the bounds
+			// calculate bounds for the float result.
 			createdSlot := testTimeProvider.EpochStart(tt.rewardEpoch)
 			targetSlot := testTimeProvider.EpochStart(tt.claimedEpoch)
 			testTimeProvider.EpochStart(1)
 			upperBound := testFloatManaDecayProvider.UpperBoundStoredMana(tt.rewards, createdSlot, targetSlot)
 			lowerBound := testFloatManaDecayProvider.LowerBoundStoredMana(tt.rewards, createdSlot, targetSlot)
 
-			// check if the result is in the bounds
-			require.LessOrEqual(t, float64(result), upperBound)
-			require.GreaterOrEqual(t, float64(result), lowerBound)
+			// check if the fixed point result is in the bounds.
+			require.LessOrEqual(t, float64(fixedPointResult), upperBound)
+			require.GreaterOrEqual(t, float64(fixedPointResult), lowerBound)
 
-			result256 := testFloatManaDecayProvider.DecayUsing256(uint64(tt.rewards), tt.claimedEpoch-tt.rewardEpoch)
-			require.Equal(t, result, result256)
+			// check the fixed point result is exactly equal to the 256-bit integer result.
+			result256 := testFloatManaDecayProvider.decay256(uint64(tt.rewards), tt.claimedEpoch-tt.rewardEpoch)
+			require.Equal(t, fixedPointResult, result256)
 		})
 	}
 }
 
-// TestFloatManaDecayProvider calculates the mana decay and mana generation
-// using floating point arithmetic.
-type TestFloatManaDecayProvider struct {
+// TestReferenceManaDecayProvider calculates reference values for the mana decay and mana generation
+// using either floating point arithmetic or 256-bit integer to compare against our fixed point decay provider.
+type TestReferenceManaDecayProvider struct {
 	timeProvider *iotago.TimeProvider
 
 	// generationRate is the amount of potential Mana generated by 1 IOTA in 1 slot.
@@ -378,22 +380,8 @@ type TestFloatManaDecayProvider struct {
 	tokenSupply iotago.BaseToken
 }
 
-//
-//   AUXILIRY FUNCTIONS FOR ALL TESTS
-//
-
-func (p *TestFloatManaDecayProvider) StoredManaDecayUsing256(value iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) iotago.Mana {
-	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
-	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
-	if value == 0 || targetEpoch-creationEpoch == 0 || p.decayFactorsLength == 0 {
-		// no need to decay if the epoch didn't change or no decay factors were given
-		return value
-	}
-
-	return p.DecayUsing256(uint64(value), targetEpoch-creationEpoch)
-}
-
-func (p *TestFloatManaDecayProvider) DecayUsing256(value uint64, epochDiff iotago.EpochIndex) iotago.Mana {
+// decay256 applies the decay to the given value using 256-bit integer arithmetic.
+func (p *TestReferenceManaDecayProvider) decay256(value uint64, epochDiff iotago.EpochIndex) iotago.Mana {
 	value256 := uint256.NewInt(value)
 
 	// we keep applying the decay as long as epoch diffs are left
@@ -416,7 +404,20 @@ func (p *TestFloatManaDecayProvider) DecayUsing256(value uint64, epochDiff iotag
 	return iotago.Mana(value256.Uint64())
 }
 
-func (p *TestFloatManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// ManaDecay256 applies the decay to the given value using 256-bit integer arithmetic.
+func (p *TestReferenceManaDecayProvider) ManaDecay256(value iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) iotago.Mana {
+	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
+	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
+	if value == 0 || targetEpoch-creationEpoch == 0 || p.decayFactorsLength == 0 {
+		// no need to decay if the epoch didn't change or no decay factors were given
+		return value
+	}
+
+	return p.decay256(uint64(value), targetEpoch-creationEpoch)
+}
+
+// ManaDecayFloat applies the decay to the given value using floating point arithmetic.
+func (p *TestReferenceManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 	floatAmount := float64(mana)
@@ -427,11 +428,8 @@ func (p *TestFloatManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSl
 	return manaDecayed
 }
 
-//
-//   FUNCTIONS FOR POTENTIAL MANA TESTING
-//
-
-func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) iotago.Mana {
+// ManaGenerationWithDecay256 calculates mana generation with decay (for potential Mana) using 256-bit integer arithmetic.
+func (p *TestReferenceManaDecayProvider) ManaGenerationWithDecay256(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) iotago.Mana {
 	if targetSlot-creationSlot == 0 || p.generationRate == 0 {
 		return 0
 	}
@@ -460,7 +458,7 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 		manaGeneratedFirstEpoch = new(uint256.Int).Mul(manaGeneratedFirstEpoch, slotsBeforeNextEpoch256)
 		manaGeneratedFirstEpoch = new(uint256.Int).Rsh(manaGeneratedFirstEpoch, uint(p.generationRateExponent))
 
-		manaDecayedFirstEpoch := p.DecayUsing256(manaGeneratedFirstEpoch.Uint64(), 1)
+		manaDecayedFirstEpoch := p.decay256(manaGeneratedFirstEpoch.Uint64(), 1)
 
 		manaGeneratedSecondEpoch := new(uint256.Int).Mul(generationRate256, amount256)
 		manaGeneratedSecondEpoch = new(uint256.Int).Mul(manaGeneratedSecondEpoch, slotsSinceEpochStart256)
@@ -479,9 +477,9 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 		manaGeneratedFirstEpoch := new(uint256.Int).Mul(generationRate256, amount256)
 		manaGeneratedFirstEpoch = new(uint256.Int).Mul(manaGeneratedFirstEpoch, slotsBeforeNextEpoch256)
 		manaGeneratedFirstEpoch = new(uint256.Int).Rsh(manaGeneratedFirstEpoch, uint(p.generationRateExponent))
-		manaDecayedFirstEpoch := p.DecayUsing256(manaGeneratedFirstEpoch.Uint64(), epochDiff)
+		manaDecayedFirstEpoch := p.decay256(manaGeneratedFirstEpoch.Uint64(), epochDiff)
 
-		manaDecayedIntermediateEpochs := p.DecayUsing256(c.Uint64(), epochDiff-1)
+		manaDecayedIntermediateEpochs := p.decay256(c.Uint64(), epochDiff-1)
 
 		manaGeneratedLastEpoch := new(uint256.Int).Mul(generationRate256, amount256)
 		manaGeneratedLastEpoch = new(uint256.Int).Mul(manaGeneratedLastEpoch, slotsSinceEpochStart256)
@@ -496,7 +494,8 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 	}
 }
 
-func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayFloat(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// ManaGenerationWithDecayFloat calculates mana generation with decay (for potential Mana) using floating point arithmetic.
+func (p *TestReferenceManaDecayProvider) ManaGenerationWithDecayFloat(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 	floatAmount := float64(amount)
@@ -534,7 +533,8 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayFloat(amount iotago.
 	}
 }
 
-func (p *TestFloatManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// LowerBoundPotentialMana calculates the lower bound for measuring the accuracy of the potential Mana fixed point calculations compared with the floating point result.
+func (p *TestReferenceManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	epochsPerYear := (365.0 * 24.0 * 60.0 * 60.0) / float64(p.timeProvider.EpochDurationSeconds())
 	decayPerEpoch := math.Pow(float64(p.annualDecayFactorPercentage)/100.0, 1/epochsPerYear)
 	constant := decayPerEpoch / (1 - decayPerEpoch)
@@ -542,18 +542,17 @@ func (p *TestFloatManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseT
 	return p.ManaGenerationWithDecayFloat(amount, creationSlot, targetSlot) - (4 + float64(amount)*float64(p.generationRate)*math.Pow(2, float64(p.timeProvider.SlotsPerEpochExponent()-uint8(p.generationRateExponent)))*(1+constant*math.Pow(2, -float64(p.decayFactorsExponent))))
 }
 
-func (p *TestFloatManaDecayProvider) UpperBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// UpperBoundPotentialMana calculates the upper bound for measuring the accuracy of the potential Mana fixed point calculations compared with the floating point result.
+func (p *TestReferenceManaDecayProvider) UpperBoundPotentialMana(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	return p.ManaGenerationWithDecayFloat(amount, creationSlot, targetSlot) + 2 - math.Pow(2, -float64(p.decayFactorsExponent-1))
 }
 
-//
-//   FUNCTIONS FOR STORED MANA AND REWARDS TESTING
-//
-
-func (p *TestFloatManaDecayProvider) LowerBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// LowerBoundStoredMana calculates the lower bound for measuring the accuracy of the stored Mana fixed point calculations compared with the floating point result.
+func (p *TestReferenceManaDecayProvider) LowerBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	return p.ManaDecayFloat(mana, creationSlot, targetSlot) - (float64(mana)*math.Pow(2, -float64(p.decayFactorsExponent)) + 1)
 }
 
-func (p *TestFloatManaDecayProvider) UpperBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
+// UpperBoundStoredMana calculates the upper bound for measuring the accuracy of the stored Mana fixed point calculations compared with the floating point result.
+func (p *TestReferenceManaDecayProvider) UpperBoundStoredMana(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
 	return p.ManaDecayFloat(mana, creationSlot, targetSlot)
 }
