@@ -189,7 +189,7 @@ func (a *AnchorOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Work
 		return 0, err
 	}
 
-	return workScoreConditions.Add(workScoreFeatures, workScoreImmutableFeatures)
+	return workScoreParameters.Output.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
 func (a *AnchorOutput) Ident(nextState TransDepIdentOutput) (Address, error) {

@@ -23,22 +23,22 @@ func TestBlock_DeSerialize(t *testing.T) {
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - transaction",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - tagged data",
-			source: tpkg.RandBlock(tpkg.RandBasicBlock(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 		{
 			name:   "ok - validation block",
-			source: tpkg.RandBlock(tpkg.RandValidationBlock(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
+			source: tpkg.RandBlock(tpkg.RandValidationBlockBody(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
 		},
 	}
@@ -435,6 +435,7 @@ func TestBasicBlock_MinSize(t *testing.T) {
 		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
+			NetworkID:        tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},
@@ -463,6 +464,7 @@ func TestValidationBlock_MinSize(t *testing.T) {
 		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
+			NetworkID:        tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},
@@ -491,6 +493,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 		API: tpkg.ZeroCostTestAPI,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  tpkg.ZeroCostTestAPI.Version(),
+			NetworkID:        tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
 			IssuingTime:      tpkg.RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(tpkg.ZeroCostTestAPI).MustID(),
 		},

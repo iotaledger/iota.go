@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -6566,11 +6565,7 @@ func TestTxSemanticMana(t *testing.T) {
 
 							input := inputs[inputIDs[0]]
 							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.StorageScoreParameters())
-							minDeposit, err := storageScoreStructure.MinDeposit(input)
-							require.NoError(t, err)
-							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
-							require.NoError(t, err)
-							potentialMana, err := testAPI.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
+							potentialMana, err := iotago.PotentialMana(testAPI.ManaDecayProvider(), storageScoreStructure, input, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
@@ -6632,19 +6627,15 @@ func TestTxSemanticMana(t *testing.T) {
 					&iotago.BasicOutput{
 						Amount: OneIOTA,
 						Mana: func() iotago.Mana {
-							var createdSlot iotago.SlotIndex = 10
+							var creationSlot iotago.SlotIndex = 10
 							targetSlot := 10 + 100*testProtoParams.ParamEpochDurationInSlots()
 
 							input := inputs[inputIDs[0]]
 							storageScoreStructure := iotago.NewStorageScoreStructure(testProtoParams.StorageScoreParameters())
-							minDeposit, err := storageScoreStructure.MinDeposit(input)
-							require.NoError(t, err)
-							excessBaseTokens, err := safemath.SafeSub(input.BaseTokenAmount(), minDeposit)
-							require.NoError(t, err)
-							potentialMana, err := testAPI.ManaDecayProvider().ManaGenerationWithDecay(excessBaseTokens, createdSlot, targetSlot)
+							potentialMana, err := iotago.PotentialMana(testAPI.ManaDecayProvider(), storageScoreStructure, input, creationSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, createdSlot, targetSlot)
+							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -6918,7 +6909,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 	currentSlot := testAPI.TimeProvider().EpochStart(currentEpoch)
 
 	blockIssuerFeature := &iotago.BlockIssuerFeature{
-		BlockIssuerKeys: tpkg.RandomBlockIssuerKeysEd25519(1),
+		BlockIssuerKeys: tpkg.RandBlockIssuerKeys(1),
 		ExpirySlot:      currentSlot + 500,
 	}
 

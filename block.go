@@ -37,6 +37,7 @@ var (
 	ErrCommitmentInputTooRecent           = ierrors.New("a block cannot contain a commitment input with index more recent than the block's slot minus minCommittableAge")
 	ErrInvalidBlockVersion                = ierrors.New("block has invalid protocol version")
 	ErrCommitmentInputNewerThanCommitment = ierrors.New("a block cannot contain a commitment input with index newer than the commitment index")
+	ErrBlockNetworkIDInvalid              = ierrors.New("invalid network ID in block header")
 )
 
 // BlockBodyType denotes a type of Block Body.
@@ -273,6 +274,11 @@ func (b *Block) Size() int {
 func (b *Block) syntacticallyValidate() error {
 	if b.API.ProtocolParameters().Version() != b.Header.ProtocolVersion {
 		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
+	}
+
+	expectedNetworkID := b.API.ProtocolParameters().NetworkID()
+	if b.Header.NetworkID != expectedNetworkID {
+		return ierrors.Wrapf(ErrBlockNetworkIDInvalid, "got %v, want %v (%s)", b.Header.NetworkID, expectedNetworkID, b.API.ProtocolParameters().NetworkName())
 	}
 
 	block := b.Body

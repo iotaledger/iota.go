@@ -85,6 +85,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 
 	// Calculate work score as defined in TIP-45 for verification.
 	expectedWorkScore := workScoreParameters.DataByte*iotago.WorkScore(tx.Size()) +
+		workScoreParameters.Output*2 +
 		workScoreParameters.Input*2 +
 		workScoreParameters.ContextInput*3 +
 		// Accounts for one Signature unlock.
