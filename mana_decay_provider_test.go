@@ -66,7 +66,7 @@ func BenchmarkManaWithDecay_Single(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaWithDecay(iotago.MaxMana, 0, endSlot)
+		benchmarkResult, _ = testManaDecayProvider.DecayManaBySlots(iotago.MaxMana, 0, endSlot)
 	}
 }
 
@@ -76,7 +76,7 @@ func BenchmarkManaWithDecay_Range(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		value := iotago.MaxMana
 		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
-			value, _ = testManaDecayProvider.ManaWithDecay(value, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
+			value, _ = testManaDecayProvider.DecayManaBySlots(value, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -88,7 +88,7 @@ func BenchmarkManaGenerationWithDecay_Single(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		benchmarkResult, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, endIndex)
+		benchmarkResult, _ = testManaDecayProvider.GenerateManaAndDecayBySlots(iotago.MaxBaseToken, 0, endIndex)
 	}
 }
 
@@ -98,7 +98,7 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var value iotago.Mana
 		for epoch := 1; epoch <= 5*len(testManaDecayFactors); epoch++ {
-			value, _ = testManaDecayProvider.ManaGenerationWithDecay(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
+			value, _ = testManaDecayProvider.GenerateManaAndDecayBySlots(iotago.MaxBaseToken, 0, iotago.SlotIndex(epoch)<<slotsPerEpochExponent)
 		}
 		benchmarkResult = value
 	}
@@ -117,14 +117,14 @@ func TestManaDecay_NoFactorsGiven(t *testing.T) {
 	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, slotsPerEpochExponent, manaStruct)
 
 	// no mana decay if no decay parameters are given
-	value, err := manaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochStart(100))
+	value, err := manaDecayProvider.DecayManaBySlots(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochStart(100))
 	require.NoError(t, err)
 	require.Equal(t, iotago.Mana(100), value)
 }
 
 func TestManaDecay_NoEpochIndexDiff(t *testing.T) {
 	// no decay in the same epoch
-	value, err := testManaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochEnd(1))
+	value, err := testManaDecayProvider.DecayManaBySlots(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochEnd(1))
 	require.NoError(t, err)
 	require.Equal(t, iotago.Mana(100), value)
 }
@@ -192,7 +192,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.ManaWithDecay(tt.storedMana, tt.createdSlot, tt.targetSlot)
+			result, err := testManaDecayProvider.DecayManaBySlots(tt.storedMana, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 
@@ -291,7 +291,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// calculate the result
-			result, err := testManaDecayProvider.ManaGenerationWithDecay(tt.amount, tt.createdSlot, tt.targetSlot)
+			result, err := testManaDecayProvider.GenerateManaAndDecayBySlots(tt.amount, tt.createdSlot, tt.targetSlot)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -380,7 +380,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := testManaDecayProvider.RewardsWithDecay(tt.rewards, tt.rewardEpoch, tt.claimedEpoch)
+			result, err := testManaDecayProvider.DecayManaByEpochs(tt.rewards, tt.rewardEpoch, tt.claimedEpoch)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 

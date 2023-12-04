@@ -318,7 +318,7 @@ func PotentialMana(manaDecayProvider *ManaDecayProvider, storageScoreStructure *
 		return 0, nil
 	}
 
-	return manaDecayProvider.ManaGenerationWithDecay(excessBaseTokens, creationSlot, targetSlot)
+	return manaDecayProvider.GenerateManaAndDecayBySlots(excessBaseTokens, creationSlot, targetSlot)
 }
 
 // TransIndepIdentOutput is a type of Output where the identity to unlock is independent
