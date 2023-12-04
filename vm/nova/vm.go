@@ -298,12 +298,8 @@ func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	// If a Block Issuer Feature is present on the input side of the transaction,
 	// and the BIC is negative, the account is locked.
 	if current.FeatureSet().BlockIssuer() != nil {
-		if bic, exists := vmParams.WorkingSet.BIC[current.AccountID]; exists {
-			if bic < 0 {
-				return ierrors.Wrap(iotago.ErrAccountLocked, "negative block issuer credit")
-			}
-		} else {
-			return iotago.ErrBlockIssuanceCreditInputRequired
+		if err := accountBlockIssuanceCreditLocked(input, vmParams.WorkingSet.BIC); err != nil {
+			return err
 		}
 	}
 
@@ -623,12 +619,9 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Slot {
 			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot destroy output until the block issuer feature expires")
 		}
-		if bic, exists := vmParams.WorkingSet.BIC[outputToDestroy.AccountID]; exists {
-			if bic < 0 {
-				return ierrors.Wrap(iotago.ErrAccountLocked, "cannot destroy locked account")
-			}
-		} else {
-			return iotago.ErrBlockIssuanceCreditInputRequired
+
+		if err := accountBlockIssuanceCreditLocked(input, vmParams.WorkingSet.BIC); err != nil {
+			return err
 		}
 	}
 
@@ -653,6 +646,22 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) 
 		if !isClaiming {
 			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w: cannot destroy account with a staking feature without reward input", iotago.ErrInvalidStakingRewardInputRequired)
 		}
+	}
+
+	return nil
+}
+
+func accountBlockIssuanceCreditLocked(input *vm.ChainOutputWithIDs, bicSet vm.BlockIssuanceCreditInputSet) error {
+	accountID, is := input.ChainID.(iotago.AccountID)
+	if !is {
+		return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID %s to account ID",
+			input.ChainID.ToHex())
+	}
+
+	if bic, exists := bicSet[accountID]; !exists {
+		return iotago.ErrBlockIssuanceCreditInputRequired
+	} else if bic < 0 {
+		return ierrors.Wrapf(iotago.ErrAccountLocked, "cannot destroy locked account with ID %s", accountID.ToHex())
 	}
 
 	return nil

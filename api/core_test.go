@@ -104,7 +104,7 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 			iotago.BlockID{0x7},
 		},
 		LatestFinalizedSlot: 14,
-		Commitment: &iotago.Commitment{
+		LatestCommitment: &iotago.Commitment{
 			ProtocolVersion:      testAPI.Version(),
 			Slot:                 18,
 			PreviousCommitmentID: iotago.CommitmentID{0x1},
@@ -117,7 +117,7 @@ func Test_IssuanceBlockHeaderResponse(t *testing.T) {
 	jsonResponse, err := testAPI.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"strongParents\":[\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x070000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":14,\"commitment\":{\"protocolVersion\":3,\"slot\":18,\"previousCommitmentId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"referenceManaCost\":\"123\"}}"
+	expected := "{\"strongParents\":[\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"],\"weakParents\":[\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"],\"shallowLikeParents\":[\"0x070000000000000000000000000000000000000000000000000000000000000000000000\"],\"latestFinalizedSlot\":14,\"latestCommitment\":{\"protocolVersion\":3,\"slot\":18,\"previousCommitmentId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"rootsId\":\"0x0200000000000000000000000000000000000000000000000000000000000000\",\"cumulativeWeight\":\"89\",\"referenceManaCost\":\"123\"}}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(api.IssuanceBlockHeaderResponse)
@@ -148,17 +148,20 @@ func Test_BlockMetadataResponse(t *testing.T) {
 
 	{
 		response := &api.BlockMetadataResponse{
-			BlockID:                  iotago.BlockID{0x9},
-			BlockState:               api.BlockStateFailed.String(),
-			BlockFailureReason:       api.BlockFailureParentNotFound,
-			TransactionState:         api.TransactionStateFailed.String(),
-			TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+			BlockID:            iotago.BlockID{0x9},
+			BlockState:         api.BlockStateFailed.String(),
+			BlockFailureReason: api.BlockFailureParentNotFound,
+			TransactionMetadata: &api.TransactionMetadataResponse{
+				TransactionID:            iotago.TransactionID{0x1},
+				TransactionState:         api.TransactionStateFailed.String(),
+				TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+			},
 		}
 
 		jsonResponse, err := testAPI.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"transactionState\":\"failed\",\"transactionFailureReason\":20}"
+		expected := "{\"blockId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"blockState\":\"failed\",\"blockFailureReason\":3,\"transactionMetadata\":{\"transactionId\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionState\":\"failed\",\"transactionFailureReason\":20}}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(api.BlockMetadataResponse)
@@ -190,20 +193,25 @@ func Test_OutputMetadataResponse(t *testing.T) {
 
 	{
 		response := &api.OutputMetadata{
-			BlockID:              iotago.BlockID{0x8},
-			TransactionID:        iotago.TransactionID{0x9},
-			OutputIndex:          3,
-			IncludedCommitmentID: iotago.CommitmentID{0x3},
-			IsSpent:              true,
-			CommitmentIDSpent:    iotago.CommitmentID{0x6},
-			TransactionIDSpent:   iotago.TransactionID{0x1},
-			LatestCommitmentID:   iotago.CommitmentID{0x2},
+			OutputID: iotago.OutputID{0x01},
+			BlockID:  iotago.BlockID{0x02},
+			Included: &api.OutputInclusionMetadata{
+				Slot:          3,
+				TransactionID: iotago.TransactionID{0x4},
+				CommitmentID:  iotago.CommitmentID{0x5},
+			},
+			Spent: &api.OutputConsumptionMetadata{
+				Slot:          6,
+				TransactionID: iotago.TransactionID{0x7},
+				CommitmentID:  iotago.CommitmentID{0x8},
+			},
+			LatestCommitmentID: iotago.CommitmentID{0x9},
 		}
 
 		jsonResponse, err := testAPI.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"includedCommitmentId\":\"0x030000000000000000000000000000000000000000000000000000000000000000000000\",\"isSpent\":true,\"commitmentIdSpent\":\"0x060000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionIdSpent\":\"0x010000000000000000000000000000000000000000000000000000000000000000000000\",\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
+		expected := "{\"outputId\":\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\",\"blockId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\",\"included\":{\"slot\":3,\"transactionId\":\"0x040000000000000000000000000000000000000000000000000000000000000000000000\",\"commitmentId\":\"0x050000000000000000000000000000000000000000000000000000000000000000000000\"},\"spent\":{\"slot\":6,\"transactionId\":\"0x070000000000000000000000000000000000000000000000000000000000000000000000\",\"commitmentId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\"},\"latestCommitmentId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(api.OutputMetadata)
@@ -214,17 +222,21 @@ func Test_OutputMetadataResponse(t *testing.T) {
 	// Test omitempty
 	{
 		response := &api.OutputMetadata{
-			BlockID:            iotago.BlockID{0x8},
-			TransactionID:      iotago.TransactionID{0x9},
-			OutputIndex:        3,
-			IsSpent:            false,
-			LatestCommitmentID: iotago.CommitmentID{0x2},
+			OutputID: iotago.OutputID{0x01},
+			BlockID:  iotago.BlockID{0x02},
+			Included: &api.OutputInclusionMetadata{
+				Slot:          3,
+				TransactionID: iotago.TransactionID{0x4},
+				// CommitmentID is omitted
+			},
+			// Spent is omitted
+			LatestCommitmentID: iotago.CommitmentID{0x9},
 		}
 
 		jsonResponse, err := testAPI.JSONEncode(response)
 		require.NoError(t, err)
 
-		expected := "{\"blockId\":\"0x080000000000000000000000000000000000000000000000000000000000000000000000\",\"transactionId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\",\"outputIndex\":3,\"isSpent\":false,\"latestCommitmentId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\"}"
+		expected := "{\"outputId\":\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\",\"blockId\":\"0x020000000000000000000000000000000000000000000000000000000000000000000000\",\"included\":{\"slot\":3,\"transactionId\":\"0x040000000000000000000000000000000000000000000000000000000000000000000000\"},\"latestCommitmentId\":\"0x090000000000000000000000000000000000000000000000000000000000000000000000\"}"
 		require.Equal(t, expected, string(jsonResponse))
 
 		decoded := new(api.OutputMetadata)
@@ -287,7 +299,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 		Validators: []*api.ValidatorResponse{
 			{
 				AddressBech32:                  iotago.AccountID{0xFF}.ToAddress().Bech32(iotago.PrefixTestnet),
-				StakingEpochEnd:                0,
+				StakingEndEpoch:                0,
 				PoolStake:                      123,
 				ValidatorStake:                 456,
 				FixedCost:                      69,
@@ -301,7 +313,7 @@ func Test_AccountStakingListResponse(t *testing.T) {
 
 	jsonResponse, err := testAPI.JSONEncode(response)
 	require.NoError(t, err)
-	expected := "{\"stakers\":[{\"address\":\"rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx\",\"stakingEpochEnd\":0,\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9,\"latestSupportedProtocolHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}],\"pageSize\":50,\"cursor\":\"0,1\"}"
+	expected := "{\"stakers\":[{\"address\":\"rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx\",\"stakingEndEpoch\":0,\"poolStake\":\"123\",\"validatorStake\":\"456\",\"fixedCost\":\"69\",\"active\":true,\"latestSupportedProtocolVersion\":9,\"latestSupportedProtocolHash\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}],\"pageSize\":50,\"cursor\":\"0,1\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(api.ValidatorsResponse)
@@ -313,15 +325,15 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	testAPI := testAPI()
 
 	response := &api.ManaRewardsResponse{
-		EpochStart: 123,
-		EpochEnd:   133,
+		StartEpoch: 123,
+		EndEpoch:   133,
 		Rewards:    456,
 	}
 
 	jsonResponse, err := testAPI.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"epochStart\":123,\"epochEnd\":133,\"rewards\":\"456\"}"
+	expected := "{\"startEpoch\":123,\"endEpoch\":133,\"rewards\":\"456\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(api.ManaRewardsResponse)
