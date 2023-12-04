@@ -227,7 +227,7 @@ func OneInputOutputTransaction() *iotago.SignedTransaction {
 		Transaction: &iotago.Transaction{
 			API: ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
-				NetworkID:     14147312347886322761,
+				NetworkID:     TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs: iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
