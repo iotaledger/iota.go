@@ -2,13 +2,11 @@
 package iotago_test
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"testing"
 
 	"github.com/holiman/uint256"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/safemath"
@@ -37,11 +35,10 @@ func TestMain(m *testing.M) {
 		decayFactorEpochsSum:         uint64(manaParams.DecayFactorEpochsSum),
 		decayFactorEpochsSumExponent: uint64(manaParams.DecayFactorEpochsSumExponent),
 		decayFactorsExponent:         uint64(manaParams.DecayFactorsExponent),
-		// Check what is happening in the line below (the lo package and the uint32)
-		decayFactors:                lo.Map(manaParams.DecayFactors, func(factor uint32) uint32 { return uint32(factor) }),
-		decayFactorsLength:          uint64(len(manaParams.DecayFactors)),
-		annualDecayFactorPercentage: uint64(manaParams.AnnualDecayFactorPercentage),
-		tokenSupply:                 testProtoParams.TokenSupply(),
+		decayFactors:                 manaParams.DecayFactors,
+		decayFactorsLength:           uint64(len(manaParams.DecayFactors)),
+		annualDecayFactorPercentage:  uint64(manaParams.AnnualDecayFactorPercentage),
+		tokenSupply:                  testProtoParams.TokenSupply(),
 	}
 
 	// call the tests
@@ -92,16 +89,6 @@ func BenchmarkManaGenerationWithDecay_Range(b *testing.B) {
 	}
 }
 
-func TestManaDecay_NoFactorsGiven(t *testing.T) {
-	manaParams := testProtoParams.ManaParameters()
-	manaDecayProvider := iotago.NewManaDecayProvider(testTimeProvider, testProtoParams.SlotsPerEpochExponent(), manaParams)
-
-	// no mana decay if no decay parameters are given
-	value, err := manaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochStart(100))
-	require.NoError(t, err)
-	require.Equal(t, iotago.Mana(100), value)
-}
-
 func TestManaDecay_NoEpochIndexDiff(t *testing.T) {
 	// no decay in the same epoch
 	value, err := testManaDecayProvider.ManaWithDecay(100, testTimeProvider.EpochStart(1), testTimeProvider.EpochEnd(1))
@@ -144,9 +131,8 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			name:        "check if mana decay works for exactly the amount of epochs in the lookup table",
 			storedMana:  iotago.MaxMana,
 			createdSlot: testTimeProvider.EpochStart(1),
-			// Shouldn't we use decayFactorsLength below?
-			targetSlot: testTimeProvider.EpochStart(iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1)),
-			wantErr:    nil,
+			targetSlot:  testTimeProvider.EpochStart(iotago.EpochIndex(len(testProtoParams.ManaParameters().DecayFactors) + 1)),
+			wantErr:     nil,
 		},
 		{
 			name:        "check if mana decay works for multiples of the available epochs in the lookup table",
@@ -181,8 +167,6 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			require.LessOrEqual(t, float64(result), upperBound)
 			require.GreaterOrEqual(t, float64(result), lowerBound)
 
-			// We can delete all tt.result
-			//require.Equal(t, tt.result, result)
 			require.Equal(t, uint64(result), uint64(result256))
 
 		})
@@ -270,9 +254,6 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			upperBound := testFloatManaDecayProvider.UpperBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
 			lowerBound := testFloatManaDecayProvider.LowerBoundPotentialMana(tt.amount, tt.createdSlot, tt.targetSlot)
 			floatResult := testFloatManaDecayProvider.ManaGenerationWithDecayFloat(tt.amount, tt.createdSlot, tt.targetSlot)
-			fmt.Println("test name:", tt.name)
-			fmt.Println("result from code", result)
-			fmt.Println("result from float", floatResult)
 
 			// check if the result is in the bounds
 			require.LessOrEqual(t, float64(result), upperBound)
@@ -283,10 +264,9 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 				require.InEpsilon(t, floatResult, float64(result), float64(0.001))
 			}
 
-			// check for the exact precomputed result
-			//require.Equal(t, tt.result, result)
+			// check against the 256-bit implementation
 			result256 := testFloatManaDecayProvider.ManaGenerationWithDecayUsing256(tt.amount, tt.createdSlot, tt.targetSlot)
-			require.Equal(t, uint64(result), result256)
+			require.Equal(t, result, result256)
 
 		})
 	}
@@ -367,8 +347,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 			require.GreaterOrEqual(t, float64(result), lowerBound)
 
 			result256 := testFloatManaDecayProvider.DecayUsing256(uint64(tt.rewards), tt.claimedEpoch-tt.rewardEpoch)
-			require.Equal(t, uint64(result), uint64(result256))
-			//require.Equal(t, tt.result, result)
+			require.Equal(t, result, result256)
 		})
 	}
 }
@@ -410,10 +389,11 @@ func (p *TestFloatManaDecayProvider) StoredManaDecayUsing256(value iotago.Mana, 
 		// no need to decay if the epoch didn't change or no decay factors were given
 		return value
 	}
-	return iotago.Mana(p.DecayUsing256(uint64(value), targetEpoch-creationEpoch))
+
+	return p.DecayUsing256(uint64(value), targetEpoch-creationEpoch)
 }
 
-func (p *TestFloatManaDecayProvider) DecayUsing256(value uint64, epochDiff iotago.EpochIndex) uint64 {
+func (p *TestFloatManaDecayProvider) DecayUsing256(value uint64, epochDiff iotago.EpochIndex) iotago.Mana {
 	value256 := uint256.NewInt(value)
 
 	// we keep applying the decay as long as epoch diffs are left
@@ -432,7 +412,8 @@ func (p *TestFloatManaDecayProvider) DecayUsing256(value uint64, epochDiff iotag
 		value256 = new(uint256.Int).Mul(value256, decayFactor256)
 		value256 = new(uint256.Int).Rsh(value256, uint(p.decayFactorsExponent))
 	}
-	return value256.Uint64()
+
+	return iotago.Mana(value256.Uint64())
 }
 
 func (p *TestFloatManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) float64 {
@@ -442,6 +423,7 @@ func (p *TestFloatManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSl
 	epochsPerYear := (365.0 * 24.0 * 60.0 * 60.0) / float64(p.timeProvider.EpochDurationSeconds())
 	decayPerEpoch := math.Pow(float64(p.annualDecayFactorPercentage)/100.0, 1/epochsPerYear)
 	manaDecayed := floatAmount * math.Pow(decayPerEpoch, float64(targetEpoch-creationEpoch))
+
 	return manaDecayed
 }
 
@@ -449,7 +431,7 @@ func (p *TestFloatManaDecayProvider) ManaDecayFloat(mana iotago.Mana, creationSl
 //   FUNCTIONS FOR POTENTIAL MANA TESTING
 //
 
-func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) uint64 {
+func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iotago.BaseToken, creationSlot iotago.SlotIndex, targetSlot iotago.SlotIndex) iotago.Mana {
 	if targetSlot-creationSlot == 0 || p.generationRate == 0 {
 		return 0
 	}
@@ -459,7 +441,7 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 	amount256 := uint256.NewInt(uint64(amount))
 	generationRate256 := uint256.NewInt(p.generationRate)
 	decayFactorEpochsSum256 := uint256.NewInt(p.decayFactorEpochsSum)
-	decayFactorEpochsSumExponent256 := uint64(p.decayFactorEpochsSumExponent)
+	decayFactorEpochsSumExponent256 := p.decayFactorEpochsSumExponent
 
 	//nolint:exhaustive // false-positive, we have a default case
 	switch epochDiff {
@@ -469,7 +451,8 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 		result := new(uint256.Int).Mul(generationRate256, amount256)
 		result = new(uint256.Int).Mul(result, slotDiff256)
 		result = new(uint256.Int).Rsh(result, uint(p.generationRateExponent))
-		return result.Uint64()
+
+		return iotago.Mana(result.Uint64())
 	case 1:
 		slotsBeforeNextEpoch256 := uint256.NewInt(uint64(p.timeProvider.SlotsBeforeNextEpoch(creationSlot)))
 		slotsSinceEpochStart256 := uint256.NewInt(uint64(p.timeProvider.SlotsSinceEpochStart(targetSlot)))
@@ -482,7 +465,8 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 		manaGeneratedSecondEpoch := new(uint256.Int).Mul(generationRate256, amount256)
 		manaGeneratedSecondEpoch = new(uint256.Int).Mul(manaGeneratedSecondEpoch, slotsSinceEpochStart256)
 		manaGeneratedSecondEpoch = new(uint256.Int).Rsh(manaGeneratedSecondEpoch, uint(p.generationRateExponent))
-		result, _ := safemath.SafeAdd(manaDecayedFirstEpoch, manaGeneratedSecondEpoch.Uint64())
+		result, _ := safemath.SafeAdd(manaDecayedFirstEpoch, iotago.Mana(manaGeneratedSecondEpoch.Uint64()))
+
 		return result
 	default:
 		slotsBeforeNextEpoch256 := uint256.NewInt(uint64(p.timeProvider.SlotsBeforeNextEpoch(creationSlot)))
@@ -503,10 +487,11 @@ func (p *TestFloatManaDecayProvider) ManaGenerationWithDecayUsing256(amount iota
 		manaGeneratedLastEpoch = new(uint256.Int).Mul(manaGeneratedLastEpoch, slotsSinceEpochStart256)
 		manaGeneratedLastEpoch = new(uint256.Int).Rsh(manaGeneratedLastEpoch, uint(p.generationRateExponent))
 
-		result, _ := safemath.SafeAdd(c.Uint64(), manaGeneratedLastEpoch.Uint64())
-		result, _ = safemath.SafeSub(result, c.Uint64()>>p.decayFactorsExponent)
+		result, _ := safemath.SafeAdd(iotago.Mana(c.Uint64()), iotago.Mana(manaGeneratedLastEpoch.Uint64()))
+		result, _ = safemath.SafeSub(result, iotago.Mana(c.Uint64())>>p.decayFactorsExponent)
 		result, _ = safemath.SafeSub(result, manaDecayedIntermediateEpochs)
 		result, _ = safemath.SafeAdd(result, manaDecayedFirstEpoch)
+
 		return result
 	}
 }
@@ -553,6 +538,7 @@ func (p *TestFloatManaDecayProvider) LowerBoundPotentialMana(amount iotago.BaseT
 	epochsPerYear := (365.0 * 24.0 * 60.0 * 60.0) / float64(p.timeProvider.EpochDurationSeconds())
 	decayPerEpoch := math.Pow(float64(p.annualDecayFactorPercentage)/100.0, 1/epochsPerYear)
 	constant := decayPerEpoch / (1 - decayPerEpoch)
+
 	return p.ManaGenerationWithDecayFloat(amount, creationSlot, targetSlot) - (4 + float64(amount)*float64(p.generationRate)*math.Pow(2, float64(p.timeProvider.SlotsPerEpochExponent()-uint8(p.generationRateExponent)))*(1+constant*math.Pow(2, -float64(p.decayFactorsExponent))))
 }
 

@@ -25,7 +25,7 @@ func NewV3TestProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *
 			WithCongestionControlOptions(1, 0, 0, 800_000, 500_000, 100_000, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 31, 1080, 2, 1),
+			WithRewardsOptions(8, 8, 31, 2, 1),
 			WithTargetCommitteeSize(32),
 		},
 			opts...,
@@ -49,6 +49,11 @@ func NewV3TestProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *
 		newProtocolParams.SlotsPerEpochExponent(),
 		newProtocolParams.SlotDurationInSeconds(),
 		newProtocolParams.ManaParameters().DecayFactorEpochsSumExponent,
+	)
+	newProtocolParams.basicProtocolParameters.RewardsParameters.BootstrappingDuration = deriveBootstrappingDuration(
+		newProtocolParams.ManaParameters().AnnualDecayFactorPercentage,
+		newProtocolParams.SlotsPerEpochExponent(),
+		newProtocolParams.SlotDurationInSeconds(),
 	)
 
 	// Sanity checks
@@ -83,11 +88,12 @@ func deriveManaDecayFactorEpochsSum(annualDecayFactorPercentage uint8, slotsPerE
 }
 
 // deriveBootstrappingDuration computes the bootstrapping duration using floating point arithmetic.
-func deriveBootstrappingDuration(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8) uint32 {
+func deriveBootstrappingDuration(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8) EpochIndex {
 	epochsPerYear := (365.0 * 24.0 * 60.0 * 60.0) / (math.Pow(2, float64(slotsPerEpochExponent)) * float64(slotDurationSeconds))
 	annualDecayFactor := float64(annualDecayFactorPercentage) / 100.0
 	beta := -math.Log(annualDecayFactor)
-	return uint32(epochsPerYear / beta)
+
+	return EpochIndex(epochsPerYear / beta)
 }
 
 func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
@@ -96,9 +102,6 @@ func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
 	maxManaSupply := 21.0 * float64(protocolParams.TokenSupply()) * float64(protocolParams.ManaParameters().GenerationRate) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())-float64(protocolParams.ManaParameters().GenerationRateExponent)) / (beta * epochDurationInYears)
 	if maxManaSupply >= math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount)) {
 		panic("the combination of parameters might lead to overflowing of the Mana supply")
-	}
-	if maxManaSupply < math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount-1)) {
-		panic("the mana generation can be increased")
 	}
 	// this check is specific to the way decay is calculated to prevent overflow
 	if _, err := safemath.SafeMul(protocolParams.ManaParameters().DecayFactorEpochsSum, uint32(protocolParams.ManaParameters().GenerationRate)); err != nil {

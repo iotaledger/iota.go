@@ -273,6 +273,7 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 		if err != nil {
 			return 0, ierrors.Wrap(err, "failed to calculate subtraction of generated mana from the rounding term")
 		}
+
 		return result, nil
 	}
 }
