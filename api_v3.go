@@ -219,8 +219,8 @@ type v3api struct {
 	livenessThresholdDuration time.Duration
 	storageScoreStructure     *StorageScoreStructure
 	maxBlockWork              WorkScore
-	computedInitialReward     uint64
-	computedFinalReward       uint64
+	computedInitialReward     Mana
+	computedFinalReward       Mana
 }
 
 type contextAPIKey = struct{}
@@ -278,11 +278,11 @@ func (v *v3api) MaxBlockWork() WorkScore {
 	return v.maxBlockWork
 }
 
-func (v *v3api) ComputedInitialReward() uint64 {
+func (v *v3api) ComputedInitialReward() Mana {
 	return v.computedInitialReward
 }
 
-func (v *v3api) ComputedFinalReward() uint64 {
+func (v *v3api) ComputedFinalReward() Mana {
 	return v.computedFinalReward
 }
 
@@ -730,7 +730,7 @@ func V3API(protoParams ProtocolParameters) API {
 	return v3
 }
 
-func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards uint64, err error) {
+func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards Mana, err error) {
 	// final reward, after bootstrapping phase
 	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
 	if err != nil {
@@ -747,15 +747,15 @@ func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewa
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
 	}
 
-	finalRewards = result >> subExponent
+	finalRewardsUint := result >> subExponent
 
 	// initial reward for bootstrapping phase
-	initialReward, err := safemath.SafeMul(finalRewards, protoParams.RewardsParameters().DecayBalancingConstant)
+	initialReward, err := safemath.SafeMul(finalRewardsUint, protoParams.RewardsParameters().DecayBalancingConstant)
 	if err != nil {
 		return 0, 0, ierrors.Wrapf(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
 	}
 
-	initialRewards = initialReward >> uint64(protoParams.RewardsParameters().DecayBalancingConstantExponent)
+	initialRewardsUint := initialReward >> uint64(protoParams.RewardsParameters().DecayBalancingConstantExponent)
 
-	return
+	return Mana(initialRewardsUint), Mana(finalRewardsUint), nil
 }

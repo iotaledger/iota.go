@@ -67,9 +67,9 @@ type API interface {
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
 	// ComputedInitialReward returns the initial reward calculated from the parameters.
-	ComputedInitialReward() uint64
+	ComputedInitialReward() Mana
 	// ComputedFinalReward returns the final reward calculated from the parameters.
-	ComputedFinalReward() uint64
+	ComputedFinalReward() Mana
 }
 
 func LatestProtocolVersion() Version {
