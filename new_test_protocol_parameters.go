@@ -121,12 +121,13 @@ func timeSanityCheck(protocolParams *V3ProtocolParameters) {
 	if protocolParams.MinCommittableAge() >= protocolParams.MaxCommittableAge() {
 		panic("MinCommittableAge must be strictly less than MaxCommittableAge")
 	}
-	if lo.PanicOnErr(safemath.SafeMul(2, protocolParams.MaxCommittableAge())) > protocolParams.EpochNearingThreshold() {
-		panic("EpochNearingThreshold must be at least 2 times MaxCommittableAge")
+	if protocolParams.MaxCommittableAge() >= protocolParams.EpochNearingThreshold() {
+		panic("MaxCommittableAge must be strictly less than EpochNearingThreshold")
 	}
-	if (1 << protocolParams.SlotsPerEpochExponent()) < 2*protocolParams.EpochNearingThreshold() {
-		panic("Epoch duration in slots must be at least 2 times EpochNearingThreshold")
+	if (1 << protocolParams.SlotsPerEpochExponent()) <= protocolParams.EpochNearingThreshold() {
+		panic("Epoch duration in slots must be strictly greater than EpochNearingThreshold")
 	}
+	// TODO: add warning level log for EpochNearingThreshold > 2 * MaxCommittableAge and EpochsPerSlot > 2 * EpochNearingThreshold
 }
 
 func congestionControlSanityCheck(protocolParams *V3ProtocolParameters) {
