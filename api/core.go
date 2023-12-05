@@ -324,6 +324,8 @@ type (
 		WeakParents iotago.BlockIDs `serix:",lenPrefix=uint8,omitempty"`
 		// ShallowLikeParents are the shallow like parents of the block.
 		ShallowLikeParents iotago.BlockIDs `serix:",lenPrefix=uint8,omitempty"`
+		// LatestParentBlockIssuingTime is the latest issuing time of the returned parents.
+		LatestParentBlockIssuingTime time.Time `serix:""`
 		// LatestFinalizedSlot is the latest finalized slot.
 		LatestFinalizedSlot iotago.SlotIndex `serix:""`
 		// LatestCommitment is the latest commitment of the node.
