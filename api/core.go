@@ -345,7 +345,7 @@ type (
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
 		// TransactionMetadata is the metadata of the transaction that is contained in the block.
-		TransactionMetadata *TransactionMetadataResponse `serix:",omitempty"`
+		TransactionMetadata *TransactionMetadataResponse `serix:",optional,omitempty"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
