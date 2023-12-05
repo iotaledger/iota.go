@@ -473,7 +473,7 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 		}
 
 		// calculate the decayed stored mana of the input
-		inputStoredMana, err := b.api.ManaDecayProvider().ManaWithDecay(input.StoredMana(), inputID.CreationSlot(), targetSlot)
+		inputStoredMana, err := b.api.ManaDecayProvider().DecayManaBySlots(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
 			return nil, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}

@@ -6594,7 +6594,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := iotago.PotentialMana(testAPI.ManaDecayProvider(), storageScoreStructure, input, creationSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
+							storedMana, err := testAPI.ManaDecayProvider().DecayManaBySlots(iotago.MaxMana, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							return potentialMana + storedMana
@@ -6661,7 +6661,7 @@ func TestTxSemanticMana(t *testing.T) {
 							potentialMana, err := iotago.PotentialMana(testAPI.ManaDecayProvider(), storageScoreStructure, input, creationSlot, targetSlot)
 							require.NoError(t, err)
 
-							storedMana, err := testAPI.ManaDecayProvider().ManaWithDecay(iotago.MaxMana, creationSlot, targetSlot)
+							storedMana, err := testAPI.ManaDecayProvider().DecayManaBySlots(iotago.MaxMana, creationSlot, targetSlot)
 							require.NoError(t, err)
 
 							// generated mana + decay - allotment
@@ -6975,7 +6975,7 @@ func TestManaRewardsClaimingStaking(t *testing.T) {
 		Outputs: iotago.TxEssenceOutputs{
 			&iotago.AccountOutput{
 				Amount:         OneIOTA * 5,
-				Mana:           lo.PanicOnErr(testAPI.ManaDecayProvider().ManaGenerationWithDecay(balance-inputMinDeposit, creationSlot, currentSlot)),
+				Mana:           lo.PanicOnErr(testAPI.ManaDecayProvider().GenerateManaAndDecayBySlots(balance-inputMinDeposit, creationSlot, currentSlot)),
 				AccountID:      accountID,
 				FoundryCounter: 0,
 				UnlockConditions: iotago.AccountOutputUnlockConditions{

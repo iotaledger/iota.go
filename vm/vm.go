@@ -76,7 +76,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 
 	for outputID, input := range inputSet {
 		// stored Mana
-		manaStored, err := manaDecayProvider.ManaWithDecay(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
+		manaStored, err := manaDecayProvider.DecayManaBySlots(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
 			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
 		}
