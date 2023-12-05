@@ -47,7 +47,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithCongestionControlOptions(1, 0, 0, 8*schedulerRate, 5*schedulerRate, schedulerRate, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 31, 1154, 2, 1),
+			WithRewardsOptions(8, 8, 11, 1154, 2, 1),
 			WithTargetCommitteeSize(32),
 		},
 			opts...,
