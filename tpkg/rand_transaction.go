@@ -152,6 +152,12 @@ func WithOutputCount(outputCount int) options.Option[iotago.Transaction] {
 	}
 }
 
+func WithOutputs(outputs iotago.TxEssenceOutputs) options.Option[iotago.Transaction] {
+	return func(tx *iotago.Transaction) {
+		tx.Outputs = outputs
+	}
+}
+
 func WithAllotmentCount(allotmentCount int) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
 		tx.Allotments = RandSortAllotment(allotmentCount)
