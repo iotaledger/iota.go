@@ -68,11 +68,12 @@ func NewV3TestProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *
 // deriveManaDecayFactors computes a lookup table of mana decay factors using floating point arithmetic.
 func deriveManaDecayFactors(annualDecayFactorPercentage uint8, slotsPerEpochExponent uint8, slotDurationSeconds uint8, decayFactorsExponent uint8) []uint32 {
 	epochsPerYear := ((365.0 * 24.0 * 60.0 * 60.0) / float64(slotDurationSeconds)) / math.Pow(2, float64(slotsPerEpochExponent))
-	decayFactors := make([]uint32, int(epochsPerYear))
+	epochsInTable := lo.Min(65535, int(epochsPerYear))
+	decayFactors := make([]uint32, epochsInTable)
 
 	decayFactorPerEpoch := math.Pow(float64(annualDecayFactorPercentage)/100.0, 1.0/epochsPerYear)
 
-	for epoch := 1; epoch <= int(epochsPerYear); epoch++ {
+	for epoch := 1; epoch <= epochsInTable; epoch++ {
 		decayFactor := math.Pow(decayFactorPerEpoch, float64(epoch)) * (math.Pow(2, float64(decayFactorsExponent)))
 		decayFactors[epoch-1] = uint32(decayFactor)
 	}
