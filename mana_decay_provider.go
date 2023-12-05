@@ -162,22 +162,27 @@ func (p *ManaDecayProvider) generateMana(value BaseToken, slotDiff SlotIndex) (M
 	return Mana(result), nil
 }
 
-// ManaWithDecay applies the decay to the given mana.
-func (p *ManaDecayProvider) ManaWithDecay(storedMana Mana, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
+// DecayManaBySlots applies the decay between the epochs corresponding to the creation and target slots to the given mana.
+func (p *ManaDecayProvider) DecayManaBySlots(mana Mana, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
 
-	if creationEpoch > targetEpoch {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created epoch was bigger than the target epoch: %d > %d", creationEpoch, targetEpoch)
-	}
-
-	return p.decay(storedMana, targetEpoch-creationEpoch)
+	return p.DecayManaByEpochs(mana, creationEpoch, targetEpoch)
 }
 
-// ManaGenerationWithDecay calculates the generated mana and applies the decay to the result.
-func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
+// DecayManaByEpochs applies the decay between the creation and target epochs to the given mana.
+func (p *ManaDecayProvider) DecayManaByEpochs(mana Mana, creationEpoch EpochIndex, targetEpoch EpochIndex) (Mana, error) {
+	if creationEpoch > targetEpoch {
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the creation epoch was greater than the target epoch: %d > %d", creationEpoch, targetEpoch)
+	}
+
+	return p.decay(mana, targetEpoch-creationEpoch)
+}
+
+// GenerateManaAndDecayBySlots generates mana from the given base token amount and returns the decayed result.
+func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
 	if creationSlot > targetSlot {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the created slot was bigger than the target slot: %d > %d", creationSlot, targetSlot)
+		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the creation slot was greater than the target slot: %d > %d", creationSlot, targetSlot)
 	}
 
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
@@ -276,13 +281,4 @@ func (p *ManaDecayProvider) ManaGenerationWithDecay(amount BaseToken, creationSl
 
 		return result, nil
 	}
-}
-
-// RewardsWithDecay applies the decay to the given stored mana.
-func (p *ManaDecayProvider) RewardsWithDecay(rewards Mana, rewardEpoch EpochIndex, claimedEpoch EpochIndex) (Mana, error) {
-	if rewardEpoch > claimedEpoch {
-		return 0, ierrors.Wrapf(ErrWrongEpochIndex, "the reward epoch was bigger than the claiming epoch: %d > %d", rewardEpoch, claimedEpoch)
-	}
-
-	return p.decay(rewards, claimedEpoch-rewardEpoch)
 }

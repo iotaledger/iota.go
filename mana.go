@@ -64,11 +64,11 @@ func (r RewardsParameters) Equals(other RewardsParameters) bool {
 
 func (r RewardsParameters) TargetReward(epoch EpochIndex, api API) (Mana, error) {
 	if epoch > r.BootstrappingDuration {
-		return Mana(api.ComputedFinalReward()), nil
+		return api.ComputedFinalReward(), nil
 	}
 
-	// rewards start at epoch 1
-	decayedInitialReward, err := api.ManaDecayProvider().RewardsWithDecay(Mana(api.ComputedInitialReward()), 1, epoch)
+	// Rewards start at epoch 0.
+	decayedInitialReward, err := api.ManaDecayProvider().DecayManaByEpochs(api.ComputedInitialReward(), 0, epoch)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
 	}
