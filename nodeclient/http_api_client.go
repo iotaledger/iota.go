@@ -556,6 +556,19 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, commitmentI
 	return res, nil
 }
 
+// CommitmentUTXOChangesFullByID returns all UTXO changes (including outputs) of a commitment by its ID.
+func (client *Client) CommitmentUTXOChangesFullByID(ctx context.Context, commitmentID iotago.CommitmentID) (*api.UTXOChangesFullResponse, error) {
+	query := client.endpointReplaceCommitmentIDParameter(api.CoreRouteCommitmentByIDUTXOChangesFull, commitmentID)
+
+	res := new(api.UTXOChangesFullResponse)
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // CommitmentByIndex gets a commitment details by its slot.
 func (client *Client) CommitmentByIndex(ctx context.Context, slot iotago.SlotIndex) (*iotago.Commitment, error) {
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlot, slot)
@@ -574,6 +587,19 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, slot iot
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlotUTXOChanges, slot)
 
 	res := new(api.UTXOChangesResponse)
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// CommitmentUTXOChangesByIndex returns all UTXO changes (including outputs) of a commitment by its slot.
+func (client *Client) CommitmentUTXOChangesFullByIndex(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesFullResponse, error) {
+	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlotUTXOChangesFull, slot)
+
+	res := new(api.UTXOChangesFullResponse)
 	//nolint:bodyclose
 	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
