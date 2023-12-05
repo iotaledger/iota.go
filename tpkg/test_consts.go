@@ -15,7 +15,8 @@ var IOTAMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters()
 var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
 	iotago.WithStorageOptions(100, 1, 10, 100, 100, 100),
 	iotago.WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-	iotago.WithTimeOptions(0, time.Now().Unix(), 10, 13, 15, 30, 10, 20, 60),
+	iotago.WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
+	iotago.WithLivenessOptions(15, 30, 10, 20, 60),
 	iotago.WithSupplyOptions(1813620509061365, 63, 1, 17, 32, 21, 70),
 	iotago.WithCongestionControlOptions(1, 0, 0, 800_000, 500_000, 100_000, 1000, 100),
 	iotago.WithStakingOptions(10, 10, 10),
@@ -26,7 +27,8 @@ var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
 
 // FixedGenesisV3TestProtocolParameters are protocol parameters with a fixed genesis value for testing purposes.
 var FixedGenesisV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
-	iotago.WithTimeOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13, 15, 30, 10, 20, 60),
+	iotago.WithTimeProviderOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13),
+	iotago.WithLivenessOptions(15, 30, 10, 20, 60),
 )
 
 // ZeroCostV3TestProtocolParameters are protocol parameters that give zero storage costs and block workscore =1 for all blocks.

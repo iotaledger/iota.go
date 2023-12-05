@@ -270,12 +270,17 @@ func WithSupplyOptions(baseTokenSupply BaseToken, bitsCount uint8, generationRat
 	}
 }
 
-func WithTimeOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8, livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+func WithTimeProviderOptions(genesisSlot SlotIndex, genesisTimestamp int64, slotDurationInSeconds uint8, slotsPerEpochExponent uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.GenesisSlot = genesisSlot
 		p.basicProtocolParameters.GenesisUnixTimestamp = genesisTimestamp
 		p.basicProtocolParameters.SlotDurationInSeconds = slotDurationInSeconds
 		p.basicProtocolParameters.SlotsPerEpochExponent = slotsPerEpochExponent
+	}
+}
+
+func WithLivenessOptions(livenessThresholdLowerBoundInSeconds uint16, livenessThresholdUpperBoundInSeconds uint16, minCommittableAge SlotIndex, maxCommittableAge SlotIndex, epochNearingThreshold SlotIndex) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.LivenessThresholdLowerBoundInSeconds = livenessThresholdLowerBoundInSeconds
 		p.basicProtocolParameters.LivenessThresholdUpperBoundInSeconds = livenessThresholdUpperBoundInSeconds
 		p.basicProtocolParameters.MinCommittableAge = minCommittableAge
@@ -328,5 +333,13 @@ func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, po
 func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TargetCommitteeSize = targetCommitteeSize
+	}
+}
+
+// WithNetworkOptions adds the given string as suffix to the network name.
+// Network name always has prefix "testnet-" when using this constructor.
+func WithNetworkOptions(networnNameSuffix string) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.NetworkName = fmt.Sprintf("testnet-%s", networnNameSuffix)
 	}
 }
