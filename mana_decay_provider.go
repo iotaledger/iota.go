@@ -237,11 +237,6 @@ func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creati
 		if err != nil {
 			return 0, ierrors.Wrap(err, "failed to decay generated mana in the first epoch")
 		}
-		/*
-			manaGeneratedWholeEpoch, err := p.generateMana(amount, 1<<p.slotsPerEpochExponent)
-			if err != nil {
-				return 0, ierrors.Wrap(err, "failed to calculate generated mana in the a whole epoch")
-			} */
 
 		aux, err := fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
 		if err != nil {
