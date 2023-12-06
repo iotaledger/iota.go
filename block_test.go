@@ -116,12 +116,12 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 	apiProvider := iotago.NewEpochBasedProvider(
 		iotago.WithAPIForMissingVersionCallback(
 			func(parameters iotago.ProtocolParameters) (iotago.API, error) {
-				return iotago.V3API(iotago.NewV3TestProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
+				return iotago.V3API(iotago.NewV3SnapshotProtocolParameters(iotago.WithVersion(parameters.Version()))), nil
 			},
 		),
 	)
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(), 0)
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(iotago.WithVersion(4)), 3)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3SnapshotProtocolParameters(), 0)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3SnapshotProtocolParameters(iotago.WithVersion(4)), 3)
 
 	timeProvider := apiProvider.CommittedAPI().TimeProvider()
 
@@ -139,7 +139,7 @@ func TestBlock_ProtocolVersionSyntactical(t *testing.T) {
 
 	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochStart(5), 4, apiProvider))
 
-	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3TestProtocolParameters(iotago.WithVersion(5)), 10)
+	apiProvider.AddProtocolParametersAtEpoch(iotago.NewV3SnapshotProtocolParameters(iotago.WithVersion(5)), 10)
 
 	require.NoError(t, createBlockAtSlotWithVersion(t, timeProvider.EpochEnd(9), 4, apiProvider))
 
@@ -152,7 +152,7 @@ func TestBlock_Commitments(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3TestProtocolParameters(
+		iotago.NewV3SnapshotProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 11, 21, 60),
 		), 0)
@@ -172,7 +172,7 @@ func TestBlock_Commitments1(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3TestProtocolParameters(
+		iotago.NewV3SnapshotProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 7, 21, 60),
 		), 0)
@@ -197,7 +197,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 	// commitments between 90 and slot that the block commits to (100 at most)
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3TestProtocolParameters(
+		iotago.NewV3SnapshotProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 7, 21, 60),
 		), 0)
@@ -264,7 +264,7 @@ func TestBlock_WeakParents(t *testing.T) {
 	// with the following parameters, a block issued in slot 100 can commit between slot 80 and 90
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3TestProtocolParameters(
+		iotago.NewV3SnapshotProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 10, 20, 60),
 		), 0)
@@ -323,7 +323,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 	// commitments between 90 and slot that the block commits to (100 at most)
 	apiProvider := iotago.NewEpochBasedProvider()
 	apiProvider.AddProtocolParametersAtEpoch(
-		iotago.NewV3TestProtocolParameters(
+		iotago.NewV3SnapshotProtocolParameters(
 			iotago.WithTimeProviderOptions(0, time.Now().Add(-20*time.Minute).Unix(), 10, 13),
 			iotago.WithLivenessOptions(15, 30, 11, 21, 60),
 		), 0)

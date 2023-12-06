@@ -8,11 +8,11 @@ import (
 
 // IOTAMainnetV3TestProtocolParameters reflect the planned protocol parameters to be used for IOTA mainnet.
 // TODO: provide a link to the IOTA mainnet protocol parameters TIP.
-var IOTAMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters()
+var IOTAMainnetV3TestProtocolParameters = iotago.NewV3SnapshotProtocolParameters()
 
 // ShimmerMainnetV3TestProtocolParameters reflect the planned protocol parameters to be used for Shimmer mainnet.
 // TODO: provide a link to the Shimmer mainnet protocol parameters TIP.
-var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
+var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3SnapshotProtocolParameters(
 	iotago.WithStorageOptions(100, 1, 10, 100, 100, 100),
 	iotago.WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
 	iotago.WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
@@ -26,14 +26,14 @@ var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
 )
 
 // FixedGenesisV3TestProtocolParameters are protocol parameters with a fixed genesis value for testing purposes.
-var FixedGenesisV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
+var FixedGenesisV3TestProtocolParameters = iotago.NewV3SnapshotProtocolParameters(
 	iotago.WithTimeProviderOptions(65898, time.Unix(1690879505, 0).UTC().Unix(), 10, 13),
 	iotago.WithLivenessOptions(15, 30, 10, 20, 60),
 )
 
 // ZeroCostV3TestProtocolParameters are protocol parameters that give zero storage costs and block workscore =1 for all blocks.
 // This is useful for testing purposes.
-var ZeroCostV3TestProtocolParameters = iotago.NewV3TestProtocolParameters(
+var ZeroCostV3TestProtocolParameters = iotago.NewV3SnapshotProtocolParameters(
 	iotago.WithStorageOptions(0, 0, 0, 0, 0, 0),               // zero storage score
 	iotago.WithWorkScoreOptions(0, 1, 0, 0, 0, 0, 0, 0, 0, 0), // all blocks workscore = 1
 )

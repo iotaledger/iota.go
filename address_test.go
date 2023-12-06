@@ -86,7 +86,7 @@ func TestAddressDeSerialize(t *testing.T) {
 			// test the AddressFromReader func
 			//nolint:forcetypeassert
 			address := tt.source.(iotago.Address)
-			addressBytes, err := tpkg.TestAPI.Encode(address, serix.WithValidation())
+			addressBytes, err := tpkg.ZeroCostTestAPI.Encode(address, serix.WithValidation())
 			require.NoError(t, err)
 
 			reader := stream.NewByteReader(addressBytes)
