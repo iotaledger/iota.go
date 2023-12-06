@@ -3,10 +3,13 @@ package iotago
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/bech32"
 )
 
@@ -259,7 +262,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	}
 
 	serixAPI := CommonSerixAPI()
-	n, err := serixAPI.Decode(context.Background(), addrData, addr)
+	n, err := serixAPI.Decode(context.TODO(), addrData, addr)
 	if err != nil {
 		return "", nil, err
 	}
@@ -269,4 +272,48 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	}
 
 	return NetworkPrefix(hrp), addr, nil
+}
+
+func AddressFromBytes(bytes []byte) (Address, int, error) {
+	var addr Address
+
+	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, &addr, serix.WithValidation())
+	if err != nil {
+		return nil, 0, ierrors.Wrap(err, "unable to decode address")
+	}
+
+	return addr, n, nil
+}
+
+func AddressFromReader(reader io.ReadSeeker) (Address, error) {
+	addressType, err := stream.PeekSize(reader, serializer.SeriLengthPrefixTypeAsByte)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address type")
+	}
+
+	switch AddressType(addressType) {
+	case AddressEd25519:
+		return Ed25519AddressFromReader(reader)
+
+	case AddressAccount:
+		return AccountAddressFromReader(reader)
+
+	case AddressNFT:
+		return NFTAddressFromReader(reader)
+
+	case AddressAnchor:
+		return AnchorAddressFromReader(reader)
+
+	case AddressImplicitAccountCreation:
+		return ImplicitAccountCreationAddressFromReader(reader)
+
+	case AddressMulti:
+		return MultiAddressFromReader(reader)
+
+	case AddressRestricted:
+		return RestrictedAddressFromReader(reader)
+
+	default:
+		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
+	}
 }

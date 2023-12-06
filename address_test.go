@@ -10,6 +10,7 @@ import (
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -79,7 +80,22 @@ func TestAddressDeSerialize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.name, func(t *testing.T) {
+			tt.deSerialize(t)
+
+			// test the AddressFromReader func
+			//nolint:forcetypeassert
+			address := tt.source.(iotago.Address)
+			addressBytes, err := tpkg.TestAPI.Encode(address, serix.WithValidation())
+			require.NoError(t, err)
+
+			reader := stream.NewByteReader(addressBytes)
+
+			addr, err := iotago.AddressFromReader(reader)
+			require.NoError(t, err)
+
+			assert.Equal(t, address, addr)
+		})
 	}
 }
 

@@ -3,6 +3,7 @@ package iotago
 import (
 	"bytes"
 	"context"
+	"io"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -128,4 +131,51 @@ func NewMultiAddress(addresses AddressesWithWeight, threshold uint16) *MultiAddr
 		Addresses: addresses,
 		Threshold: threshold,
 	}
+}
+
+// MultiAddressFromReader parses the MultiAddress from the given reader.
+func MultiAddressFromReader(reader io.ReadSeeker) (Address, error) {
+	// skip the address type byte
+	if _, err := stream.Skip(reader, serializer.SmallTypeDenotationByteSize); err != nil {
+		return nil, ierrors.Wrap(err, "unable to skip address type byte")
+	}
+
+	var addressesWithWeight AddressesWithWeight
+	if err := stream.ReadCollection(reader, serializer.SeriLengthPrefixTypeAsByte, func(index int) error {
+		address, err := AddressFromReader(reader)
+		if err != nil {
+			return ierrors.Wrapf(err, "unable to read address %d", index)
+		}
+
+		weight, err := stream.Read[byte](reader)
+		if err != nil {
+			return ierrors.Wrapf(err, "unable to read address %d weight", index)
+		}
+
+		addressesWithWeight = append(addressesWithWeight, &AddressWithWeight{
+			Address: address,
+			Weight:  weight,
+		})
+
+		return nil
+	}); err != nil {
+		return nil, ierrors.Wrap(err, "unable to read addresses with weight")
+	}
+
+	threshold, err := stream.Read[uint16](reader)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read threshold")
+	}
+
+	multiAddress := &MultiAddress{
+		Addresses: addressesWithWeight,
+		Threshold: threshold,
+	}
+
+	_, err = CommonSerixAPI().Encode(context.TODO(), multiAddress, serix.WithValidation())
+	if err != nil {
+		return nil, ierrors.Wrap(err, "multi address validation failed")
+	}
+
+	return multiAddress, nil
 }

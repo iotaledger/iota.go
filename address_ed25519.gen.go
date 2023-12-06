@@ -5,12 +5,14 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
+	"io"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -83,4 +85,24 @@ func Ed25519AddressFromPubKey(pubKey ed25519.PublicKey) *Ed25519Address {
 	address := blake2b.Sum256(pubKey[:])
 
 	return (*Ed25519Address)(&address)
+}
+
+// Ed25519AddressFromReader parses the Ed25519Address from the given reader.
+func Ed25519AddressFromReader(reader io.Reader) (*Ed25519Address, error) {
+	addrBytes, err := stream.ReadBytes(reader, Ed25519AddressSerializedBytesSize)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address bytes")
+	}
+
+	addr, _, err := AddressFromBytes(addrBytes)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to parse address from bytes")
+	}
+
+	address, ok := addr.(*Ed25519Address)
+	if !ok {
+		return nil, ierrors.Errorf("invalid address type: %T", addr)
+	}
+
+	return address, nil
 }

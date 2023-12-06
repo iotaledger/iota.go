@@ -3,11 +3,15 @@ package iotago
 import (
 	"bytes"
 	"context"
+	"io"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/runtime/options"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -112,4 +116,34 @@ func RestrictedAddressWithCapabilities(address Address, opts ...options.Option[A
 		Address:             address,
 		AllowedCapabilities: AddressCapabilitiesBitMaskWithCapabilities(opts...),
 	}
+}
+
+// RestrictedAddressFromBytes parses the RestrictedAddress from the given reader.
+func RestrictedAddressFromReader(reader io.ReadSeeker) (Address, error) {
+	// skip the address type byte
+	if _, err := stream.Skip(reader, serializer.SmallTypeDenotationByteSize); err != nil {
+		return nil, ierrors.Wrap(err, "unable to skip address type byte")
+	}
+
+	address, err := AddressFromReader(reader)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read restricted address")
+	}
+
+	capabilities, err := stream.ReadBytesWithSize(reader, serializer.SeriLengthPrefixTypeAsByte)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address capabilities")
+	}
+
+	restrictedAddress := &RestrictedAddress{
+		Address:             address,
+		AllowedCapabilities: capabilities,
+	}
+
+	_, err = CommonSerixAPI().Encode(context.TODO(), restrictedAddress, serix.WithValidation())
+	if err != nil {
+		return nil, ierrors.Wrap(err, "restricted address validation failed")
+	}
+
+	return restrictedAddress, nil
 }
