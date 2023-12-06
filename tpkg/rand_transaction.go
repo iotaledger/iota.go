@@ -229,11 +229,11 @@ func RandSignedTransactionWithInputOutputCount(api iotago.API, inputCount int, o
 // OneInputOutputTransaction generates a random transaction with one input and output.
 func OneInputOutputTransaction() *iotago.SignedTransaction {
 	return &iotago.SignedTransaction{
-		API: TestAPI,
+		API: ZeroCostTestAPI,
 		Transaction: &iotago.Transaction{
-			API: TestAPI,
+			API: ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
-				NetworkID:     14147312347886322761,
+				NetworkID:     TestNetworkID,
 				ContextInputs: iotago.TxEssenceContextInputs{},
 				Inputs: iotago.TxEssenceInputs{
 					&iotago.UTXOInput{

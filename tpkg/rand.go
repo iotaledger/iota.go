@@ -347,14 +347,11 @@ func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 }
 
 // RandProtocolParameters produces random protocol parameters.
+// Some protocol parameters are subject to sanity checks when the protocol parameters are created
+// so we use default values here to avoid panics rather than random ones.
 func RandProtocolParameters() iotago.ProtocolParameters {
-	return iotago.NewV3ProtocolParameters(
-		iotago.WithNetworkOptions(
-			RandString(255),
-			iotago.NetworkPrefix(RandString(255)),
-		),
-		iotago.WithSupplyOptions(
-			RandBaseToken(iotago.MaxBaseToken),
+	return iotago.NewV3TestProtocolParameters(
+		iotago.WithStorageOptions(
 			RandBaseToken(iotago.MaxBaseToken),
 			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),
 			iotago.StorageScore(RandUint64(math.MaxUint64)),
@@ -373,18 +370,6 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
 			RandWorkScore(math.MaxUint32),
-		),
-		iotago.WithTimeProviderOptions(RandSlot(), time.Now().Unix(), RandUint8(math.MaxUint8), RandUint8(math.MaxUint8)),
-		iotago.WithLivenessOptions(RandUint16(math.MaxUint16), RandUint16(math.MaxUint16), RandSlot(), RandSlot(), RandSlot()),
-		iotago.WithCongestionControlOptions(
-			RandMana(iotago.MaxMana),
-			RandMana(iotago.MaxMana),
-			RandMana(iotago.MaxMana),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandWorkScore(math.MaxUint32),
-			RandUint32(math.MaxUint32),
-			RandUint32(math.MaxUint32),
 		),
 	)
 }

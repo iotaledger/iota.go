@@ -34,13 +34,13 @@ func TestStorageScoreParamtersJSONMarshalling(t *testing.T) {
 	}
 	storageScoreParametersJSON := `{"storageCost":"500","factorData":1,"offsetOutputOverhead":"10","offsetEd25519BlockIssuerKey":"50","offsetStakingFeature":"100","offsetDelegation":"100"}`
 
-	j, err := tpkg.TestAPI.JSONEncode(storageScoreParameters)
+	j, err := tpkg.ZeroCostTestAPI.JSONEncode(storageScoreParameters)
 	require.NoError(t, err)
 
 	require.Equal(t, storageScoreParametersJSON, string(j))
 
 	decodedStorageScoreStructure := &iotago.StorageScoreParameters{}
-	err = tpkg.TestAPI.JSONDecode([]byte(storageScoreParametersJSON), decodedStorageScoreStructure)
+	err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(storageScoreParametersJSON), decodedStorageScoreStructure)
 	require.NoError(t, err)
 
 	require.Equal(t, storageScoreParameters, decodedStorageScoreStructure)

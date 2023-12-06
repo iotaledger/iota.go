@@ -84,7 +84,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	defer gock.Off()
 
 	originOutput := tpkg.RandBasicOutput(iotago.AddressEd25519)
-	originOutputProof, err := iotago.NewOutputIDProof(tpkg.TestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
+	originOutputProof, err := iotago.NewOutputIDProof(tpkg.ZeroCostTestAPI, tpkg.Rand32ByteArray(), tpkg.RandSlot(), iotago.TxEssenceOutputs{originOutput}, 0)
 	require.NoError(t, err)
 
 	fakeOutputID, err := originOutputProof.OutputID(originOutput)

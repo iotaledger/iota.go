@@ -16,7 +16,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 		return &iotago.Block{
 			API: api,
 			Header: iotago.BlockHeader{
-				ProtocolVersion:  TestAPI.Version(),
+				ProtocolVersion:  ZeroCostTestAPI.Version(),
 				NetworkID:        api.ProtocolParameters().NetworkID(),
 				IssuingTime:      RandUTCTime(),
 				SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
@@ -30,7 +30,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 	return &iotago.Block{
 		API: api,
 		Header: iotago.BlockHeader{
-			ProtocolVersion:  TestAPI.Version(),
+			ProtocolVersion:  ZeroCostTestAPI.Version(),
 			NetworkID:        api.ProtocolParameters().NetworkID(),
 			IssuingTime:      RandUTCTime(),
 			SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
@@ -44,7 +44,7 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {
 	basicBlock := RandBasicBlockBody(api, iotago.PayloadSignedTransaction)
 
-	block := RandBlock(basicBlock, TestAPI, rmc)
+	block := RandBlock(basicBlock, ZeroCostTestAPI, rmc)
 	block.Header.IssuerID = issuerID
 
 	return block
@@ -83,6 +83,6 @@ func RandValidationBlockBody(api iotago.API) *iotago.ValidationBlockBody {
 		StrongParents:           SortedRandBlockIDs(1 + RandInt(iotago.ValidationBlockMaxParents)),
 		WeakParents:             iotago.BlockIDs{},
 		ShallowLikeParents:      iotago.BlockIDs{},
-		HighestSupportedVersion: TestAPI.Version() + 1,
+		HighestSupportedVersion: ZeroCostTestAPI.Version() + 1,
 	}
 }

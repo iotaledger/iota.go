@@ -187,7 +187,6 @@ func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creati
 
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
 	targetEpoch := p.timeProvider.EpochFromSlot(targetSlot)
-
 	epochDiff := targetEpoch - creationEpoch
 
 	//nolint:exhaustive // false-positive, we have a default case
@@ -229,12 +228,6 @@ func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creati
 	// the default case means that the creationSlot and targetSlot belong to separated epochs.
 	// Parts of the generated mana are decayed by epochDiff epochs, other parts by epochDiff-1, and other parts are not decayed at all
 	default:
-		aux, err := fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
-		if err != nil {
-			return 0, ierrors.Wrap(err, "failed to calculate auxiliary value")
-		}
-		c := Mana(aux)
-
 		manaGeneratedFirstEpoch, err := p.generateMana(amount, p.timeProvider.SlotsBeforeNextEpoch(creationSlot))
 		if err != nil {
 			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the first epoch")
@@ -245,7 +238,18 @@ func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creati
 			return 0, ierrors.Wrap(err, "failed to decay generated mana in the first epoch")
 		}
 
-		manaDecayedIntermediateEpochs, err := p.decay(c, epochDiff-1)
+		aux, err := fixedPointMultiplication32(uint64(amount), p.decayFactorEpochsSum*p.generationRate, p.decayFactorEpochsSumExponent+p.generationRateExponent-p.slotsPerEpochExponent)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate auxiliary value")
+		}
+		c := Mana(aux)
+
+		c2, err := p.decay(c, epochDiff-1)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate second auxiliary value")
+		}
+
+		manaDecayedIntermediateEpochs, err := safemath.SafeSub(c, c2)
 		if err != nil {
 			return 0, ierrors.Wrap(err, "failed to decay generated mana in the intermediate epochs")
 		}
@@ -255,24 +259,19 @@ func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creati
 			return 0, ierrors.Wrap(err, "failed to calculate generated mana in the last epoch")
 		}
 
-		result, err := safemath.SafeAdd(c, manaGeneratedLastEpoch)
+		result, err := safemath.SafeAdd(manaDecayedIntermediateEpochs, manaGeneratedLastEpoch)
 		if err != nil {
-			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana of the last epoch")
+			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana after first epoch")
+		}
+
+		result, err = safemath.SafeAdd(result, manaDecayedFirstEpoch)
+		if err != nil {
+			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana")
 		}
 
 		result, err = safemath.SafeSub(result, c>>p.decayFactorsExponent)
 		if err != nil {
 			return 0, ierrors.Wrap(err, "failed to calculate subtraction of generated mana from the rounding term")
-		}
-
-		result, err = safemath.SafeSub(result, manaDecayedIntermediateEpochs)
-		if err != nil {
-			return 0, ierrors.Wrap(err, "failed to calculate subtraction of generated mana of intermediate epochs")
-		}
-
-		result, err = safemath.SafeAdd(result, manaDecayedFirstEpoch)
-		if err != nil {
-			return 0, ierrors.Wrap(err, "failed to calculate sum of generated mana of the first epoch")
 		}
 
 		return result, nil

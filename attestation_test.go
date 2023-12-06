@@ -12,7 +12,7 @@ import (
 )
 
 func TestAttestation(t *testing.T) {
-	block, err := builder.NewValidationBlockBuilder(tpkg.TestAPI).
+	block, err := builder.NewValidationBlockBuilder(tpkg.ZeroCostTestAPI).
 		StrongParents(tpkg.SortedRandBlockIDs(2)).
 		Sign(tpkg.RandAccountID(), tpkg.RandEd25519PrivateKey()).
 		Build()
@@ -20,7 +20,7 @@ func TestAttestation(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, iotago.BlockBodyTypeValidation, block.Body.Type())
 
-	attestation := iotago.NewAttestation(tpkg.TestAPI, block)
+	attestation := iotago.NewAttestation(tpkg.ZeroCostTestAPI, block)
 
 	// Compare fields of block and attestation.
 	{

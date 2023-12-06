@@ -18,11 +18,11 @@ func TestNativeTokenDeSerialization(t *testing.T) {
 		Amount: new(big.Int).SetUint64(1000),
 	}
 
-	ntBytes, err := tpkg.TestAPI.Encode(ntIn, serix.WithValidation())
+	ntBytes, err := tpkg.ZeroCostTestAPI.Encode(ntIn, serix.WithValidation())
 	require.NoError(t, err)
 
 	ntOut := &iotago.NativeTokenFeature{}
-	_, err = tpkg.TestAPI.Decode(ntBytes, ntOut, serix.WithValidation())
+	_, err = tpkg.ZeroCostTestAPI.Decode(ntBytes, ntOut, serix.WithValidation())
 	require.NoError(t, err)
 
 	require.EqualValues(t, ntIn, ntOut)
@@ -73,7 +73,7 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 				ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
 			}
 
-			foundryBytes, err := tpkg.TestAPI.Encode(foundryIn, serix.WithValidation())
+			foundryBytes, err := tpkg.ZeroCostTestAPI.Encode(foundryIn, serix.WithValidation())
 			if err == nil {
 				err = iotago.OutputsSyntacticalFoundry()(0, foundryIn)
 			}
@@ -84,7 +84,7 @@ func TestNativeToken_SyntacticalValidation(t *testing.T) {
 			require.NoError(t, err)
 
 			foundryOut := &iotago.FoundryOutput{}
-			_, err = tpkg.TestAPI.Decode(foundryBytes, foundryOut, serix.WithValidation())
+			_, err = tpkg.ZeroCostTestAPI.Decode(foundryBytes, foundryOut, serix.WithValidation())
 			require.NoError(t, err)
 
 			require.True(t, foundryIn.Equal(foundryOut))
