@@ -116,7 +116,7 @@ func timeSanityCheck(protocolParams *V3ProtocolParameters) {
 		panic("LivenessThresholdLowerBoundInSeconds must be less than or equal to LivenessThresholdUpperBoundInSeconds")
 	}
 	if SlotIndex(protocolParams.LivenessThresholdUpperBoundInSeconds) >= protocolParams.MinCommittableAge()*SlotIndex(protocolParams.SlotDurationInSeconds()) {
-		panic("LivenessThresholdUpperBoundInSeconds * SlotDurationInSeconds must be less than MinCommittableAge")
+		panic("LivenessThresholdUpperBoundInSeconds must be strictly less than MinCommittableAge * SlotDurationInSeconds")
 	}
 	if protocolParams.MinCommittableAge() >= protocolParams.MaxCommittableAge() {
 		panic("MinCommittableAge must be strictly less than MaxCommittableAge")
