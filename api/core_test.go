@@ -272,6 +272,56 @@ func Test_UTXOChangesResponse(t *testing.T) {
 	require.EqualValues(t, response, decoded)
 }
 
+func Test_UTXOChangesFullResponse(t *testing.T) {
+	testAPI := testAPI()
+
+	commitmentID := iotago.NewCommitmentID(42, iotago.Identifier{})
+
+	response := &api.UTXOChangesFullResponse{
+		CommitmentID: commitmentID,
+		CreatedOutputs: []*api.OutputWithID{
+			{
+				OutputID: iotago.OutputID{0x1},
+				Output: &iotago.BasicOutput{
+					Amount: 123,
+					Mana:   456,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{
+							Address: &iotago.Ed25519Address{0x01},
+						},
+					},
+					Features: iotago.BasicOutputFeatures{},
+				},
+			},
+		},
+		ConsumedOutputs: []*api.OutputWithID{
+			{
+				OutputID: iotago.OutputID{0x2},
+				Output: &iotago.BasicOutput{
+					Amount: 456,
+					Mana:   123,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{
+							Address: &iotago.Ed25519Address{0x02},
+						},
+					},
+					Features: iotago.BasicOutputFeatures{},
+				},
+			},
+		},
+	}
+
+	jsonResponse, err := testAPI.JSONEncode(response)
+	require.NoError(t, err)
+
+	expected := "{\"commitmentId\":\"0x00000000000000000000000000000000000000000000000000000000000000002a000000\",\"createdOutputs\":[{\"outputId\":\"0x0100000000000000000000000000000000000000000000000000000000000000000000000000\",\"output\":{\"type\":0,\"amount\":\"123\",\"mana\":\"456\",\"unlockConditions\":[{\"type\":0,\"address\":{\"type\":0,\"pubKeyHash\":\"0x0100000000000000000000000000000000000000000000000000000000000000\"}}],\"features\":[]}}],\"consumedOutputs\":[{\"outputId\":\"0x0200000000000000000000000000000000000000000000000000000000000000000000000000\",\"output\":{\"type\":0,\"amount\":\"456\",\"mana\":\"123\",\"unlockConditions\":[{\"type\":0,\"address\":{\"type\":0,\"pubKeyHash\":\"0x0200000000000000000000000000000000000000000000000000000000000000\"}}],\"features\":[]}}]}"
+	require.Equal(t, expected, string(jsonResponse))
+
+	decoded := new(api.UTXOChangesFullResponse)
+	require.NoError(t, testAPI.JSONDecode(jsonResponse, decoded))
+	require.EqualValues(t, response, decoded)
+}
+
 func Test_CongestionResponse(t *testing.T) {
 	testAPI := testAPI()
 

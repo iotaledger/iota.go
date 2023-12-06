@@ -345,7 +345,7 @@ type (
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
 		// TransactionMetadata is the metadata of the transaction that is contained in the block.
-		TransactionMetadata *TransactionMetadataResponse `serix:",omitempty"`
+		TransactionMetadata *TransactionMetadataResponse `serix:",optional,omitempty"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
@@ -368,6 +368,12 @@ type (
 	OutputResponse struct {
 		Output        iotago.TxEssenceOutput `serix:""`
 		OutputIDProof *iotago.OutputIDProof  `serix:""`
+	}
+
+	// OutputWithID returns an output with its corresponding ID.
+	OutputWithID struct {
+		OutputID iotago.OutputID        `serix:""`
+		Output   iotago.TxEssenceOutput `serix:""`
 	}
 
 	OutputInclusionMetadata struct {
@@ -409,7 +415,7 @@ type (
 		Metadata      *OutputMetadata        `serix:""`
 	}
 
-	// UTXOChangesResponse defines the response for UTXO slot REST API call.
+	// UTXOChangesResponse defines the response for the UTXO changes per slot REST API call.
 	UTXOChangesResponse struct {
 		// CommitmentID is the commitment ID of the requested slot that contains the changes.
 		CommitmentID iotago.CommitmentID `serix:""`
@@ -417,6 +423,17 @@ type (
 		CreatedOutputs iotago.OutputIDs `serix:""`
 		// The outputs that are consumed in this slot.
 		ConsumedOutputs iotago.OutputIDs `serix:""`
+	}
+
+	// UTXOChangesFullResponse defines the response for the UTXO changes per slot REST API call.
+	// It returns the full information about the outputs with their corresponding ID.
+	UTXOChangesFullResponse struct {
+		// CommitmentID is the commitment ID of the requested slot that contains the changes.
+		CommitmentID iotago.CommitmentID `serix:""`
+		// The outputs that are created in this slot.
+		CreatedOutputs []*OutputWithID `serix:""`
+		// The outputs that are consumed in this slot.
+		ConsumedOutputs []*OutputWithID `serix:""`
 	}
 
 	// CongestionResponse defines the response for the congestion REST API call.

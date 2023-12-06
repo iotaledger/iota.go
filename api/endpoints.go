@@ -187,6 +187,13 @@ const (
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointCommitmentByIDUTXOChanges = "/commitments/{commitmentId}/utxo-changes"
 
+	// CoreEndpointCommitmentByIDUTXOChangesFull is the endpoint for getting all UTXO changes of a commitment by its ID.
+	// GET returns the outputs of all UTXO changes including their corresponding output IDs.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	CoreEndpointCommitmentByIDUTXOChangesFull = "/commitments/{commitmentId}/utxo-changes/full"
+
 	// CoreEndpointCommitmentBySlot is the endpoint for getting a commitment by its Slot.
 	// GET returns the commitment.
 	// "Accept" header:
@@ -200,6 +207,13 @@ const (
 	// 		MIMEApplicationJSON => json.
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointCommitmentBySlotUTXOChanges = "/commitments/by-slot/{slot}/utxo-changes"
+
+	// CoreEndpointCommitmentBySlotUTXOChangesFull is the endpoint for getting all UTXO changes of a commitment by its Slot.
+	// GET returns the outputs of all UTXO changes including their corresponding output IDs.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	CoreEndpointCommitmentBySlotUTXOChangesFull = "/commitments/by-slot/{slot}/utxo-changes/full"
 
 	// CoreEndpointCongestion is the endpoint for getting the current congestion state and all account related useful details as block issuance credits.
 	// GET returns the congestion state related to the specified account. (optional query parameters: "QueryParameterCommitmentID" to specify the used commitment)
@@ -253,8 +267,10 @@ var (
 	CoreRouteTransactionsMetadata              = route(CorePluginName, CoreEndpointTransactionsMetadata)
 	CoreRouteCommitmentByID                    = route(CorePluginName, CoreEndpointCommitmentByID)
 	CoreRouteCommitmentByIDUTXOChanges         = route(CorePluginName, CoreEndpointCommitmentByIDUTXOChanges)
+	CoreRouteCommitmentByIDUTXOChangesFull     = route(CorePluginName, CoreEndpointCommitmentByIDUTXOChangesFull)
 	CoreRouteCommitmentBySlot                  = route(CorePluginName, CoreEndpointCommitmentBySlot)
 	CoreRouteCommitmentBySlotUTXOChanges       = route(CorePluginName, CoreEndpointCommitmentBySlotUTXOChanges)
+	CoreRouteCommitmentBySlotUTXOChangesFull   = route(CorePluginName, CoreEndpointCommitmentBySlotUTXOChangesFull)
 	CoreRouteCongestion                        = route(CorePluginName, CoreEndpointCongestion)
 	CoreRouteValidators                        = route(CorePluginName, CoreEndpointValidators)
 	CoreRouteValidatorsAccount                 = route(CorePluginName, CoreEndpointValidatorsAccount)
