@@ -44,14 +44,14 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Clone() BlockIssuerKey {
 	}
 }
 
-func Ed25519PublicKeyHashBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKeyHashBlockIssuerKey, error) {
+func Ed25519PublicKeyHashBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKeyHashBlockIssuerKey, int, error) {
 	blockIssuerKey := &Ed25519PublicKeyHashBlockIssuerKey{}
-	_, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
+	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return blockIssuerKey, nil
+	return blockIssuerKey, n, nil
 }
 
 // Bytes returns a byte slice consisting of the type prefix and the raw address.

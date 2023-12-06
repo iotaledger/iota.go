@@ -31,14 +31,14 @@ func (key *Ed25519PublicKeyBlockIssuerKey) ToEd25519PublicKey() hiveEd25519.Publ
 	return key.PublicKey
 }
 
-func Ed25519PublicKeyBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKeyBlockIssuerKey, error) {
+func Ed25519PublicKeyBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKeyBlockIssuerKey, int, error) {
 	blockIssuerKey := &Ed25519PublicKeyBlockIssuerKey{}
-	_, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
+	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return blockIssuerKey, nil
+	return blockIssuerKey, n, nil
 }
 
 // Bytes returns a byte slice consisting of the type prefix and the public key bytes.
