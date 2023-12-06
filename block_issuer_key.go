@@ -184,25 +184,26 @@ func BlockIssuerKeyFromReader(reader io.ReadSeeker) (BlockIssuerKey, error) {
 			return nil, ierrors.Wrap(err, "unable to read block issuer key bytes")
 		}
 
-		return Ed25519PublicKeyBlockIssuerKeyFromBytes(readBytes)
+		return lo.DropCount(Ed25519PublicKeyBlockIssuerKeyFromBytes(readBytes))
 	case BlockIssuerKeyPublicKeyHash:
 		readBytes, err := stream.ReadBytes(reader, Ed25519PublicKeyHashBlockIssuerKeyLength)
 		if err != nil {
 			return nil, ierrors.Wrap(err, "unable to read block issuer key bytes")
 		}
 
-		return Ed25519PublicKeyHashBlockIssuerKeyFromBytes(readBytes)
+		return lo.DropCount(Ed25519PublicKeyHashBlockIssuerKeyFromBytes(readBytes))
 	default:
 		return nil, ierrors.Errorf("unsupported block issuer key type: %d", blockIssuerKeyType)
 	}
 }
 
-func BlockIssuerKeyFromBytes(bytes []byte) (BlockIssuerKey, error) {
+func BlockIssuerKeyFromBytes(bytes []byte) (BlockIssuerKey, int, error) {
 	var blockIssuerKey BlockIssuerKey
 
-	if _, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey); err != nil {
-		return nil, ierrors.Wrap(err, "unable to decode block issuer key")
+	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
+	if err != nil {
+		return nil, 0, ierrors.Wrap(err, "unable to decode block issuer key")
 	}
 
-	return blockIssuerKey, nil
+	return blockIssuerKey, n, nil
 }

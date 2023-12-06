@@ -5,12 +5,14 @@ package iotago
 import (
 	"context"
 	"crypto/ed25519"
+	"io"
 
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -79,4 +81,24 @@ func ImplicitAccountCreationAddressFromPubKey(pubKey ed25519.PublicKey) *Implici
 	address := blake2b.Sum256(pubKey[:])
 
 	return (*ImplicitAccountCreationAddress)(&address)
+}
+
+// ImplicitAccountCreationAddressFromReader parses the ImplicitAccountCreationAddress from the given reader.
+func ImplicitAccountCreationAddressFromReader(reader io.Reader) (*ImplicitAccountCreationAddress, error) {
+	addrBytes, err := stream.ReadBytes(reader, ImplicitAccountCreationAddressSerializedBytesSize)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address bytes")
+	}
+
+	addr, _, err := AddressFromBytes(addrBytes)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to parse address from bytes")
+	}
+
+	address, ok := addr.(*ImplicitAccountCreationAddress)
+	if !ok {
+		return nil, ierrors.Errorf("invalid address type: %T", addr)
+	}
+
+	return address, nil
 }

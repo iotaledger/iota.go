@@ -4,14 +4,16 @@ package iotago
 
 import (
 	"context"
-    {{if index .Features "frompubkey"}} "crypto/ed25519" {{end}}
+	"io"
+	{{if index .Features "frompubkey"}} "crypto/ed25519" {{end}}
     
 	"golang.org/x/crypto/blake2b"
 
+    "github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
-    {{if index .Features "ed25519unlock"}} "github.com/iotaledger/hive.go/ierrors" {{end}}
 )
 
 const (
@@ -104,3 +106,23 @@ func {{.Name}}FromOutputID(outputID OutputID) *{{.Name}} {
 
 	return (*{{.Name}})(&address)
 }{{end}}
+
+// {{.Name}}FromReader parses the {{.Name}} from the given reader.
+func {{.Name}}FromReader(reader io.Reader) (*{{.Name}}, error) {
+	addrBytes, err := stream.ReadBytes(reader, {{.Name}}SerializedBytesSize)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address bytes")
+	}
+
+	addr, _, err := AddressFromBytes(addrBytes)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to parse address from bytes")
+	}
+
+	address, ok := addr.(*{{.Name}})
+	if !ok {
+		return nil, ierrors.Errorf("invalid address type: %T", addr)
+	}
+	
+	return address, nil
+}

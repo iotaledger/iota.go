@@ -350,7 +350,7 @@ func RandWorkScoreParameters() *iotago.WorkScoreParameters {
 // Some protocol parameters are subject to sanity checks when the protocol parameters are created
 // so we use default values here to avoid panics rather than random ones.
 func RandProtocolParameters() iotago.ProtocolParameters {
-	return iotago.NewV3TestProtocolParameters(
+	return iotago.NewV3SnapshotProtocolParameters(
 		iotago.WithStorageOptions(
 			RandBaseToken(iotago.MaxBaseToken),
 			iotago.StorageScoreFactor(RandUint8(math.MaxUint8)),

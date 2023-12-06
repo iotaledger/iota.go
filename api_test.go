@@ -25,6 +25,8 @@ type deSerializeTest struct {
 }
 
 func (test *deSerializeTest) deSerialize(t *testing.T) {
+	t.Helper()
+
 	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
 		require.ErrorIs(t, err, test.seriErr)

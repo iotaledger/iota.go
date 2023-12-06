@@ -4,11 +4,14 @@ package iotago
 
 import (
 	"context"
+	"io"
 
 	"golang.org/x/crypto/blake2b"
 
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
@@ -80,4 +83,24 @@ func AccountAddressFromOutputID(outputID OutputID) *AccountAddress {
 	address := blake2b.Sum256(outputID[:])
 
 	return (*AccountAddress)(&address)
+}
+
+// AccountAddressFromReader parses the AccountAddress from the given reader.
+func AccountAddressFromReader(reader io.Reader) (*AccountAddress, error) {
+	addrBytes, err := stream.ReadBytes(reader, AccountAddressSerializedBytesSize)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to read address bytes")
+	}
+
+	addr, _, err := AddressFromBytes(addrBytes)
+	if err != nil {
+		return nil, ierrors.Wrap(err, "unable to parse address from bytes")
+	}
+
+	address, ok := addr.(*AccountAddress)
+	if !ok {
+		return nil, ierrors.Errorf("invalid address type: %T", addr)
+	}
+
+	return address, nil
 }
