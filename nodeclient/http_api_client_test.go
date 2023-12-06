@@ -164,10 +164,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.NoError(t, err)
 
 	originRes := &api.IssuanceBlockHeaderResponse{
-		StrongParents:       parents,
-		WeakParents:         parents,
-		ShallowLikeParents:  parents,
-		LatestFinalizedSlot: iotago.SlotIndex(20),
+		StrongParents:                parents,
+		WeakParents:                  parents,
+		ShallowLikeParents:           parents,
+		LatestParentBlockIssuingTime: time.Now().UTC(),
+		LatestFinalizedSlot:          iotago.SlotIndex(20),
 	}
 
 	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
@@ -576,6 +577,41 @@ func TestClient_CommitmentUTXOChangesByID(t *testing.T) {
 	require.EqualValues(t, originRes, resp)
 }
 
+func TestClient_CommitmentUTXOChangesFullByID(t *testing.T) {
+	defer gock.Off()
+
+	commitmentID := iotago.NewCommitmentID(5, tpkg.Rand32ByteArray())
+
+	randCreatedOutputID := tpkg.RandOutputID(0)
+	randCreatedOutput := tpkg.RandBasicOutput()
+
+	randConsumedOutputID := tpkg.RandOutputID(0)
+	randConsumedOutput := tpkg.RandBasicOutput()
+
+	originRes := &api.UTXOChangesFullResponse{
+		CommitmentID: commitmentID,
+		CreatedOutputs: []*api.OutputWithID{
+			{
+				OutputID: randCreatedOutputID,
+				Output:   randCreatedOutput,
+			},
+		},
+		ConsumedOutputs: []*api.OutputWithID{
+			{
+				OutputID: randConsumedOutputID,
+				Output:   randConsumedOutput,
+			},
+		},
+	}
+
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentByIDUTXOChangesFull, api.ParameterCommitmentID, commitmentID.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	resp, err := nodeAPI.CommitmentUTXOChangesFullByID(context.Background(), commitmentID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
 func TestClient_CommitmentByIndex(t *testing.T) {
 	defer gock.Off()
 
@@ -621,6 +657,42 @@ func TestClient_CommitmentUTXOChangesByIndex(t *testing.T) {
 
 	nodeAPI := nodeClient(t)
 	resp, err := nodeAPI.CommitmentUTXOChangesByIndex(context.Background(), slot)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, resp)
+}
+
+func TestClient_CommitmentUTXOChangesFullByIndex(t *testing.T) {
+	defer gock.Off()
+
+	var slot iotago.SlotIndex = 1337
+	commitmentID := iotago.NewCommitmentID(slot, tpkg.Rand32ByteArray())
+
+	randCreatedOutputID := tpkg.RandOutputID(0)
+	randCreatedOutput := tpkg.RandBasicOutput()
+
+	randConsumedOutputID := tpkg.RandOutputID(0)
+	randConsumedOutput := tpkg.RandBasicOutput()
+
+	originRes := &api.UTXOChangesFullResponse{
+		CommitmentID: commitmentID,
+		CreatedOutputs: []*api.OutputWithID{
+			{
+				OutputID: randCreatedOutputID,
+				Output:   randCreatedOutput,
+			},
+		},
+		ConsumedOutputs: []*api.OutputWithID{
+			{
+				OutputID: randConsumedOutputID,
+				Output:   randConsumedOutput,
+			},
+		},
+	}
+
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCommitmentBySlotUTXOChangesFull, api.ParameterSlot, strconv.Itoa(int(slot))), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	resp, err := nodeAPI.CommitmentUTXOChangesFullByIndex(context.Background(), slot)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, resp)
 }

@@ -139,6 +139,10 @@ func (p *V3ProtocolParameters) TargetCommitteeSize() uint8 {
 	return p.basicProtocolParameters.TargetCommitteeSize
 }
 
+func (p *V3ProtocolParameters) ChainSwitchingThreshold() uint8 {
+	return p.basicProtocolParameters.ChainSwitchingThreshold
+}
+
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
 	if len(p.bytes) > 0 {
 		return p.bytes, nil
@@ -341,5 +345,11 @@ func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3Protoco
 func WithNetworkOptions(networnNameSuffix string) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.NetworkName = fmt.Sprintf("testnet-%s", networnNameSuffix)
+	}
+}
+
+func WithChainSwitchingThreshold(chainSwitchingThreshold uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.ChainSwitchingThreshold = chainSwitchingThreshold
 	}
 }
