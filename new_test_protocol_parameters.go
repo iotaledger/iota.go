@@ -28,6 +28,7 @@ func NewV3TestProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(8, 8, 31, 2, 1),
 			WithTargetCommitteeSize(32),
+			WithChainSwitchingThreshold(3),
 		},
 			opts...,
 		),
