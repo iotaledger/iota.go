@@ -61,6 +61,9 @@ type basicProtocolParameters struct {
 
 	// TargetCommitteeSize defines the target size of the committee. If there's fewer candidates the actual committee size could be smaller in a given epoch.
 	TargetCommitteeSize uint8 `serix:""`
+
+	// ChainSwitchingThreshold defines the number of heavier slots that a chain needs to be ahead of the current chain to be considered for switching.
+	ChainSwitchingThreshold uint8 `serix:""`
 }
 
 func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
@@ -86,5 +89,6 @@ func (b basicProtocolParameters) Equals(other basicProtocolParameters) bool {
 		b.CongestionControlParameters.Equals(other.CongestionControlParameters) &&
 		b.VersionSignalingParameters.Equals(other.VersionSignalingParameters) &&
 		b.RewardsParameters.Equals(other.RewardsParameters) &&
-		b.TargetCommitteeSize == other.TargetCommitteeSize
+		b.TargetCommitteeSize == other.TargetCommitteeSize &&
+		b.ChainSwitchingThreshold == other.ChainSwitchingThreshold
 }

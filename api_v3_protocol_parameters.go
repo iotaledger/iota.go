@@ -49,6 +49,7 @@ func NewV3ProtocolParameters(opts ...options.Option[V3ProtocolParameters]) *V3Pr
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(8, 8, 11, 1154, 2, 1),
 			WithTargetCommitteeSize(32),
+			WithChainSwitchingThreshold(3),
 		},
 			opts...,
 		),
@@ -169,6 +170,10 @@ func (p *V3ProtocolParameters) RewardsParameters() *RewardsParameters {
 
 func (p *V3ProtocolParameters) TargetCommitteeSize() uint8 {
 	return p.basicProtocolParameters.TargetCommitteeSize
+}
+
+func (p *V3ProtocolParameters) ChainSwitchingThreshold() uint8 {
+	return p.basicProtocolParameters.ChainSwitchingThreshold
 }
 
 func (p *V3ProtocolParameters) Bytes() ([]byte, error) {
@@ -374,5 +379,11 @@ func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, po
 func WithTargetCommitteeSize(targetCommitteeSize uint8) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.TargetCommitteeSize = targetCommitteeSize
+	}
+}
+
+func WithChainSwitchingThreshold(chainSwitchingThreshold uint8) options.Option[V3ProtocolParameters] {
+	return func(p *V3ProtocolParameters) {
+		p.basicProtocolParameters.ChainSwitchingThreshold = chainSwitchingThreshold
 	}
 }

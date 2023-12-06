@@ -157,6 +157,8 @@ type ProtocolParameters interface {
 
 	TargetCommitteeSize() uint8
 
+	ChainSwitchingThreshold() uint8
+
 	Bytes() ([]byte, error)
 
 	Hash() (Identifier, error)
