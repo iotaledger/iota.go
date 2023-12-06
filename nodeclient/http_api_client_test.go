@@ -169,10 +169,11 @@ func TestClient_BlockIssuance(t *testing.T) {
 	require.NoError(t, err)
 
 	originRes := &api.IssuanceBlockHeaderResponse{
-		StrongParents:       parents,
-		WeakParents:         parents,
-		ShallowLikeParents:  parents,
-		LatestFinalizedSlot: iotago.SlotIndex(20),
+		StrongParents:                parents,
+		WeakParents:                  parents,
+		ShallowLikeParents:           parents,
+		LatestParentBlockIssuingTime: time.Now().UTC(),
+		LatestFinalizedSlot:          iotago.SlotIndex(20),
 	}
 
 	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
