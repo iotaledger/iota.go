@@ -236,7 +236,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 			WithCongestionControlOptions(1, 0, 0, 800_000, 500_000, 100_000, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 31, 2, 1),
+			WithRewardsOptions(8, 8, 11, 2, 1),
 			WithTargetCommitteeSize(32),
 			WithChainSwitchingThreshold(3),
 		},
@@ -267,6 +267,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 	manaSupplySanityCheck(newProtocolParams)
 	timeSanityCheck(newProtocolParams)
 	congestionControlSanityCheck(newProtocolParams)
+	rewardsSanityCheck(newProtocolParams)
 
 	return newProtocolParams
 }
@@ -346,6 +347,12 @@ func congestionControlSanityCheck(protocolParams *V3ProtocolParameters) {
 	}
 	if protocolParams.CongestionControlParameters().DecreaseThreshold > protocolParams.CongestionControlParameters().IncreaseThreshold {
 		panic("DecreaseThreshold must be less than or equal to IncreaseThreshold")
+	}
+}
+
+func rewardsSanityCheck(protocolParams *V3ProtocolParameters) {
+	if math.Log2(float64(protocolParams.TokenSupply()))+float64(protocolParams.RewardsParameters().PoolCoefficientExponent) > 63 {
+		panic("Token supply bits count + poolCoefficientExponent must be less than or equal to 63")
 	}
 }
 
