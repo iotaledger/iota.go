@@ -19,7 +19,7 @@ import (
 func TestMerkleHasher(t *testing.T) {
 	var includedBlocks iotago.BlockIDs
 
-	// https://github.com/Wollac/iota-crypto-demo/tree/master/examples/merkle
+	// https://github.com/iotaledger/iota-crypto-demo/tree/master/examples/merkle
 
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900000000"))
 	includedBlocks = append(includedBlocks, iotago.MustBlockIDFromHexString("0x81855ad8681d0d86d1e91e00167939cb6694d2c422acd208a0072939487f699900000000"))

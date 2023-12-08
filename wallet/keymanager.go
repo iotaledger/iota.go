@@ -3,10 +3,10 @@ package wallet
 import (
 	"crypto/ed25519"
 
-	"github.com/wollac/iota-crypto-demo/pkg/bip32path"
-	"github.com/wollac/iota-crypto-demo/pkg/bip39"
-	"github.com/wollac/iota-crypto-demo/pkg/slip10"
-	"github.com/wollac/iota-crypto-demo/pkg/slip10/eddsa"
+	"github.com/iotaledger/iota-crypto-demo/pkg/bip32path"
+	"github.com/iotaledger/iota-crypto-demo/pkg/bip39"
+	"github.com/iotaledger/iota-crypto-demo/pkg/slip10"
+	"github.com/iotaledger/iota-crypto-demo/pkg/slip10/eddsa"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
