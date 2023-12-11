@@ -31,8 +31,9 @@ func NewCommitment(version Version, slot SlotIndex, prevID CommitmentID, rootsID
 
 func NewEmptyCommitment(api API) *Commitment {
 	return &Commitment{
-		ProtocolVersion: api.ProtocolParameters().Version(),
-		Slot:            api.ProtocolParameters().GenesisSlot(),
+		ProtocolVersion:   api.ProtocolParameters().Version(),
+		Slot:              api.ProtocolParameters().GenesisSlot(),
+		ReferenceManaCost: api.ProtocolParameters().CongestionControlParameters().MinReferenceManaCost,
 	}
 }
 
