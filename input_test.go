@@ -123,13 +123,13 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 			wantErr: iotago.ErrInputRewardInvalid,
 		},
 		{
-			name: "fail - reward input references index greater than inputs count",
+			name: "fail - reward input references index equal to inputs count",
 			inputs: iotago.ContextInputs[iotago.ContextInput]{
 				&iotago.RewardInput{
 					Index: 1,
 				},
 				&iotago.RewardInput{
-					Index: iotago.MaxInputsCount/2 + 1,
+					Index: iotago.MaxInputsCount / 2,
 				},
 			},
 			wantErr: iotago.ErrInputRewardInvalid,

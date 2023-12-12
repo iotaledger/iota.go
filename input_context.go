@@ -109,12 +109,12 @@ func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntactical
 			bicSet[k] = index
 		case *RewardInput:
 			utxoIndex := castInput.Index
-			if utxoIndex > inputsCount {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d references index %d which is greater than the inputs count %d",
+			if utxoIndex >= inputsCount {
+				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d references index %d which is equal or greater than the inputs count %d",
 					index, utxoIndex, inputsCount)
 			}
 			if j, has := rewardSet[utxoIndex]; has {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d and %d share the same input index", j, index)
+				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d and %d share the same input index", j, index)
 			}
 			rewardSet[utxoIndex] = index
 		case *CommitmentInput:
