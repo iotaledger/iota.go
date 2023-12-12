@@ -3,7 +3,6 @@ package iotago
 import (
 	"encoding/binary"
 
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -29,11 +28,7 @@ func (u *UTXOInput) Clone() Input {
 	}
 }
 
-func (u *UTXOInput) ReferencedStateID() Identifier {
-	return IdentifierFromData(lo.PanicOnErr(u.OutputID().Bytes()))
-}
-
-func (u *UTXOInput) Type() StateType {
+func (u *UTXOInput) Type() InputType {
 	return InputUTXO
 }
 

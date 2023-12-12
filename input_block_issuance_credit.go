@@ -8,22 +8,14 @@ type BlockIssuanceCreditInput struct {
 	AccountID AccountID `serix:""`
 }
 
-func (b *BlockIssuanceCreditInput) Clone() Input {
+func (b *BlockIssuanceCreditInput) Clone() ContextInput {
 	return &BlockIssuanceCreditInput{
 		AccountID: b.AccountID,
 	}
 }
 
-func (b *BlockIssuanceCreditInput) ReferencedStateID() Identifier {
-	return b.StateID()
-}
-
-func (b *BlockIssuanceCreditInput) StateID() Identifier {
-	return IdentifierFromData(b.AccountID[:])
-}
-
-func (b *BlockIssuanceCreditInput) Type() StateType {
-	return InputBlockIssuanceCredit
+func (b *BlockIssuanceCreditInput) Type() ContextInputType {
+	return ContextInputBlockIssuanceCredit
 }
 
 func (b *BlockIssuanceCreditInput) IsReadOnly() bool {

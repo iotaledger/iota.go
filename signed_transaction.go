@@ -34,7 +34,7 @@ var (
 	ErrInputCreationAfterTxCreation = ierrors.New("input creation slot after tx creation slot")
 )
 
-type TransactionContextInputs ContextInputs[Input]
+type TransactionContextInputs ContextInputs[ContextInput]
 
 // SignedTransaction is a transaction with its inputs, outputs and unlocks.
 type SignedTransaction struct {

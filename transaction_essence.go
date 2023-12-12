@@ -22,7 +22,7 @@ const (
 )
 
 type (
-	txEssenceContextInput  interface{ Input }
+	txEssenceContextInput  interface{ ContextInput }
 	txEssenceInput         interface{ Input }
 	TxEssenceOutput        interface{ Output }
 	TxEssencePayload       interface{ Payload }
