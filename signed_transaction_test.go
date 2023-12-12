@@ -103,9 +103,13 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
-					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount/2),
-					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2),
+					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount-1),
 					tpkg.WithCommitmentInput(),
+					func(tx *iotago.Transaction) {
+						tx.TransactionEssence.ContextInputs = append(tx.TransactionEssence.ContextInputs, &iotago.RewardInput{
+							Index: 0,
+						})
+					},
 				)),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,

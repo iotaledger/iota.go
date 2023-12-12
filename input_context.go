@@ -93,7 +93,7 @@ type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) 
 //   - there are exactly 0 or 1 Commitment inputs.
 //   - every Block Issuance Credits Input references a different account.
 //   - every Reward Input references a different input and the index it references is <= max inputs count.
-func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
+func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
 	hasCommitment := false
 	bicSet := map[string]int{}
 	rewardSet := map[uint16]int{}
@@ -109,8 +109,9 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 			bicSet[k] = index
 		case *RewardInput:
 			utxoIndex := castInput.Index
-			if utxoIndex > MaxInputsCount {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d references an index greater than max inputs count", index)
+			if utxoIndex > inputsCount {
+				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d references index %d which is greater than the inputs count %d",
+					index, utxoIndex, inputsCount)
 			}
 			if j, has := rewardSet[utxoIndex]; has {
 				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d and %d share the same input index", j, index)
@@ -131,8 +132,8 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 
 // SyntacticallyValidateContextInputs validates the context inputs by running them against
 // the given ContextInputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateContextInputs(inputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
-	for i, input := range inputs {
+func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
+	for i, input := range contextInputs {
 		for _, f := range funcs {
 			if err := f(i, input); err != nil {
 				return err
