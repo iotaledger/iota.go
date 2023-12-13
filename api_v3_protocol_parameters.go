@@ -267,7 +267,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 	manaSupplySanityCheck(newProtocolParams)
 	timeSanityCheck(newProtocolParams)
 	congestionControlSanityCheck(newProtocolParams)
-	rewardsSanityCheck(newProtocolParams)
+	stakingSanityCheck(newProtocolParams)
 
 	return newProtocolParams
 }
@@ -350,12 +350,16 @@ func congestionControlSanityCheck(protocolParams *V3ProtocolParameters) {
 	}
 }
 
-func rewardsSanityCheck(protocolParams *V3ProtocolParameters) {
+func stakingSanityCheck(protocolParams *V3ProtocolParameters) {
 	tokenSupplyBitsCount := uint8(math.Log2(float64(protocolParams.TokenSupply()))) + 1
 	poolCoefficientExponent := protocolParams.RewardsParameters().PoolCoefficientExponent
 	if poolCoefficientExponent > 64 || tokenSupplyBitsCount+poolCoefficientExponent > 64 {
 		message := fmt.Sprintf("Token supply bits count (%d) + PoolCoefficientExponent (%d) must be less than or equal to 64\n", tokenSupplyBitsCount, protocolParams.RewardsParameters().PoolCoefficientExponent)
 		panic(message)
+	}
+
+	if protocolParams.ValidationBlocksPerSlot() > 32 {
+		panic("ValidationBlocksPerSlot must be less than or equal to 32")
 	}
 }
 
