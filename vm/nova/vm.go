@@ -246,7 +246,7 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 
 	// Whether the account is removing the staking feature.
 	isRemovingStakingFeatureValue := false
-	var isRemovingStakingFeature *bool = &isRemovingStakingFeatureValue
+	isRemovingStakingFeature := &isRemovingStakingFeatureValue
 
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
@@ -321,7 +321,7 @@ func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		}
 	}
 
-	if err := accountStakingSTVF(vmParams, input.ChainID, current, next, isRemovingStakingFeature); err != nil {
+	if err := accountStakingSTVF(vmParams, current, next, isRemovingStakingFeature); err != nil {
 		return err
 	}
 
@@ -439,7 +439,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	return nil
 }
 
-func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *iotago.AccountOutput, next *iotago.AccountOutput, isRemovingStakingFeature *bool) error {
+func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next *iotago.AccountOutput, isRemovingStakingFeature *bool) error {
 	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
 
@@ -544,17 +544,15 @@ func accountStakingExpiredValidation(
 ) error {
 	if nextStakingFeat == nil {
 		*isRemovingStakingFeature = true
-	} else {
-		// If the feature is changed it must be transitioned as if newly added and rewards must be claimed.
-		if !currentStakingFeat.Equal(nextStakingFeat) {
-			if err := accountStakingGenesisValidation(vmParams, next, nextStakingFeat); err != nil {
-				return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
-			}
-			// If staking feature genesis validation succeeds, the start epoch has been reset which means the new epoch range
-			// is disjoint from the current staking feature's, which can therefore be considered as removing and re-adding
-			// the feature.
-			*isRemovingStakingFeature = true
+	} else if !currentStakingFeat.Equal(nextStakingFeat) {
+		// If an expired feature is changed it must be transitioned as if newly added.
+		if err := accountStakingGenesisValidation(vmParams, next, nextStakingFeat); err != nil {
+			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
 		}
+		// If staking feature genesis validation succeeds, the start epoch has been reset which means the new epoch range
+		// is disjoint from the current staking feature's, which can therefore be considered as removing and re-adding
+		// the feature.
+		*isRemovingStakingFeature = true
 	}
 
 	return nil
