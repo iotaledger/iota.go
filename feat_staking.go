@@ -22,8 +22,8 @@ var (
 	ErrInvalidStakingBondedModified = ierrors.New("staking start epoch, fixed cost and staked amount cannot be modified while bonded")
 	// ErrInvalidStakingRewardInputRequired get returned when a staking feature is removed or resetted without a reward input.
 	ErrInvalidStakingRewardInputRequired = ierrors.New("staking feature removal or resetting requires a reward input")
-	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed before the end of the unbonding period.
-	ErrInvalidStakingRewardClaim = ierrors.New("staking rewards claiming can only be done after the unbonding period")
+	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed without removing or resetting the staking feature.
+	ErrInvalidStakingRewardClaim = ierrors.New("staking feature must be removed or reset in order to claim rewards")
 	// ErrInvalidStakingCommitmentInput gets returned when no commitment input was passed in a TX containing a staking feature.
 	ErrInvalidStakingCommitmentInput = ierrors.New("staking feature validation requires a commitment input")
 )
