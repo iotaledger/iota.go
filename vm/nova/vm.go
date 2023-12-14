@@ -238,20 +238,30 @@ func implicitAccountSTVF(vmParams *vm.Params, implicitAccount *vm.ImplicitAccoun
 // For output AccountOutput(s) with non-zeroed AccountID, there must be a corresponding input AccountOutput where either its
 // AccountID is zeroed and FoundryCounter is zero or an input AccountOutput with the same AccountID.
 func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.AccountOutput) error {
+	// Whether the transaction is claiming Mana rewards for this account.
+	isClaimingRewards := false
+	if vmParams.WorkingSet.Rewards != nil {
+		_, isClaimingRewards = vmParams.WorkingSet.Rewards[input.ChainID]
+	}
+
+	// Whether the account is removing the staking feature.
+	isRemovingStakingFeatureValue := false
+	isRemovingStakingFeature := &isRemovingStakingFeatureValue
+
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := accountGenesisValid(vmParams, next, true); err != nil {
 			return ierrors.Wrapf(err, " account %s", next.AccountID)
 		}
 	case iotago.ChainTransitionTypeStateChange:
-		if err := accountStateChangeValid(vmParams, input, next); err != nil {
+		if err := accountStateChangeValid(vmParams, input, next, isRemovingStakingFeature); err != nil {
 			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 			a := input.Output.(*iotago.AccountOutput)
 
 			return ierrors.Wrapf(err, "account %s", a.AccountID)
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		if err := accountDestructionValid(vmParams, input); err != nil {
+		if err := accountDestructionValid(vmParams, input, isRemovingStakingFeature); err != nil {
 			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 			a := input.Output.(*iotago.AccountOutput)
 
@@ -259,6 +269,14 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 		}
 	default:
 		panic("unknown chain transition type in AccountOutput")
+	}
+
+	if isClaimingRewards && !*isRemovingStakingFeature {
+		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardClaim)
+	}
+
+	if !isClaimingRewards && *isRemovingStakingFeature {
+		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardInputRequired)
 	}
 
 	return nil
@@ -288,7 +306,7 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 	return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedIdents)
 }
 
-func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, next *iotago.AccountOutput) error {
+func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, next *iotago.AccountOutput, isRemovingStakingFeature *bool) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
@@ -303,7 +321,7 @@ func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		}
 	}
 
-	if err := accountStakingSTVF(vmParams, input.ChainID, current, next); err != nil {
+	if err := accountStakingSTVF(vmParams, current, next, isRemovingStakingFeature); err != nil {
 		return err
 	}
 
@@ -421,11 +439,9 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	return nil
 }
 
-func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *iotago.AccountOutput, next *iotago.AccountOutput) error {
+func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next *iotago.AccountOutput, isRemovingStakingFeature *bool) error {
 	currentStakingFeat := current.FeatureSet().Staking()
 	nextStakingFeat := next.FeatureSet().Staking()
-
-	_, isClaiming := vmParams.WorkingSet.Rewards[chainID]
 
 	if currentStakingFeat != nil {
 
@@ -445,11 +461,11 @@ func accountStakingSTVF(vmParams *vm.Params, chainID iotago.ChainID, current *io
 			nextHasBlockIssuerFeat := next.FeatureSet().BlockIssuer() != nil
 
 			return accountStakingNonExpiredValidation(
-				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, isClaiming, nextHasBlockIssuerFeat,
+				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, nextHasBlockIssuerFeat,
 			)
 		}
 
-		return accountStakingExpiredValidation(vmParams, next, currentStakingFeat, nextStakingFeat, isClaiming)
+		return accountStakingExpiredValidation(vmParams, next, currentStakingFeat, nextStakingFeat, isRemovingStakingFeature)
 	} else if nextStakingFeat != nil {
 		return accountStakingGenesisValidation(vmParams, next, nextStakingFeat)
 	}
@@ -493,15 +509,10 @@ func accountStakingNonExpiredValidation(
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
 	earliestUnbondingEpoch iotago.EpochIndex,
-	isClaiming bool,
 	nextHasBlockIssuerFeat bool,
 ) error {
 	if nextStakingFeat == nil {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBondedRemoval)
-	}
-
-	if isClaiming {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingRewardClaim)
 	}
 
 	if !nextHasBlockIssuerFeat {
@@ -529,26 +540,19 @@ func accountStakingExpiredValidation(
 	next *iotago.AccountOutput,
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
-	isClaiming bool,
+	isRemovingStakingFeature *bool,
 ) error {
-	// Mana Claiming by either removing the Feature or changing the feature's epoch range.
 	if nextStakingFeat == nil {
-		if !isClaiming {
-			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingRewardInputRequired)
+		*isRemovingStakingFeature = true
+	} else if !currentStakingFeat.Equal(nextStakingFeat) {
+		// If an expired feature is changed it must be transitioned as if newly added.
+		if err := accountStakingGenesisValidation(vmParams, next, nextStakingFeat); err != nil {
+			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
 		}
-	} else {
-		if isClaiming {
-			// When claiming with a feature on the output side, it must be transitioned as if it was newly added,
-			// so that the new epoch range is disjoint from the current staking feature.
-			if err := accountStakingGenesisValidation(vmParams, next, nextStakingFeat); err != nil {
-				return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
-			}
-		} else {
-			// If not claiming, the feature must be unchanged.
-			if !currentStakingFeat.Equal(nextStakingFeat) {
-				return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingRewardInputRequired)
-			}
-		}
+		// If staking feature genesis validation succeeds, the start epoch has been reset which means the new epoch range
+		// is disjoint from the current staking feature's, which can therefore be considered as removing and re-adding
+		// the feature.
+		*isRemovingStakingFeature = true
 	}
 
 	return nil
@@ -591,7 +595,7 @@ func accountFoundryCounterSTVF(vmParams *vm.Params, current *iotago.AccountOutpu
 	return nil
 }
 
-func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) error {
+func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, isRemovingStakingFeature *bool) error {
 	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyAccountOutputs() {
 		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
 	}
@@ -631,10 +635,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs) 
 			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w: cannot destroy account until the staking feature is unbonded", iotago.ErrInvalidStakingBondedRemoval)
 		}
 
-		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
-		if !isClaiming {
-			return ierrors.Wrapf(iotago.ErrInvalidAccountStateTransition, "%w: cannot destroy account with a staking feature without reward input", iotago.ErrInvalidStakingRewardInputRequired)
-		}
+		*isRemovingStakingFeature = true
 	}
 
 	return nil
