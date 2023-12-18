@@ -588,11 +588,15 @@ func TestRestrictedAddressSyntacticalValidation(t *testing.T) {
 									Address: &iotago.MultiAddress{
 										Addresses: []*iotago.AddressWithWeight{
 											{
+												Address: ed25519Addresses[0],
+												Weight:  1,
+											},
+											{
 												Address: ed25519Addresses[1],
 												Weight:  1,
 											},
 										},
-										Threshold: 1,
+										Threshold: 2,
 									},
 									AllowedCapabilities: iotago.AddressCapabilitiesBitMask{},
 								}},

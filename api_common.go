@@ -12,7 +12,7 @@ var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
 	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
 	addressesWithWeightArrRules = &serix.ArrayRules{
-		Min:            1,
+		Min:            2,
 		Max:            10,
 		ValidationMode: serializer.ArrayValidationModeLexicalOrdering | serializer.ArrayValidationModeNoDuplicates,
 	}
