@@ -240,7 +240,7 @@ func implicitAccountSTVF(vmParams *vm.Params, implicitAccount *vm.ImplicitAccoun
 func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago.ChainTransitionType, next *iotago.AccountOutput) error {
 	// Whether the transaction is claiming Mana rewards for this account.
 	isClaimingRewards := false
-	if vmParams.WorkingSet.Rewards != nil {
+	if vmParams.WorkingSet.Rewards != nil && input != nil {
 		_, isClaimingRewards = vmParams.WorkingSet.Rewards[input.ChainID]
 	}
 
