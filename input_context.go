@@ -3,12 +3,27 @@ package iotago
 import (
 	"fmt"
 
+	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
 // ContextInputType defines the type of context inputs.
 type ContextInputType byte
+
+const (
+	// ContextInputCommitment is a type of input which references a commitment.
+	ContextInputCommitment ContextInputType = iota
+	// ContextInputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment, the latter being provided by a commitment input.
+	ContextInputBlockIssuanceCredit
+	// ContextInputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
+	ContextInputReward
+)
+
+var (
+	// ErrUnknownContextInputType gets returned for unknown context input types.
+	ErrUnknownContextInputType = ierrors.New("unknown context input type")
+)
 
 func (inputType ContextInputType) String() string {
 	if int(inputType) >= len(contextInputNames) {
@@ -18,10 +33,20 @@ func (inputType ContextInputType) String() string {
 	return contextInputNames[inputType]
 }
 
-var contextInputNames = [InputReward + 1]string{"CommitmentInput", "BlockIssuanceCreditInput", "RewardInput"}
+var contextInputNames = [ContextInputReward + 1]string{"CommitmentInput", "BlockIssuanceCreditInput", "RewardInput"}
+
+// ContextInput provides an additional contextual input for transaction validation.
+type ContextInput interface {
+	Sizer
+	constraints.Cloneable[ContextInput]
+	ProcessableObject
+
+	// Type returns the type of ContextInput.
+	Type() ContextInputType
+}
 
 // ContextInputs is a slice of ContextInput.
-type ContextInputs[T Input] []T
+type ContextInputs[T ContextInput] []T
 
 func (in ContextInputs[T]) Clone() ContextInputs[T] {
 	cpy := make(ContextInputs[T], len(in))
@@ -61,19 +86,19 @@ func (in ContextInputs[T]) Size() int {
 
 // ContextInputsSyntacticalValidationFunc which given the index of an input and the input itself,
 // runs syntactical validations and returns an error if any should fail.
-type ContextInputsSyntacticalValidationFunc func(index int, input Input) error
+type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) error
 
 // ContextInputsSyntacticalUnique returns a ContextInputsSyntacticalValidationFunc
 // which checks that
 //   - there are exactly 0 or 1 Commitment inputs.
 //   - every Block Issuance Credits Input references a different account.
 //   - every Reward Input references a different input and the index it references is <= max inputs count.
-func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
+func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
 	hasCommitment := false
 	bicSet := map[string]int{}
 	rewardSet := map[uint16]int{}
 
-	return func(index int, input Input) error {
+	return func(index int, input ContextInput) error {
 		switch castInput := input.(type) {
 		case *BlockIssuanceCreditInput:
 			accountID := castInput.AccountID
@@ -84,11 +109,12 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 			bicSet[k] = index
 		case *RewardInput:
 			utxoIndex := castInput.Index
-			if utxoIndex > MaxInputsCount {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d references an index greater than max inputs count", index)
+			if utxoIndex >= inputsCount {
+				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d references index %d which is equal or greater than the inputs count %d",
+					index, utxoIndex, inputsCount)
 			}
 			if j, has := rewardSet[utxoIndex]; has {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "input %d and %d share the same input index", j, index)
+				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d and %d share the same input index", j, index)
 			}
 			rewardSet[utxoIndex] = index
 		case *CommitmentInput:
@@ -96,8 +122,6 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 				return ierrors.Wrapf(ErrMultipleInputCommitments, "input %d is the second commitment input", index)
 			}
 			hasCommitment = true
-		case *UTXOInput:
-			// ignore as we are evaluating context inputs only
 		default:
 			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
 		}
@@ -108,8 +132,8 @@ func ContextInputsSyntacticalUnique() ContextInputsSyntacticalValidationFunc {
 
 // SyntacticallyValidateContextInputs validates the context inputs by running them against
 // the given ContextInputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateContextInputs(inputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
-	for i, input := range inputs {
+func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
+	for i, input := range contextInputs {
 		for _, f := range funcs {
 			if err := f(i, input); err != nil {
 				return err

@@ -8,21 +8,15 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// StateType defines the type of inputs.
-type StateType byte
+// InputType defines the type of inputs.
+type InputType byte
 
 const (
 	// InputUTXO is a type of input which references an unspent transaction output.
-	InputUTXO StateType = iota
-	// InputCommitment is a type of input which references a commitment.
-	InputCommitment
-	// InputBlockIssuanceCredit is a type of input which references the block issuance credit from a specific account and commitment, the latter being provided by a commitment input.
-	InputBlockIssuanceCredit
-	// InputReward is a type of input which references an Account or Delegation Input for which to claim rewards.
-	InputReward
+	InputUTXO InputType = iota
 )
 
-func (inputType StateType) String() string {
+func (inputType InputType) String() string {
 	if int(inputType) >= len(inputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
 	}
@@ -35,8 +29,6 @@ var inputNames = [InputUTXO + 1]string{"UTXOInput"}
 var (
 	// ErrRefUTXOIndexInvalid gets returned on invalid UTXO indices.
 	ErrRefUTXOIndexInvalid = ierrors.Errorf("the referenced UTXO index must be between %d and %d (inclusive)", RefUTXOIndexMin, RefUTXOIndexMax)
-	// ErrUnknownContextInputType gets returned for unknown context input types.
-	ErrUnknownContextInputType = ierrors.New("unknown context input type")
 )
 
 // Inputs is a slice of Input.
@@ -84,10 +76,8 @@ type Input interface {
 	constraints.Cloneable[Input]
 	ProcessableObject
 
-	ReferencedStateID() Identifier
-
 	// Type returns the type of Input.
-	Type() StateType
+	Type() InputType
 }
 
 // InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.

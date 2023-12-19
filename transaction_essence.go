@@ -22,7 +22,7 @@ const (
 )
 
 type (
-	txEssenceContextInput  interface{ Input }
+	txEssenceContextInput  interface{ ContextInput }
 	txEssenceInput         interface{ Input }
 	TxEssenceOutput        interface{ Output }
 	TxEssencePayload       interface{ Payload }
@@ -122,8 +122,10 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
+	// cast is safe since serix validates that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
+	inputsCount := uint16(len(u.Inputs))
 	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
-		ContextInputsSyntacticalUnique(),
+		ContextInputsSyntacticalUnique(inputsCount),
 	); err != nil {
 		return err
 	}

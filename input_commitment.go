@@ -8,18 +8,14 @@ type CommitmentInput struct {
 	CommitmentID CommitmentID `serix:""`
 }
 
-func (c *CommitmentInput) Clone() Input {
+func (c *CommitmentInput) Clone() ContextInput {
 	return &CommitmentInput{
 		CommitmentID: c.CommitmentID,
 	}
 }
 
-func (c *CommitmentInput) ReferencedStateID() Identifier {
-	return IdentifierFromData(c.CommitmentID[:])
-}
-
-func (c *CommitmentInput) Type() StateType {
-	return InputCommitment
+func (c *CommitmentInput) Type() ContextInputType {
+	return ContextInputCommitment
 }
 
 func (c *CommitmentInput) IsReadOnly() bool {

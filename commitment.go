@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -46,16 +45,8 @@ func (c *Commitment) ID() (CommitmentID, error) {
 	return CommitmentIDRepresentingData(c.Slot, data), nil
 }
 
-func (c *Commitment) StateID() Identifier {
-	return IdentifierFromData(lo.PanicOnErr(c.MustID().Bytes()))
-}
-
-func (c *Commitment) IsReadOnly() bool {
-	return true
-}
-
-func (c *Commitment) Type() StateType {
-	return InputCommitment
+func (c *Commitment) Type() ContextInputType {
+	return ContextInputCommitment
 }
 
 func (c *Commitment) MustID() CommitmentID {
