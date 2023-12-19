@@ -924,8 +924,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					&iotago.StakingFeature{
 						StakedAmount: 80,
 						FixedCost:    5,
-						StartEpoch:   currentEpoch - 10,
-						EndEpoch:     currentEpoch - 5,
+						StartEpoch:   currentEpoch,
+						EndEpoch:     currentEpoch + testProtoParams.StakingUnbondingPeriod(),
 					},
 					exampleBlockIssuerFeature,
 				},
@@ -1014,6 +1014,118 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrInvalidStakingStartEpoch,
+		},
+		{
+			name: "fail - claiming rewards without removing staking feature",
+			input: &vm.ChainOutputWithIDs{
+				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
+				ChainID:  exampleAccountID,
+				Output: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: exampleAccountID,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: exampleAddress},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
+						},
+						exampleBlockIssuerFeature,
+					},
+				},
+			},
+			next: &iotago.AccountOutput{
+				Amount:    100,
+				AccountID: exampleAccountID,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: exampleAddress},
+				},
+				Features: iotago.AccountOutputFeatures{
+					&iotago.StakingFeature{
+						StakedAmount: 50,
+						FixedCost:    5,
+						StartEpoch:   currentEpoch - 10,
+						EndEpoch:     currentEpoch - 5,
+					},
+					exampleBlockIssuerFeature,
+				},
+			},
+			transType: iotago.ChainTransitionTypeStateChange,
+			svCtx: &vm.Params{
+				API: tpkg.ZeroCostTestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Slot: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						API: tpkg.ZeroCostTestAPI,
+						TransactionEssence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+						},
+					},
+					BIC: exampleBIC,
+					Rewards: map[iotago.ChainID]iotago.Mana{
+						exampleAccountID: 200,
+					},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingRewardClaim,
+		},
+		{
+			name: "fail - destroy account with expired staking feature but without claiming rewards",
+			input: &vm.ChainOutputWithIDs{
+				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
+				ChainID:  exampleAccountID,
+				Output: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: exampleAccountID,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: exampleAddress},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{
+							StakedAmount: 50,
+							FixedCost:    5,
+							StartEpoch:   currentEpoch - 10,
+							EndEpoch:     currentEpoch - 5,
+						},
+						&iotago.BlockIssuerFeature{
+							BlockIssuerKeys: tpkg.RandBlockIssuerKeys(1),
+							ExpirySlot:      currentSlot - 50,
+						},
+					},
+				},
+			},
+			next:      nil,
+			transType: iotago.ChainTransitionTypeDestroy,
+			svCtx: &vm.Params{
+				API: tpkg.ZeroCostTestAPI,
+				WorkingSet: &vm.WorkingSet{
+					Commitment: &iotago.Commitment{
+						Slot: currentSlot,
+					},
+					UnlockedIdents: vm.UnlockedIdentities{
+						exampleIssuer.Key(): {UnlockedAt: 0},
+					},
+					Tx: &iotago.Transaction{
+						API: tpkg.ZeroCostTestAPI,
+						TransactionEssence: &iotago.TransactionEssence{
+							CreationSlot: currentSlot,
+							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
+						},
+					},
+					BIC:     exampleBIC,
+					Rewards: map[iotago.ChainID]iotago.Mana{},
+				},
+			},
+			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
 		},
 		{
 			name: "ok - destroy transition",
