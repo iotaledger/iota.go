@@ -61,7 +61,8 @@ func RandNFTUnlock() *iotago.NFTUnlock {
 
 // RandMultiUnlock returns a random multi unlock.
 func RandMultiUnlock() *iotago.MultiUnlock {
-	unlockCnt := RandInt(10) + 1
+	// at least 2 unlocks but max 10 unlocks
+	unlockCnt := RandInt(9) + 2
 	unlocks := make([]iotago.Unlock, 0, unlockCnt)
 
 	for i := 0; i < unlockCnt; i++ {
