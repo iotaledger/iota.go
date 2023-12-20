@@ -218,9 +218,10 @@ func TestClient_Rewards(t *testing.T) {
 	outID := tpkg.RandOutputID(1)
 
 	originRes := &api.ManaRewardsResponse{
-		StartEpoch: iotago.EpochIndex(20),
-		EndEpoch:   iotago.EpochIndex(30),
-		Rewards:    iotago.Mana(1000),
+		StartEpoch:                      iotago.EpochIndex(20),
+		EndEpoch:                        iotago.EpochIndex(30),
+		Rewards:                         iotago.Mana(1000),
+		LatestCommittedEpochPoolRewards: iotago.Mana(1500),
 	}
 
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteRewards, api.ParameterOutputID, outID.ToHex()), 200, originRes)

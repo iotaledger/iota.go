@@ -376,15 +376,16 @@ func Test_ManaRewardsResponse(t *testing.T) {
 	testAPI := testAPI()
 
 	response := &api.ManaRewardsResponse{
-		StartEpoch: 123,
-		EndEpoch:   133,
-		Rewards:    456,
+		StartEpoch:                      123,
+		EndEpoch:                        133,
+		Rewards:                         456,
+		LatestCommittedEpochPoolRewards: 555,
 	}
 
 	jsonResponse, err := testAPI.JSONEncode(response)
 	require.NoError(t, err)
 
-	expected := "{\"startEpoch\":123,\"endEpoch\":133,\"rewards\":\"456\"}"
+	expected := "{\"startEpoch\":123,\"endEpoch\":133,\"rewards\":\"456\",\"latestCommittedEpochPoolRewards\":\"555\"}"
 	require.Equal(t, expected, string(jsonResponse))
 
 	decoded := new(api.ManaRewardsResponse)
