@@ -480,12 +480,19 @@ type (
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
 	ManaRewardsResponse struct {
-		// StartEpoch is the starting epoch for the range for which the mana rewards are returned.
+		// StartEpoch is the first epoch for which rewards can be claimed.
+		// This value is useful for checking if rewards have expired (by comparing against the staking or delegation start)
+		// or would expire soon (by checking its relation to the rewards retention period).
 		StartEpoch iotago.EpochIndex `serix:""`
-		// EndEpoch is the ending epoch for the range for which the mana rewards are returned, also the decay is only applied up to this point.
+		// EndEpoch is the last epoch for which rewards can be claimed.
 		EndEpoch iotago.EpochIndex `serix:""`
-		// The amount of totally available rewards the requested output may claim, decayed up to EpochEnd (including).
+		// The amount of totally available decayed rewards the requested output may claim.
 		Rewards iotago.Mana `serix:""`
+		// The rewards of the latest committed epoch of the staking pool to which this validator or delegator belongs.
+		// The ratio of this value and the maximally possible rewards for the latest committed epoch can be used to determine
+		// how well the validator of this staking pool performed in that epoch.
+		// Note that if the pool was not part of the committee in the latest committed epoch, this value is 0.
+		LatestCommittedEpochPoolRewards iotago.Mana `serix:""`
 	}
 
 	// CommitteeMemberResponse defines the response used in committee and staking response REST API calls.
