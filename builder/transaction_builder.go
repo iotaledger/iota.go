@@ -604,6 +604,8 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
 
+	b.transaction.Allotments.Sort()
+
 	sigTxPayload := &iotago.SignedTransaction{
 		API:         b.api,
 		Transaction: b.transaction,
