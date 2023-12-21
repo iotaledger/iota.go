@@ -119,6 +119,26 @@ func TestFeaturesMetadata(t *testing.T) {
 			seriErr: iotago.ErrInvalidStateMetadataKey,
 			target:  &iotago.StateMetadataFeature{},
 		},
+		{
+			name: "fail - StateMetadataFeature - space char in key",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"space-> ": []byte("world"),
+				},
+			},
+			seriErr: iotago.ErrInvalidStateMetadataKey,
+			target:  &iotago.StateMetadataFeature{},
+		},
+		{
+			name: "fail - StateMetadataFeature - ASCII control-character in key",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"\x07": []byte("world"),
+				},
+			},
+			seriErr: iotago.ErrInvalidStateMetadataKey,
+			target:  &iotago.StateMetadataFeature{},
+		},
 	}
 
 	for _, tt := range tests {

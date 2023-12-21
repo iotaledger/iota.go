@@ -345,7 +345,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
 		must(api.RegisterValidators(MetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key MetadataFeatureEntriesKey) error {
-			if err := checkASCIIString(string(key)); err != nil {
+			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidMetadataKey, err)
 			}
 
@@ -365,7 +365,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
 		must(api.RegisterValidators(StateMetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
-			if err := checkASCIIString(string(key)); err != nil {
+			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidStateMetadataKey, err)
 			}
 

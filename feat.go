@@ -3,7 +3,6 @@ package iotago
 import (
 	"fmt"
 	"sort"
-	"unicode"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -334,10 +333,13 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 	return nil
 }
 
-func checkASCIIString(s string) error {
+// checkPrintableASCIIString returns an error if the given string contains non-printable ASCII characters (including space).
+func checkPrintableASCIIString(s string) error {
 	for i := 0; i < len(s); i++ {
-		if s[i] > unicode.MaxASCII {
-			return ierrors.Errorf("string contains non-ASCII character at index %d", i)
+		if s[i] < 33 || s[i] > 126 {
+			return ierrors.Errorf(
+				"string contains non-printable ASCII character %d at index %d (allowed range 33 <= character <= 126)", s[i], i,
+			)
 		}
 	}
 
