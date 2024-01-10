@@ -472,7 +472,7 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, manaShareCoefficient, decayBalancingConstant uint64, retentionPeriod EpochIndex) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, manaShareCoefficient, decayBalancingConstant uint64, retentionPeriod uint16) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
 		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient

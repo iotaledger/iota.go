@@ -53,7 +53,7 @@ type RewardsParameters struct {
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:""`
 	// The number of epochs for which rewards are retained.
-	RetentionPeriod EpochIndex `serix:""`
+	RetentionPeriod uint16 `serix:""`
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
