@@ -52,6 +52,8 @@ type RewardsParameters struct {
 	DecayBalancingConstant uint64 `serix:""`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:""`
+	// The number of epochs for which rewards are retained.
+	RetentionPeriod uint16 `serix:""`
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
@@ -59,7 +61,8 @@ func (r RewardsParameters) Equals(other RewardsParameters) bool {
 		r.ManaShareCoefficient == other.ManaShareCoefficient &&
 		r.DecayBalancingConstantExponent == other.DecayBalancingConstantExponent &&
 		r.DecayBalancingConstant == other.DecayBalancingConstant &&
-		r.PoolCoefficientExponent == other.PoolCoefficientExponent
+		r.PoolCoefficientExponent == other.PoolCoefficientExponent &&
+		r.RetentionPeriod == other.RetentionPeriod
 }
 
 func (r RewardsParameters) TargetReward(epoch EpochIndex, api API) (Mana, error) {

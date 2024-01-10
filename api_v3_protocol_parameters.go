@@ -236,7 +236,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 			WithCongestionControlOptions(1, 0, 0, 800_000, 500_000, 100_000, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 11, 2, 1),
+			WithRewardsOptions(8, 8, 11, 2, 1, 384),
 			WithTargetCommitteeSize(32),
 			WithChainSwitchingThreshold(3),
 		},
@@ -472,13 +472,14 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, manaShareCoefficient, decayBalancingConstant uint64) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, manaShareCoefficient, decayBalancingConstant uint64, retentionPeriod uint16) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
 		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
 		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
+		p.basicProtocolParameters.RewardsParameters.RetentionPeriod = retentionPeriod
 	}
 }
 
