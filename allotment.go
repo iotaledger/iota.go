@@ -41,6 +41,10 @@ func (a Allotments) Sort() {
 	})
 }
 
+func (f Allotments) LexicalCompare(a Allotment, b Allotment) int {
+	return bytes.Compare(a.AccountID[:], b.AccountID[:])
+}
+
 func (a Allotments) Size() int {
 	// LengthPrefixType
 	return serializer.UInt16ByteSize + len(a)*(AccountIDLength+ManaSize)

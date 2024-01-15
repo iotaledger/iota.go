@@ -190,9 +190,6 @@ var (
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
 		Min: MinAllotmentCount,
 		Max: MaxAllotmentCount,
-		// Uniqueness and lexical order is checked based on the Account ID.
-		UniquenessSliceFunc: func(next []byte) []byte { return next[:AccountIDLength] },
-		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	txV3UnlocksArrRules = &serix.ArrayRules{
@@ -644,8 +641,25 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
 
+		must(api.RegisterValidators(TxEssenceAllotments{},
+			nil,
+			// TODO: Introduce helper func to reduce this kind of boilerplate.
+			func(ctx context.Context, allotments Allotments) error {
+				validationFunc := LexicalOrderAndUniqueness[Allotment](allotments)
+				for i, allotment := range allotments {
+					if err := validationFunc(i, *allotment); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			},
+		))
+
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules),
+			serix.TypeSettings{}.
+				WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).
+				WithArrayRules(txEssenceV3AllotmentsArrRules),
 		))
 		must(api.RegisterTypeSettings(TransactionCapabilitiesBitMask{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
