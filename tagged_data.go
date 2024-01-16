@@ -10,7 +10,7 @@ type TaggedData struct {
 	// The tag to use to categorize the data.
 	Tag []byte `serix:",omitempty,lenPrefix=uint8,maxLen=64"`
 	// The data within the payload.
-	Data []byte `serix:",lenPrefix=uint32,maxLen=8192"`
+	Data []byte `serix:",omitempty,lenPrefix=uint32,maxLen=8192"`
 }
 
 func (u *TaggedData) Clone() Payload {
