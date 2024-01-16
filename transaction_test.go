@@ -229,11 +229,11 @@ func TestAllotmentUniqueness(t *testing.T) {
 								Mana:      0,
 							},
 							&iotago.Allotment{
-								AccountID: tpkg.RandAccountID(),
+								AccountID: accountID,
 								Mana:      12,
 							},
 							&iotago.Allotment{
-								AccountID: accountID,
+								AccountID: tpkg.RandAccountID(),
 								Mana:      12,
 							},
 						},
@@ -244,7 +244,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 					},
 				}),
 			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			deSeriErr: nil,
 		},
 	}
