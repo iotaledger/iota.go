@@ -643,16 +643,9 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterValidators(TxEssenceAllotments{},
 			nil,
-			// TODO: Introduce helper func to reduce this kind of boilerplate.
 			func(ctx context.Context, allotments Allotments) error {
-				validationFunc := LexicalOrderAndUniqueness[Allotment](allotments)
-				for i, allotment := range allotments {
-					if err := validationFunc(i, *allotment); err != nil {
-						return err
-					}
-				}
-
-				return nil
+				validationFunc := LexicalOrderAndUniqueness(allotments)
+				return SyntacticSliceValidator(ctx, allotments, validationFunc)
 			},
 		))
 

@@ -31,6 +31,10 @@ func (a *Allotment) Equal(other *Allotment) bool {
 	return a.AccountID == other.AccountID && a.Mana == other.Mana
 }
 
+func (a *Allotment) Compare(other *Allotment) int {
+	return bytes.Compare(a.AccountID[:], other.AccountID[:])
+}
+
 // Allotments is a slice of Allotment.
 type Allotments []*Allotment
 
@@ -57,10 +61,6 @@ func (a Allotments) Sort() {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].AccountID[:], a[j].AccountID[:]) < 0
 	})
-}
-
-func (f Allotments) LexicalCompare(a Allotment, b Allotment) int {
-	return bytes.Compare(a.AccountID[:], b.AccountID[:])
 }
 
 func (a Allotments) Size() int {
