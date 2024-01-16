@@ -27,11 +27,29 @@ func (a *Allotment) Clone() *Allotment {
 	}
 }
 
+func (a *Allotment) Equal(other *Allotment) bool {
+	return a.AccountID == other.AccountID && a.Mana == other.Mana
+}
+
 // Allotments is a slice of Allotment.
 type Allotments []*Allotment
 
 func (a Allotments) Clone() Allotments {
 	return lo.CloneSlice(a)
+}
+
+func (a Allotments) Equal(other Allotments) bool {
+	if len(a) != len(other) {
+		return false
+	}
+
+	for idx, allotment := range a {
+		if !allotment.Equal(other[idx]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Sort sorts the allotments in lexical order.

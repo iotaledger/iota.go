@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -245,7 +244,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 					},
 				}),
 			target:    &iotago.SignedTransaction{},
-			seriErr:   serializer.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: nil,
 		},
 	}

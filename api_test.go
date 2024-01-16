@@ -27,6 +27,11 @@ type deSerializeTest struct {
 func (test *deSerializeTest) deSerialize(t *testing.T) {
 	t.Helper()
 
+	if reflect.TypeOf(test.target).Kind() != reflect.Ptr {
+		// This is required for the serixTarget creation hack to work.
+		t.Fatal("test target must be a pointer")
+	}
+
 	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
 		require.ErrorIs(t, err, test.seriErr)
