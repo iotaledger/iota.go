@@ -111,14 +111,14 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(MultiAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressMulti))),
 		)
-		must(api.RegisterValidators(MultiAddress{}, nil, multiAddressValidatorFunc))
+		must(api.RegisterValidator(MultiAddress{}, multiAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
 		must(api.RegisterTypeSettings(RestrictedAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressRestricted))),
 		)
-		must(api.RegisterValidators(RestrictedAddress{}, nil, restrictedAddressValidatorFunc))
+		must(api.RegisterValidator(RestrictedAddress{}, restrictedAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressCapabilitiesBitMask{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(2),
 		))

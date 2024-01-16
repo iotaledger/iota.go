@@ -341,7 +341,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(MetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidators(MetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key MetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(MetadataFeatureEntriesKey(""), func(ctx context.Context, key MetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidMetadataKey, err)
 			}
@@ -361,7 +361,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StateMetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidators(StateMetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(StateMetadataFeatureEntriesKey(""), func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidStateMetadataKey, err)
 			}
@@ -407,7 +407,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
-		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
+		must(api.RegisterValidator(StorageDepositReturnUnlockCondition{},
 			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
 			},
@@ -418,7 +418,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
-		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
+		must(api.RegisterValidator(ExpirationUnlockCondition{},
 			func(ctx context.Context, exp ExpirationUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
 			},
@@ -426,7 +426,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
-		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
+		must(api.RegisterValidator(StateControllerAddressUnlockCondition{},
 			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(stateController.Address)
 			},
@@ -434,7 +434,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
-		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
+		must(api.RegisterValidator(GovernorAddressUnlockCondition{},
 			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(gov.Address)
 			},
@@ -641,8 +641,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
 
-		must(api.RegisterValidators(TxEssenceAllotments{},
-			nil,
+		must(api.RegisterValidator(TxEssenceAllotments{},
 			func(ctx context.Context, allotments Allotments) error {
 				validationFunc := LexicalOrderAndUniqueness(allotments)
 				return SyntacticSliceValidator(ctx, allotments, validationFunc)
@@ -671,7 +670,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
-		must(api.RegisterValidators(SignedTransaction{}, nil, func(ctx context.Context, tx SignedTransaction) error {
+		must(api.RegisterValidator(SignedTransaction{}, func(ctx context.Context, tx SignedTransaction) error {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
@@ -711,7 +710,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
 		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
-		must(api.RegisterValidators(Block{}, nil, func(ctx context.Context, block Block) error {
+		must(api.RegisterValidator(Block{}, func(ctx context.Context, block Block) error {
 			return block.syntacticallyValidate()
 		}))
 	}
