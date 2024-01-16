@@ -272,6 +272,10 @@ func (b *Block) Size() int {
 
 // syntacticallyValidate syntactically validates the Block.
 func (b *Block) syntacticallyValidate() error {
+	if b.Size() > MaxBlockSize {
+		return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, b.Size())
+	}
+
 	if b.API.ProtocolParameters().Version() != b.Header.ProtocolVersion {
 		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
 	}
