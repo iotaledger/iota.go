@@ -22,17 +22,17 @@ func LexicalOrderAndUniqueness[T any](slice LexicallyComparable[T]) ElementValid
 	var prevIndex int
 
 	return func(index int, next T) error {
-		switch {
-		case prev == nil:
+		if prev == nil {
 			prev = &next
 			prevIndex = index
-		// TODO: Optimize to return different error when lexical order vs uniquness is violated.
-		case slice.LexicalCompare(*prev, next) > 0:
-			return ierrors.Wrapf(ErrArrayValidationOrderViolatesLexicalOrder, "element %d should have been before element %d", index, prevIndex)
-		case slice.LexicalCompare(*prev, next) == 0:
-			// TODO: Error message.
-			return ierrors.Wrapf(ErrArrayValidationViolatesUniqueness, "TODO: element %d should have been before element %d", index, prevIndex)
-		default:
+		} else {
+			switch slice.LexicalCompare(*prev, next) {
+			case 1:
+				return ierrors.Wrapf(ErrArrayValidationOrderViolatesLexicalOrder, "element %d should have been before element %d", index, prevIndex)
+			case 0:
+				return ierrors.Wrapf(ErrArrayValidationViolatesUniqueness, "element %d and element %d are duplicates", index, prevIndex)
+			}
+
 			prev = &next
 			prevIndex = index
 		}
