@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -1353,8 +1354,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AccountOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - NFTOutput contains lexically unordered immutable features",
@@ -1368,8 +1369,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AnchorOutput contains lexically unordered immutable features",
@@ -1384,8 +1385,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AccountOutput contains duplicate immutable features",
@@ -1399,8 +1400,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AccountOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - NFTOutput contains duplicate immutable features",
@@ -1414,8 +1415,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - AnchorOutput contains duplicate immutable features",
@@ -1430,8 +1431,8 @@ func TestOutputImmutableFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
@@ -1507,8 +1508,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.BasicOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AccountOutput contains lexically unordered features",
@@ -1522,8 +1523,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AccountOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AnchorOutput contains lexically unordered features",
@@ -1538,8 +1539,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - FoundryOutput contains lexically unordered features",
@@ -1554,8 +1555,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.FoundryOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - NFTOutput contains lexically unordered features",
@@ -1569,8 +1570,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - BasicOutput contains duplicate features",
@@ -1585,8 +1586,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.BasicOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - AccountOutput contains duplicate features",
@@ -1601,8 +1602,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AccountOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - AnchorOutput contains duplicate features",
@@ -1618,8 +1619,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - FoundryOutput contains duplicate features",
@@ -1634,8 +1635,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.FoundryOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - NFTOutput contains duplicate features",
@@ -1650,8 +1651,8 @@ func TestOutputFeatureInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
@@ -1695,8 +1696,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				Features: iotago.BasicOutputFeatures{},
 			},
 			target:    &iotago.BasicOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AnchorOutput contains lexically unordered unlock conditions",
@@ -1708,8 +1709,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				Features: iotago.AnchorOutputFeatures{},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - NFTOutput contains lexically unordered unlock conditions",
@@ -1723,8 +1724,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				Features: iotago.NFTOutputFeatures{},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - BasicOutput contains duplicate unlock conditions",
@@ -1737,8 +1738,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.BasicOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - AnchorOutput contains duplicate unlock conditions",
@@ -1750,8 +1751,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				Features: iotago.AnchorOutputFeatures{},
 			},
 			target:    &iotago.AnchorOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - NFTOutput contains duplicate unlock conditions",
@@ -1764,8 +1765,8 @@ func TestOutputUnlockConditionsInvariants(t *testing.T) {
 				},
 			},
 			target:    &iotago.NFTOutput{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 

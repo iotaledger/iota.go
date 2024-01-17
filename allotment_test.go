@@ -58,8 +58,8 @@ func TestAllotmentDeSerialize(t *testing.T) {
 				},
 			},
 			target:    &iotago.TxEssenceAllotments{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "err - account id in allotments not unique",
@@ -74,8 +74,8 @@ func TestAllotmentDeSerialize(t *testing.T) {
 				},
 			},
 			target:    &iotago.TxEssenceAllotments{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: serix.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 

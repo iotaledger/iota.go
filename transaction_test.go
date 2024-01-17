@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
@@ -244,7 +245,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 					},
 				}),
 			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
 			deSeriErr: nil,
 		},
 	}
@@ -386,6 +387,73 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.tx.SyntacticallyValidate(tpkg.ZeroCostTestAPI)
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestTransactionInputUniqueness(t *testing.T) {
+	type test struct {
+		name    string
+		inputs  iotago.TxEssenceInputs
+		wantErr error
+	}
+
+	input1 := iotago.MustOutputIDFromHexString("0x2668778ef0362d601c36ea05c742185daa1740dfcdaee0acfde6a9806a1f2ed20d8566fd0800")
+	input2 := iotago.MustOutputIDFromHexString("0x3f34a869f47f8454e7cb233943cd31a0e3bd8b9551b1390039ec582b0a196856eff185120400")
+	input3 := iotago.MustOutputIDFromHexString("0xfdad2fee88cc4f1020848dce710124ac9060cdbee840a72b750c1f6901502576422f83b50500")
+	// Differs from input3 only in the output index.
+	input4 := iotago.MustOutputIDFromHexString("0xfdad2fee88cc4f1020848dce710124ac9060cdbee840a72b750c1f6901502576422f83b50600")
+
+	tests := []test{
+		{
+			name: "ok - inputs unique",
+			inputs: iotago.TxEssenceInputs{
+				input3.UTXOInput(),
+				input1.UTXOInput(),
+				input4.UTXOInput(),
+				input2.UTXOInput(),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - duplicate inputs",
+			inputs: iotago.TxEssenceInputs{
+				input1.UTXOInput(),
+				input2.UTXOInput(),
+				input2.UTXOInput(),
+			},
+			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			basicOutput := &iotago.BasicOutput{
+				Amount: OneIOTA,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{
+						Address: tpkg.RandEd25519Address(),
+					},
+				},
+			}
+
+			tx := &iotago.Transaction{
+				API: tpkg.ZeroCostTestAPI,
+				TransactionEssence: &iotago.TransactionEssence{
+					Inputs: test.inputs,
+				},
+				Outputs: iotago.TxEssenceOutputs{
+					basicOutput,
+				},
+			}
+
+			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 

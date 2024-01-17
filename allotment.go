@@ -59,7 +59,7 @@ func (a Allotments) Equal(other Allotments) bool {
 // Sort sorts the allotments in lexical order.
 func (a Allotments) Sort() {
 	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].AccountID[:], a[j].AccountID[:]) < 0
+		return a[i].Compare(a[j]) < 0
 	})
 }
 

@@ -558,6 +558,8 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
 	}
 
+	b.transaction.Allotments.Sort()
+
 	// prepare the inputs commitment in the same order as the inputs in the essence
 	var inputIDs iotago.OutputIDs
 	for _, input := range b.transaction.TransactionEssence.Inputs {
@@ -603,8 +605,6 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 		unlocks = addReferentialUnlock(addr, unlocks, pos)
 		addChainAsUnlocked(inputs[i], i, unlockPos)
 	}
-
-	b.transaction.Allotments.Sort()
 
 	sigTxPayload := &iotago.SignedTransaction{
 		API:         b.api,

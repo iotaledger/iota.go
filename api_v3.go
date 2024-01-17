@@ -131,15 +131,13 @@ var (
 	}
 
 	txEssenceV3InputsArrRules = &serix.ArrayRules{
-		Min:            MinInputsCount,
-		Max:            MaxInputsCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
+		Min: MinInputsCount,
+		Max: MaxInputsCount,
 	}
 
 	txEssenceV3OutputsArrRules = &serix.ArrayRules{
-		Min:            MinOutputsCount,
-		Max:            MaxOutputsCount,
-		ValidationMode: serializer.ArrayValidationModeNone,
+		Min: MinOutputsCount,
+		Max: MaxOutputsCount,
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
@@ -427,7 +425,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(BasicOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputBasic))))
 
 		must(api.RegisterValidator(BasicOutputUnlockConditions{}, func(ctx context.Context, unlockConditions BasicOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(BasicOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3UnlockCondArrRules),
@@ -439,7 +437,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
 		must(api.RegisterValidator(BasicOutputFeatures{}, func(ctx context.Context, features BasicOutputFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(BasicOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3FeatBlocksArrRules),
@@ -455,7 +453,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(AccountOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAccount))))
 
 		must(api.RegisterValidator(AccountOutputUnlockConditions{}, func(ctx context.Context, unlockConditions AccountOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(AccountOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3UnlockCondArrRules),
@@ -464,7 +462,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AccountOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
 
 		must(api.RegisterValidator(AccountOutputFeatures{}, func(ctx context.Context, features AccountOutputFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(AccountOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3FeatBlocksArrRules),
@@ -476,7 +474,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*StakingFeature)(nil)))
 
 		must(api.RegisterValidator(AccountOutputImmFeatures{}, func(ctx context.Context, features AccountOutputImmFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(AccountOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3ImmFeatBlocksArrRules),
@@ -490,7 +488,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(AnchorOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputAnchor))))
 
 		must(api.RegisterValidator(AnchorOutputUnlockConditions{}, func(ctx context.Context, unlockConditions AnchorOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(AnchorOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3UnlockCondArrRules),
@@ -500,7 +498,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AnchorOutputUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
 
 		must(api.RegisterValidator(AnchorOutputFeatures{}, func(ctx context.Context, features AnchorOutputFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(AnchorOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3FeatBlocksArrRules),
@@ -510,7 +508,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
 
 		must(api.RegisterValidator(AnchorOutputImmFeatures{}, func(ctx context.Context, features AnchorOutputImmFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(AnchorOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3ImmFeatBlocksArrRules),
@@ -526,7 +524,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 
 		must(api.RegisterValidator(FoundryOutputUnlockConditions{}, func(ctx context.Context, unlockConditions FoundryOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(FoundryOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3UnlockCondArrRules),
@@ -535,7 +533,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*FoundryOutputUnlockCondition)(nil), (*ImmutableAccountUnlockCondition)(nil)))
 
 		must(api.RegisterValidator(FoundryOutputFeatures{}, func(ctx context.Context, features FoundryOutputFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(FoundryOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3FeatBlocksArrRules),
@@ -545,7 +543,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 
 		must(api.RegisterValidator(FoundryOutputImmFeatures{}, func(ctx context.Context, features FoundryOutputImmFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3ImmFeatBlocksArrRules),
@@ -563,7 +561,7 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 
 		must(api.RegisterValidator(NFTOutputUnlockConditions{}, func(ctx context.Context, unlockConditions NFTOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(NFTOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3UnlockCondArrRules),
@@ -575,7 +573,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
 		must(api.RegisterValidator(NFTOutputFeatures{}, func(ctx context.Context, features NFTOutputFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(NFTOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3FeatBlocksArrRules),
@@ -586,7 +584,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*TagFeature)(nil)))
 
 		must(api.RegisterValidator(NFTOutputImmFeatures{}, func(ctx context.Context, features NFTOutputImmFeatures) error {
-			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
 		}))
 		must(api.RegisterTypeSettings(NFTOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3ImmFeatBlocksArrRules),
@@ -600,7 +598,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(DelegationOutput{}, serix.TypeSettings{}.WithObjectType(uint8(OutputDelegation))))
 
 		must(api.RegisterValidator(DelegationOutputUnlockConditions{}, func(ctx context.Context, unlockConditions DelegationOutputUnlockConditions) error {
-			return SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, LexicalOrderAndUniqueness[UnlockCondition]())
+			return serix.SyntacticSliceValidator[UnlockCondition](ctx, unlockConditions, serix.LexicalOrderAndUniqueness[UnlockCondition]())
 		}))
 		must(api.RegisterTypeSettings(DelegationOutputUnlockConditions{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(delegationOutputV3UnlockCondArrRules),
@@ -619,6 +617,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(RewardInput{},
 			serix.TypeSettings{}.WithObjectType(uint8(ContextInputReward))),
 		)
+		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*CommitmentInput)(nil)))
+		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*BlockIssuanceCreditInput)(nil)))
+		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*RewardInput)(nil)))
 
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
@@ -631,7 +632,14 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(UTXOInput{},
 			serix.TypeSettings{}.WithObjectType(uint8(InputUTXO))),
 		)
+		must(api.RegisterInterfaceObjects((*Input)(nil), (*UTXOInput)(nil)))
 
+		must(api.RegisterValidator(TxEssenceInputs{},
+			func(ctx context.Context, inputs TxEssenceInputs) error {
+				valFun := serix.UniquenessValidator[Input]()
+				return serix.SyntacticSliceValidator[Input](ctx, inputs, valFun)
+			},
+		))
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
 		))
@@ -643,8 +651,8 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterValidator(TxEssenceAllotments{},
 			func(ctx context.Context, allotments Allotments) error {
-				validationFunc := LexicalOrderAndUniqueness[*Allotment]()
-				return SyntacticSliceValidator(ctx, allotments, validationFunc)
+				validationFunc := serix.LexicalOrderAndUniqueness[*Allotment]()
+				return serix.SyntacticSliceValidator(ctx, allotments, validationFunc)
 			},
 		))
 

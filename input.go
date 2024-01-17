@@ -6,6 +6,7 @@ import (
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
 // InputType defines the type of inputs.
@@ -32,7 +33,7 @@ var (
 )
 
 // Inputs is a slice of Input.
-type Inputs[T Input] []T
+type Inputs[T Input] []Input
 
 func (in Inputs[T]) Clone() Inputs[T] {
 	cpy := make(Inputs[T], len(in))
@@ -74,6 +75,7 @@ func (in Inputs[T]) WorkScore(workScoreParameters *WorkScoreParameters) (WorkSco
 type Input interface {
 	Sizer
 	constraints.Cloneable[Input]
+	serix.UniquenessIdentifier
 	ProcessableObject
 
 	// Type returns the type of Input.

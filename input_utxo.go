@@ -28,6 +28,16 @@ func (u *UTXOInput) Clone() Input {
 	}
 }
 
+func (u *UTXOInput) UniquenessIdentifier() []byte {
+	id := make([]byte, 0, u.Size())
+
+	id = append(id, byte(u.Type()))
+	id = append(id, u.TransactionID[:]...)
+	id = binary.LittleEndian.AppendUint16(id, u.TransactionOutputIndex)
+
+	return id
+}
+
 func (u *UTXOInput) Type() InputType {
 	return InputUTXO
 }
