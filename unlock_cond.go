@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"cmp"
 	"fmt"
 	"sort"
 
@@ -76,6 +75,7 @@ type UnlockCondition interface {
 	ProcessableObject
 	constraints.Cloneable[UnlockCondition]
 	constraints.Equalable[UnlockCondition]
+	constraints.Comparable[UnlockCondition]
 
 	// Type returns the type of the UnlockCondition.
 	Type() UnlockConditionType
@@ -144,6 +144,16 @@ func (f UnlockConditions[T]) Size() int {
 	return sum
 }
 
+// upcast returns a type-erased copy of the Unlock Condition slice.
+func (f UnlockConditions[T]) upcast() UnlockConditions[UnlockCondition] {
+	unlockConditions := make(UnlockConditions[UnlockCondition], 0, len(f))
+	for _, u := range f {
+		unlockConditions = append(unlockConditions, u)
+	}
+
+	return unlockConditions
+}
+
 // Set converts the slice into an UnlockConditionSet.
 // Returns an error if an UnlockConditionType occurs multiple times.
 func (f UnlockConditions[T]) Set() (UnlockConditionSet, error) {
@@ -197,10 +207,6 @@ func (f *UnlockConditions[T]) Remove(unlockConditionType UnlockConditionType) bo
 // Sort sorts the UnlockConditions in place by type.
 func (f UnlockConditions[T]) Sort() {
 	sort.Slice(f, func(i, j int) bool { return f[i].Type() < f[j].Type() })
-}
-
-func (f UnlockConditions[T]) LexicalCompare(a T, b T) int {
-	return cmp.Compare(a.Type(), b.Type())
 }
 
 // UnlockConditionSet is a set of UnlockCondition(s).

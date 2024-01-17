@@ -163,6 +163,41 @@ func TestOutputsDeSerialize(t *testing.T) {
 			},
 			target: &iotago.DelegationOutput{},
 		},
+		{
+			name: "fail - BasicOutput contains duplicate unlock conditions",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				Mana:   500,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					&iotago.TimelockUnlockCondition{Slot: 1337},
+					&iotago.TimelockUnlockCondition{Slot: 1000},
+				},
+				Features: iotago.BasicOutputFeatures{},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - BasicOutput contains lexically unordered unlock conditions",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				Mana:   500,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					// Unlock Condition Type 0
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+					// Unlock Condition Type 3
+					&iotago.ExpirationUnlockCondition{Slot: 1000},
+					// Unlock Condition Type 2
+					&iotago.TimelockUnlockCondition{Slot: 1337},
+				},
+				Features: iotago.BasicOutputFeatures{},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
 	}
 
 	for _, tt := range tests {

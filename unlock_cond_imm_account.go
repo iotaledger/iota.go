@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -23,6 +25,10 @@ func (s *ImmutableAccountUnlockCondition) StorageScore(storageScoreStruct *Stora
 func (s *ImmutableAccountUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// ImmutableAccountUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
+}
+
+func (s *ImmutableAccountUnlockCondition) Compare(other UnlockCondition) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *ImmutableAccountUnlockCondition) Equal(other UnlockCondition) bool {
