@@ -3,8 +3,10 @@ package iotago_test
 import (
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFeaturesDeSerialize(t *testing.T) {
@@ -143,5 +145,85 @@ func TestFeaturesMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, tt.deSerialize)
+	}
+}
+
+// Tests that maps are sorted when encoded to binary to produce a deterministic result,
+// but do not have to be sorted when decoded from binary
+func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
+	type metadataDeserializeTest struct {
+		name   string
+		source iotago.Feature
+		target iotago.Feature
+	}
+
+	tests := []metadataDeserializeTest{
+		{
+			name: "ok - MetadataFeature",
+			source: &iotago.MetadataFeature{
+				Entries: iotago.MetadataFeatureEntries{
+					"b": []byte("y"),
+					"c": []byte("z"),
+					"a": []byte("x"),
+				},
+			},
+			target: &iotago.MetadataFeature{},
+		},
+		{
+			name: "ok - StateMetadataFeature",
+			source: &iotago.StateMetadataFeature{
+				Entries: iotago.StateMetadataFeatureEntries{
+					"b": []byte("y"),
+					"c": []byte("z"),
+					"a": []byte("x"),
+				},
+			},
+			target: &iotago.StateMetadataFeature{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
+			require.NoError(t, err)
+
+			expected := []byte{
+				// Metadata Feature Type
+				byte(test.source.Type()),
+				// Map Length
+				3,
+				// Key Length
+				1,
+				'a',
+				// Little-endian value Length
+				1, 0,
+				'x',
+				// Key Length
+				1,
+				'b',
+				// Little-endian value Length
+				1, 0,
+				'y',
+				// Key Length
+				1,
+				'c',
+				// Little-endian value Length
+				1, 0,
+				'z',
+			}
+
+			require.Equal(t, expected, serixData)
+
+			// Swap a and b to make it unsorted.
+			serixData[3], serixData[8] = serixData[8], serixData[3]
+			// Swap x and y so the maps are equal key-value-wise.
+			serixData[6], serixData[11] = serixData[11], serixData[6]
+
+			bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target)
+			// TODO: Reconsider whether maps must be sorted during decoding or if it's sufficient to sort when encoding.
+			require.NoError(t, err)
+			require.Len(t, serixData, bytesRead)
+			require.EqualValues(t, test.source, test.target)
+		})
 	}
 }
