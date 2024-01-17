@@ -82,7 +82,7 @@ type UnlockCondition interface {
 }
 
 // UnlockConditions is a slice of UnlockCondition(s).
-type UnlockConditions[T UnlockCondition] []T
+type UnlockConditions[T UnlockCondition] []UnlockCondition
 
 func (f UnlockConditions[T]) Equal(other UnlockConditions[T]) bool {
 	if len(f) != len(other) {
@@ -142,16 +142,6 @@ func (f UnlockConditions[T]) Size() int {
 	}
 
 	return sum
-}
-
-// upcast returns a type-erased copy of the Unlock Condition slice.
-func (f UnlockConditions[T]) upcast() UnlockConditions[UnlockCondition] {
-	unlockConditions := make(UnlockConditions[UnlockCondition], 0, len(f))
-	for _, u := range f {
-		unlockConditions = append(unlockConditions, u)
-	}
-
-	return unlockConditions
 }
 
 // Set converts the slice into an UnlockConditionSet.
