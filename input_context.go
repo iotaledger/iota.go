@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -39,6 +40,7 @@ var contextInputNames = [ContextInputReward + 1]string{"CommitmentInput", "Block
 type ContextInput interface {
 	Sizer
 	constraints.Cloneable[ContextInput]
+	constraints.Comparable[ContextInput]
 	ProcessableObject
 
 	// Type returns the type of ContextInput.
@@ -46,7 +48,7 @@ type ContextInput interface {
 }
 
 // ContextInputs is a slice of ContextInput.
-type ContextInputs[T ContextInput] []T
+type ContextInputs[T ContextInput] []ContextInput
 
 func (in ContextInputs[T]) Clone() ContextInputs[T] {
 	cpy := make(ContextInputs[T], len(in))
@@ -82,6 +84,13 @@ func (in ContextInputs[T]) Size() int {
 	}
 
 	return sum
+}
+
+// Sort sorts the Context Inputs in lexical order.
+func (in ContextInputs[T]) Sort() {
+	sort.Slice(in, func(i, j int) bool {
+		return in[i].Compare(in[j]) < 0
+	})
 }
 
 // ContextInputsSyntacticalValidationFunc which given the index of an input and the input itself,

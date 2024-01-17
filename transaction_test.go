@@ -463,3 +463,163 @@ func TestTransactionInputUniqueness(t *testing.T) {
 		})
 	}
 }
+
+func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
+	type test struct {
+		name          string
+		contextInputs iotago.TxEssenceContextInputs
+		wantErr       error
+	}
+
+	accountID1 := iotago.MustAccountIDFromHexString("0x2668778ef0362d601c36ea05c742185daa1740dfcdaee0acfde6a9806a1f2ed2")
+	accountID2 := iotago.MustAccountIDFromHexString("0x4e7cb233943cd31a0e3bd8b92668778ef0362d601c36ea05c742039ec582b0af")
+	commitmentID1 := iotago.MustCommitmentIDFromHexString("0x3f34a869f47f8454e7cb233943cd31a0e3bd8b9551b1390039ec582b0a196856e50500fd")
+	commitmentID2 := iotago.MustCommitmentIDFromHexString("0x90039ec582b0a196856e50500fd3f34a869f47f8454e7cb233943cd31a0e3bd8b9551ac4")
+
+	tests := []test{
+		{
+			name: "ok - context inputs lexically ordered and unique",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+				&iotago.RewardInput{
+					Index: 0,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - context inputs lexically unordered",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
+				&iotago.RewardInput{
+					Index: 0,
+				},
+			},
+			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - block issuance credits inputs lexically unordered",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID2,
+				},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+			},
+			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - reward inputs lexically unordered",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.RewardInput{
+					Index: 5,
+				},
+				&iotago.RewardInput{
+					Index: 3,
+				},
+			},
+			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - commitment inputs lexically unordered",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID2,
+				},
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
+			},
+			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - duplicate block issuance credit inputs",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+			},
+			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - duplicate reward inputs",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+				&iotago.RewardInput{
+					Index: 3,
+				},
+				&iotago.RewardInput{
+					Index: 3,
+				},
+			},
+			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - duplicate commitment inputs",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
+				&iotago.RewardInput{
+					Index: 3,
+				},
+			},
+			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			basicOutput := &iotago.BasicOutput{
+				Amount: OneIOTA,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{
+						Address: tpkg.RandEd25519Address(),
+					},
+				},
+			}
+
+			tx := &iotago.Transaction{
+				API: tpkg.ZeroCostTestAPI,
+				TransactionEssence: &iotago.TransactionEssence{
+					Inputs: iotago.TxEssenceInputs{
+						tpkg.RandUTXOInput(),
+						tpkg.RandUTXOInput(),
+						tpkg.RandUTXOInput(),
+					},
+					ContextInputs: test.contextInputs,
+				},
+				Outputs: iotago.TxEssenceOutputs{
+					basicOutput,
+				},
+			}
+
+			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

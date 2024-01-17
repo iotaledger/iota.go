@@ -125,9 +125,8 @@ var (
 	}
 
 	txEssenceV3ContextInputsArrRules = &serix.ArrayRules{
-		Min:            MinContextInputsCount,
-		Max:            MaxContextInputsCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
+		Min: MinContextInputsCount,
+		Max: MaxContextInputsCount,
 	}
 
 	txEssenceV3InputsArrRules = &serix.ArrayRules{
@@ -621,6 +620,11 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*BlockIssuanceCreditInput)(nil)))
 		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*RewardInput)(nil)))
 
+		must(api.RegisterValidator(TxEssenceContextInputs{},
+			func(ctx context.Context, contextInputs TxEssenceContextInputs) error {
+				return serix.SyntacticSliceValidator[ContextInput](ctx, contextInputs, serix.LexicalOrderAndUniqueness[ContextInput]())
+			},
+		))
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
 		))

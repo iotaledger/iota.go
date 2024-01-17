@@ -1,6 +1,9 @@
 package iotago
 
 import (
+	"bytes"
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -30,4 +33,19 @@ func (b *BlockIssuanceCreditInput) Size() int {
 func (b *BlockIssuanceCreditInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
 	return workScoreParameters.ContextInput, nil
+}
+
+func (b *BlockIssuanceCreditInput) Compare(other ContextInput) int {
+	typeCompare := cmp.Compare(b.Type(), other.Type())
+	if typeCompare != 0 {
+		return typeCompare
+	}
+
+	otherBICInput := other.(*BlockIssuanceCreditInput)
+	accountIDCompare := bytes.Compare(b.AccountID[:], otherBICInput.AccountID[:])
+	if accountIDCompare != 0 {
+		return accountIDCompare
+	}
+
+	return 0
 }

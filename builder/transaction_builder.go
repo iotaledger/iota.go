@@ -559,6 +559,7 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	}
 
 	b.transaction.Allotments.Sort()
+	b.transaction.TransactionEssence.ContextInputs.Sort()
 
 	// prepare the inputs commitment in the same order as the inputs in the essence
 	var inputIDs iotago.OutputIDs
