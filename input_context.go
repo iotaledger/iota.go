@@ -100,32 +100,19 @@ type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) 
 // ContextInputsSyntacticalUnique returns a ContextInputsSyntacticalValidationFunc
 // which checks that
 //   - there are exactly 0 or 1 Commitment inputs.
-//   - every Block Issuance Credits Input references a different account.
-//   - every Reward Input references a different input and the index it references is <= max inputs count.
+//   - every Reward Input references an index <= max inputs count.
 func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
 	hasCommitment := false
-	bicSet := map[string]int{}
-	rewardSet := map[uint16]int{}
 
 	return func(index int, input ContextInput) error {
 		switch castInput := input.(type) {
 		case *BlockIssuanceCreditInput:
-			accountID := castInput.AccountID
-			k := string(accountID[:])
-			if j, has := bicSet[k]; has {
-				return ierrors.Wrapf(ErrInputBICNotUnique, "input %d and %d share the same Account ref", j, index)
-			}
-			bicSet[k] = index
 		case *RewardInput:
 			utxoIndex := castInput.Index
 			if utxoIndex >= inputsCount {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d references index %d which is equal or greater than the inputs count %d",
+				return ierrors.Wrapf(ErrInputRewardIndexExceedsMaxInputsCount, "reward input %d references index %d which is equal or greater than the inputs count %d",
 					index, utxoIndex, inputsCount)
 			}
-			if j, has := rewardSet[utxoIndex]; has {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d and %d share the same input index", j, index)
-			}
-			rewardSet[utxoIndex] = index
 		case *CommitmentInput:
 			if hasCommitment {
 				return ierrors.Wrapf(ErrMultipleInputCommitments, "input %d is the second commitment input", index)

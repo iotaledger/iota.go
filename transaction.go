@@ -28,11 +28,8 @@ var (
 	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
-	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputBICNotUnique = ierrors.New("inputs must each reference a unique BIC")
-	// ErrInputRewardInvalid gets returned if multiple reward inputs reference the same input index
-	// or if they reference an index greater than max inputs count.
-	ErrInputRewardInvalid = ierrors.New("invalid reward input")
+	// ErrInputRewardIndexExceedsMaxInputsCount gets returned if a reward input references an index greater than max inputs count.
+	ErrInputRewardIndexExceedsMaxInputsCount = ierrors.New("reward input references an index greater than max inputs count")
 	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
 	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
