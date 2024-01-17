@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"cmp"
 	"math/big"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -67,6 +68,10 @@ func (n *NativeTokenFeature) StorageScore(_ *StorageScoreStructure, _ StorageSco
 
 func (n *NativeTokenFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	return workScoreParameters.NativeToken, nil
+}
+
+func (n *NativeTokenFeature) Compare(other Feature) int {
+	return cmp.Compare(n.Type(), other.Type())
 }
 
 // Equal checks whether other is equal to this NativeToken.

@@ -198,6 +198,50 @@ func TestOutputsDeSerialize(t *testing.T) {
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
+		{
+			name: "fail - BasicOutput contains duplicate features",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				Mana:   500,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.BasicOutputFeatures{
+					&iotago.TagFeature{
+						Tag: tpkg.RandBytes(3),
+					},
+					&iotago.TagFeature{
+						Tag: tpkg.RandBytes(6),
+					},
+				},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - BasicOutput contains lexically unordered features",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				Mana:   500,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.BasicOutputFeatures{
+					// Feature Type 4
+					&iotago.TagFeature{
+						Tag: tpkg.RandBytes(3),
+					},
+					// Feature Type 0
+					&iotago.SenderFeature{
+						Address: tpkg.RandEd25519Address(),
+					},
+				},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
 	}
 
 	for _, tt := range tests {

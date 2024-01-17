@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -32,6 +34,10 @@ func (s *BlockIssuerFeature) StorageScore(storageScoreStruct *StorageScoreStruct
 func (s *BlockIssuerFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// block issuer feature requires invocation of account and mana managers, so requires extra work.
 	return workScoreParameters.BlockIssuer, nil
+}
+
+func (s *BlockIssuerFeature) Compare(other Feature) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *BlockIssuerFeature) Equal(other Feature) bool {

@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -26,6 +28,10 @@ func (s *SenderFeature) StorageScore(storageScoreStruct *StorageScoreStructure, 
 func (s *SenderFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// we do not need to charge for a signature check here as this is covered by the unlock that must be provided.
 	return 0, nil
+}
+
+func (s *SenderFeature) Compare(other Feature) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *SenderFeature) Equal(other Feature) bool {

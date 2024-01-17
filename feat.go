@@ -28,6 +28,7 @@ type Feature interface {
 	ProcessableObject
 	constraints.Cloneable[Feature]
 	constraints.Equalable[Feature]
+	constraints.Comparable[Feature]
 
 	// Type returns the type of the Feature.
 	Type() FeatureType
@@ -115,6 +116,16 @@ func (f Features[T]) Size() int {
 	}
 
 	return sum
+}
+
+// upcast returns a type-erased copy of the Feature slice.
+func (f Features[T]) upcast() Features[Feature] {
+	features := make(Features[Feature], 0, len(f))
+	for _, u := range f {
+		features = append(features, u)
+	}
+
+	return features
 }
 
 // Set converts the slice into a FeatureSet.

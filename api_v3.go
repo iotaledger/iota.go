@@ -41,9 +41,6 @@ var (
 	basicOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 4, // Max: SenderFeature, MetadataFeature, TagFeature, NativeTokenFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	accountOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -467,6 +464,11 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
+		must(api.RegisterValidator(BasicOutputFeatures{}, func(ctx context.Context, features BasicOutputFeatures) error {
+			feats := features.upcast()
+			validationFunc := LexicalOrderAndUniqueness[Feature](feats)
+			return SyntacticSliceValidator[Feature](ctx, feats, validationFunc)
+		}))
 		must(api.RegisterTypeSettings(BasicOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3FeatBlocksArrRules),
 		))
