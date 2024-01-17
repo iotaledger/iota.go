@@ -41,6 +41,19 @@ func (builder *FoundryOutputBuilder) Amount(amount iotago.BaseToken) *FoundryOut
 	return builder
 }
 
+// SerialNumber sets the serial number of the output.
+func (builder *FoundryOutputBuilder) SerialNumber(number uint32) *FoundryOutputBuilder {
+	if builder.prev != nil {
+		if builder.prev.SerialNumber != number {
+			panic(ierrors.New("serial number is not allowed to be changed"))
+		}
+	}
+
+	builder.output.SerialNumber = number
+
+	return builder
+}
+
 // NativeToken adds/modifies a native token to/on the output.
 func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *FoundryOutputBuilder {
 	builder.output.Features.Upsert(nt)
