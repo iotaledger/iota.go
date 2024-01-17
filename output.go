@@ -96,6 +96,10 @@ var (
 	ErrTransDepIdentOutputNonUTXOChainID = ierrors.New("transition dependable ident outputs must have UTXO chain IDs")
 	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
 	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
+	// ErrArrayValidationOrderViolatesLexicalOrder gets returned if the array elements are not in lexical order.
+	ErrArrayValidationOrderViolatesLexicalOrder = ierrors.New("array elements must be in their lexical order")
+	// ErrArrayValidationViolatesUniqueness gets returned if the array elements are not unique.
+	ErrArrayValidationViolatesUniqueness = ierrors.New("array elements must be unique")
 )
 
 // OutputSet is a map of the OutputID to Output.
@@ -691,6 +695,65 @@ func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValida
 			if (stateControllerAddress.Type() == AddressImplicitAccountCreation) ||
 				(governorAddress.Type() == AddressImplicitAccountCreation) {
 				return ErrImplicitAccountCreationAddressInInvalidOutput
+			}
+		default:
+			panic("unrecognized output type")
+		}
+
+		return nil
+	}
+}
+
+type ElementValidationFunc[T any] func(index int, next T) error
+
+func LexicalOrderAndUniqueness[T constraints.Comparable[T]]() ElementValidationFunc[T] {
+	var prev *T
+	var prevIndex int
+
+	return func(index int, next T) error {
+		if prev == nil {
+			prev = &next
+			prevIndex = index
+		} else {
+			switch (*prev).Compare(next) {
+			case 1:
+				return ierrors.Wrapf(ErrArrayValidationOrderViolatesLexicalOrder, "element %d should have been before element %d", index, prevIndex)
+			case 0:
+				return ierrors.Wrapf(ErrArrayValidationViolatesUniqueness, "element %d and element %d are duplicates", index, prevIndex)
+			}
+
+			prev = &next
+			prevIndex = index
+		}
+
+		return nil
+	}
+}
+
+func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		elementValidationFunc := LexicalOrderAndUniqueness[UnlockCondition]()
+		switch typedOutput := output.(type) {
+		case *BasicOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := elementValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *FoundryOutput, *AccountOutput, *DelegationOutput:
+			// These outputs only have one address type.
+			return nil
+		case *NFTOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := elementValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *AnchorOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := elementValidationFunc(idx, uc); err != nil {
+					return err
+				}
 			}
 		default:
 			panic("unrecognized output type")

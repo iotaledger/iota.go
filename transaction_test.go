@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 )
 
@@ -612,6 +614,139 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 					basicOutput,
 				},
 			}
+
+			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
+			if test.wantErr != nil {
+				require.ErrorIs(t, err, test.wantErr)
+
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+// Tests that lexical order & uniqueness are checked for unlock conditions across all relevant outputs.
+func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T) {
+	type test struct {
+		name    string
+		output  iotago.Output
+		wantErr error
+	}
+
+	// Unlock Cond Type 0
+	addressUnlockCond := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Unlock Cond Type 4
+	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Unlock Cond Type 5
+	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Unlock Cond Type 2
+	timelockUnlockCond := &iotago.TimelockUnlockCondition{Slot: 1337}
+	timelockUnlockCond2 := &iotago.TimelockUnlockCondition{Slot: 1000}
+
+	// Unlock Cond Type 3
+	expirationUnlockCond := &iotago.ExpirationUnlockCondition{
+		ReturnAddress: tpkg.RandEd25519Address(),
+		Slot:          1000,
+	}
+
+	tests := []test{
+		{
+			name: "fail - BasicOutput contains lexically unordered unlock conditions",
+			output: &iotago.BasicOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					addressUnlockCond,
+					expirationUnlockCond,
+					timelockUnlockCond,
+				},
+				Features: iotago.BasicOutputFeatures{},
+			},
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AnchorOutput contains lexically unordered unlock conditions",
+			output: &iotago.AnchorOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					govUnlockCond, stateCtrlUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{},
+			},
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - NFTOutput contains lexically unordered unlock conditions",
+			output: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+					expirationUnlockCond,
+					timelockUnlockCond,
+				},
+				Features: iotago.NFTOutputFeatures{},
+			},
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - BasicOutput contains duplicate unlock conditions",
+			output: &iotago.BasicOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					addressUnlockCond,
+					timelockUnlockCond,
+					timelockUnlockCond2,
+				},
+			},
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AnchorOutput contains duplicate unlock conditions",
+			output: &iotago.AnchorOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond, stateCtrlUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{},
+			},
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate unlock conditions",
+			output: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+					timelockUnlockCond,
+					timelockUnlockCond2,
+				},
+			},
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			txBuilder := builder.NewTransactionBuilder(testAPI)
+			txBuilder.WithTransactionCapabilities(
+				iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+			)
+
+			_, ident, addrKeys := tpkg.RandEd25519Identity()
+			txBuilder.AddInput(&builder.TxInput{
+				UnlockTarget: ident,
+				InputID:      tpkg.RandUTXOInput().OutputID(),
+				Input:        tpkg.RandBasicOutput(),
+			})
+			txBuilder.AddOutput(test.output)
+			tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
 
 			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
 			if test.wantErr != nil {
