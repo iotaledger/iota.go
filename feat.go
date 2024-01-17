@@ -118,16 +118,6 @@ func (f Features[T]) Size() int {
 	return sum
 }
 
-// upcast returns a type-erased copy of the Feature slice.
-func (f Features[T]) upcast() Features[Feature] {
-	features := make(Features[Feature], 0, len(f))
-	for _, u := range f {
-		features = append(features, u)
-	}
-
-	return features
-}
-
 // Set converts the slice into a FeatureSet.
 // Returns an error if a FeatureType occurs multiple times.
 func (f Features[T]) Set() (FeatureSet, error) {

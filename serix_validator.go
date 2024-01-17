@@ -30,7 +30,7 @@ func SyntacticSliceValidator[T constraints.Comparable[T]](ctx context.Context, s
 }
 
 // TODO
-func LexicalOrderAndUniqueness[T constraints.Comparable[T]](slice []T) ElementValidationFunc[T] {
+func LexicalOrderAndUniqueness[T constraints.Comparable[T]]() ElementValidationFunc[T] {
 	var prev *T
 	var prevIndex int
 
