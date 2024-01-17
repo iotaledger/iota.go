@@ -1659,3 +1659,117 @@ func TestOutputFeatureInvariants(t *testing.T) {
 		t.Run(test.name, test.deSerialize)
 	}
 }
+
+// Tests that lexical order & uniqueness are checked for unlock conditions across all relevant outputs.
+func TestOutputUnlockConditionsInvariants(t *testing.T) {
+	// Unlock Cond Type 0
+	addressUnlockCond := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Unlock Cond Type 4
+	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Unlock Cond Type 5
+	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Unlock Cond Type 2
+	timelockUnlockCond := &iotago.TimelockUnlockCondition{Slot: 1337}
+	timelockUnlockCond2 := &iotago.TimelockUnlockCondition{Slot: 1000}
+
+	// Unlock Cond Type 3
+	expirationUnlockCond := &iotago.ExpirationUnlockCondition{Slot: 1000}
+
+	tests := []deSerializeTest{
+		{
+			name: "fail - BasicOutput contains lexically unordered unlock conditions",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					addressUnlockCond,
+					expirationUnlockCond,
+					timelockUnlockCond,
+				},
+				Features: iotago.BasicOutputFeatures{},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AnchorOutput contains lexically unordered unlock conditions",
+			source: &iotago.AnchorOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					govUnlockCond, stateCtrlUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{},
+			},
+			target:    &iotago.AnchorOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - NFTOutput contains lexically unordered unlock conditions",
+			source: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+					expirationUnlockCond,
+					timelockUnlockCond,
+				},
+				Features: iotago.NFTOutputFeatures{},
+			},
+			target:    &iotago.NFTOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - BasicOutput contains duplicate unlock conditions",
+			source: &iotago.BasicOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					addressUnlockCond,
+					timelockUnlockCond,
+					timelockUnlockCond2,
+				},
+			},
+			target:    &iotago.BasicOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AnchorOutput contains duplicate unlock conditions",
+			source: &iotago.AnchorOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond, stateCtrlUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{},
+			},
+			target:    &iotago.AnchorOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate unlock conditions",
+			source: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+					timelockUnlockCond,
+					timelockUnlockCond2,
+				},
+			},
+			target:    &iotago.NFTOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, test.deSerialize)
+	}
+}
