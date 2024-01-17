@@ -1390,3 +1390,131 @@ func TestOutputsSyntacticDisallowedImplicitAccountCreationAddress(t *testing.T) 
 	}
 
 }
+
+// Tests that lexical order & uniqueness are checked for immutable features across all relevant outputs.
+func TestOutputImmutableFeatureInvariants(t *testing.T) {
+	addressUnlockCond := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Feature Type 1
+	issuerFeat := &iotago.IssuerFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Create a second issuer feature to ensure uniqueness is checked based on the type of the feature.
+	issuerFeat2 := &iotago.IssuerFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Feature Type 2
+	metadataFeat := &iotago.MetadataFeature{
+		Entries: iotago.MetadataFeatureEntries{
+			"key": []byte("val"),
+		},
+	}
+
+	tests := []deSerializeTest{
+		{
+			name: "fail - AccountOutput contains lexically unordered immutable features",
+			source: &iotago.AccountOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			target:    &iotago.AccountOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - NFTOutput contains lexically unordered immutable features",
+			source: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			target:    &iotago.NFTOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AnchorOutput contains lexically unordered immutable features",
+			source: &iotago.AnchorOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			target:    &iotago.AnchorOutput{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AccountOutput contains duplicate immutable features",
+			source: &iotago.AccountOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			target:    &iotago.AccountOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate immutable features",
+			source: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			target:    &iotago.NFTOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AnchorOutput contains duplicate immutable features",
+			source: &iotago.AnchorOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			target:    &iotago.AnchorOutput{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, test.deSerialize)
+	}
+}

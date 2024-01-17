@@ -19,9 +19,13 @@ type ElementValidationFunc[T any] func(index int, next T) error
 
 // TODO: Extend doc.
 // Helper function to validate a slice syntactically.
-func SyntacticSliceValidator[T constraints.Comparable[T]](ctx context.Context, slice []T, validationFunc ElementValidationFunc[T]) error {
+func SyntacticSliceValidator[T constraints.Comparable[T]](
+	ctx context.Context,
+	slice []T,
+	elementValidationFunc ElementValidationFunc[T],
+) error {
 	for i, element := range slice {
-		if err := validationFunc(i, element); err != nil {
+		if err := elementValidationFunc(i, element); err != nil {
 			return err
 		}
 	}
