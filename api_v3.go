@@ -59,9 +59,6 @@ var (
 	accountOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	anchorOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -81,9 +78,6 @@ var (
 	anchorOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	foundryOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -102,9 +96,6 @@ var (
 	foundryOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 1, // Max: MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	nftOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -123,9 +114,6 @@ var (
 	nftOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	delegationOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -489,6 +477,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*BlockIssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*StakingFeature)(nil)))
 
+		must(api.RegisterValidator(AccountOutputImmFeatures{}, func(ctx context.Context, features AccountOutputImmFeatures) error {
+			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+		}))
 		must(api.RegisterTypeSettings(AccountOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3ImmFeatBlocksArrRules),
 		))
@@ -522,6 +513,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
 
+		must(api.RegisterValidator(AnchorOutputImmFeatures{}, func(ctx context.Context, features AnchorOutputImmFeatures) error {
+			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+		}))
 		must(api.RegisterTypeSettings(AnchorOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3ImmFeatBlocksArrRules),
 		))
@@ -556,6 +550,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 
+		must(api.RegisterValidator(FoundryOutputImmFeatures{}, func(ctx context.Context, features FoundryOutputImmFeatures) error {
+			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+		}))
 		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3ImmFeatBlocksArrRules),
 		))
@@ -596,6 +593,9 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*TagFeature)(nil)))
 
+		must(api.RegisterValidator(NFTOutputImmFeatures{}, func(ctx context.Context, features NFTOutputImmFeatures) error {
+			return SyntacticSliceValidator[Feature](ctx, features, LexicalOrderAndUniqueness[Feature]())
+		}))
 		must(api.RegisterTypeSettings(NFTOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3ImmFeatBlocksArrRules),
 		))
