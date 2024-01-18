@@ -190,6 +190,13 @@ func (ids TransactionIDs) RemoveDupsAndSort() TransactionIDs {
 	return result
 }
 
+// Sort sorts the TransactionIDs lexically and in-place.
+func (ids TransactionIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
+}
+
 // TransactionIDsFromHexString converts the given block IDs from their hex to TransactionID representation.
 func TransactionIDsFromHexString(TransactionIDsHex []string) (TransactionIDs, error) {
 	result := make(TransactionIDs, len(TransactionIDsHex))

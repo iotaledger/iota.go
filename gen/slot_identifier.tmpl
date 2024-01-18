@@ -216,6 +216,13 @@ func (ids {{.Name}}s) RemoveDupsAndSort() {{.Name}}s {
 	return result
 }
 
+// Sort sorts the {{.Name}}s lexically and in-place.
+func (ids {{.Name}}s) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
+}
+
 // {{.Name}}sFromHexString converts the given block IDs from their hex to {{.Name}} representation.
 func {{.Name}}sFromHexString({{.Name}}sHex []string) ({{.Name}}s, error) {
 	result := make({{.Name}}s, len({{.Name}}sHex))

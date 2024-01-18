@@ -180,6 +180,13 @@ func (ids OutputIDs) RemoveDupsAndSort() OutputIDs {
 	return result
 }
 
+// Sort sorts the OutputIDs lexically and in-place.
+func (ids OutputIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
+}
+
 // OutputIDsFromHexString converts the given block IDs from their hex to OutputID representation.
 func OutputIDsFromHexString(OutputIDsHex []string) (OutputIDs, error) {
 	result := make(OutputIDs, len(OutputIDsHex))

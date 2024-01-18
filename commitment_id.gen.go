@@ -190,6 +190,13 @@ func (ids CommitmentIDs) RemoveDupsAndSort() CommitmentIDs {
 	return result
 }
 
+// Sort sorts the CommitmentIDs lexically and in-place.
+func (ids CommitmentIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
+}
+
 // CommitmentIDsFromHexString converts the given block IDs from their hex to CommitmentID representation.
 func CommitmentIDsFromHexString(CommitmentIDsHex []string) (CommitmentIDs, error) {
 	result := make(CommitmentIDs, len(CommitmentIDsHex))
