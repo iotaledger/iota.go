@@ -730,6 +730,7 @@ func LexicalOrderAndUniqueness[T constraints.Comparable[T]]() ElementValidationF
 	}
 }
 
+// TODO
 func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() OutputsSyntacticalValidationFunc {
 	return func(index int, output Output) error {
 		elementValidationFunc := LexicalOrderAndUniqueness[UnlockCondition]()
@@ -752,6 +753,71 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() OutputsSyntact
 		case *AnchorOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := elementValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+		default:
+			panic("unrecognized output type")
+		}
+
+		return nil
+	}
+}
+
+// TODO
+func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() OutputsSyntacticalValidationFunc {
+	return func(index int, output Output) error {
+		featureValidationFunc := LexicalOrderAndUniqueness[Feature]()
+		immutableFeatureValidationFunc := LexicalOrderAndUniqueness[Feature]()
+
+		switch typedOutput := output.(type) {
+		case *BasicOutput:
+			for idx, uc := range typedOutput.Features {
+				if err := featureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+			// This output does not have immutable feature.
+		case *FoundryOutput:
+			for idx, uc := range typedOutput.Features {
+				if err := featureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+			// This output only has one immutable feature.
+		case *AccountOutput:
+			for idx, uc := range typedOutput.Features {
+				if err := featureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+			for idx, uc := range typedOutput.ImmutableFeatures {
+				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *DelegationOutput:
+			// This output does not have features.
+			return nil
+		case *NFTOutput:
+			for idx, uc := range typedOutput.Features {
+				if err := featureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+			for idx, uc := range typedOutput.ImmutableFeatures {
+				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *AnchorOutput:
+			for idx, uc := range typedOutput.Features {
+				if err := featureValidationFunc(idx, uc); err != nil {
+					return err
+				}
+			}
+			for idx, uc := range typedOutput.ImmutableFeatures {
+				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
 					return err
 				}
 			}

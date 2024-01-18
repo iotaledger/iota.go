@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/lo"
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
@@ -626,14 +627,50 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 	}
 }
 
-// Tests that lexical order & uniqueness are checked for unlock conditions across all relevant outputs.
-func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T) {
-	type test struct {
-		name    string
-		output  iotago.Output
-		wantErr error
+type transactionSerializeTest struct {
+	name      string
+	output    iotago.Output
+	seriErr   error
+	deseriErr error
+}
+
+func (test *transactionSerializeTest) Run(t *testing.T) {
+	txBuilder := builder.NewTransactionBuilder(testAPI)
+	txBuilder.WithTransactionCapabilities(
+		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+	)
+
+	_, ident, addrKeys := tpkg.RandEd25519Identity()
+	txBuilder.AddInput(&builder.TxInput{
+		UnlockTarget: ident,
+		InputID:      tpkg.RandUTXOInput().OutputID(),
+		Input:        tpkg.RandBasicOutput(),
+	})
+	txBuilder.AddOutput(test.output)
+	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
+
+	serixData, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
+	if test.seriErr != nil {
+		require.ErrorIs(t, err, test.seriErr)
+
+		serixData, err = tpkg.ZeroCostTestAPI.Encode(tx)
+		require.NoError(t, err)
+	} else {
+		require.NoError(t, err)
 	}
 
+	serixTarget := &iotago.SignedTransaction{}
+	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
+
+	if test.deseriErr != nil {
+		require.ErrorIs(t, err, test.deseriErr)
+	} else {
+		require.NoError(t, err)
+	}
+}
+
+// Tests that lexical order & uniqueness are checked for unlock conditions across all relevant outputs.
+func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T) {
 	// Unlock Cond Type 0
 	addressUnlockCond := &iotago.AddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
@@ -657,11 +694,11 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 		Slot:          1000,
 	}
 
-	tests := []test{
+	tests := []transactionSerializeTest{
 		{
 			name: "fail - BasicOutput contains lexically unordered unlock conditions",
 			output: &iotago.BasicOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{
 					addressUnlockCond,
 					expirationUnlockCond,
@@ -669,23 +706,25 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 				},
 				Features: iotago.BasicOutputFeatures{},
 			},
-			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - AnchorOutput contains lexically unordered unlock conditions",
 			output: &iotago.AnchorOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
 					govUnlockCond, stateCtrlUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
-			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - NFTOutput contains lexically unordered unlock conditions",
 			output: &iotago.NFTOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.NFTOutputUnlockConditions{
 					addressUnlockCond,
 					expirationUnlockCond,
@@ -693,68 +732,173 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 				},
 				Features: iotago.NFTOutputFeatures{},
 			},
-			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - BasicOutput contains duplicate unlock conditions",
 			output: &iotago.BasicOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{
 					addressUnlockCond,
 					timelockUnlockCond,
 					timelockUnlockCond2,
 				},
 			},
-			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - AnchorOutput contains duplicate unlock conditions",
 			output: &iotago.AnchorOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
-					stateCtrlUnlockCond, stateCtrlUnlockCond,
+					stateCtrlUnlockCond, stateCtrlUnlockCond, govUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
-			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+			// The errors don't match up here, but that's fine.
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 		{
 			name: "fail - NFTOutput contains duplicate unlock conditions",
 			output: &iotago.NFTOutput{
-				Amount: 1337,
+				Amount: 10_000_000,
 				UnlockConditions: iotago.NFTOutputUnlockConditions{
 					addressUnlockCond,
 					timelockUnlockCond,
 					timelockUnlockCond2,
 				},
 			},
-			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			txBuilder := builder.NewTransactionBuilder(testAPI)
-			txBuilder.WithTransactionCapabilities(
-				iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
-			)
+		t.Run(test.name, test.Run)
+	}
+}
 
-			_, ident, addrKeys := tpkg.RandEd25519Identity()
-			txBuilder.AddInput(&builder.TxInput{
-				UnlockTarget: ident,
-				InputID:      tpkg.RandUTXOInput().OutputID(),
-				Input:        tpkg.RandBasicOutput(),
-			})
-			txBuilder.AddOutput(test.output)
-			tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
+// Tests that lexical order & uniqueness are checked for immutable features across all relevant outputs.
+func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T) {
+	addressUnlockCond := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
 
-			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
-			if test.wantErr != nil {
-				require.ErrorIs(t, err, test.wantErr)
+	// Feature Type 1
+	issuerFeat := &iotago.IssuerFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
+	// Create a second issuer feature to ensure uniqueness is checked based on the type of the feature.
+	issuerFeat2 := &iotago.IssuerFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
 
-				return
-			}
-			require.NoError(t, err)
-		})
+	// Feature Type 2
+	metadataFeat := &iotago.MetadataFeature{
+		Entries: iotago.MetadataFeatureEntries{
+			"key": []byte("val"),
+		},
+	}
+
+	tests := []transactionSerializeTest{
+		{
+			name: "fail - AccountOutput contains lexically unordered immutable features",
+			output: &iotago.AccountOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - NFTOutput contains lexically unordered immutable features",
+			output: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AnchorOutput contains lexically unordered immutable features",
+			output: &iotago.AnchorOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AccountOutput contains duplicate immutable features",
+			output: &iotago.AccountOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.AccountOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate immutable features",
+			output: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AnchorOutput contains duplicate immutable features",
+			output: &iotago.AnchorOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, test.Run)
 	}
 }

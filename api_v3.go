@@ -432,9 +432,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*BasicOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
-		must(api.RegisterValidator(BasicOutputFeatures{}, func(ctx context.Context, features BasicOutputFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(BasicOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(basicOutputV3FeatBlocksArrRules),
 		))
@@ -454,9 +451,6 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*AccountOutputUnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
 
-		must(api.RegisterValidator(AccountOutputFeatures{}, func(ctx context.Context, features AccountOutputFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(AccountOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3FeatBlocksArrRules),
 		))
@@ -466,9 +460,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*BlockIssuerFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*AccountOutputFeature)(nil), (*StakingFeature)(nil)))
 
-		must(api.RegisterValidator(AccountOutputImmFeatures{}, func(ctx context.Context, features AccountOutputImmFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(AccountOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(accountOutputV3ImmFeatBlocksArrRules),
 		))
@@ -487,9 +478,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AnchorOutputUnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*AnchorOutputUnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
 
-		must(api.RegisterValidator(AnchorOutputFeatures{}, func(ctx context.Context, features AnchorOutputFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(AnchorOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3FeatBlocksArrRules),
 		))
@@ -497,9 +485,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*AnchorOutputFeature)(nil), (*StateMetadataFeature)(nil)))
 
-		must(api.RegisterValidator(AnchorOutputImmFeatures{}, func(ctx context.Context, features AnchorOutputImmFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(AnchorOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(anchorOutputV3ImmFeatBlocksArrRules),
 		))
@@ -519,9 +504,6 @@ func V3API(protoParams ProtocolParameters) API {
 
 		must(api.RegisterInterfaceObjects((*FoundryOutputUnlockCondition)(nil), (*ImmutableAccountUnlockCondition)(nil)))
 
-		must(api.RegisterValidator(FoundryOutputFeatures{}, func(ctx context.Context, features FoundryOutputFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(FoundryOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3FeatBlocksArrRules),
 		))
@@ -529,9 +511,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*FoundryOutputFeature)(nil), (*NativeTokenFeature)(nil)))
 
-		must(api.RegisterValidator(FoundryOutputImmFeatures{}, func(ctx context.Context, features FoundryOutputImmFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(FoundryOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(foundryOutputV3ImmFeatBlocksArrRules),
 		))
@@ -556,9 +535,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
 		must(api.RegisterInterfaceObjects((*NFTOutputUnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
 
-		must(api.RegisterValidator(NFTOutputFeatures{}, func(ctx context.Context, features NFTOutputFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(NFTOutputFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3FeatBlocksArrRules),
 		))
@@ -567,9 +543,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*MetadataFeature)(nil)))
 		must(api.RegisterInterfaceObjects((*NFTOutputFeature)(nil), (*TagFeature)(nil)))
 
-		must(api.RegisterValidator(NFTOutputImmFeatures{}, func(ctx context.Context, features NFTOutputImmFeatures) error {
-			return serix.SyntacticSliceValidator[Feature](ctx, features, serix.LexicalOrderAndUniqueness[Feature]())
-		}))
 		must(api.RegisterTypeSettings(NFTOutputImmFeatures{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(nftOutputV3ImmFeatBlocksArrRules),
 		))
