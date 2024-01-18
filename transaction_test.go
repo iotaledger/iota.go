@@ -651,7 +651,7 @@ func (test *transactionSerializeTest) Run(t *testing.T) {
 
 	serixData, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
 	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr)
+		require.ErrorIs(t, err, test.seriErr, "serialization failed")
 
 		serixData, err = tpkg.ZeroCostTestAPI.Encode(tx)
 		require.NoError(t, err)
@@ -663,7 +663,7 @@ func (test *transactionSerializeTest) Run(t *testing.T) {
 	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
 
 	if test.deseriErr != nil {
-		require.ErrorIs(t, err, test.deseriErr)
+		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
 	} else {
 		require.NoError(t, err)
 	}
@@ -769,6 +769,216 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 					timelockUnlockCond,
 					timelockUnlockCond2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, test.Run)
+	}
+}
+
+// Tests that lexical order & uniqueness are checked for features across all relevant outputs.
+func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
+	addressUnlockCond := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	immutableAccountAddressUnlockCond := &iotago.ImmutableAccountUnlockCondition{
+		Address: tpkg.RandAccountAddress(),
+	}
+	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Feature Type 1
+	senderFeat := &iotago.SenderFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
+	senderFeat2 := &iotago.SenderFeature{
+		Address: tpkg.RandEd25519Address(),
+	}
+
+	// Feature Type 2
+	metadataFeat := &iotago.MetadataFeature{
+		Entries: iotago.MetadataFeatureEntries{
+			"key": []byte("val"),
+		},
+	}
+	metadataFeat2 := &iotago.MetadataFeature{
+		Entries: iotago.MetadataFeatureEntries{
+			"entry": []byte("theval"),
+		},
+	}
+
+	// Feature Type 3
+	stateMetadataFeat := &iotago.StateMetadataFeature{
+		Entries: iotago.StateMetadataFeatureEntries{
+			"key": []byte("value"),
+		},
+	}
+
+	// Feature Type 4
+	tagFeat := &iotago.TagFeature{
+		Tag: tpkg.RandBytes(3),
+	}
+	tagFeat2 := &iotago.TagFeature{
+		Tag: tpkg.RandBytes(6),
+	}
+
+	// Feature Type 6
+	nativeTokenFeat := tpkg.RandNativeTokenFeature()
+
+	tests := []transactionSerializeTest{
+		{
+			name: "fail - BasicOutput contains lexically unordered features",
+			output: &iotago.BasicOutput{
+				Amount: 1337,
+				Mana:   500,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.BasicOutputFeatures{
+					tagFeat, senderFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AccountOutput contains lexically unordered features",
+			output: &iotago.AccountOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				Features: iotago.AccountOutputFeatures{
+					metadataFeat, senderFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - AnchorOutput contains lexically unordered features",
+			output: &iotago.AnchorOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{
+					stateMetadataFeat, metadataFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - FoundryOutput contains lexically unordered features",
+			output: &iotago.FoundryOutput{
+				Amount:      1_000_000,
+				TokenScheme: tpkg.RandTokenScheme(),
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
+					immutableAccountAddressUnlockCond,
+				},
+				Features: iotago.FoundryOutputFeatures{
+					nativeTokenFeat, metadataFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - NFTOutput contains lexically unordered features",
+			output: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
+				},
+				Features: iotago.NFTOutputFeatures{
+					tagFeat, senderFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - BasicOutput contains duplicate features",
+			output: &iotago.BasicOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				Features: iotago.BasicOutputFeatures{
+					tagFeat,
+					tagFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AccountOutput contains duplicate features",
+			output: &iotago.AccountOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				Features: iotago.AccountOutputFeatures{
+					senderFeat,
+					senderFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - AnchorOutput contains duplicate features",
+			output: &iotago.AnchorOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.AnchorOutputUnlockConditions{
+					stateCtrlUnlockCond,
+					govUnlockCond,
+				},
+				Features: iotago.AnchorOutputFeatures{
+					senderFeat,
+					senderFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - FoundryOutput contains duplicate features",
+			output: &iotago.FoundryOutput{
+				Amount:      1_000_000,
+				TokenScheme: tpkg.RandTokenScheme(),
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
+					immutableAccountAddressUnlockCond,
+				},
+				Features: iotago.FoundryOutputFeatures{
+					metadataFeat, metadataFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate features",
+			output: &iotago.NFTOutput{
+				Amount: 1337,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				Features: iotago.NFTOutputFeatures{
+					tagFeat,
+					tagFeat2,
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
