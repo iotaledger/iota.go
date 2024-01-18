@@ -46,7 +46,6 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 				StakedAmount: 500_00,
 				FixedCost:    500,
 			},
-			tpkg.RandNativeTokenFeature(),
 		},
 	}
 
@@ -92,7 +91,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		workScoreParameters.SignatureEd25519 +
 		workScoreParameters.BlockIssuer +
 		workScoreParameters.Staking +
-		workScoreParameters.NativeToken*2 +
+		workScoreParameters.NativeToken*1 +
 		workScoreParameters.Allotment*2
 
 	require.Equal(t, expectedWorkScore, workScore, "work score expected: %d, actual: %d", expectedWorkScore, workScore)
