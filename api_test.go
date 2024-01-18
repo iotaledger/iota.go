@@ -24,13 +24,8 @@ type deSerializeTest struct {
 	deSeriErr error
 }
 
-func (test *deSerializeTest) deSerialize(t *testing.T) {
+func (test *deSerializeTest) assertBinaryEncodeDecode(t *testing.T) {
 	t.Helper()
-
-	if reflect.TypeOf(test.target).Kind() != reflect.Ptr {
-		// This is required for the serixTarget creation hack to work.
-		t.Fatal("test target must be a pointer")
-	}
 
 	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
@@ -39,8 +34,9 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 		// Encode again without validation so we can check that deserialization would also fail.
 		serixData, err = tpkg.ZeroCostTestAPI.Encode(test.source)
 		require.NoError(t, err)
+	} else {
+		require.NoError(t, err)
 	}
-	require.NoError(t, err)
 
 	if src, ok := test.source.(iotago.Sizer); ok {
 		require.Equal(t, src.Size(), len(serixData))
@@ -56,14 +52,43 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, serixData, bytesRead)
 	require.EqualValues(t, test.source, serixTarget)
+}
 
-	sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source)
-	require.NoError(t, err)
+func (test *deSerializeTest) assertJSONEncodeDecode(t *testing.T) {
+	t.Helper()
+
+	sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
+	if test.seriErr != nil {
+		require.ErrorIs(t, err, test.seriErr)
+
+		// Encode again without validation so we can check that deserialization would also fail.
+		sourceJSON, err = tpkg.ZeroCostTestAPI.JSONEncode(test.source)
+		require.NoError(t, err)
+	} else {
+		require.NoError(t, err)
+	}
 
 	jsonDest := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-	require.NoError(t, tpkg.ZeroCostTestAPI.JSONDecode(sourceJSON, jsonDest))
+	err = tpkg.ZeroCostTestAPI.JSONDecode(sourceJSON, jsonDest, serix.WithValidation())
+	if test.deSeriErr != nil {
+		require.ErrorIs(t, err, test.deSeriErr, "JSON decoding")
 
-	require.EqualValues(t, test.source, jsonDest)
+		return
+	}
+	require.NoError(t, err, "JSON decoding")
+	require.EqualValues(t, test.source, jsonDest, "JSON decoding")
+}
+
+func (test *deSerializeTest) deSerialize(t *testing.T) {
+	t.Helper()
+
+	if reflect.TypeOf(test.target).Kind() != reflect.Ptr {
+		// This is required for the serixTarget creation hack to work.
+		t.Fatal("test target must be a pointer")
+	}
+
+	test.assertBinaryEncodeDecode(t)
+	test.assertJSONEncodeDecode(t)
 }
 
 func TestProtocolParameters_DeSerialize(t *testing.T) {

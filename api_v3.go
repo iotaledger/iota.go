@@ -623,7 +623,6 @@ func V3API(protoParams ProtocolParameters) API {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
-
 	}
 
 	{
