@@ -97,27 +97,33 @@ func (in ContextInputs[T]) Sort() {
 // runs syntactical validations and returns an error if any should fail.
 type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) error
 
-// ContextInputsSyntacticalUnique returns a ContextInputsSyntacticalValidationFunc
-// which checks that
-//   - there are exactly 0 or 1 Commitment inputs.
-//   - every Reward Input references an index <= max inputs count.
-func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
-	hasCommitment := false
+// ContextInputsSyntacticalLexicalOrderAndUniqueness returns a ContextInputsSyntacticalValidationFunc
+// which checks lexcial order and uniqueness.
+//
+// As a special case, it also checks that at most one commitment input is present,
+// due to how Compare is defined on commitment inputs.
+func ContextInputsSyntacticalLexicalOrderAndUniqueness() ContextInputsSyntacticalValidationFunc {
+	contextInputValidationFunc := LexicalOrderAndUniqueness[ContextInput]()
+	return func(index int, input ContextInput) error {
+		if err := contextInputValidationFunc(index, input); err != nil {
+			return err
+		}
+		return nil
+	}
+}
 
+// ContextInputsRewardInputMaxIndex returns a ContextInputsSyntacticalValidationFunc
+// which checks that every Reward Input references an index <= max inputs count.
+func ContextInputsRewardInputMaxIndex(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
 	return func(index int, input ContextInput) error {
 		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput:
+		case *CommitmentInput, *BlockIssuanceCreditInput:
 		case *RewardInput:
 			utxoIndex := castInput.Index
 			if utxoIndex >= inputsCount {
 				return ierrors.Wrapf(ErrInputRewardIndexExceedsMaxInputsCount, "reward input %d references index %d which is equal or greater than the inputs count %d",
 					index, utxoIndex, inputsCount)
 			}
-		case *CommitmentInput:
-			if hasCommitment {
-				return ierrors.Wrapf(ErrMultipleInputCommitments, "input %d is the second commitment input", index)
-			}
-			hasCommitment = true
 		default:
 			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
 		}

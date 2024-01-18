@@ -248,7 +248,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 					},
 				}),
 			target:    &iotago.SignedTransaction{},
-			seriErr:   serix.ErrArrayValidationViolatesUniqueness,
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			deSeriErr: nil,
 		},
 	}
@@ -400,6 +400,47 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 	}
 }
 
+type transactionSerializeTest struct {
+	name      string
+	output    iotago.Output
+	seriErr   error
+	deseriErr error
+}
+
+func (test *transactionSerializeTest) Run(t *testing.T) {
+	txBuilder := builder.NewTransactionBuilder(testAPI)
+	txBuilder.WithTransactionCapabilities(
+		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+	)
+	_, ident, addrKeys := tpkg.RandEd25519Identity()
+	txBuilder.AddInput(&builder.TxInput{
+		UnlockTarget: ident,
+		InputID:      tpkg.RandUTXOInput().OutputID(),
+		Input:        tpkg.RandBasicOutput(),
+	})
+	txBuilder.AddOutput(test.output)
+	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
+
+	serixData, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
+	if test.seriErr != nil {
+		require.ErrorIs(t, err, test.seriErr, "serialization failed")
+
+		serixData, err = tpkg.ZeroCostTestAPI.Encode(tx)
+		require.NoError(t, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	serixTarget := &iotago.SignedTransaction{}
+	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
+
+	if test.deseriErr != nil {
+		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
+	} else {
+		require.NoError(t, err)
+	}
+}
+
 func TestTransactionInputUniqueness(t *testing.T) {
 	type test struct {
 		name    string
@@ -431,7 +472,7 @@ func TestTransactionInputUniqueness(t *testing.T) {
 				input2.UTXOInput(),
 				input2.UTXOInput(),
 			},
-			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
@@ -489,8 +530,14 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
 				},
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID2,
+				},
 				&iotago.RewardInput{
 					Index: 0,
+				},
+				&iotago.RewardInput{
+					Index: 1,
 				},
 			},
 			wantErr: nil,
@@ -508,7 +555,7 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 					Index: 0,
 				},
 			},
-			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - block issuance credits inputs lexically unordered",
@@ -520,31 +567,19 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 					AccountID: accountID1,
 				},
 			},
-			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - reward inputs lexically unordered",
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.RewardInput{
-					Index: 5,
+					Index: 1,
 				},
 				&iotago.RewardInput{
-					Index: 3,
+					Index: 0,
 				},
 			},
-			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
-		},
-		{
-			name: "fail - commitment inputs lexically unordered",
-			contextInputs: iotago.TxEssenceContextInputs{
-				&iotago.CommitmentInput{
-					CommitmentID: commitmentID2,
-				},
-				&iotago.CommitmentInput{
-					CommitmentID: commitmentID1,
-				},
-			},
-			wantErr: serix.ErrArrayValidationOrderViolatesLexicalOrder,
+			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
 			name: "fail - duplicate block issuance credit inputs",
@@ -556,7 +591,7 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 					AccountID: accountID1,
 				},
 			},
-			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 		{
 			name: "fail - duplicate reward inputs",
@@ -565,31 +600,33 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 					AccountID: accountID1,
 				},
 				&iotago.RewardInput{
-					Index: 3,
+					Index: 0,
 				},
 				&iotago.RewardInput{
-					Index: 3,
+					Index: 0,
 				},
 			},
-			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 		{
+			// At most one commitment input is allowed.
 			name: "fail - duplicate commitment inputs",
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.CommitmentInput{
-					CommitmentID: commitmentID1,
+					CommitmentID: commitmentID2,
 				},
 				&iotago.CommitmentInput{
 					CommitmentID: commitmentID1,
 				},
 				&iotago.RewardInput{
-					Index: 3,
+					Index: 1,
 				},
 			},
-			wantErr: serix.ErrArrayValidationViolatesUniqueness,
+			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
+	// We need to build the transaction manually, since the builder would sort the context inputs.
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			basicOutput := &iotago.BasicOutput{
@@ -604,6 +641,8 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			tx := &iotago.Transaction{
 				API: tpkg.ZeroCostTestAPI,
 				TransactionEssence: &iotago.TransactionEssence{
+					NetworkID:    tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+					CreationSlot: 5,
 					Inputs: iotago.TxEssenceInputs{
 						tpkg.RandUTXOInput(),
 						tpkg.RandUTXOInput(),
@@ -616,7 +655,17 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 				},
 			}
 
-			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
+			stx := &iotago.SignedTransaction{
+				API:         tpkg.ZeroCostTestAPI,
+				Transaction: tx,
+				Unlocks: iotago.Unlocks{
+					tpkg.RandEd25519SignatureUnlock(),
+					tpkg.RandEd25519SignatureUnlock(),
+					tpkg.RandEd25519SignatureUnlock(),
+				},
+			}
+
+			_, err := tpkg.ZeroCostTestAPI.Encode(stx, serix.WithValidation())
 			if test.wantErr != nil {
 				require.ErrorIs(t, err, test.wantErr)
 
@@ -624,48 +673,6 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			}
 			require.NoError(t, err)
 		})
-	}
-}
-
-type transactionSerializeTest struct {
-	name      string
-	output    iotago.Output
-	seriErr   error
-	deseriErr error
-}
-
-func (test *transactionSerializeTest) Run(t *testing.T) {
-	txBuilder := builder.NewTransactionBuilder(testAPI)
-	txBuilder.WithTransactionCapabilities(
-		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
-	)
-
-	_, ident, addrKeys := tpkg.RandEd25519Identity()
-	txBuilder.AddInput(&builder.TxInput{
-		UnlockTarget: ident,
-		InputID:      tpkg.RandUTXOInput().OutputID(),
-		Input:        tpkg.RandBasicOutput(),
-	})
-	txBuilder.AddOutput(test.output)
-	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
-
-	serixData, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
-	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr, "serialization failed")
-
-		serixData, err = tpkg.ZeroCostTestAPI.Encode(tx)
-		require.NoError(t, err)
-	} else {
-		require.NoError(t, err)
-	}
-
-	serixTarget := &iotago.SignedTransaction{}
-	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
-
-	if test.deseriErr != nil {
-		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
-	} else {
-		require.NoError(t, err)
 	}
 }
 

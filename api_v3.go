@@ -575,11 +575,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*BlockIssuanceCreditInput)(nil)))
 		must(api.RegisterInterfaceObjects((*ContextInput)(nil), (*RewardInput)(nil)))
 
-		must(api.RegisterValidator(TxEssenceContextInputs{},
-			func(ctx context.Context, contextInputs TxEssenceContextInputs) error {
-				return serix.SyntacticSliceValidator[ContextInput](ctx, contextInputs, serix.LexicalOrderAndUniqueness[ContextInput]())
-			},
-		))
 		must(api.RegisterTypeSettings(TxEssenceContextInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3ContextInputsArrRules),
 		))
@@ -593,12 +588,12 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterInterfaceObjects((*Input)(nil), (*UTXOInput)(nil)))
 
-		must(api.RegisterValidator(TxEssenceInputs{},
-			func(ctx context.Context, inputs TxEssenceInputs) error {
-				valFun := serix.UniquenessValidator[Input]()
-				return serix.SyntacticSliceValidator[Input](ctx, inputs, valFun)
-			},
-		))
+		// must(api.RegisterValidator(TxEssenceInputs{},
+		// 	func(ctx context.Context, inputs TxEssenceInputs) error {
+		// 		valFun := serix.UniquenessValidator[Input]()
+		// 		return serix.SyntacticSliceValidator[Input](ctx, inputs, valFun)
+		// 	},
+		// ))
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
 		))
@@ -608,12 +603,12 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
 
-		must(api.RegisterValidator(TxEssenceAllotments{},
-			func(ctx context.Context, allotments Allotments) error {
-				validationFunc := serix.LexicalOrderAndUniqueness[*Allotment]()
-				return serix.SyntacticSliceValidator(ctx, allotments, validationFunc)
-			},
-		))
+		// must(api.RegisterValidator(TxEssenceAllotments{},
+		// 	func(ctx context.Context, allotments Allotments) error {
+		// 		validationFunc := serix.LexicalOrderAndUniqueness[*Allotment]()
+		// 		return serix.SyntacticSliceValidator(ctx, allotments, validationFunc)
+		// 	},
+		// ))
 
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
 			serix.TypeSettings{}.

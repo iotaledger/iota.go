@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"bytes"
 	"cmp"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -36,16 +35,7 @@ func (c *CommitmentInput) WorkScore(workScoreParameters *WorkScoreParameters) (W
 }
 
 func (c *CommitmentInput) Compare(other ContextInput) int {
-	typeCompare := cmp.Compare(c.Type(), other.Type())
-	if typeCompare != 0 {
-		return typeCompare
-	}
-
-	otherCommitmentInput := other.(*CommitmentInput)
-	commitmentIDCompare := bytes.Compare(c.CommitmentID[:], otherCommitmentInput.CommitmentID[:])
-	if commitmentIDCompare != 0 {
-		return commitmentIDCompare
-	}
-
-	return 0
+	// At most one commitment input is allowed.
+	// If we compare based only on the type, we achieve lexical order and "at most one" semantics.
+	return cmp.Compare(c.Type(), other.Type())
 }

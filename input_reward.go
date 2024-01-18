@@ -42,9 +42,9 @@ func (r *RewardInput) Compare(other ContextInput) int {
 	}
 
 	otherRewardInput := other.(*RewardInput)
-	commitmentIDCompare := cmp.Compare(r.Index, otherRewardInput.Index)
-	if commitmentIDCompare != 0 {
-		return commitmentIDCompare
+	indexCompare := cmp.Compare(r.Index, otherRewardInput.Index)
+	if indexCompare != 0 {
+		return indexCompare
 	}
 
 	return 0

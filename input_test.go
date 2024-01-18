@@ -113,7 +113,7 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.ContextInputsSyntacticalUnique(iotago.MaxInputsCount / 2)
+			valFunc := iotago.ContextInputsRewardInputMaxIndex(iotago.MaxInputsCount / 2)
 			var runErr error
 			for index, input := range tt.inputs {
 				if err := valFunc(index, input); err != nil {

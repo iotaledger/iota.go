@@ -122,16 +122,17 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
-	// cast is safe since serix validates that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
-	inputsCount := uint16(len(u.Inputs))
-	if err := SyntacticallyValidateContextInputs(u.ContextInputs,
-		ContextInputsSyntacticalUnique(inputsCount),
-	); err != nil {
-		return err
-	}
-
-	return SyntacticallyValidateInputs(u.Inputs,
+	err := SyntacticallyValidateInputs(u.Inputs,
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
 	)
+	if err != nil {
+		return err
+	}
+
+	// cast is safe since we just validated that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
+	inputsCount := uint16(len(u.Inputs))
+	return SyntacticallyValidateContextInputs(u.ContextInputs,
+		ContextInputsSyntacticalLexicalOrderAndUniqueness(),
+		ContextInputsRewardInputMaxIndex(inputsCount))
 }
