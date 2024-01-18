@@ -11,7 +11,6 @@ func TestAllotmentDeSerialize(t *testing.T) {
 	type allotmentDeSerializeTest struct {
 		name      string
 		source    iotago.TxEssenceAllotments
-		target    *iotago.TxEssenceAllotments
 		seriErr   error
 		deSeriErr error
 	}
@@ -37,7 +36,6 @@ func TestAllotmentDeSerialize(t *testing.T) {
 					Mana:      6,
 				},
 			},
-			target: &iotago.TxEssenceAllotments{},
 		},
 		{
 			name: "err - account id in allotments not lexically ordered",
@@ -55,7 +53,6 @@ func TestAllotmentDeSerialize(t *testing.T) {
 					Mana:      800,
 				},
 			},
-			target:    &iotago.TxEssenceAllotments{},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
@@ -71,7 +68,6 @@ func TestAllotmentDeSerialize(t *testing.T) {
 					Mana:      800,
 				},
 			},
-			target:    &iotago.TxEssenceAllotments{},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
@@ -81,8 +77,10 @@ func TestAllotmentDeSerialize(t *testing.T) {
 		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, &iotago.Transaction{
 			API: tpkg.ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
-				Allotments: test.source,
-				NetworkID:  tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+				Allotments:    test.source,
+				Capabilities:  iotago.TransactionCapabilitiesBitMaskWithCapabilities(),
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				NetworkID:     tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
 				Inputs: iotago.TxEssenceInputs{
 					tpkg.RandUTXOInput(),
 				},
@@ -92,13 +90,14 @@ func TestAllotmentDeSerialize(t *testing.T) {
 			},
 		})
 
-		tst := syntacticalSerializeTest{
-			name:        test.name,
-			transaction: stx,
-			seriErr:     test.seriErr,
-			deseriErr:   test.deSeriErr,
+		tst := deSerializeTest{
+			name:      test.name,
+			source:    stx,
+			target:    &iotago.SignedTransaction{},
+			seriErr:   test.seriErr,
+			deSeriErr: test.deSeriErr,
 		}
 
-		t.Run(tst.name, tst.Run)
+		t.Run(tst.name, tst.deSerialize)
 	}
 }
