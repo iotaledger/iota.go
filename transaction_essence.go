@@ -139,8 +139,11 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 		return err
 	}
 
-	return SyntacticallyValidateAllotments(
+	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
+
+	return SyntacticSliceValidator(
 		u.Allotments,
 		LexicalOrderAndUniquenessValidator[*Allotment](),
+		allotmentMaxManaValidator(maxManaValue),
 	)
 }

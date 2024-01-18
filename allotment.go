@@ -5,6 +5,8 @@ import (
 	"math"
 	"sort"
 
+	"github.com/iotaledger/hive.go/core/safemath"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -70,15 +72,21 @@ func (a Allotments) Get(id AccountID) Mana {
 	return 0
 }
 
-// SyntacticallyValidateAllotments validates the allotments by running them against the given ElementValidationFunc(s).
-func SyntacticallyValidateAllotments(allotments Allotments, funcs ...ElementValidationFunc[*Allotment]) error {
-	for i, allotment := range allotments {
-		for _, f := range funcs {
-			if err := f(i, allotment); err != nil {
-				return err
-			}
-		}
-	}
+// allotmentMaxManaValidator checks that the sum of all allotted mana does not exceed 2^(Mana Bits Count) - 1.
+func allotmentMaxManaValidator(maxManaValue Mana) ElementValidationFunc[*Allotment] {
+	var sum Mana
 
-	return nil
+	return func(index int, next *Allotment) error {
+		var err error
+		sum, err = safemath.SafeAdd(sum, next.Mana)
+		if err != nil {
+			return ierrors.Errorf("%w: %w: allotment mana sum calculation failed at allotment %d", ErrMaxManaExceeded, err, index)
+		}
+
+		if sum > maxManaValue {
+			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
+		}
+
+		return nil
+	}
 }

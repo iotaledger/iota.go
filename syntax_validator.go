@@ -38,11 +38,13 @@ func LexicalOrderAndUniquenessValidator[T constraints.Comparable[T]]() ElementVa
 // returning the first error it encounters, if any.
 func SyntacticSliceValidator[T any](
 	slice []T,
-	elementValidationFunc ElementValidationFunc[T],
+	elementValidationFuncs ...ElementValidationFunc[T],
 ) error {
 	for i, element := range slice {
-		if err := elementValidationFunc(i, element); err != nil {
-			return err
+		for _, f := range elementValidationFuncs {
+			if err := f(i, element); err != nil {
+				return err
+			}
 		}
 	}
 

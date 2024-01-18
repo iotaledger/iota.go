@@ -6,7 +6,6 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
@@ -247,25 +246,6 @@ func (t *Transaction) Size() int {
 	return t.TransactionEssence.Size() + t.Outputs.Size()
 }
 
-// allotmentSyntacticValidation checks that the sum of all allotted mana does not exceed 2^(Mana Bits Count) - 1.
-func (t *Transaction) allotmentSyntacticValidation(maxManaValue Mana) error {
-	var sum Mana
-
-	for index, allotment := range t.Allotments {
-		var err error
-		sum, err = safemath.SafeAdd(sum, allotment.Mana)
-		if err != nil {
-			return ierrors.Errorf("%w: %w: allotment mana sum calculation failed at allotment %d", ErrMaxManaExceeded, err, index)
-		}
-
-		if sum > maxManaValue {
-			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
-		}
-	}
-
-	return nil
-}
-
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (t *Transaction) SyntacticallyValidate(api API) error {
@@ -276,9 +256,6 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 	}
 
 	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
-	if err := t.allotmentSyntacticValidation(maxManaValue); err != nil {
-		return err
-	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
 		OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness(),
