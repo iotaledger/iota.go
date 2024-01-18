@@ -400,6 +400,34 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 	}
 }
 
+type syntacticalSerializeTest struct {
+	name        string
+	transaction *iotago.SignedTransaction
+	seriErr     error
+	deseriErr   error
+}
+
+func (test *syntacticalSerializeTest) Run(t *testing.T) {
+	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.transaction, serix.WithValidation())
+	if test.seriErr != nil {
+		require.ErrorIs(t, err, test.seriErr, "serialization failed")
+
+		serixData, err = tpkg.ZeroCostTestAPI.Encode(test.transaction)
+		require.NoError(t, err)
+	} else {
+		require.NoError(t, err)
+	}
+
+	serixTarget := &iotago.SignedTransaction{}
+	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
+
+	if test.deseriErr != nil {
+		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
+	} else {
+		require.NoError(t, err)
+	}
+}
+
 type transactionSerializeTest struct {
 	name      string
 	output    iotago.Output
@@ -421,24 +449,12 @@ func (test *transactionSerializeTest) Run(t *testing.T) {
 	txBuilder.AddOutput(test.output)
 	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
 
-	serixData, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
-	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr, "serialization failed")
-
-		serixData, err = tpkg.ZeroCostTestAPI.Encode(tx)
-		require.NoError(t, err)
-	} else {
-		require.NoError(t, err)
-	}
-
-	serixTarget := &iotago.SignedTransaction{}
-	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
-
-	if test.deseriErr != nil {
-		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
-	} else {
-		require.NoError(t, err)
-	}
+	(&syntacticalSerializeTest{
+		name:        test.name,
+		transaction: tx,
+		seriErr:     test.seriErr,
+		deseriErr:   test.deseriErr,
+	}).Run(t)
 }
 
 func TestTransactionInputUniqueness(t *testing.T) {

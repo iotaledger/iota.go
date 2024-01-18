@@ -3,10 +3,8 @@ package iotago_test
 import (
 	"testing"
 
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAllotmentDeSerialize(t *testing.T) {
@@ -80,27 +78,27 @@ func TestAllotmentDeSerialize(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
-			if test.seriErr != nil {
-				require.ErrorIs(t, err, test.seriErr)
-
-				// Encode again without validation so we can test decoding.
-				serixData, err = tpkg.ZeroCostTestAPI.Encode(test.source)
-				require.NoError(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-
-			bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target, serix.WithValidation())
-			if test.deSeriErr != nil {
-				require.ErrorIs(t, err, test.deSeriErr)
-
-				return
-			}
-			require.NoError(t, err)
-			require.Len(t, serixData, bytesRead)
-			require.EqualValues(t, test.source, *test.target)
+		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, &iotago.Transaction{
+			API: tpkg.ZeroCostTestAPI,
+			TransactionEssence: &iotago.TransactionEssence{
+				Allotments: test.source,
+				NetworkID:  tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+				Inputs: iotago.TxEssenceInputs{
+					tpkg.RandUTXOInput(),
+				},
+			},
+			Outputs: iotago.TxEssenceOutputs{
+				tpkg.RandBasicOutput(),
+			},
 		})
+
+		tst := syntacticalSerializeTest{
+			name:        test.name,
+			transaction: stx,
+			seriErr:     test.seriErr,
+			deseriErr:   test.deSeriErr,
+		}
+
+		t.Run(tst.name, tst.Run)
 	}
 }
