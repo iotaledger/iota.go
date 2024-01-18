@@ -154,6 +154,11 @@ func (b BlockID) UnregisterAlias() {
 	delete(BlockIDAliases, b)
 }
 
+// Compare compares two BlockIDs.
+func (b BlockID) Compare(other BlockID) int {
+	return bytes.Compare(b[:], other[:])
+}
+
 type BlockIDs []BlockID
 
 // ToHex converts the BlockIDs to their hex representation.

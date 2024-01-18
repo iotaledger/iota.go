@@ -20,6 +20,10 @@ import (
 )
 
 func TestBlock_DeSerialize(t *testing.T) {
+	blockID1 := iotago.MustBlockIDFromHexString("0x960192696d2c99fe338a212f223f96e72c11147ca23490806c1bb18e4d76995ccbfb91ae")
+	blockID2 := iotago.MustBlockIDFromHexString("0xc9e20c8bf3b1655b6fc385aebde8e25a668bd4109f5c698eb1b30b31fbbcfb5e6b9dd933")
+	blockID3 := iotago.MustBlockIDFromHexString("0xf2520bde652b46d7119a6d2a3b83947ce2d8a79867d37262e91f129215e5098f3f011d8e")
+
 	tests := []deSerializeTest{
 		{
 			name:   "ok - no payload",
@@ -40,6 +44,60 @@ func TestBlock_DeSerialize(t *testing.T) {
 			name:   "ok - validation block",
 			source: tpkg.RandBlock(tpkg.RandValidationBlockBody(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
 			target: &iotago.Block{},
+		},
+		{
+			name: "ok - basic block parent ids sorted",
+			source: func() *iotago.Block {
+				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
+				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
+				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+					blockID1,
+					blockID2,
+					blockID3,
+				}
+				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{}
+
+				return block
+			}(),
+			target: &iotago.Block{},
+		},
+		{
+			name: "ok - basic block strong parent ids unsorted",
+			source: func() *iotago.Block {
+				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
+				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
+				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+					blockID1,
+					blockID3,
+					blockID2,
+				}
+				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{}
+
+				return block
+			}(),
+			target:    &iotago.Block{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "ok - validation block weak parent ids unsorted",
+			source: func() *iotago.Block {
+				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
+				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
+				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+					tpkg.RandBlockID(),
+				}
+				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{
+					blockID1,
+					blockID3,
+					blockID2,
+				}
+
+				return block
+			}(),
+			target:    &iotago.Block{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 	}
 

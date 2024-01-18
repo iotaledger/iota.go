@@ -154,6 +154,11 @@ func (c CommitmentID) UnregisterAlias() {
 	delete(CommitmentIDAliases, c)
 }
 
+// Compare compares two CommitmentIDs.
+func (c CommitmentID) Compare(other CommitmentID) int {
+	return bytes.Compare(c[:], other[:])
+}
+
 type CommitmentIDs []CommitmentID
 
 // ToHex converts the CommitmentIDs to their hex representation.

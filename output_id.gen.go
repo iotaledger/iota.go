@@ -144,6 +144,11 @@ func (o OutputID) UnregisterAlias() {
 	delete(OutputIDAliases, o)
 }
 
+// Compare compares two OutputIDs.
+func (o OutputID) Compare(other OutputID) int {
+	return bytes.Compare(o[:], other[:])
+}
+
 type OutputIDs []OutputID
 
 // ToHex converts the OutputIDs to their hex representation.

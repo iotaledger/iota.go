@@ -154,6 +154,11 @@ func (t TransactionID) UnregisterAlias() {
 	delete(TransactionIDAliases, t)
 }
 
+// Compare compares two TransactionIDs.
+func (t TransactionID) Compare(other TransactionID) int {
+	return bytes.Compare(t[:], other[:])
+}
+
 type TransactionIDs []TransactionID
 
 // ToHex converts the TransactionIDs to their hex representation.

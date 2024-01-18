@@ -5,8 +5,11 @@ import (
 	"github.com/iotaledger/hive.go/ierrors"
 )
 
+// ElementValidationFunc is a func that, given the index of a slice element and the element itself
+// runs syntactical validations and returns an error if it fails.
 type ElementValidationFunc[T any] func(index int, next T) error
 
+// An ElementValidationFunc that checks lexical order and uniqueness based on the Compare implementation.
 func LexicalOrderAndUniquenessValidator[T constraints.Comparable[T]]() ElementValidationFunc[T] {
 	var prev *T
 	var prevIndex int
@@ -31,8 +34,8 @@ func LexicalOrderAndUniquenessValidator[T constraints.Comparable[T]]() ElementVa
 	}
 }
 
-// TODO: Extend doc.
-// Helper function to validate a slice syntactically.
+// SyntacticSliceValidator iterates over a slice and calls elementValidationFunc on each element,
+// returning the first error it encounters, if any.
 func SyntacticSliceValidator[T any](
 	slice []T,
 	elementValidationFunc ElementValidationFunc[T],
