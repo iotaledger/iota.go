@@ -459,9 +459,10 @@ func (test *transactionSerializeTest) Run(t *testing.T) {
 
 func TestTransactionInputUniqueness(t *testing.T) {
 	type test struct {
-		name    string
-		inputs  iotago.TxEssenceInputs
-		wantErr error
+		name      string
+		inputs    iotago.TxEssenceInputs
+		seriErr   error
+		deseriErr error
 	}
 
 	input1 := iotago.MustOutputIDFromHexString("0x2668778ef0362d601c36ea05c742185daa1740dfcdaee0acfde6a9806a1f2ed20d8566fd0800")
@@ -479,7 +480,7 @@ func TestTransactionInputUniqueness(t *testing.T) {
 				input4.UTXOInput(),
 				input2.UTXOInput(),
 			},
-			wantErr: nil,
+			seriErr: nil,
 		},
 		{
 			name: "fail - duplicate inputs",
@@ -488,39 +489,32 @@ func TestTransactionInputUniqueness(t *testing.T) {
 				input2.UTXOInput(),
 				input2.UTXOInput(),
 			},
-			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+			seriErr:   iotago.ErrInputUTXORefsNotUnique,
+			deseriErr: iotago.ErrInputUTXORefsNotUnique,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			basicOutput := &iotago.BasicOutput{
-				Amount: OneIOTA,
-				UnlockConditions: iotago.BasicOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{
-						Address: tpkg.RandEd25519Address(),
-					},
-				},
-			}
 
-			tx := &iotago.Transaction{
-				API: tpkg.ZeroCostTestAPI,
-				TransactionEssence: &iotago.TransactionEssence{
-					Inputs: test.inputs,
-				},
-				Outputs: iotago.TxEssenceOutputs{
-					basicOutput,
-				},
-			}
-
-			_, err := tpkg.ZeroCostTestAPI.Encode(tx, serix.WithValidation())
-			if test.wantErr != nil {
-				require.ErrorIs(t, err, test.wantErr)
-
-				return
-			}
-			require.NoError(t, err)
+		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, &iotago.Transaction{
+			API: tpkg.ZeroCostTestAPI,
+			TransactionEssence: &iotago.TransactionEssence{
+				NetworkID: tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+				Inputs:    test.inputs,
+			},
+			Outputs: iotago.TxEssenceOutputs{
+				tpkg.RandBasicOutput(),
+			},
 		})
+
+		tst := syntacticalSerializeTest{
+			name:        test.name,
+			transaction: stx,
+			seriErr:     test.seriErr,
+			deseriErr:   test.deseriErr,
+		}
+
+		t.Run(tst.name, tst.Run)
 	}
 }
 
