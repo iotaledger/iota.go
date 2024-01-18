@@ -29,29 +29,29 @@ func (test *deSerializeTest) assertBinaryEncodeDecode(t *testing.T) {
 
 	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr)
+		require.ErrorIs(t, err, test.seriErr, "binary encoding")
 
 		// Encode again without validation so we can check that deserialization would also fail.
 		serixData, err = tpkg.ZeroCostTestAPI.Encode(test.source)
-		require.NoError(t, err)
+		require.NoError(t, err, "binary encoding")
 	} else {
-		require.NoError(t, err)
+		require.NoError(t, err, "binary encoding")
 	}
 
 	if src, ok := test.source.(iotago.Sizer); ok {
-		require.Equal(t, src.Size(), len(serixData))
+		require.Equal(t, src.Size(), len(serixData), "binary encoding")
 	}
 
 	serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
 	bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
 	if test.deSeriErr != nil {
-		require.ErrorIs(t, err, test.deSeriErr)
+		require.ErrorIs(t, err, test.deSeriErr, "binary decoding")
 
 		return
 	}
-	require.NoError(t, err)
-	require.Len(t, serixData, bytesRead)
-	require.EqualValues(t, test.source, serixTarget)
+	require.NoError(t, err, "binary decoding")
+	require.Len(t, serixData, bytesRead, "binary decoding")
+	require.EqualValues(t, test.source, serixTarget, "binary decoding")
 }
 
 func (test *deSerializeTest) assertJSONEncodeDecode(t *testing.T) {
@@ -59,13 +59,13 @@ func (test *deSerializeTest) assertJSONEncodeDecode(t *testing.T) {
 
 	sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
 	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr)
+		require.ErrorIs(t, err, test.seriErr, "JSON encoding")
 
 		// Encode again without validation so we can check that deserialization would also fail.
 		sourceJSON, err = tpkg.ZeroCostTestAPI.JSONEncode(test.source)
-		require.NoError(t, err)
+		require.NoError(t, err, "JSON encoding")
 	} else {
-		require.NoError(t, err)
+		require.NoError(t, err, "JSON encoding")
 	}
 
 	// fmt.Println(string(lo.PanicOnErr(tpkg.ZeroCostTestAPI.JSONEncode(test.source))))
