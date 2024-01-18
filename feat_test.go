@@ -97,8 +97,9 @@ func TestFeaturesMetadata(t *testing.T) {
 					"hellö": []byte("world"),
 				},
 			},
-			seriErr: iotago.ErrInvalidMetadataKey,
-			target:  &iotago.MetadataFeature{},
+			seriErr:   iotago.ErrInvalidMetadataKey,
+			deSeriErr: iotago.ErrInvalidMetadataKey,
+			target:    &iotago.MetadataFeature{},
 		},
 		{
 			name: "ok - StateMetadataFeature",
@@ -118,8 +119,9 @@ func TestFeaturesMetadata(t *testing.T) {
 					"hellö": []byte("world"),
 				},
 			},
-			seriErr: iotago.ErrInvalidStateMetadataKey,
-			target:  &iotago.StateMetadataFeature{},
+			seriErr:   iotago.ErrInvalidStateMetadataKey,
+			deSeriErr: iotago.ErrInvalidStateMetadataKey,
+			target:    &iotago.StateMetadataFeature{},
 		},
 		{
 			name: "fail - StateMetadataFeature - space char in key",
@@ -128,8 +130,9 @@ func TestFeaturesMetadata(t *testing.T) {
 					"space-> ": []byte("world"),
 				},
 			},
-			seriErr: iotago.ErrInvalidStateMetadataKey,
-			target:  &iotago.StateMetadataFeature{},
+			seriErr:   iotago.ErrInvalidStateMetadataKey,
+			deSeriErr: iotago.ErrInvalidStateMetadataKey,
+			target:    &iotago.StateMetadataFeature{},
 		},
 		{
 			name: "fail - StateMetadataFeature - ASCII control-character in key",
@@ -138,8 +141,9 @@ func TestFeaturesMetadata(t *testing.T) {
 					"\x07": []byte("world"),
 				},
 			},
-			seriErr: iotago.ErrInvalidStateMetadataKey,
-			target:  &iotago.StateMetadataFeature{},
+			seriErr:   iotago.ErrInvalidStateMetadataKey,
+			deSeriErr: iotago.ErrInvalidStateMetadataKey,
+			target:    &iotago.StateMetadataFeature{},
 		},
 	}
 

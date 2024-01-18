@@ -36,7 +36,9 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	if test.seriErr != nil {
 		require.ErrorIs(t, err, test.seriErr)
 
-		return
+		// Encode again without validation so we can check that deserialization would also fail.
+		serixData, err = tpkg.ZeroCostTestAPI.Encode(test.source)
+		require.NoError(t, err)
 	}
 	require.NoError(t, err)
 
@@ -45,7 +47,7 @@ func (test *deSerializeTest) deSerialize(t *testing.T) {
 	}
 
 	serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-	bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget)
+	bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
 	if test.deSeriErr != nil {
 		require.ErrorIs(t, err, test.deSeriErr)
 

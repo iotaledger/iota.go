@@ -78,7 +78,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 				}),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same Anchor twice
@@ -116,7 +116,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 				}),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same NFT twice
@@ -150,7 +150,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 				}),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same Foundry twice
@@ -202,7 +202,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 				}),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 	}
 
@@ -249,7 +249,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 				}),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 

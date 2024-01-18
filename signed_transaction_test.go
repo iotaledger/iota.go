@@ -96,7 +96,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 				)),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			deSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 		{
 			name: "too many context inputs",
@@ -113,7 +113,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 				)),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			deSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
@@ -135,7 +135,7 @@ func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
 			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount+1),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			deSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
@@ -153,11 +153,11 @@ func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
 			deSeriErr: nil,
 		},
 		{
-			name:      "too many outputs",
+			name:      "too many allotments",
 			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount+1),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			deSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
@@ -191,7 +191,7 @@ func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
 				}))),
 			target:    &iotago.SignedTransaction{},
 			seriErr:   iotago.ErrRefUTXOIndexInvalid,
-			deSeriErr: nil,
+			deSeriErr: iotago.ErrRefUTXOIndexInvalid,
 		},
 	}
 	for _, tt := range tests {

@@ -58,16 +58,18 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 			source: &iotago.GovernorAddressUnlockCondition{
 				Address: tpkg.RandImplicitAccountCreationAddress(),
 			},
-			target:  &iotago.GovernorAddressUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			target:    &iotago.GovernorAddressUnlockCondition{},
+			seriErr:   iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			deSeriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in StateControllerAddressUnlockCondition",
 			source: &iotago.StateControllerAddressUnlockCondition{
 				Address: tpkg.RandImplicitAccountCreationAddress(),
 			},
-			target:  &iotago.StateControllerAddressUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			target:    &iotago.StateControllerAddressUnlockCondition{},
+			seriErr:   iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			deSeriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in ExpirationUnlockCondition",
@@ -75,16 +77,18 @@ func TestUnlockConditionsDeSerialize(t *testing.T) {
 				Slot:          3,
 				ReturnAddress: tpkg.RandImplicitAccountCreationAddress(),
 			},
-			target:  &iotago.ExpirationUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			target:    &iotago.ExpirationUnlockCondition{},
+			seriErr:   iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			deSeriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 		{
 			name: "fail - ImplicitAccountCreationAddress in StorageDepositReturnUnlockCondition",
 			source: &iotago.StorageDepositReturnUnlockCondition{
 				ReturnAddress: tpkg.RandImplicitAccountCreationAddress(),
 			},
-			target:  &iotago.StorageDepositReturnUnlockCondition{},
-			seriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			target:    &iotago.StorageDepositReturnUnlockCondition{},
+			seriErr:   iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
+			deSeriErr: iotago.ErrImplicitAccountCreationAddressInInvalidUnlockCondition,
 		},
 	}
 
