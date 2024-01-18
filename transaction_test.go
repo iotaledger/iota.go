@@ -363,6 +363,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(1), allotmentWithMana(maxManaValue - 1)}
+					tx.Allotments.Sort()
 				},
 			),
 			wantErr: nil,
@@ -372,6 +373,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue + 1)}
+					tx.Allotments.Sort()
 				},
 			),
 			wantErr: iotago.ErrMaxManaExceeded,
@@ -381,6 +383,7 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 			tx: tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI,
 				func(tx *iotago.Transaction) {
 					tx.Allotments = iotago.Allotments{allotmentWithMana(maxManaValue - 1), allotmentWithMana(maxManaValue - 1)}
+					tx.Allotments.Sort()
 				},
 			),
 			wantErr: iotago.ErrMaxManaExceeded,

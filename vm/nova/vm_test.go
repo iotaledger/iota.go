@@ -7568,12 +7568,12 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 					},
 					Features: iotago.BasicOutputFeatures{
+						&iotago.SenderFeature{
+							Address: edIdentAddrKeys.Address,
+						},
 						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(40)}},
 						&iotago.TagFeature{
 							Tag: tpkg.RandBytes(12),
-						},
-						&iotago.SenderFeature{
-							Address: edIdentAddrKeys.Address,
 						},
 						&iotago.NativeTokenFeature{
 							ID:     exampleNativeTokenFeature.ID,
@@ -7666,6 +7666,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleNativeTokenFeature,
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
@@ -7674,7 +7675,6 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
-						exampleNativeTokenFeature,
 					},
 				},
 			},
@@ -7830,13 +7830,13 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleMetadataFeature,
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
 								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
-						exampleMetadataFeature,
 					},
 				},
 			},
