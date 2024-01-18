@@ -588,12 +588,6 @@ func V3API(protoParams ProtocolParameters) API {
 		)
 		must(api.RegisterInterfaceObjects((*Input)(nil), (*UTXOInput)(nil)))
 
-		// must(api.RegisterValidator(TxEssenceInputs{},
-		// 	func(ctx context.Context, inputs TxEssenceInputs) error {
-		// 		valFun := serix.UniquenessValidator[Input]()
-		// 		return serix.SyntacticSliceValidator[Input](ctx, inputs, valFun)
-		// 	},
-		// ))
 		must(api.RegisterTypeSettings(TxEssenceInputs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3InputsArrRules),
 		))
