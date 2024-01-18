@@ -290,7 +290,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		immMetadataEntries = iotago.MetadataFeatureEntries{"data": []byte("654321")}
 	)
 
-	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, amount).
+	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, amount, 12345, tokenScheme).
 		NativeToken(nativeTokenFeature).
 		Metadata(metadataEntries).
 		ImmutableMetadata(immMetadataEntries).
@@ -298,8 +298,9 @@ func TestFoundryOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, &iotago.FoundryOutput{
-		Amount:      1337,
-		TokenScheme: tokenScheme,
+		Amount:       1337,
+		SerialNumber: 12345,
+		TokenScheme:  tokenScheme,
 		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},
