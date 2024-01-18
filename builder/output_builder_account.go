@@ -105,10 +105,10 @@ func (builder *AccountOutputBuilder) Sender(senderAddr iotago.Address) *AccountO
 	return builder
 }
 
-// ImmutableSender sets/modifies an iotago.SenderFeature as an immutable feature on the output.
+// ImmutableIssuer sets/modifies an iotago.IssuerFeature as an immutable feature on the output.
 // Only call this function on a new iotago.AccountOutput.
-func (builder *AccountOutputBuilder) ImmutableSender(senderAddr iotago.Address) *AccountOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.SenderFeature{Address: senderAddr})
+func (builder *AccountOutputBuilder) ImmutableIssuer(issuer iotago.Address) *AccountOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.IssuerFeature{Address: issuer})
 
 	return builder
 }
