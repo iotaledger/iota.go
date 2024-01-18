@@ -351,16 +351,13 @@ type TransDepIdentOutput interface {
 	UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error)
 }
 
-// OutputsSyntacticalValidationFunc which given the index of an output and the output itself, runs syntactical validations and returns an error if any should fail.
-type OutputsSyntacticalValidationFunc func(index int, output Output) error
-
-// OutputsSyntacticalDepositAmount returns an OutputsSyntacticalValidationFunc which checks that:
+// OutputsSyntacticalDepositAmount returns an ElementValidationFunc[Output] which checks that:
 //   - every output has base token amount more than zero
 //   - the sum of base token amounts does not exceed the total supply
 //   - the base token amount fulfills the minimum storage deposit as calculated from the storage score of the output
 //   - if the output contains a StorageDepositReturnUnlockCondition, it must "return" bigger equal than the minimum storage deposit
 //     required for the sender to send back the tokens.
-func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScoreStructure *StorageScoreStructure) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScoreStructure *StorageScoreStructure) ElementValidationFunc[Output] {
 	var sum BaseToken
 
 	return func(index int, output Output) error {
@@ -402,9 +399,9 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 	}
 }
 
-// OutputsSyntacticalNativeTokens returns an OutputsSyntacticalValidationFunc which checks that:
+// OutputsSyntacticalNativeTokens returns an ElementValidationFunc[Output] which checks that:
 //   - each native token holds an amount bigger than zero
-func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalNativeTokens() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		nativeToken := output.FeatureSet().NativeToken()
 		if nativeToken == nil {
@@ -419,9 +416,9 @@ func OutputsSyntacticalNativeTokens() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// OutputsSyntacticalStoredMana returns an OutputsSyntacticalValidationFunc which checks that:
+// OutputsSyntacticalStoredMana returns an ElementValidationFunc[Output] which checks that:
 //   - the sum of all stored mana fields does not exceed 2^(Mana Bits Count) - 1.
-func OutputsSyntacticalStoredMana(maxManaValue Mana) OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalStoredMana(maxManaValue Mana) ElementValidationFunc[Output] {
 	var sum Mana
 
 	return func(index int, output Output) error {
@@ -441,9 +438,9 @@ func OutputsSyntacticalStoredMana(maxManaValue Mana) OutputsSyntacticalValidatio
 	}
 }
 
-// OutputsSyntacticalExpirationAndTimelock returns an OutputsSyntacticalValidationFunc which checks that:
+// OutputsSyntacticalExpirationAndTimelock returns an ElementValidationFunc[Output] which checks that:
 // That ExpirationUnlockCondition and TimelockUnlockCondition does not have its unix criteria set to zero.
-func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalExpirationAndTimelock() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		unlockConditionSet := output.UnlockConditionSet()
 
@@ -463,11 +460,11 @@ func OutputsSyntacticalExpirationAndTimelock() OutputsSyntacticalValidationFunc 
 	}
 }
 
-// OutputsSyntacticalAccount returns an OutputsSyntacticalValidationFunc which checks that AccountOutput(s)':
+// OutputsSyntacticalAccount returns an ElementValidationFunc[Output] which checks that AccountOutput(s)':
 //   - FoundryCounter is zero if the AccountID is zeroed
 //   - Address must be different from AccountAddress derived from AccountID
 //   - Amount must be greater than or equal to StakedAmount of staking feature if it is present
-func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalAccount() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		accountOutput, is := output.(*AccountOutput)
 		if !is {
@@ -494,10 +491,10 @@ func OutputsSyntacticalAccount() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// OutputsSyntacticalAnchor returns an OutputsSyntacticalValidationFunc which checks that AnchorOutput(s)':
+// OutputsSyntacticalAnchor returns an ElementValidationFunc[Output] which checks that AnchorOutput(s)':
 //   - StateIndex is zero if the AnchorID is zeroed
 //   - StateController and GovernanceController must be different from AnchorAddress derived from AnchorID
-func OutputsSyntacticalAnchor() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalAnchor() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		anchorOutput, is := output.(*AnchorOutput)
 		if !is {
@@ -525,10 +522,10 @@ func OutputsSyntacticalAnchor() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// OutputsSyntacticalFoundry returns an OutputsSyntacticalValidationFunc which checks that FoundryOutput(s)':
+// OutputsSyntacticalFoundry returns an ElementValidationFunc[Output] which checks that FoundryOutput(s)':
 //   - Minted and melted supply is less equal MaximumSupply
 //   - MaximumSupply is not zero
-func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalFoundry() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		foundryOutput, is := output.(*FoundryOutput)
 		if !is {
@@ -558,9 +555,9 @@ func OutputsSyntacticalFoundry() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// OutputsSyntacticalNFT returns an OutputsSyntacticalValidationFunc which checks that NFTOutput(s)':
+// OutputsSyntacticalNFT returns an ElementValidationFunc[Output] which checks that NFTOutput(s)':
 //   - Address must be different from NFTAddress derived from NFTID
-func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalNFT() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		nftOutput, is := output.(*NFTOutput)
 		if !is {
@@ -580,9 +577,9 @@ func OutputsSyntacticalNFT() OutputsSyntacticalValidationFunc {
 	}
 }
 
-// OutputsSyntacticalDelegation returns an OutputsSyntacticalValidationFunc which checks that DelegationOutput(s)':
+// OutputsSyntacticalDelegation returns an ElementValidationFunc[Output] which checks that DelegationOutput(s)':
 //   - Validator ID is not zeroed out.
-func OutputsSyntacticalDelegation() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalDelegation() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		delegationOutput, is := output.(*DelegationOutput)
 		if !is {
@@ -647,7 +644,7 @@ func checkAddressRestrictions(output TxEssenceOutput, address Address) error {
 //
 // Does not validate the Return Address in StorageDepositReturnUnlockCondition because such a Return Address
 // already is as restricted as the most restricted address.
-func OutputsSyntacticalAddressRestrictions() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalAddressRestrictions() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
 			if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
@@ -674,7 +671,7 @@ func OutputsSyntacticalAddressRestrictions() OutputsSyntacticalValidationFunc {
 	}
 }
 
-func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		switch typedOutput := output.(type) {
 		case *BasicOutput, *FoundryOutput:
@@ -705,7 +702,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() OutputsSyntacticalValida
 }
 
 // TODO
-func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		elementValidationFunc := LexicalOrderAndUniquenessValidator[UnlockCondition]()
 		switch typedOutput := output.(type) {
@@ -739,7 +736,7 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() OutputsSyntact
 }
 
 // TODO
-func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		featureValidationFunc := LexicalOrderAndUniquenessValidator[Feature]()
 		immutableFeatureValidationFunc := LexicalOrderAndUniquenessValidator[Feature]()
@@ -803,8 +800,8 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() OutputsSyntacticalVal
 	}
 }
 
-// SyntacticallyValidateOutputs validates the outputs by running them against the given OutputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...OutputsSyntacticalValidationFunc) error {
+// SyntacticallyValidateOutputs validates the outputs by running them against the given ElementValidationFunc(s).
+func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...ElementValidationFunc[Output]) error {
 	for i, output := range outputs {
 		for _, f := range funcs {
 			if err := f(i, output); err != nil {
@@ -816,7 +813,7 @@ func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...OutputsSynt
 	return nil
 }
 
-func OutputsSyntacticalChainConstrainedOutputUniqueness() OutputsSyntacticalValidationFunc {
+func OutputsSyntacticalChainConstrainedOutputUniqueness() ElementValidationFunc[Output] {
 	chainConstrainedOutputs := make(ChainOutputSet)
 
 	return func(index int, output Output) error {

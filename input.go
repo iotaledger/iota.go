@@ -116,16 +116,3 @@ func InputsSyntacticalIndicesWithinBounds() ElementValidationFunc[Input] {
 		return nil
 	}
 }
-
-// SyntacticallyValidateInputs validates the inputs by running them against the given ElementValidationFunc(s).
-func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...ElementValidationFunc[Input]) error {
-	for i, input := range inputs {
-		for _, f := range funcs {
-			if err := f(i, input); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}

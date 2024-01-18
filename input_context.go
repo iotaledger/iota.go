@@ -127,17 +127,3 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[
 		return nil
 	}
 }
-
-// SyntacticallyValidateContextInputs validates the context inputs by running them against
-// the given ElementValidationFunc(s).
-func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ElementValidationFunc[ContextInput]) error {
-	for i, input := range contextInputs {
-		for _, f := range funcs {
-			if err := f(i, input); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
