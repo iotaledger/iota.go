@@ -103,7 +103,7 @@ type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) 
 // As a special case, it also checks that at most one commitment input is present,
 // due to how Compare is defined on commitment inputs.
 func ContextInputsSyntacticalLexicalOrderAndUniqueness() ContextInputsSyntacticalValidationFunc {
-	contextInputValidationFunc := LexicalOrderAndUniqueness[ContextInput]()
+	contextInputValidationFunc := LexicalOrderAndUniquenessValidator[ContextInput]()
 	return func(index int, input ContextInput) error {
 		if err := contextInputValidationFunc(index, input); err != nil {
 			return err

@@ -82,7 +82,7 @@ type UnlockCondition interface {
 }
 
 // UnlockConditions is a slice of UnlockCondition(s).
-type UnlockConditions[T UnlockCondition] []UnlockCondition
+type UnlockConditions[T UnlockCondition] []T
 
 func (f UnlockConditions[T]) Equal(other UnlockConditions[T]) bool {
 	if len(f) != len(other) {

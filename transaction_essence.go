@@ -141,6 +141,6 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 
 	return SyntacticallyValidateAllotments(
 		u.Allotments,
-		LexicalOrderAndUniqueness[*Allotment](),
+		LexicalOrderAndUniquenessValidator[*Allotment](),
 	)
 }
