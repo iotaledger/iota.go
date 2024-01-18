@@ -132,7 +132,15 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 
 	// cast is safe since we just validated that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
 	inputsCount := uint16(len(u.Inputs))
-	return SyntacticallyValidateContextInputs(u.ContextInputs,
+	err = SyntacticallyValidateContextInputs(u.ContextInputs,
 		ContextInputsSyntacticalLexicalOrderAndUniqueness(),
 		ContextInputsRewardInputMaxIndex(inputsCount))
+	if err != nil {
+		return err
+	}
+
+	return SyntacticallyValidateAllotments(
+		u.Allotments,
+		LexicalOrderAndUniqueness[*Allotment](),
+	)
 }

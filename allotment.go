@@ -87,3 +87,16 @@ func (a Allotments) Get(id AccountID) Mana {
 
 	return 0
 }
+
+// SyntacticallyValidateAllotments validates the allotments by running them against the given ElementValidationFunc(s).
+func SyntacticallyValidateAllotments(allotments Allotments, funcs ...ElementValidationFunc[*Allotment]) error {
+	for i, allotment := range allotments {
+		for _, f := range funcs {
+			if err := f(i, allotment); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}

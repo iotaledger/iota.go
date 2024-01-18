@@ -603,13 +603,6 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3OutputsArrRules),
 		))
 
-		// must(api.RegisterValidator(TxEssenceAllotments{},
-		// 	func(ctx context.Context, allotments Allotments) error {
-		// 		validationFunc := serix.LexicalOrderAndUniqueness[*Allotment]()
-		// 		return serix.SyntacticSliceValidator(ctx, allotments, validationFunc)
-		// 	},
-		// ))
-
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
 			serix.TypeSettings{}.
 				WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).
