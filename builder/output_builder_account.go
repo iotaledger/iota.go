@@ -71,6 +71,30 @@ func (builder *AccountOutputBuilder) Address(addr iotago.Address) *AccountOutput
 	return builder
 }
 
+// Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
+func (builder *AccountOutputBuilder) Sender(senderAddr iotago.Address) *AccountOutputBuilder {
+	builder.output.Features.Upsert(&iotago.SenderFeature{Address: senderAddr})
+
+	return builder
+}
+
+// Metadata sets/modifies an iotago.MetadataFeature on the output.
+func (builder *AccountOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AccountOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
+
+	return builder
+}
+
+// BlockIssuer sets/modifies an iotago.BlockIssuerFeature as a mutable feature on the output.
+func (builder *AccountOutputBuilder) BlockIssuer(keys iotago.BlockIssuerKeys, expirySlot iotago.SlotIndex) *AccountOutputBuilder {
+	builder.output.Features.Upsert(&iotago.BlockIssuerFeature{
+		BlockIssuerKeys: keys,
+		ExpirySlot:      expirySlot,
+	})
+
+	return builder
+}
+
 // Staking sets/modifies an iotago.StakingFeature as a mutable feature on the output.
 func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost iotago.Mana, startEpoch iotago.EpochIndex, optEndEpoch ...iotago.EpochIndex) *AccountOutputBuilder {
 	endEpoch := iotago.MaxEpochIndex
@@ -88,34 +112,10 @@ func (builder *AccountOutputBuilder) Staking(amount iotago.BaseToken, fixedCost 
 	return builder
 }
 
-// BlockIssuer sets/modifies an iotago.BlockIssuerFeature as a mutable feature on the output.
-func (builder *AccountOutputBuilder) BlockIssuer(keys iotago.BlockIssuerKeys, expirySlot iotago.SlotIndex) *AccountOutputBuilder {
-	builder.output.Features.Upsert(&iotago.BlockIssuerFeature{
-		BlockIssuerKeys: keys,
-		ExpirySlot:      expirySlot,
-	})
-
-	return builder
-}
-
-// Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (builder *AccountOutputBuilder) Sender(senderAddr iotago.Address) *AccountOutputBuilder {
-	builder.output.Features.Upsert(&iotago.SenderFeature{Address: senderAddr})
-
-	return builder
-}
-
 // ImmutableIssuer sets/modifies an iotago.IssuerFeature as an immutable feature on the output.
 // Only call this function on a new iotago.AccountOutput.
 func (builder *AccountOutputBuilder) ImmutableIssuer(issuer iotago.Address) *AccountOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.IssuerFeature{Address: issuer})
-
-	return builder
-}
-
-// Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *AccountOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AccountOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

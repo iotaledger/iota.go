@@ -48,13 +48,6 @@ func (builder *BasicOutputBuilder) Address(addr iotago.Address) *BasicOutputBuil
 	return builder
 }
 
-// NativeToken adds/modifies a native token to/on the output.
-func (builder *BasicOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *BasicOutputBuilder {
-	builder.output.Features.Upsert(nt)
-
-	return builder
-}
-
 // StorageDepositReturn sets/modifies an iotago.StorageDepositReturnUnlockCondition on the output.
 func (builder *BasicOutputBuilder) StorageDepositReturn(returnAddr iotago.Address, amount iotago.BaseToken) *BasicOutputBuilder {
 	builder.output.UnlockConditions.Upsert(&iotago.StorageDepositReturnUnlockCondition{ReturnAddress: returnAddr, Amount: amount})
@@ -93,6 +86,13 @@ func (builder *BasicOutputBuilder) Metadata(entries iotago.MetadataFeatureEntrie
 // Tag sets/modifies an iotago.TagFeature on the output.
 func (builder *BasicOutputBuilder) Tag(tag []byte) *BasicOutputBuilder {
 	builder.output.Features.Upsert(&iotago.TagFeature{Tag: tag})
+
+	return builder
+}
+
+// NativeToken adds/modifies a native token to/on the output.
+func (builder *BasicOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *BasicOutputBuilder {
+	builder.output.Features.Upsert(nt)
 
 	return builder
 }

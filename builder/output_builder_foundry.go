@@ -41,16 +41,16 @@ func (builder *FoundryOutputBuilder) Amount(amount iotago.BaseToken) *FoundryOut
 	return builder
 }
 
-// NativeToken adds/modifies a native token to/on the output.
-func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *FoundryOutputBuilder {
-	builder.output.Features.Upsert(nt)
+// Metadata sets/modifies an iotago.MetadataFeature on the output.
+func (builder *FoundryOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *FoundryOutputBuilder {
+	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }
 
-// Metadata sets/modifies an iotago.MetadataFeature on the output.
-func (builder *FoundryOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *FoundryOutputBuilder {
-	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
+// NativeToken adds/modifies a native token to/on the output.
+func (builder *FoundryOutputBuilder) NativeToken(nt *iotago.NativeTokenFeature) *FoundryOutputBuilder {
+	builder.output.Features.Upsert(nt)
 
 	return builder
 }

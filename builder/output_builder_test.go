@@ -158,13 +158,13 @@ func TestAnchorOutputBuilder(t *testing.T) {
 		amount               iotago.BaseToken = 1337
 		stateMetadataEntries                  = iotago.StateMetadataFeatureEntries{"data": []byte("123456")}
 		immMetadataEntries                    = iotago.MetadataFeatureEntries{"data": []byte("654321")}
-		immSender                             = tpkg.RandEd25519Address()
+		immIssuer                             = tpkg.RandEd25519Address()
 	)
 
 	anchorOutput, err := builder.NewAnchorOutputBuilder(stateCtrl, gov, amount).
 		StateMetadata(stateMetadataEntries).
 		ImmutableMetadata(immMetadataEntries).
-		ImmutableSender(immSender).
+		ImmutableIssuer(immIssuer).
 		Build()
 	require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
@@ -217,7 +217,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
