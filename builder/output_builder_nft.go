@@ -48,17 +48,17 @@ func (builder *NFTOutputBuilder) Mana(mana iotago.Mana) *NFTOutputBuilder {
 	return builder
 }
 
-// Address sets/modifies an iotago.AddressUnlockCondition on the output.
-func (builder *NFTOutputBuilder) Address(addr iotago.Address) *NFTOutputBuilder {
-	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
-
-	return builder
-}
-
 // NFTID sets the iotago.NFTID of this output.
 // Do not call this function if the underlying iotago.NFTID is not new.
 func (builder *NFTOutputBuilder) NFTID(nftID iotago.NFTID) *NFTOutputBuilder {
 	builder.output.NFTID = nftID
+
+	return builder
+}
+
+// Address sets/modifies an iotago.AddressUnlockCondition on the output.
+func (builder *NFTOutputBuilder) Address(addr iotago.Address) *NFTOutputBuilder {
+	builder.output.UnlockConditions.Upsert(&iotago.AddressUnlockCondition{Address: addr})
 
 	return builder
 }
@@ -98,14 +98,6 @@ func (builder *NFTOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries)
 	return builder
 }
 
-// ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
-// Only call this function on a new iotago.NFTOutput.
-func (builder *NFTOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *NFTOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
-
-	return builder
-}
-
 // Tag sets/modifies an iotago.TagFeature on the output.
 func (builder *NFTOutputBuilder) Tag(tag []byte) *NFTOutputBuilder {
 	builder.output.Features.Upsert(&iotago.TagFeature{Tag: tag})
@@ -117,6 +109,14 @@ func (builder *NFTOutputBuilder) Tag(tag []byte) *NFTOutputBuilder {
 // Only call this function on a new iotago.NFTOutput.
 func (builder *NFTOutputBuilder) ImmutableIssuer(issuer iotago.Address) *NFTOutputBuilder {
 	builder.output.ImmutableFeatures.Upsert(&iotago.IssuerFeature{Address: issuer})
+
+	return builder
+}
+
+// ImmutableMetadata sets/modifies an iotago.MetadataFeature as an immutable feature on the output.
+// Only call this function on a new iotago.NFTOutput.
+func (builder *NFTOutputBuilder) ImmutableMetadata(entries iotago.MetadataFeatureEntries) *NFTOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.MetadataFeature{Entries: entries})
 
 	return builder
 }

@@ -52,7 +52,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		amount             iotago.BaseToken = 1337
 		metadataEntries                     = iotago.MetadataFeatureEntries{"data": []byte("123456")}
 		immMetadataEntries                  = iotago.MetadataFeatureEntries{"data": []byte("654321")}
-		immSender                           = tpkg.RandEd25519Address()
+		immIssuer                           = tpkg.RandEd25519Address()
 
 		blockIssuerKey1    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 		blockIssuerKey2    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
@@ -66,7 +66,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 		Staking(amount, 1, 1000).
 		BlockIssuer(iotago.NewBlockIssuerKeys(blockIssuerKey1, blockIssuerKey2, blockIssuerKey3), 100000).
 		ImmutableMetadata(immMetadataEntries).
-		ImmutableSender(immSender).
+		ImmutableIssuer(immIssuer).
 		FoundriesToGenerate(5).
 		Build()
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
@@ -143,7 +143,7 @@ func TestAccountOutputBuilder(t *testing.T) {
 			},
 		},
 		ImmutableFeatures: iotago.AccountOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
@@ -158,13 +158,13 @@ func TestAnchorOutputBuilder(t *testing.T) {
 		amount               iotago.BaseToken = 1337
 		stateMetadataEntries                  = iotago.StateMetadataFeatureEntries{"data": []byte("123456")}
 		immMetadataEntries                    = iotago.MetadataFeatureEntries{"data": []byte("654321")}
-		immSender                             = tpkg.RandEd25519Address()
+		immIssuer                             = tpkg.RandEd25519Address()
 	)
 
 	anchorOutput, err := builder.NewAnchorOutputBuilder(stateCtrl, gov, amount).
 		StateMetadata(stateMetadataEntries).
 		ImmutableMetadata(immMetadataEntries).
-		ImmutableSender(immSender).
+		ImmutableIssuer(immIssuer).
 		Build()
 	require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
@@ -217,7 +217,7 @@ func TestAnchorOutputBuilder(t *testing.T) {
 			&iotago.StateMetadataFeature{Entries: stateMetadataEntries},
 		},
 		ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-			&iotago.SenderFeature{Address: immSender},
+			&iotago.IssuerFeature{Address: immIssuer},
 			&iotago.MetadataFeature{Entries: immMetadataEntries},
 		},
 	}
@@ -290,7 +290,7 @@ func TestFoundryOutputBuilder(t *testing.T) {
 		immMetadataEntries = iotago.MetadataFeatureEntries{"data": []byte("654321")}
 	)
 
-	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, tokenScheme, amount).
+	foundryOutput, err := builder.NewFoundryOutputBuilder(accountAddr, amount, 12345, tokenScheme).
 		NativeToken(nativeTokenFeature).
 		Metadata(metadataEntries).
 		ImmutableMetadata(immMetadataEntries).
@@ -298,8 +298,9 @@ func TestFoundryOutputBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, &iotago.FoundryOutput{
-		Amount:      1337,
-		TokenScheme: tokenScheme,
+		Amount:       1337,
+		SerialNumber: 12345,
+		TokenScheme:  tokenScheme,
 		UnlockConditions: iotago.FoundryOutputUnlockConditions{
 			&iotago.ImmutableAccountUnlockCondition{Address: accountAddr},
 		},

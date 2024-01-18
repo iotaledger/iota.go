@@ -77,22 +77,6 @@ func (builder *AnchorOutputBuilder) Governor(governor iotago.Address) *AnchorOut
 	return builder
 }
 
-// Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (builder *AnchorOutputBuilder) Sender(senderAddr iotago.Address) *AnchorOutputBuilder {
-	builder.output.Features.Upsert(&iotago.SenderFeature{Address: senderAddr})
-	builder.govCtrlReq = true
-
-	return builder
-}
-
-// ImmutableSender sets/modifies an iotago.SenderFeature as an immutable feature on the output.
-// Only call this function on a new iotago.AnchorOutput.
-func (builder *AnchorOutputBuilder) ImmutableSender(senderAddr iotago.Address) *AnchorOutputBuilder {
-	builder.output.ImmutableFeatures.Upsert(&iotago.SenderFeature{Address: senderAddr})
-
-	return builder
-}
-
 // Metadata sets/modifies an iotago.MetadataFeature on the output.
 func (builder *AnchorOutputBuilder) Metadata(entries iotago.MetadataFeatureEntries) *AnchorOutputBuilder {
 	builder.output.Features.Upsert(&iotago.MetadataFeature{Entries: entries})
@@ -105,6 +89,14 @@ func (builder *AnchorOutputBuilder) Metadata(entries iotago.MetadataFeatureEntri
 func (builder *AnchorOutputBuilder) StateMetadata(entries iotago.StateMetadataFeatureEntries) *AnchorOutputBuilder {
 	builder.output.Features.Upsert(&iotago.StateMetadataFeature{Entries: entries})
 	builder.stateCtrlReq = true
+
+	return builder
+}
+
+// ImmutableIssuer sets/modifies an iotago.IssuerFeature as an immutable feature on the output.
+// Only call this function on a new iotago.AnchorOutput.
+func (builder *AnchorOutputBuilder) ImmutableIssuer(issuer iotago.Address) *AnchorOutputBuilder {
+	builder.output.ImmutableFeatures.Upsert(&iotago.IssuerFeature{Address: issuer})
 
 	return builder
 }
@@ -175,11 +167,6 @@ func (trans *AnchorStateTransition) StateMetadata(entries iotago.StateMetadataFe
 	return trans.builder.StateMetadata(entries).StateTransition()
 }
 
-// Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (trans *AnchorStateTransition) Sender(senderAddr iotago.Address) *AnchorStateTransition {
-	return trans.builder.Sender(senderAddr).StateTransition()
-}
-
 // Builder returns the AnchorOutputBuilder.
 func (trans *AnchorStateTransition) Builder() *AnchorOutputBuilder {
 	return trans.builder
@@ -204,11 +191,6 @@ func (trans *AnchorGovernanceTransition) StateController(stateCtrl iotago.Addres
 // Governor sets the iotago.GovernorAddressUnlockCondition of the output.
 func (trans *AnchorGovernanceTransition) Governor(governor iotago.Address) *AnchorGovernanceTransition {
 	return trans.builder.Governor(governor).GovernanceTransition()
-}
-
-// Sender sets/modifies an iotago.SenderFeature as a mutable feature on the output.
-func (trans *AnchorGovernanceTransition) Sender(senderAddr iotago.Address) *AnchorGovernanceTransition {
-	return trans.builder.Sender(senderAddr).GovernanceTransition()
 }
 
 // Metadata sets/modifies an iotago.MetadataFeature as a mutable feature on the output.
