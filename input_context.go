@@ -93,16 +93,12 @@ func (in ContextInputs[T]) Sort() {
 	})
 }
 
-// ContextInputsSyntacticalValidationFunc which given the index of an input and the input itself,
-// runs syntactical validations and returns an error if any should fail.
-type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) error
-
-// ContextInputsSyntacticalLexicalOrderAndUniqueness returns a ContextInputsSyntacticalValidationFunc
+// ContextInputsSyntacticalLexicalOrderAndUniqueness returns a ElementValidationFunc
 // which checks lexcial order and uniqueness.
 //
 // As a special case, it also checks that at most one commitment input is present,
 // due to how Compare is defined on commitment inputs.
-func ContextInputsSyntacticalLexicalOrderAndUniqueness() ContextInputsSyntacticalValidationFunc {
+func ContextInputsSyntacticalLexicalOrderAndUniqueness() ElementValidationFunc[ContextInput] {
 	contextInputValidationFunc := LexicalOrderAndUniquenessValidator[ContextInput]()
 	return func(index int, input ContextInput) error {
 		if err := contextInputValidationFunc(index, input); err != nil {
@@ -112,9 +108,9 @@ func ContextInputsSyntacticalLexicalOrderAndUniqueness() ContextInputsSyntactica
 	}
 }
 
-// ContextInputsRewardInputMaxIndex returns a ContextInputsSyntacticalValidationFunc
+// ContextInputsRewardInputMaxIndex returns a ElementValidationFunc
 // which checks that every Reward Input references an index <= max inputs count.
-func ContextInputsRewardInputMaxIndex(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
+func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[ContextInput] {
 	return func(index int, input ContextInput) error {
 		switch castInput := input.(type) {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
@@ -133,8 +129,8 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ContextInputsSyntactic
 }
 
 // SyntacticallyValidateContextInputs validates the context inputs by running them against
-// the given ContextInputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
+// the given ElementValidationFunc(s).
+func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ElementValidationFunc[ContextInput]) error {
 	for i, input := range contextInputs {
 		for _, f := range funcs {
 			if err := f(i, input); err != nil {
