@@ -259,9 +259,9 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 				unsortedJSON := fmt.Sprintf(`{"type":%d,"entries":{"b":"0x79","a":"0x78","c":"0x7a"}}`, byte(source.Type()))
 
 				// Both sorted and unsorted input is accepted.
-				for _, source := range []string{sortedJSON, unsortedJSON} {
+				for _, src := range []string{sortedJSON, unsortedJSON} {
 					serixTarget := reflect.New(reflect.TypeOf(target).Elem()).Interface()
-					err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(source), serixTarget, serix.WithValidation())
+					err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(src), serixTarget, serix.WithValidation())
 					require.NoError(t, err)
 					require.Equal(t, source, serixTarget)
 				}
