@@ -122,7 +122,8 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
-	err := SyntacticSliceValidator(u.Inputs,
+	err := SyntacticSliceValidatorMapper(u.Inputs,
+		func(input txEssenceInput) Input { return input },
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
 	)
@@ -132,7 +133,8 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 
 	// cast is safe since we just validated that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
 	inputsCount := uint16(len(u.Inputs))
-	err = SyntacticSliceValidator(u.ContextInputs,
+	err = SyntacticSliceValidatorMapper(u.ContextInputs,
+		func(input txEssenceContextInput) ContextInput { return input },
 		ContextInputsSyntacticalLexicalOrderAndUniqueness(),
 		ContextInputsRewardInputMaxIndex(inputsCount))
 	if err != nil {

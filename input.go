@@ -32,7 +32,7 @@ var (
 )
 
 // Inputs is a slice of Input.
-type Inputs[T Input] []Input
+type Inputs[T Input] []T
 
 func (in Inputs[T]) Clone() Inputs[T] {
 	cpy := make(Inputs[T], len(in))

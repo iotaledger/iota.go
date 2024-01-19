@@ -48,7 +48,7 @@ type ContextInput interface {
 }
 
 // ContextInputs is a slice of ContextInput.
-type ContextInputs[T ContextInput] []ContextInput
+type ContextInputs[T ContextInput] []T
 
 func (in ContextInputs[T]) Clone() ContextInputs[T] {
 	cpy := make(ContextInputs[T], len(in))

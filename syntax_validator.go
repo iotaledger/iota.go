@@ -50,3 +50,21 @@ func SyntacticSliceValidator[T any](
 
 	return nil
 }
+
+// SyntacticSliceValidatorMapper iterates over a slice and calls elementValidationFunc on each element,
+// after mapping it with mapper and returning the first error it encounters, if any.
+func SyntacticSliceValidatorMapper[U, T any](
+	slice []U,
+	mapper func(U) T,
+	elementValidationFuncs ...ElementValidationFunc[T],
+) error {
+	for i, element := range slice {
+		for _, f := range elementValidationFuncs {
+			if err := f(i, mapper(element)); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
