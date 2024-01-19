@@ -64,7 +64,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 			target: &iotago.Block{},
 		},
 		{
-			name: "ok - basic block strong parent ids unsorted",
+			name: "fail - basic block strong parent ids unsorted",
 			source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
 				//nolint:forcetypeassert
@@ -84,7 +84,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
-			name: "ok - validation block weak parent ids unsorted",
+			name: "fail - validation block weak parent ids unsorted",
 			source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
 				//nolint:forcetypeassert
