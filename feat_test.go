@@ -1,8 +1,10 @@
 package iotago_test
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -218,16 +220,21 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 
 			require.Equal(t, expected, serixData)
 
+			// Decoding the sorted map should succeed.
+			bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target, serix.WithValidation())
+			require.NoError(t, err)
+			require.Len(t, serixData, bytesRead)
+			require.EqualValues(t, test.source, test.target)
+
 			// Swap a and b to make it unsorted.
 			serixData[3], serixData[8] = serixData[8], serixData[3]
 			// Swap x and y so the maps are equal key-value-wise.
 			serixData[6], serixData[11] = serixData[11], serixData[6]
 
-			bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target)
-			// TODO: Reconsider whether maps must be sorted during decoding or if it's sufficient to sort when encoding.
-			require.NoError(t, err)
-			require.Len(t, serixData, bytesRead)
-			require.EqualValues(t, test.source, test.target)
+			// Decoding the unsorted map should fail.
+			serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
+			_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
+			require.ErrorIs(t, err, serializer.ErrArrayValidationOrderViolatesLexicalOrder)
 		})
 	}
 }
