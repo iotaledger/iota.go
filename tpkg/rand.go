@@ -376,8 +376,10 @@ func RandProtocolParameters() iotago.ProtocolParameters {
 
 func RandTokenScheme() iotago.TokenScheme {
 	maxSupply := RandInt64(1_000_000_000)
+	mintedTokens := RandInt64(uint64(maxSupply))
+
 	return &iotago.SimpleTokenScheme{
-		MintedTokens:  big.NewInt(maxSupply - 10),
+		MintedTokens:  big.NewInt(mintedTokens),
 		MaximumSupply: big.NewInt(maxSupply),
 		MeltedTokens:  big.NewInt(0),
 	}
