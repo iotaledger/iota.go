@@ -599,6 +599,9 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterValidator(BlockIDs{}, func(ctx context.Context, blockIDs BlockIDs) error {
+			return SliceValidator(blockIDs, LexicalOrderAndUniquenessValidator[BlockID]())
+		}))
 		must(api.RegisterTypeSettings(BlockIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32),
 		))

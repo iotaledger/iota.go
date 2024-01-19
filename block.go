@@ -285,16 +285,6 @@ func (b *Block) syntacticallyValidate() error {
 		return ierrors.Wrapf(ErrBlockNetworkIDInvalid, "got %v, want %v (%s)", b.Header.NetworkID, expectedNetworkID, b.API.ProtocolParameters().NetworkName())
 	}
 
-	if err := SliceValidator(b.Body.StrongParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
-		return err
-	}
-	if err := SliceValidator(b.Body.WeakParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
-		return err
-	}
-	if err := SliceValidator(b.Body.ShallowLikeParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
-		return err
-	}
-
 	block := b.Body
 	if len(block.WeakParentIDs()) > 0 {
 		// weak parents must be disjunct to the rest of the parents
