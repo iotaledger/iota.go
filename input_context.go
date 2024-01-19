@@ -93,21 +93,6 @@ func (in ContextInputs[T]) Sort() {
 	})
 }
 
-// ContextInputsSyntacticalLexicalOrderAndUniqueness returns a ElementValidationFunc
-// which checks lexcial order and uniqueness.
-//
-// As a special case, it also checks that at most one commitment input is present,
-// due to how Compare is defined on commitment inputs.
-func ContextInputsSyntacticalLexicalOrderAndUniqueness() ElementValidationFunc[ContextInput] {
-	contextInputValidationFunc := LexicalOrderAndUniquenessValidator[ContextInput]()
-	return func(index int, input ContextInput) error {
-		if err := contextInputValidationFunc(index, input); err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
 // ContextInputsRewardInputMaxIndex returns a ElementValidationFunc
 // which checks that every Reward Input references an index <= max inputs count.
 func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[ContextInput] {
