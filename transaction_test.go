@@ -1049,6 +1049,11 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 			"key": []byte("val"),
 		},
 	}
+	metadataFeat2 := &iotago.MetadataFeature{
+		Entries: iotago.MetadataFeatureEntries{
+			"key": []byte("value"),
+		},
+	}
 
 	tests := []transactionSerializeTest{
 		{
@@ -1059,20 +1064,6 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
-					metadataFeat, issuerFeat,
-				},
-			},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-		},
-		{
-			name: "fail - NFTOutput contains lexically unordered immutable features",
-			output: &iotago.NFTOutput{
-				Amount: 1_000_000,
-				UnlockConditions: iotago.NFTOutputUnlockConditions{
-					addressUnlockCond,
-				},
-				ImmutableFeatures: iotago.NFTOutputImmFeatures{
 					metadataFeat, issuerFeat,
 				},
 			},
@@ -1095,6 +1086,20 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
+			name: "fail - NFTOutput contains lexically unordered immutable features",
+			output: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
+					metadataFeat, issuerFeat,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deseriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
 			name: "fail - AccountOutput contains duplicate immutable features",
 			output: &iotago.AccountOutput{
 				Amount: 1_000_000,
@@ -1102,20 +1107,6 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
-					issuerFeat, issuerFeat2,
-				},
-			},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
-		},
-		{
-			name: "fail - NFTOutput contains duplicate immutable features",
-			output: &iotago.NFTOutput{
-				Amount: 1_000_000,
-				UnlockConditions: iotago.NFTOutputUnlockConditions{
-					addressUnlockCond,
-				},
-				ImmutableFeatures: iotago.NFTOutputImmFeatures{
 					issuerFeat, issuerFeat2,
 				},
 			},
@@ -1131,6 +1122,39 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					govUnlockCond,
 				},
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
+					issuerFeat, issuerFeat2,
+				},
+			},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - FoundryOutput contains duplicate immutable features",
+			output: &iotago.FoundryOutput{
+				Amount:      1_000_000,
+				TokenScheme: tpkg.RandTokenScheme(),
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
+					&iotago.ImmutableAccountUnlockCondition{
+						Address: tpkg.RandAccountAddress(),
+					},
+				},
+				ImmutableFeatures: iotago.FoundryOutputImmFeatures{
+					metadataFeat,
+					metadataFeat2,
+				},
+			},
+			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			// During decoding, we encounter the max size error before the custom validator runs.
+			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
+		},
+		{
+			name: "fail - NFTOutput contains duplicate immutable features",
+			output: &iotago.NFTOutput{
+				Amount: 1_000_000,
+				UnlockConditions: iotago.NFTOutputUnlockConditions{
+					addressUnlockCond,
+				},
+				ImmutableFeatures: iotago.NFTOutputImmFeatures{
 					issuerFeat, issuerFeat2,
 				},
 			},
