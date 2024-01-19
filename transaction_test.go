@@ -967,8 +967,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					govUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{
-					senderFeat,
-					senderFeat2,
+					metadataFeat,
+					metadataFeat2,
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,

@@ -7684,7 +7684,6 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						},
 					},
 					Features: iotago.AccountOutputFeatures{
-						exampleNativeTokenFeature,
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
