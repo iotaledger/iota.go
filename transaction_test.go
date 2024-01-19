@@ -9,7 +9,6 @@ import (
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -403,36 +402,6 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 	}
 }
 
-type transactionSerializeTest struct {
-	name      string
-	output    iotago.Output
-	seriErr   error
-	deseriErr error
-}
-
-func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
-	txBuilder := builder.NewTransactionBuilder(testAPI)
-	txBuilder.WithTransactionCapabilities(
-		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
-	)
-	_, ident, addrKeys := tpkg.RandEd25519Identity()
-	txBuilder.AddInput(&builder.TxInput{
-		UnlockTarget: ident,
-		InputID:      tpkg.RandUTXOInput().OutputID(),
-		Input:        tpkg.RandBasicOutput(),
-	})
-	txBuilder.AddOutput(test.output)
-	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
-
-	return &deSerializeTest{
-		name:      test.name,
-		source:    tx,
-		target:    &iotago.SignedTransaction{},
-		seriErr:   test.seriErr,
-		deSeriErr: test.deseriErr,
-	}
-}
-
 func TestTransactionInputUniqueness(t *testing.T) {
 	type test struct {
 		name      string
@@ -471,7 +440,6 @@ func TestTransactionInputUniqueness(t *testing.T) {
 	}
 
 	for _, test := range tests {
-
 		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, &iotago.Transaction{
 			API: tpkg.ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
@@ -616,53 +584,68 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		},
 	}
 
-	// We need to build the transaction manually, since the builder would sort the context inputs.
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			basicOutput := &iotago.BasicOutput{
-				Amount: OneIOTA,
-				UnlockConditions: iotago.BasicOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{
-						Address: tpkg.RandEd25519Address(),
-					},
+		// We need to build the transaction manually, since the builder and rand funcs would sort the context inputs.
+		tx := &iotago.Transaction{
+			API: tpkg.ZeroCostTestAPI,
+			TransactionEssence: &iotago.TransactionEssence{
+				Allotments:   iotago.Allotments{},
+				Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(),
+				NetworkID:    tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+				CreationSlot: 5,
+				Inputs: iotago.TxEssenceInputs{
+					tpkg.RandUTXOInput(),
+					tpkg.RandUTXOInput(),
+					tpkg.RandUTXOInput(),
 				},
-			}
+				ContextInputs: test.contextInputs,
+			},
+			Outputs: iotago.TxEssenceOutputs{
+				tpkg.RandBasicOutput(),
+			},
+		}
 
-			tx := &iotago.Transaction{
-				API: tpkg.ZeroCostTestAPI,
-				TransactionEssence: &iotago.TransactionEssence{
-					NetworkID:    tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
-					CreationSlot: 5,
-					Inputs: iotago.TxEssenceInputs{
-						tpkg.RandUTXOInput(),
-						tpkg.RandUTXOInput(),
-						tpkg.RandUTXOInput(),
-					},
-					ContextInputs: test.contextInputs,
-				},
-				Outputs: iotago.TxEssenceOutputs{
-					basicOutput,
-				},
-			}
+		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, tx)
 
-			stx := &iotago.SignedTransaction{
-				API:         tpkg.ZeroCostTestAPI,
-				Transaction: tx,
-				Unlocks: iotago.Unlocks{
-					tpkg.RandEd25519SignatureUnlock(),
-					tpkg.RandEd25519SignatureUnlock(),
-					tpkg.RandEd25519SignatureUnlock(),
-				},
-			}
+		tst := &deSerializeTest{
+			name:      test.name,
+			source:    stx,
+			target:    &iotago.SignedTransaction{},
+			seriErr:   test.wantErr,
+			deSeriErr: test.wantErr,
+		}
 
-			_, err := tpkg.ZeroCostTestAPI.Encode(stx, serix.WithValidation())
-			if test.wantErr != nil {
-				require.ErrorIs(t, err, test.wantErr)
+		t.Run(test.name, tst.deSerialize)
+	}
+}
 
-				return
-			}
-			require.NoError(t, err)
-		})
+type transactionSerializeTest struct {
+	name      string
+	output    iotago.Output
+	seriErr   error
+	deseriErr error
+}
+
+func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
+	txBuilder := builder.NewTransactionBuilder(testAPI)
+	txBuilder.WithTransactionCapabilities(
+		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
+	)
+	_, ident, addrKeys := tpkg.RandEd25519Identity()
+	txBuilder.AddInput(&builder.TxInput{
+		UnlockTarget: ident,
+		InputID:      tpkg.RandUTXOInput().OutputID(),
+		Input:        tpkg.RandBasicOutput(),
+	})
+	txBuilder.AddOutput(test.output)
+	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
+
+	return &deSerializeTest{
+		name:      test.name,
+		source:    tx,
+		target:    &iotago.SignedTransaction{},
+		seriErr:   test.seriErr,
+		deSeriErr: test.deseriErr,
 	}
 }
 
