@@ -49,13 +49,15 @@ func TestBlock_DeSerialize(t *testing.T) {
 			name: "ok - basic block parent ids sorted",
 			source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
-				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
-				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+				//nolint:forcetypeassert
+				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
+				basicBlockBody.ShallowLikeParents = iotago.BlockIDs{}
+				basicBlockBody.StrongParents = iotago.BlockIDs{
 					blockID1,
 					blockID2,
 					blockID3,
 				}
-				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{}
+				basicBlockBody.WeakParents = iotago.BlockIDs{}
 
 				return block
 			}(),
@@ -65,13 +67,15 @@ func TestBlock_DeSerialize(t *testing.T) {
 			name: "ok - basic block strong parent ids unsorted",
 			source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
-				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
-				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+				//nolint:forcetypeassert
+				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
+				basicBlockBody.ShallowLikeParents = iotago.BlockIDs{}
+				basicBlockBody.StrongParents = iotago.BlockIDs{
 					blockID1,
 					blockID3,
 					blockID2,
 				}
-				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{}
+				basicBlockBody.WeakParents = iotago.BlockIDs{}
 
 				return block
 			}(),
@@ -83,11 +87,13 @@ func TestBlock_DeSerialize(t *testing.T) {
 			name: "ok - validation block weak parent ids unsorted",
 			source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
-				block.Body.(*iotago.BasicBlockBody).ShallowLikeParents = iotago.BlockIDs{}
-				block.Body.(*iotago.BasicBlockBody).StrongParents = iotago.BlockIDs{
+				//nolint:forcetypeassert
+				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
+				basicBlockBody.ShallowLikeParents = iotago.BlockIDs{}
+				basicBlockBody.StrongParents = iotago.BlockIDs{
 					tpkg.RandBlockID(),
 				}
-				block.Body.(*iotago.BasicBlockBody).WeakParents = iotago.BlockIDs{
+				basicBlockBody.WeakParents = iotago.BlockIDs{
 					blockID1,
 					blockID3,
 					blockID2,

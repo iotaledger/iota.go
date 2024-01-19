@@ -5,11 +5,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFeaturesDeSerialize(t *testing.T) {
@@ -190,14 +191,19 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		// Required to avoid triggering the scopelint.
+		source := test.source
+		target := test.target
+		featType := test.source.Type()
+
 		t.Run(test.name, func(t *testing.T) {
 			{
-				serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
+				serixData, err := tpkg.ZeroCostTestAPI.Encode(source, serix.WithValidation())
 				require.NoError(t, err)
 
 				expected := []byte{
 					// Metadata Feature Type
-					byte(test.source.Type()),
+					byte(featType),
 					// Map Length
 					3,
 					// Key Length
@@ -223,10 +229,10 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 				require.Equal(t, expected, serixData)
 
 				// Decoding the sorted map should succeed.
-				bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target, serix.WithValidation())
+				bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, target, serix.WithValidation())
 				require.NoError(t, err)
 				require.Len(t, serixData, bytesRead)
-				require.EqualValues(t, test.source, test.target)
+				require.EqualValues(t, source, target)
 
 				// Swap a and b to make it unsorted.
 				serixData[3], serixData[8] = serixData[8], serixData[3]
@@ -234,30 +240,30 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 				serixData[6], serixData[11] = serixData[11], serixData[6]
 
 				// Decoding the unsorted map should fail.
-				serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
+				serixTarget := reflect.New(reflect.TypeOf(target).Elem()).Interface()
 				_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
 				require.ErrorIs(t, err, serializer.ErrArrayValidationOrderViolatesLexicalOrder)
 			}
 
 			{
-				sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
+				sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(source, serix.WithValidation())
 				require.NoError(t, err)
 
 				json := string(sourceJSON)
-				require.Contains(t, json, fmt.Sprintf(`"type":%d`, byte(test.source.Type())))
+				require.Contains(t, json, fmt.Sprintf(`"type":%d`, byte(source.Type())))
 				require.Contains(t, json, `"a":"0x78"`)
 				require.Contains(t, json, `"b":"0x79"`)
 				require.Contains(t, json, `"c":"0x7a"`)
 
-				sortedJson := fmt.Sprintf(`{"type":%d,"entries":{"a":"0x78","b":"0x79","c":"0x7a"}}`, byte(test.source.Type()))
-				unsortedJson := fmt.Sprintf(`{"type":%d,"entries":{"b":"0x79","a":"0x78","c":"0x7a"}}`, byte(test.source.Type()))
+				sortedJSON := fmt.Sprintf(`{"type":%d,"entries":{"a":"0x78","b":"0x79","c":"0x7a"}}`, byte(source.Type()))
+				unsortedJSON := fmt.Sprintf(`{"type":%d,"entries":{"b":"0x79","a":"0x78","c":"0x7a"}}`, byte(source.Type()))
 
 				// Both sorted and unsorted input is accepted.
-				for _, source := range []string{sortedJson, unsortedJson} {
-					serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
+				for _, source := range []string{sortedJSON, unsortedJSON} {
+					serixTarget := reflect.New(reflect.TypeOf(target).Elem()).Interface()
 					err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(source), serixTarget, serix.WithValidation())
 					require.NoError(t, err)
-					require.Equal(t, test.source, serixTarget)
+					require.Equal(t, source, serixTarget)
 				}
 			}
 		})

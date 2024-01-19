@@ -41,6 +41,7 @@ func (b *BlockIssuanceCreditInput) Compare(other ContextInput) int {
 		return typeCompare
 	}
 
+	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuanceCreditInput
 	otherBICInput := other.(*BlockIssuanceCreditInput)
 	accountIDCompare := bytes.Compare(b.AccountID[:], otherBICInput.AccountID[:])
 	if accountIDCompare != 0 {
