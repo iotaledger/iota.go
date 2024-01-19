@@ -704,26 +704,41 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 // Checks lexical order and uniqueness of the output's unlock conditions.
 func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
-		elementValidationFunc := LexicalOrderAndUniquenessValidator[UnlockCondition]()
+		lexicalOrderUniquenessValidator := LexicalOrderAndUniquenessValidator[UnlockCondition]()
 		switch typedOutput := output.(type) {
 		case *BasicOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
-				if err := elementValidationFunc(idx, uc); err != nil {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
 					return err
 				}
 			}
-		case *FoundryOutput, *AccountOutput, *DelegationOutput:
-			// These outputs only have one address type.
-			return nil
-		case *NFTOutput:
+		case *AccountOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
-				if err := elementValidationFunc(idx, uc); err != nil {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
 					return err
 				}
 			}
 		case *AnchorOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
-				if err := elementValidationFunc(idx, uc); err != nil {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *FoundryOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *NFTOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
+					return err
+				}
+			}
+		case *DelegationOutput:
+			for idx, uc := range typedOutput.UnlockConditions {
+				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
 					return err
 				}
 			}

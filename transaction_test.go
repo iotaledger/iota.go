@@ -655,6 +655,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 	addressUnlockCond := &iotago.AddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
 	}
+	addressUnlockCond2 := &iotago.AddressUnlockCondition{
+		Address: tpkg.RandEd25519Address(),
+	}
 	// Unlock Cond Type 4
 	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
@@ -662,6 +665,13 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 	// Unlock Cond Type 5
 	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
+	}
+	// Unlock Cond Type 6
+	immAccUnlockCond := &iotago.ImmutableAccountUnlockCondition{
+		Address: tpkg.RandAccountAddress(),
+	}
+	immAccUnlockCond2 := &iotago.ImmutableAccountUnlockCondition{
+		Address: tpkg.RandAccountAddress(),
 	}
 
 	// Unlock Cond Type 2
@@ -729,6 +739,19 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 		{
+			name: "fail - AccountOutput contains duplicate unlock conditions",
+			output: &iotago.AccountOutput{
+				Amount: 10_000_000,
+				UnlockConditions: iotago.AccountOutputUnlockConditions{
+					addressUnlockCond,
+					addressUnlockCond2,
+				},
+			},
+			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			// During decoding, we encounter the max size error before the custom validator runs.
+			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
+		},
+		{
 			name: "fail - AnchorOutput contains duplicate unlock conditions",
 			output: &iotago.AnchorOutput{
 				Amount: 10_000_000,
@@ -737,7 +760,21 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
-			// The errors don't match up here, but that's fine.
+			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			// During decoding, we encounter the max size error before the custom validator runs.
+			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
+		},
+		{
+			name: "fail - FoundryOutput contains duplicate unlock conditions",
+			output: &iotago.FoundryOutput{
+				Amount:      10_000_000,
+				TokenScheme: tpkg.RandTokenScheme(),
+				UnlockConditions: iotago.FoundryOutputUnlockConditions{
+					immAccUnlockCond,
+					immAccUnlockCond2,
+				},
+				Features: iotago.FoundryOutputFeatures{},
+			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
@@ -753,6 +790,20 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			deseriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - DelegationOutput contains duplicate unlock conditions",
+			output: &iotago.DelegationOutput{
+				Amount:           10_000_000,
+				ValidatorAddress: tpkg.RandAccountAddress(),
+				UnlockConditions: iotago.DelegationOutputUnlockConditions{
+					addressUnlockCond,
+					addressUnlockCond2,
+				},
+			},
+			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			// During decoding, we encounter the max size error before the custom validator runs.
+			deseriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 
