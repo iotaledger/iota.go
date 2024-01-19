@@ -403,34 +403,6 @@ func TestTransactionSyntacticMaxMana(t *testing.T) {
 	}
 }
 
-type syntacticalSerializeTest struct {
-	name        string
-	transaction *iotago.SignedTransaction
-	seriErr     error
-	deseriErr   error
-}
-
-func (test *syntacticalSerializeTest) Run(t *testing.T) {
-	serixData, err := tpkg.ZeroCostTestAPI.Encode(test.transaction, serix.WithValidation())
-	if test.seriErr != nil {
-		require.ErrorIs(t, err, test.seriErr, "serialization failed")
-
-		serixData, err = tpkg.ZeroCostTestAPI.Encode(test.transaction)
-		require.NoError(t, err)
-	} else {
-		require.NoError(t, err)
-	}
-
-	serixTarget := &iotago.SignedTransaction{}
-	_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
-
-	if test.deseriErr != nil {
-		require.ErrorIs(t, err, test.deseriErr, "deserialization failed")
-	} else {
-		require.NoError(t, err)
-	}
-}
-
 type transactionSerializeTest struct {
 	name      string
 	output    iotago.Output
@@ -438,7 +410,7 @@ type transactionSerializeTest struct {
 	deseriErr error
 }
 
-func (test *transactionSerializeTest) Run(t *testing.T) {
+func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
 	txBuilder := builder.NewTransactionBuilder(testAPI)
 	txBuilder.WithTransactionCapabilities(
 		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
@@ -452,12 +424,13 @@ func (test *transactionSerializeTest) Run(t *testing.T) {
 	txBuilder.AddOutput(test.output)
 	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
 
-	(&syntacticalSerializeTest{
-		name:        test.name,
-		transaction: tx,
-		seriErr:     test.seriErr,
-		deseriErr:   test.deseriErr,
-	}).Run(t)
+	return &deSerializeTest{
+		name:      test.name,
+		source:    tx,
+		target:    &iotago.SignedTransaction{},
+		seriErr:   test.seriErr,
+		deSeriErr: test.deseriErr,
+	}
 }
 
 func TestTransactionInputUniqueness(t *testing.T) {
@@ -502,22 +475,26 @@ func TestTransactionInputUniqueness(t *testing.T) {
 		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, &iotago.Transaction{
 			API: tpkg.ZeroCostTestAPI,
 			TransactionEssence: &iotago.TransactionEssence{
-				NetworkID: tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
-				Inputs:    test.inputs,
+				Allotments:    iotago.Allotments{},
+				ContextInputs: iotago.TxEssenceContextInputs{},
+				Capabilities:  iotago.TransactionCapabilitiesBitMaskWithCapabilities(),
+				NetworkID:     tpkg.ZeroCostTestAPI.ProtocolParameters().NetworkID(),
+				Inputs:        test.inputs,
 			},
 			Outputs: iotago.TxEssenceOutputs{
 				tpkg.RandBasicOutput(),
 			},
 		})
 
-		tst := syntacticalSerializeTest{
-			name:        test.name,
-			transaction: stx,
-			seriErr:     test.seriErr,
-			deseriErr:   test.deseriErr,
+		tst := deSerializeTest{
+			name:      test.name,
+			source:    stx,
+			target:    &iotago.SignedTransaction{},
+			seriErr:   test.seriErr,
+			deSeriErr: test.deseriErr,
 		}
 
-		t.Run(tst.name, tst.Run)
+		t.Run(tst.name, tst.deSerialize)
 	}
 }
 
@@ -797,7 +774,7 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.Run)
+		t.Run(test.name, test.ToDeserializeTest().deSerialize)
 	}
 }
 
@@ -1007,7 +984,7 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.Run)
+		t.Run(test.name, test.ToDeserializeTest().deSerialize)
 	}
 }
 
@@ -1129,7 +1106,7 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.Run)
+		t.Run(test.name, test.ToDeserializeTest().deSerialize)
 	}
 }
 
