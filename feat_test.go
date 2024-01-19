@@ -1,6 +1,7 @@
 package iotago_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -154,8 +155,8 @@ func TestFeaturesMetadata(t *testing.T) {
 	}
 }
 
-// Tests that maps are sorted when encoded to binary to produce a deterministic result,
-// but do not have to be sorted when decoded from binary
+// Tests that maps are sorted when encoded to and decoded from binary to produce a deterministic result,
+// but do not have to be sorted when encoded/decoded to JSON.
 func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 	type metadataDeserializeTest struct {
 		name   string
@@ -190,51 +191,74 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
-			require.NoError(t, err)
+			{
+				serixData, err := tpkg.ZeroCostTestAPI.Encode(test.source, serix.WithValidation())
+				require.NoError(t, err)
 
-			expected := []byte{
-				// Metadata Feature Type
-				byte(test.source.Type()),
-				// Map Length
-				3,
-				// Key Length
-				1,
-				'a',
-				// Little-endian value Length
-				1, 0,
-				'x',
-				// Key Length
-				1,
-				'b',
-				// Little-endian value Length
-				1, 0,
-				'y',
-				// Key Length
-				1,
-				'c',
-				// Little-endian value Length
-				1, 0,
-				'z',
+				expected := []byte{
+					// Metadata Feature Type
+					byte(test.source.Type()),
+					// Map Length
+					3,
+					// Key Length
+					1,
+					'a',
+					// Little-endian value Length
+					1, 0,
+					'x',
+					// Key Length
+					1,
+					'b',
+					// Little-endian value Length
+					1, 0,
+					'y',
+					// Key Length
+					1,
+					'c',
+					// Little-endian value Length
+					1, 0,
+					'z',
+				}
+
+				require.Equal(t, expected, serixData)
+
+				// Decoding the sorted map should succeed.
+				bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target, serix.WithValidation())
+				require.NoError(t, err)
+				require.Len(t, serixData, bytesRead)
+				require.EqualValues(t, test.source, test.target)
+
+				// Swap a and b to make it unsorted.
+				serixData[3], serixData[8] = serixData[8], serixData[3]
+				// Swap x and y so the maps are equal key-value-wise.
+				serixData[6], serixData[11] = serixData[11], serixData[6]
+
+				// Decoding the unsorted map should fail.
+				serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
+				_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
+				require.ErrorIs(t, err, serializer.ErrArrayValidationOrderViolatesLexicalOrder)
 			}
 
-			require.Equal(t, expected, serixData)
+			{
+				sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
+				require.NoError(t, err)
 
-			// Decoding the sorted map should succeed.
-			bytesRead, err := tpkg.ZeroCostTestAPI.Decode(serixData, test.target, serix.WithValidation())
-			require.NoError(t, err)
-			require.Len(t, serixData, bytesRead)
-			require.EqualValues(t, test.source, test.target)
+				json := string(sourceJSON)
+				require.Contains(t, json, fmt.Sprintf(`"type":%d`, byte(test.source.Type())))
+				require.Contains(t, json, `"a":"0x78"`)
+				require.Contains(t, json, `"b":"0x79"`)
+				require.Contains(t, json, `"c":"0x7a"`)
 
-			// Swap a and b to make it unsorted.
-			serixData[3], serixData[8] = serixData[8], serixData[3]
-			// Swap x and y so the maps are equal key-value-wise.
-			serixData[6], serixData[11] = serixData[11], serixData[6]
+				sortedJson := fmt.Sprintf(`{"type":%d,"entries":{"a":"0x78","b":"0x79","c":"0x7a"}}`, byte(test.source.Type()))
+				unsortedJson := fmt.Sprintf(`{"type":%d,"entries":{"b":"0x79","a":"0x78","c":"0x7a"}}`, byte(test.source.Type()))
 
-			// Decoding the unsorted map should fail.
-			serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
-			_, err = tpkg.ZeroCostTestAPI.Decode(serixData, serixTarget, serix.WithValidation())
-			require.ErrorIs(t, err, serializer.ErrArrayValidationOrderViolatesLexicalOrder)
+				// Both sorted and unsorted input is accepted.
+				for _, source := range []string{sortedJson, unsortedJson} {
+					serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
+					err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(source), serixTarget, serix.WithValidation())
+					require.NoError(t, err)
+				}
+			}
 		})
 	}
 }
