@@ -41,6 +41,7 @@ func (b *BlockIssuanceCreditInput) Compare(other ContextInput) int {
 		return typeCompare
 	}
 
+	// Causes any two BIC Inputs with the same account ID to be considered duplicates.
 	//nolint:forcetypeassert // we can safely assume that this is a BlockIssuanceCreditInput
 	otherBICInput := other.(*BlockIssuanceCreditInput)
 	accountIDCompare := bytes.Compare(b.AccountID[:], otherBICInput.AccountID[:])
