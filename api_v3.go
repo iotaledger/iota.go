@@ -338,14 +338,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StakingFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureStaking))),
 		)
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*SenderFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*IssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*MetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*StateMetadataFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*TagFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*NativeTokenFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*BlockIssuerFeature)(nil)))
-		must(api.RegisterInterfaceObjects((*Feature)(nil), (*StakingFeature)(nil)))
 	}
 
 	{
@@ -390,13 +382,6 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ImmutableAccountUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionImmutableAccount))),
 		)
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*AddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*StorageDepositReturnUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*TimelockUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*ExpirationUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*StateControllerAddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*GovernorAddressUnlockCondition)(nil)))
-		must(api.RegisterInterfaceObjects((*UnlockCondition)(nil), (*ImmutableAccountUnlockCondition)(nil)))
 	}
 
 	{

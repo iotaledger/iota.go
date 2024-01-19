@@ -70,9 +70,20 @@ func TestOutputsDeSerialize(t *testing.T) {
 				Features: iotago.AccountOutputFeatures{
 					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
+					&iotago.BlockIssuerFeature{
+						ExpirySlot:      1337,
+						BlockIssuerKeys: tpkg.RandBlockIssuerKeys(),
+					},
+					&iotago.StakingFeature{
+						StakedAmount: 1337,
+						FixedCost:    10,
+						StartEpoch:   1,
+						EndEpoch:     2,
+					},
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(100)}},
 				},
 			},
 			target: &iotago.AccountOutput{},
@@ -89,11 +100,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.GovernorAddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.AnchorOutputFeatures{
-					&iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
 					&iotago.StateMetadataFeature{Entries: iotago.StateMetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
 				},
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
 				},
 			},
 			target: &iotago.AnchorOutput{},
@@ -113,8 +125,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 				Features: iotago.FoundryOutputFeatures{
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
+					tpkg.RandNativeTokenFeature(),
 				},
-				ImmutableFeatures: iotago.FoundryOutputImmFeatures{},
+				ImmutableFeatures: iotago.FoundryOutputImmFeatures{
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(100)}},
+				},
 			},
 			target: &iotago.FoundryOutput{},
 		},
@@ -143,7 +158,7 @@ func TestOutputsDeSerialize(t *testing.T) {
 				},
 				ImmutableFeatures: iotago.NFTOutputImmFeatures{
 					&iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
-					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(10)}},
+					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(10)}},
 				},
 			},
 			target: &iotago.NFTOutput{},
