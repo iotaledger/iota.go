@@ -651,22 +651,18 @@ func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
 
 // Tests that lexical order & uniqueness are checked for unlock conditions across all relevant outputs.
 func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T) {
-	// Unlock Cond Type 0
 	addressUnlockCond := &iotago.AddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
 	}
 	addressUnlockCond2 := &iotago.AddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
 	}
-	// Unlock Cond Type 4
 	stateCtrlUnlockCond := &iotago.StateControllerAddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
 	}
-	// Unlock Cond Type 5
 	govUnlockCond := &iotago.GovernorAddressUnlockCondition{
 		Address: tpkg.RandEd25519Address(),
 	}
-	// Unlock Cond Type 6
 	immAccUnlockCond := &iotago.ImmutableAccountUnlockCondition{
 		Address: tpkg.RandAccountAddress(),
 	}
@@ -674,11 +670,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 		Address: tpkg.RandAccountAddress(),
 	}
 
-	// Unlock Cond Type 2
 	timelockUnlockCond := &iotago.TimelockUnlockCondition{Slot: 1337}
 	timelockUnlockCond2 := &iotago.TimelockUnlockCondition{Slot: 1000}
 
-	// Unlock Cond Type 3
 	expirationUnlockCond := &iotago.ExpirationUnlockCondition{
 		ReturnAddress: tpkg.RandEd25519Address(),
 		Slot:          1000,
@@ -704,7 +698,8 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.AnchorOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
-					govUnlockCond, stateCtrlUnlockCond,
+					govUnlockCond,
+					stateCtrlUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
@@ -756,7 +751,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.AnchorOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
-					stateCtrlUnlockCond, stateCtrlUnlockCond, govUnlockCond,
+					stateCtrlUnlockCond,
+					stateCtrlUnlockCond,
+					govUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
@@ -827,7 +824,6 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 		Address: tpkg.RandEd25519Address(),
 	}
 
-	// Feature Type 1
 	senderFeat := &iotago.SenderFeature{
 		Address: tpkg.RandEd25519Address(),
 	}
@@ -835,7 +831,6 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 		Address: tpkg.RandEd25519Address(),
 	}
 
-	// Feature Type 2
 	metadataFeat := &iotago.MetadataFeature{
 		Entries: iotago.MetadataFeatureEntries{
 			"key": []byte("val"),
@@ -847,14 +842,12 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 		},
 	}
 
-	// Feature Type 3
 	stateMetadataFeat := &iotago.StateMetadataFeature{
 		Entries: iotago.StateMetadataFeatureEntries{
 			"key": []byte("value"),
 		},
 	}
 
-	// Feature Type 4
 	tagFeat := &iotago.TagFeature{
 		Tag: tpkg.RandBytes(3),
 	}
@@ -862,7 +855,6 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 		Tag: tpkg.RandBytes(6),
 	}
 
-	// Feature Type 6
 	nativeTokenFeat := tpkg.RandNativeTokenFeature()
 
 	tests := []transactionSerializeTest{
@@ -1034,7 +1026,6 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 		Address: tpkg.RandEd25519Address(),
 	}
 
-	// Feature Type 1
 	issuerFeat := &iotago.IssuerFeature{
 		Address: tpkg.RandEd25519Address(),
 	}
@@ -1043,7 +1034,6 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 		Address: tpkg.RandEd25519Address(),
 	}
 
-	// Feature Type 2
 	metadataFeat := &iotago.MetadataFeature{
 		Entries: iotago.MetadataFeatureEntries{
 			"key": []byte("val"),

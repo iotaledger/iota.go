@@ -68,8 +68,6 @@ func (test *deSerializeTest) assertJSONEncodeDecode(t *testing.T) {
 		require.NoError(t, err, "JSON encoding")
 	}
 
-	// fmt.Println(string(lo.PanicOnErr(tpkg.ZeroCostTestAPI.JSONEncode(test.source))))
-
 	jsonDest := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
 	err = tpkg.ZeroCostTestAPI.JSONDecode(sourceJSON, jsonDest, serix.WithValidation())
 	if test.deSeriErr != nil {
