@@ -12,7 +12,7 @@ require (
 	github.com/iotaledger/hive.go/ierrors v0.0.0-20240115140343-94cb44b074ff
 	github.com/iotaledger/hive.go/lo v0.0.0-20240115140343-94cb44b074ff
 	github.com/iotaledger/hive.go/runtime v0.0.0-20240115140343-94cb44b074ff
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240118145159-07e2f61da3b7
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240119112618-b3224191937c
 	github.com/iotaledger/hive.go/stringify v0.0.0-20240115140343-94cb44b074ff
 	github.com/iotaledger/iota-crypto-demo v0.0.0-20231208171603-786bb32fdb00
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c

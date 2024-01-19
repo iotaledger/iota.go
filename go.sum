@@ -39,8 +39,8 @@ github.com/iotaledger/hive.go/lo v0.0.0-20240115140343-94cb44b074ff h1:up1jKP/ZK
 github.com/iotaledger/hive.go/lo v0.0.0-20240115140343-94cb44b074ff/go.mod h1:w3abvs2FpXLd8rugaTq5YnT4KbniyulhePRU77F5pCg=
 github.com/iotaledger/hive.go/runtime v0.0.0-20240115140343-94cb44b074ff h1:GTKSNReEXHc8bMm5lKoyUsoWbnc/HLSslhGS42pcOEI=
 github.com/iotaledger/hive.go/runtime v0.0.0-20240115140343-94cb44b074ff/go.mod h1:VLpNMa0NeqyMh0js2KHChwYQU1RoFtMJdMr4pepTQmE=
-github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240118145159-07e2f61da3b7 h1:dCsPwiMBxveAXAvCu9tyZajaUb27xNQ5pB9jlK3ncJM=
-github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240118145159-07e2f61da3b7/go.mod h1:oRYMGe/LneO5CmiEYitoApLDPBuIdsjYGIrAh8Ap9/o=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240119112618-b3224191937c h1:2Hjg2RIayvO0zzRNUVsUthuUNd/CYL0aRZmT72VVDHU=
+github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240119112618-b3224191937c/go.mod h1:oRYMGe/LneO5CmiEYitoApLDPBuIdsjYGIrAh8Ap9/o=
 github.com/iotaledger/hive.go/stringify v0.0.0-20240115140343-94cb44b074ff h1:IVBJddNqrLAuZSZT+4qUtHABES6+EVOhT+2dCxfkksI=
 github.com/iotaledger/hive.go/stringify v0.0.0-20240115140343-94cb44b074ff/go.mod h1:FTo/UWzNYgnQ082GI9QVM9HFDERqf9rw9RivNpqrnTs=
 github.com/iotaledger/iota-crypto-demo v0.0.0-20231208171603-786bb32fdb00 h1:j5udgLtSN6wQgFI9vnhkdJsqsVdJmwtoc0yOmT/Ila4=
