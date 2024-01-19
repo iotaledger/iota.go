@@ -701,7 +701,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 	}
 }
 
-// TODO
+// Checks lexical order and uniqueness of the output's unlock conditions.
 func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		elementValidationFunc := LexicalOrderAndUniquenessValidator[UnlockCondition]()
@@ -735,7 +735,7 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 	}
 }
 
-// TODO
+// Checks lexical order and uniqueness of the output's features and immutable features.
 func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		featureValidationFunc := LexicalOrderAndUniquenessValidator[Feature]()
@@ -748,7 +748,7 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 					return err
 				}
 			}
-			// This output does not have immutable feature.
+			// This output does not have immutable features.
 		case *FoundryOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
@@ -813,6 +813,7 @@ func SyntacticallyValidateOutputs(outputs TxEssenceOutputs, funcs ...ElementVali
 	return nil
 }
 
+// Checks that a chain-constrained output with a certain ChainID is unique on the output side.
 func OutputsSyntacticalChainConstrainedOutputUniqueness() ElementValidationFunc[Output] {
 	chainConstrainedOutputs := make(ChainOutputSet)
 

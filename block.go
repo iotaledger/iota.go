@@ -285,13 +285,13 @@ func (b *Block) syntacticallyValidate() error {
 		return ierrors.Wrapf(ErrBlockNetworkIDInvalid, "got %v, want %v (%s)", b.Header.NetworkID, expectedNetworkID, b.API.ProtocolParameters().NetworkName())
 	}
 
-	if err := SyntacticSliceValidator(b.Body.StrongParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
+	if err := SliceValidator(b.Body.StrongParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
 		return err
 	}
-	if err := SyntacticSliceValidator(b.Body.WeakParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
+	if err := SliceValidator(b.Body.WeakParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
 		return err
 	}
-	if err := SyntacticSliceValidator(b.Body.ShallowLikeParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
+	if err := SliceValidator(b.Body.ShallowLikeParentIDs(), LexicalOrderAndUniquenessValidator[BlockID]()); err != nil {
 		return err
 	}
 

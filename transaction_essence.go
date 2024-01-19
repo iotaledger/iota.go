@@ -122,7 +122,7 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
 	}
 
-	err := SyntacticSliceValidatorMapper(u.Inputs,
+	err := SliceValidatorMapper(u.Inputs,
 		func(input txEssenceInput) Input { return input },
 		InputsSyntacticalUnique(),
 		InputsSyntacticalIndicesWithinBounds(),
@@ -133,7 +133,7 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 
 	// cast is safe since we just validated that at most MaxInputsCount inputs are added which is less than what fits into a uint16.
 	inputsCount := uint16(len(u.Inputs))
-	err = SyntacticSliceValidatorMapper(u.ContextInputs,
+	err = SliceValidatorMapper(u.ContextInputs,
 		func(input txEssenceContextInput) ContextInput { return input },
 		LexicalOrderAndUniquenessValidator[ContextInput](),
 		ContextInputsRewardInputMaxIndex(inputsCount))
@@ -143,7 +143,7 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 
 	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
 
-	return SyntacticSliceValidator(
+	return SliceValidator(
 		u.Allotments,
 		LexicalOrderAndUniquenessValidator[*Allotment](),
 		allotmentMaxManaValidator(maxManaValue),

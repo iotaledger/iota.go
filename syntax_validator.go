@@ -34,9 +34,9 @@ func LexicalOrderAndUniquenessValidator[T constraints.Comparable[T]]() ElementVa
 	}
 }
 
-// SyntacticSliceValidator iterates over a slice and calls elementValidationFunc on each element,
+// SliceValidator iterates over a slice and calls elementValidationFunc on each element,
 // returning the first error it encounters, if any.
-func SyntacticSliceValidator[T any](
+func SliceValidator[T any](
 	slice []T,
 	elementValidationFuncs ...ElementValidationFunc[T],
 ) error {
@@ -51,9 +51,9 @@ func SyntacticSliceValidator[T any](
 	return nil
 }
 
-// SyntacticSliceValidatorMapper iterates over a slice and calls elementValidationFunc on each element,
+// SliceValidatorMapper iterates over a slice and calls elementValidationFunc on each element,
 // after mapping it with mapper and returning the first error it encounters, if any.
-func SyntacticSliceValidatorMapper[U, T any](
+func SliceValidatorMapper[U, T any](
 	slice []U,
 	mapper func(U) T,
 	elementValidationFuncs ...ElementValidationFunc[T],

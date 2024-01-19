@@ -606,7 +606,7 @@ func V3API(protoParams ProtocolParameters) API {
 
 	{
 		must(api.RegisterValidator(TransactionIDs{}, func(ctx context.Context, transactionIDs TransactionIDs) error {
-			return SyntacticSliceValidator(transactionIDs, LexicalOrderAndUniquenessValidator[TransactionID]())
+			return SliceValidator(transactionIDs, LexicalOrderAndUniquenessValidator[TransactionID]())
 		}))
 		must(api.RegisterTypeSettings(TransactionIDs{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32),
