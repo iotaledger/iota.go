@@ -257,6 +257,7 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 					serixTarget := reflect.New(reflect.TypeOf(test.target).Elem()).Interface()
 					err = tpkg.ZeroCostTestAPI.JSONDecode([]byte(source), serixTarget, serix.WithValidation())
 					require.NoError(t, err)
+					require.Equal(t, test.source, serixTarget)
 				}
 			}
 		})
