@@ -148,10 +148,6 @@ var (
 		Min: 1,
 		Max: MaxInputsCount,
 	}
-
-	transactionIDsArrRules = &serix.ArrayRules{
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
 )
 
 // v3api implements the iota-core 1.0 protocol core models.
@@ -613,8 +609,11 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterValidator(TransactionIDs{}, func(ctx context.Context, transactionIDs TransactionIDs) error {
+			return SyntacticSliceValidator(transactionIDs, LexicalOrderAndUniquenessValidator[TransactionID]())
+		}))
 		must(api.RegisterTypeSettings(TransactionIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(transactionIDsArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32),
 		))
 	}
 

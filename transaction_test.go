@@ -1132,3 +1132,59 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 		t.Run(test.name, test.Run)
 	}
 }
+
+// Helper struct for testing JSON encoding, since slices cannot be serialized directly.
+type transactionIDTestHelper struct {
+	IDs iotago.TransactionIDs `serix:""`
+}
+
+// Tests that lexical order & uniqueness are checked for TransactionIDs.
+func TestTransactionIDsLexicalOrderAndUniqueness(t *testing.T) {
+	txID1 := iotago.MustTransactionIDFromHexString("0x8f63d1473a0417e89d01c5174ac5802402f2a49159cad1de811786367da7db3d0a0d3d78")
+	txID2 := iotago.MustTransactionIDFromHexString("0xc988b403f48b71adbd0a0dba3b2c0665283f8c3290028e220eab35d1c86c60f747eb2624")
+	txID3 := iotago.MustTransactionIDFromHexString("0xfe25a362ae9483819ec35387a47476408e7a65d868651832d7714935fd5ca7596aa8828b")
+
+	tests := []deSerializeTest{
+		{
+			name: "ok - transaction ids lexically ordered and unique",
+			source: &transactionIDTestHelper{
+				IDs: iotago.TransactionIDs{
+					txID1,
+					txID2,
+					txID3,
+				},
+			},
+			target: &transactionIDTestHelper{},
+		},
+		{
+			name: "fail - transaction ids lexically unordered",
+			source: &transactionIDTestHelper{
+				IDs: iotago.TransactionIDs{
+					txID1,
+					txID3,
+					txID2,
+				},
+			},
+			target:    &transactionIDTestHelper{},
+			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			name: "fail - transaction ids contains duplicates",
+			source: &transactionIDTestHelper{
+				IDs: iotago.TransactionIDs{
+					txID1,
+					txID2,
+					txID2,
+				},
+			},
+			target:    &transactionIDTestHelper{},
+			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, tt.deSerialize)
+	}
+}
