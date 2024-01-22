@@ -484,19 +484,19 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.CommitmentInput{
 					CommitmentID: commitmentID1,
-				},
+				}, // type 0
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID2,
-				},
+				}, // type 1
 				&iotago.RewardInput{
 					Index: 0,
-				},
+				}, // type 2
 				&iotago.RewardInput{
 					Index: 1,
-				},
+				}, // type 2
 			},
 			wantErr: nil,
 		},
@@ -505,13 +505,13 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 				&iotago.CommitmentInput{
 					CommitmentID: commitmentID1,
-				},
+				}, // type 0
 				&iotago.RewardInput{
 					Index: 0,
-				},
+				}, // type 2
 			},
 			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
@@ -520,10 +520,10 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID2,
-				},
+				}, // type 1
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 			},
 			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
@@ -532,10 +532,10 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.RewardInput{
 					Index: 1,
-				},
+				}, // type 2
 				&iotago.RewardInput{
 					Index: 0,
-				},
+				}, // type 2
 			},
 			wantErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
@@ -544,10 +544,10 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 			},
 			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
@@ -556,13 +556,13 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
-				},
+				}, // type 1
 				&iotago.RewardInput{
 					Index: 0,
-				},
+				}, // type 2
 				&iotago.RewardInput{
 					Index: 0,
-				},
+				}, // type 2
 			},
 			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
@@ -572,13 +572,13 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 			contextInputs: iotago.TxEssenceContextInputs{
 				&iotago.CommitmentInput{
 					CommitmentID: commitmentID2,
-				},
+				}, // type 0
 				&iotago.CommitmentInput{
 					CommitmentID: commitmentID1,
-				},
+				}, // type 0
 				&iotago.RewardInput{
 					Index: 1,
-				},
+				}, // type 2
 			},
 			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
@@ -684,9 +684,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.BasicOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{
-					addressUnlockCond,
-					expirationUnlockCond,
-					timelockUnlockCond,
+					addressUnlockCond,    // type 0
+					expirationUnlockCond, // type 3
+					timelockUnlockCond,   // type 2
 				},
 				Features: iotago.BasicOutputFeatures{},
 			},
@@ -698,8 +698,8 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.AnchorOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
-					govUnlockCond,
-					stateCtrlUnlockCond,
+					govUnlockCond,       // type 5
+					stateCtrlUnlockCond, // type 4
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
@@ -711,9 +711,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.NFTOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.NFTOutputUnlockConditions{
-					addressUnlockCond,
-					expirationUnlockCond,
-					timelockUnlockCond,
+					addressUnlockCond,    // type 0
+					expirationUnlockCond, // type 3
+					timelockUnlockCond,   // type 2
 				},
 				Features: iotago.NFTOutputFeatures{},
 			},
@@ -725,9 +725,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.BasicOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{
-					addressUnlockCond,
-					timelockUnlockCond,
-					timelockUnlockCond2,
+					addressUnlockCond,   // type 0
+					timelockUnlockCond,  // type 2
+					timelockUnlockCond2, // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -738,8 +738,8 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.AccountOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.AccountOutputUnlockConditions{
-					addressUnlockCond,
-					addressUnlockCond2,
+					addressUnlockCond,  // type 0
+					addressUnlockCond2, // type 0
 				},
 			},
 			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
@@ -751,9 +751,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.AnchorOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.AnchorOutputUnlockConditions{
-					stateCtrlUnlockCond,
-					stateCtrlUnlockCond,
-					govUnlockCond,
+					stateCtrlUnlockCond, // type 4
+					stateCtrlUnlockCond, // type 4
+					govUnlockCond,       // type 5
 				},
 				Features: iotago.AnchorOutputFeatures{},
 			},
@@ -767,8 +767,8 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 				Amount:      10_000_000,
 				TokenScheme: tpkg.RandTokenScheme(),
 				UnlockConditions: iotago.FoundryOutputUnlockConditions{
-					immAccUnlockCond,
-					immAccUnlockCond2,
+					immAccUnlockCond,  // type 6
+					immAccUnlockCond2, // type 6
 				},
 				Features: iotago.FoundryOutputFeatures{},
 			},
@@ -780,9 +780,9 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 			output: &iotago.NFTOutput{
 				Amount: 10_000_000,
 				UnlockConditions: iotago.NFTOutputUnlockConditions{
-					addressUnlockCond,
-					timelockUnlockCond,
-					timelockUnlockCond2,
+					addressUnlockCond,   // type 0
+					timelockUnlockCond,  // type 2
+					timelockUnlockCond2, // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -794,8 +794,8 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 				Amount:           10_000_000,
 				ValidatorAddress: tpkg.RandAccountAddress(),
 				UnlockConditions: iotago.DelegationOutputUnlockConditions{
-					addressUnlockCond,
-					addressUnlockCond2,
+					addressUnlockCond,  // type 0
+					addressUnlockCond2, // type 0
 				},
 			},
 			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
@@ -867,7 +867,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.BasicOutputFeatures{
-					tagFeat, senderFeat,
+					tagFeat,    // type 4
+					senderFeat, // type 0
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -881,7 +882,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					addressUnlockCond,
 				},
 				Features: iotago.AccountOutputFeatures{
-					metadataFeat, senderFeat,
+					metadataFeat, // type 2
+					senderFeat,   // type 0
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -896,7 +898,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					govUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{
-					stateMetadataFeat, metadataFeat,
+					stateMetadataFeat, // type 3
+					metadataFeat,      // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -911,7 +914,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					immutableAccountAddressUnlockCond,
 				},
 				Features: iotago.FoundryOutputFeatures{
-					nativeTokenFeat, metadataFeat,
+					nativeTokenFeat, // type 5
+					metadataFeat,    // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -925,7 +929,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 				Features: iotago.NFTOutputFeatures{
-					tagFeat, senderFeat,
+					tagFeat,    // type 4
+					senderFeat, // type 0
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -939,8 +944,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					addressUnlockCond,
 				},
 				Features: iotago.BasicOutputFeatures{
-					tagFeat,
-					tagFeat2,
+					tagFeat,  // type 4
+					tagFeat2, // type 4
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -954,8 +959,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					addressUnlockCond,
 				},
 				Features: iotago.AccountOutputFeatures{
-					senderFeat,
-					senderFeat2,
+					senderFeat,  // type 0
+					senderFeat2, // type 0
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -970,8 +975,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					govUnlockCond,
 				},
 				Features: iotago.AnchorOutputFeatures{
-					metadataFeat,
-					metadataFeat2,
+					metadataFeat,  // type 2
+					metadataFeat2, // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -986,7 +991,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					immutableAccountAddressUnlockCond,
 				},
 				Features: iotago.FoundryOutputFeatures{
-					metadataFeat, metadataFeat2,
+					metadataFeat,  // type 2
+					metadataFeat2, // type 2
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -1000,8 +1006,8 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 					addressUnlockCond,
 				},
 				Features: iotago.NFTOutputFeatures{
-					tagFeat,
-					tagFeat2,
+					tagFeat,  // type 4
+					tagFeat2, // type 4
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -1054,7 +1060,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
-					metadataFeat, issuerFeat,
+					metadataFeat, // type 2
+					issuerFeat,   // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -1069,7 +1076,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					govUnlockCond,
 				},
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-					metadataFeat, issuerFeat,
+					metadataFeat, // type 2
+					issuerFeat,   // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -1083,7 +1091,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.NFTOutputImmFeatures{
-					metadataFeat, issuerFeat,
+					metadataFeat, // type 2
+					issuerFeat,   // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -1097,7 +1106,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.AccountOutputImmFeatures{
-					issuerFeat, issuerFeat2,
+					issuerFeat,  // type 1
+					issuerFeat2, // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -1112,7 +1122,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					govUnlockCond,
 				},
 				ImmutableFeatures: iotago.AnchorOutputImmFeatures{
-					issuerFeat, issuerFeat2,
+					issuerFeat,  // type 1
+					issuerFeat2, // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -1129,8 +1140,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					},
 				},
 				ImmutableFeatures: iotago.FoundryOutputImmFeatures{
-					metadataFeat,
-					metadataFeat2,
+					metadataFeat,  // type 2
+					metadataFeat2, // type 2
 				},
 			},
 			seriErr: iotago.ErrArrayValidationViolatesUniqueness,
@@ -1145,7 +1156,8 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 					addressUnlockCond,
 				},
 				ImmutableFeatures: iotago.NFTOutputImmFeatures{
-					issuerFeat, issuerFeat2,
+					issuerFeat,  // type 1
+					issuerFeat2, // type 1
 				},
 			},
 			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
