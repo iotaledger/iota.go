@@ -30,7 +30,7 @@ func TestOutputTypeString(t *testing.T) {
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok - BasicOutput",
 			source: &iotago.BasicOutput{

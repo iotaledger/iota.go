@@ -10,7 +10,7 @@ import (
 )
 
 func TestUTXOInput_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "",
 			source: tpkg.RandUTXOInput(),

@@ -191,7 +191,7 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 }
 
 func TestInputDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok - UTXO",
 			source: &iotago.UTXOInput{

@@ -13,7 +13,7 @@ import (
 )
 
 func TestTransactionEssence_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok",
 			source: tpkg.RandTransaction(tpkg.ZeroCostTestAPI),
@@ -40,7 +40,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
 	nftID := nftAddress.NFTID()
 
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			// we transition the same Account twice
 			name: "transition the same Account twice",
@@ -214,7 +214,7 @@ func TestAllotmentUniqueness(t *testing.T) {
 	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
 	accountID := accountAddress.AccountID()
 
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "allot to the same account twice",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
