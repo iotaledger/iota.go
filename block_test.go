@@ -105,6 +105,42 @@ func TestBlock_DeSerialize(t *testing.T) {
 			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
+		{
+			name: "fail - max block size exceeded",
+			source: func() *iotago.Block {
+				bigBasicOutput := func() *iotago.BasicOutput {
+					return &iotago.BasicOutput{
+						Amount: 10_000_000,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{
+								Address: tpkg.RandEd25519Address(),
+							},
+						},
+						Features: iotago.BasicOutputFeatures{
+							&iotago.MetadataFeature{
+								Entries: iotago.MetadataFeatureEntries{
+									"x": tpkg.RandBytes(8150),
+								},
+							},
+						},
+					}
+				}
+
+				tx := tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+					t.Outputs = iotago.TxEssenceOutputs{
+						bigBasicOutput(),
+						bigBasicOutput(),
+						bigBasicOutput(),
+						bigBasicOutput(),
+					}
+				})
+				block := tpkg.RandBlock(tpkg.RandBasicBlockBodyWithPayload(tpkg.ZeroCostTestAPI, tx), tpkg.ZeroCostTestAPI, 1)
+				return block
+			}(),
+			target: &iotago.Block{},
+			seriErr:   iotago.ErrBlockMaxSizeExceeded,
+			deSeriErr: iotago.ErrBlockMaxSizeExceeded,
+		},
 	}
 
 	for _, tt := range tests {
