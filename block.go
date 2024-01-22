@@ -75,10 +75,6 @@ func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	return blake2b.Sum256(headerBytes), nil
 }
 
-func (b *BlockHeader) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
-	return 0, nil
-}
-
 func (b *BlockHeader) Size() int {
 	return BlockHeaderLength
 }
@@ -245,14 +241,14 @@ func (b *Block) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *Block) WorkScore() (WorkScore, error) {
-	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
-
-	workScoreHeader, err := b.Header.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
+	if b.Body.Type() == BlockBodyTypeValidation {
+		// Validator blocks do not incur any work score as they should not burn mana.
+		return 0, nil
 	}
 
-	workScoreBlock, err := b.Body.WorkScore(workScoreParameters)
+	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
+
+	workScoreBody, err := b.Body.WorkScore(workScoreParameters)
 	if err != nil {
 		return 0, err
 	}
@@ -262,7 +258,7 @@ func (b *Block) WorkScore() (WorkScore, error) {
 		return 0, err
 	}
 
-	return workScoreHeader.Add(workScoreHeader, workScoreBlock, workScoreSignature)
+	return workScoreBody.Add(workScoreSignature)
 }
 
 // Size returns the size of the block in bytes.
