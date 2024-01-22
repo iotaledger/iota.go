@@ -870,6 +870,7 @@ func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
 				featType, index, mapSize, MaxMetadataMapSize,
 			)
 		}
+
 		return nil
 	}
 

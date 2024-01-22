@@ -135,9 +135,10 @@ func TestBlock_DeSerialize(t *testing.T) {
 					}
 				})
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBodyWithPayload(tpkg.ZeroCostTestAPI, tx), tpkg.ZeroCostTestAPI, 1)
+
 				return block
 			}(),
-			target: &iotago.Block{},
+			target:    &iotago.Block{},
 			seriErr:   iotago.ErrBlockMaxSizeExceeded,
 			deSeriErr: iotago.ErrBlockMaxSizeExceeded,
 		},

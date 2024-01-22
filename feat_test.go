@@ -296,6 +296,7 @@ func TestMetadataMaxSize(t *testing.T) {
 						),
 					},
 				})
+
 				return output
 			}(),
 		},
@@ -311,6 +312,7 @@ func TestMetadataMaxSize(t *testing.T) {
 						),
 					},
 				})
+
 				return output
 			}(),
 			seriErr:   iotago.ErrMetadataExceedsMaxSize,
