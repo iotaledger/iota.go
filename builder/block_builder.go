@@ -181,7 +181,22 @@ func (b *BasicBlockBuilder) CalculateAndSetMaxBurnedMana(rmc iotago.Mana) *Basic
 		return b
 	}
 
-	burnedMana, err := b.basicBlock.ManaCost(rmc, b.protocolBlock.API.ProtocolParameters().WorkScoreParameters())
+	// For calculating the correct workscore, we need to know the signature type, but we can only sign the block after we set the MaxBurnedMana first.
+	// In the builder we assume that the signature type is always Ed25519, which is the only supported signature type at the moment, so we can
+	// simplify the logic here. As a sanity check we still check the signature type here, in case we add support for other signature types in the future.
+	_, isEdSig := b.protocolBlock.Signature.(*iotago.Ed25519Signature)
+	if !isEdSig {
+		b.err = ierrors.Errorf("only ed2519 signatures supported, got %T", b.protocolBlock.Signature)
+		return b
+	}
+
+	blockWorkScore, err := b.protocolBlock.WorkScore()
+	if err != nil {
+		b.err = ierrors.Errorf("error calculating block workscore: %w", err)
+		return b
+	}
+
+	burnedMana, err := iotago.ManaCost(rmc, blockWorkScore)
 	if err != nil {
 		b.err = ierrors.Errorf("error calculating mana cost: %w", err)
 		return b
