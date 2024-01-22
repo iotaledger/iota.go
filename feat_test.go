@@ -269,3 +269,116 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 		})
 	}
 }
+
+func TestMetadataMaxSize(t *testing.T) {
+	myKey := "mykey"
+	myKeyLen := len(myKey)
+	mapLenPrefixSize := 1
+	keyLenPrefixSize := 1
+	valueLenPrefixSize := 2
+
+	tests := []transactionSerializeTest{
+		{
+			name: "ok - MetadataFeature size matches max allowed size",
+			output: func() iotago.Output {
+				output := &iotago.BasicOutput{
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{
+							Address: tpkg.RandEd25519Address(),
+						},
+					},
+				}
+				output.Amount = 100_000_000
+				output.Features = append(output.Features, &iotago.MetadataFeature{
+					Entries: iotago.MetadataFeatureEntries{
+						iotago.MetadataFeatureEntriesKey(myKey): tpkg.RandBytes(
+							iotago.MaxMetadataMapSize - mapLenPrefixSize - myKeyLen - keyLenPrefixSize - valueLenPrefixSize,
+						),
+					},
+				})
+				return output
+			}(),
+		},
+		{
+			name: "fail - MetadataFeature size exceeds max allowed size by one",
+			output: func() iotago.Output {
+				output := tpkg.RandBasicOutput()
+				output.Amount = 100_000_000
+				output.Features = append(output.Features, &iotago.MetadataFeature{
+					Entries: iotago.MetadataFeatureEntries{
+						iotago.MetadataFeatureEntriesKey(myKey): tpkg.RandBytes(
+							iotago.MaxMetadataMapSize - mapLenPrefixSize - myKeyLen - keyLenPrefixSize - valueLenPrefixSize + 1,
+						),
+					},
+				})
+				return output
+			}(),
+			seriErr:   iotago.ErrMetadataExceedsMaxSize,
+			deseriErr: iotago.ErrMetadataExceedsMaxSize,
+		},
+		{
+			name: "ok - StateMetadataFeature size matches max allowed size",
+			output: func() iotago.Output {
+				return &iotago.AnchorOutput{
+					Amount: 100_000_000,
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{
+							Address: tpkg.RandEd25519Address(),
+						},
+						&iotago.GovernorAddressUnlockCondition{
+							Address: tpkg.RandEd25519Address(),
+						},
+					},
+					ImmutableFeatures: iotago.AnchorOutputImmFeatures{},
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.StateMetadataFeature{
+							Entries: iotago.StateMetadataFeatureEntries{
+								iotago.StateMetadataFeatureEntriesKey(myKey): tpkg.RandBytes(
+									iotago.MaxMetadataMapSize - mapLenPrefixSize - myKeyLen - keyLenPrefixSize - valueLenPrefixSize,
+								),
+							},
+						},
+					},
+				}
+			}(),
+		},
+		{
+			name: "fail - StateMetadataFeature size exceeds max allowed size by one",
+			output: func() iotago.Output {
+				return &iotago.AnchorOutput{
+					Amount: 100_000_000,
+					UnlockConditions: iotago.AnchorOutputUnlockConditions{
+						&iotago.StateControllerAddressUnlockCondition{
+							Address: tpkg.RandEd25519Address(),
+						},
+						&iotago.GovernorAddressUnlockCondition{
+							Address: tpkg.RandEd25519Address(),
+						},
+					},
+					ImmutableFeatures: iotago.AnchorOutputImmFeatures{},
+					Features: iotago.AnchorOutputFeatures{
+						&iotago.MetadataFeature{
+							Entries: iotago.MetadataFeatureEntries{
+								"test": []byte("value_unrelated_to_test"),
+							},
+						},
+						&iotago.StateMetadataFeature{
+							Entries: iotago.StateMetadataFeatureEntries{
+								iotago.StateMetadataFeatureEntriesKey(myKey): tpkg.RandBytes(
+									iotago.MaxMetadataMapSize - mapLenPrefixSize - myKeyLen - keyLenPrefixSize - valueLenPrefixSize + 1,
+								),
+							},
+						},
+					},
+				}
+			}(),
+			seriErr:   iotago.ErrMetadataExceedsMaxSize,
+			deseriErr: iotago.ErrMetadataExceedsMaxSize,
+		},
+	}
+
+	for _, test := range tests {
+		tst := test.ToDeserializeTest()
+		t.Run(test.name, tst.deSerialize)
+	}
+}

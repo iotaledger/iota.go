@@ -627,7 +627,7 @@ type transactionSerializeTest struct {
 }
 
 func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
-	txBuilder := builder.NewTransactionBuilder(testAPI)
+	txBuilder := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI)
 	txBuilder.WithTransactionCapabilities(
 		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 	)

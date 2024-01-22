@@ -32,6 +32,9 @@ const ManaSize = 8
 
 const MaxMana = Mana(math.MaxUint64)
 
+// The maximum a metadata map may have (excluding the type byte of the feature).
+const MaxMetadataMapSize = 8192
+
 // Output defines a unit of output of a transaction.
 type Output interface {
 	Sizer
@@ -853,6 +856,39 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() ElementValidationFunc[
 		}
 
 		chainConstrainedOutputs[chainID] = chainConstrainedOutput
+
+		return nil
+	}
+}
+
+// Checks that the (state) metadata feature in outputs do not exceed the max allowed size.
+func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
+	checkMaxSize := func(index int, featType FeatureType, mapSize int) error {
+		if mapSize > MaxMetadataMapSize {
+			return ierrors.Wrapf(ErrMetadataExceedsMaxSize,
+				"the %s of the output at index %d has size %d; max allowed: %d",
+				featType, index, mapSize, MaxMetadataMapSize,
+			)
+		}
+		return nil
+	}
+
+	return func(index int, output Output) error {
+		stateMetadataFeat := output.FeatureSet().StateMetadata()
+		if stateMetadataFeat != nil {
+			mapSize := stateMetadataFeat.mapSize()
+			if err := checkMaxSize(index, stateMetadataFeat.Type(), mapSize); err != nil {
+				return err
+			}
+		}
+
+		metadataFeat := output.FeatureSet().Metadata()
+		if metadataFeat != nil {
+			mapSize := metadataFeat.mapSize()
+			if err := checkMaxSize(index, metadataFeat.Type(), mapSize); err != nil {
+				return err
+			}
+		}
 
 		return nil
 	}

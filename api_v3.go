@@ -296,7 +296,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)),
 		)
 		must(api.RegisterTypeSettings(MetadataFeatureEntries{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxByteSize(8192)),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1)),
 		)
 		must(api.RegisterTypeSettings(MetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))),
@@ -316,7 +316,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)),
 		)
 		must(api.RegisterTypeSettings(StateMetadataFeatureEntries{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxByteSize(8192)),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1)),
 		)
 		must(api.RegisterTypeSettings(StateMetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureStateMetadata))),
