@@ -112,12 +112,12 @@ func Test_ManagementAPIDeSerialize(t *testing.T) {
 			Target: &api.CreateSnapshotsRequest{},
 		},
 		{
-			Name: "ok - CreateSnapshotsResponse",
-			Source: &api.CreateSnapshotsResponse{
+			Name: "ok - CreateSnapshotResponse",
+			Source: &api.CreateSnapshotResponse{
 				Slot:     1,
 				FilePath: "filePath",
 			},
-			Target: &api.CreateSnapshotsResponse{},
+			Target: &api.CreateSnapshotResponse{},
 		},
 	}
 
@@ -305,8 +305,8 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			Name: "ok - CreateSnapshotsResponse",
-			Source: &api.CreateSnapshotsResponse{
+			Name: "ok - CreateSnapshotResponse",
+			Source: &api.CreateSnapshotResponse{
 				Slot:     1,
 				FilePath: "filePath",
 			},

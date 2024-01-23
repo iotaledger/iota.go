@@ -9,7 +9,7 @@ type (
 	AddPeerRequest struct {
 		// The libp2p multi address of the peer.
 		MultiAddress string `serix:",lenPrefix=uint8"`
-		// The alias of to identify the peer.
+		// The alias to identify the peer.
 		Alias string `serix:",lenPrefix=uint8,omitempty"`
 	}
 
@@ -109,8 +109,8 @@ type (
 		Slot iotago.SlotIndex `serix:""`
 	}
 
-	// CreateSnapshotsResponse defines the response of a create snapshots REST API call.
-	CreateSnapshotsResponse struct {
+	// CreateSnapshotResponse defines the response of a create snapshot REST API call.
+	CreateSnapshotResponse struct {
 		// The slot of the snapshot.
 		Slot iotago.SlotIndex `serix:""`
 		// The file path of the snapshot file.
