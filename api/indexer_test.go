@@ -3,55 +3,78 @@ package api_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
-func Test_IndexerResponse(t *testing.T) {
-	testAPI := testAPI()
-	{
-		response := &api.IndexerResponse{
-			CommittedSlot: 281,
-			PageSize:      1000,
-			Items: iotago.OutputIDs{
-				iotago.OutputID{0xff},
-				iotago.OutputID{0xfa},
-			}.ToHex(),
-			Cursor: "cursor-value",
-		}
-
-		jsonResponse, err := testAPI.JSONEncode(response)
-		require.NoError(t, err)
-
-		expected := "{\"committedSlot\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"],\"cursor\":\"cursor-value\"}"
-		require.Equal(t, expected, string(jsonResponse))
-
-		decoded := new(api.IndexerResponse)
-		require.NoError(t, testAPI.JSONDecode(jsonResponse, decoded))
-		require.EqualValues(t, response, decoded)
+func Test_IndexerAPIDeSerialize(t *testing.T) {
+	tests := []*frameworks.DeSerializeTest{
+		{
+			Name: "ok",
+			Source: &api.IndexerResponse{
+				CommittedSlot: tpkg.RandSlot(),
+				PageSize:      1000,
+				Items:         iotago.HexOutputIDsFromOutputIDs(tpkg.RandOutputIDs(2)...),
+				Cursor:        "cursor-value",
+			},
+			Target:    &api.IndexerResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
 	}
 
-	// Test omitempty
-	{
-		response := &api.IndexerResponse{
-			CommittedSlot: 281,
-			PageSize:      1000,
-			Items: iotago.OutputIDs{
-				iotago.OutputID{0xff},
-				iotago.OutputID{0xfa},
-			}.ToHex(),
-		}
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
+	}
+}
 
-		jsonResponse, err := testAPI.JSONEncode(response)
-		require.NoError(t, err)
+func Test_IndexerAPIJSONSerialization(t *testing.T) {
+	tests := []*frameworks.JSONEncodeTest{
+		{
+			Name: "ok - IndexerResponse",
+			Source: &api.IndexerResponse{
+				CommittedSlot: 281,
+				PageSize:      1000,
+				Items: iotago.HexOutputIDsFromOutputIDs(
+					iotago.OutputID{0xff},
+					iotago.OutputID{0xfa},
+				),
+				Cursor: "cursor-value",
+			},
+			Target: `{
+	"committedSlot": 281,
+	"pageSize": 1000,
+	"items": [
+		"0xff00000000000000000000000000000000000000000000000000000000000000000000000000",
+		"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000"
+	],
+	"cursor": "cursor-value"
+}`,
+		},
+		{
+			Name: "ok - IndexerResponse - omitempty",
+			Source: &api.IndexerResponse{
+				CommittedSlot: 281,
+				PageSize:      1000,
+				Items: iotago.HexOutputIDsFromOutputIDs(
+					iotago.OutputID{0xff},
+					iotago.OutputID{0xfa},
+				),
+			},
+			Target: `{
+	"committedSlot": 281,
+	"pageSize": 1000,
+	"items": [
+		"0xff00000000000000000000000000000000000000000000000000000000000000000000000000",
+		"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000"
+	]
+}`,
+		},
+	}
 
-		expected := "{\"committedSlot\":281,\"pageSize\":1000,\"items\":[\"0xff00000000000000000000000000000000000000000000000000000000000000000000000000\",\"0xfa00000000000000000000000000000000000000000000000000000000000000000000000000\"]}"
-		require.Equal(t, expected, string(jsonResponse))
-
-		decoded := new(api.IndexerResponse)
-		require.NoError(t, testAPI.JSONDecode(jsonResponse, decoded))
-		require.EqualValues(t, response, decoded)
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
 	}
 }

@@ -99,7 +99,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
-		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		Items:         iotago.HexOutputIDsFromOutputIDs(fakeOutputID),
 		Cursor:        "some-offset-key",
 	}, map[string]string{
 		"tag": "some-tag",
@@ -108,7 +108,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
-		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		Items:         iotago.HexOutputIDsFromOutputIDs(fakeOutputID),
 	}, map[string]string{
 		"cursor": "some-offset-key",
 		"tag":    "some-tag",
