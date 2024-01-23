@@ -617,6 +617,10 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
+		must(api.RegisterTypeSettings(HexOutputID(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)))
+	}
+
+	{
 		must(api.RegisterTypeSettings(BasicBlockBody{},
 			serix.TypeSettings{}.WithObjectType(byte(BlockBodyTypeBasic))),
 		)

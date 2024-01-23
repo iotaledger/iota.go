@@ -115,8 +115,10 @@ func (oih OutputIDHex) AsUTXOInput() (*UTXOInput, error) {
 	return &utxoInput, nil
 }
 
+type HexOutputID string
+
 // HexOutputIDs is a slice of hex encoded OutputID strings.
-type HexOutputIDs []string
+type HexOutputIDs []HexOutputID
 
 // MustOutputIDs converts the hex strings into OutputIDs.
 func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
@@ -132,7 +134,7 @@ func (ids HexOutputIDs) MustOutputIDs() OutputIDs {
 func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	vals := make(OutputIDs, len(ids))
 	for i, v := range ids {
-		val, err := hexutil.DecodeHex(v)
+		val, err := hexutil.DecodeHex(string(v))
 		if err != nil {
 			return nil, err
 		}
@@ -140,4 +142,14 @@ func (ids HexOutputIDs) OutputIDs() (OutputIDs, error) {
 	}
 
 	return vals, nil
+}
+
+func HexOutputIDsFromOutputIDs(outputIDs ...OutputID) HexOutputIDs {
+	hexOutputIDs := make(HexOutputIDs, len(outputIDs))
+
+	for i, outputID := range outputIDs {
+		hexOutputIDs[i] = HexOutputID(outputID.ToHex())
+	}
+
+	return hexOutputIDs
 }
