@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
+	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 )
@@ -16,7 +17,7 @@ func TestManagementClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.ManagementPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.ManagementPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -31,7 +32,7 @@ func TestManagementClient_Disabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{"someplugin/v1"},
+		Routes: []iotago.PrefixedStringUint8{"someplugin/v1"},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -46,7 +47,7 @@ func TestManagementClient_PeerByID(t *testing.T) {
 	defer gock.Off()
 
 	originRes := &api.PeerInfo{
-		MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
+		MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID))},
 		ID:             peerID,
 		Connected:      true,
 		Relation:       "autopeered",
@@ -54,7 +55,7 @@ func TestManagementClient_PeerByID(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.ManagementPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.ManagementPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -79,7 +80,7 @@ func TestManagementClient_RemovePeerByID(t *testing.T) {
 		Status(200)
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.ManagementPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.ManagementPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -102,14 +103,14 @@ func TestManagementClient_Peers(t *testing.T) {
 		Peers: []*api.PeerInfo{
 			{
 				ID:             peerID,
-				MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID)},
+				MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID))},
 				Relation:       "autopeered",
 				Gossip:         sampleGossipInfo,
 				Connected:      true,
 			},
 			{
 				ID:             peerID2,
-				MultiAddresses: []string{fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2)},
+				MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2))},
 				Alias:          "Peer2",
 				Relation:       "static",
 				Gossip:         sampleGossipInfo,
@@ -119,7 +120,7 @@ func TestManagementClient_Peers(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.ManagementPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.ManagementPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -142,7 +143,7 @@ func TestManagementClient_AddPeer(t *testing.T) {
 
 	originRes := &api.PeerInfo{
 		ID:             peerID,
-		MultiAddresses: []string{multiAddr},
+		MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(multiAddr)},
 		Relation:       "autopeered",
 		Connected:      true,
 		Gossip:         sampleGossipInfo,
@@ -151,7 +152,7 @@ func TestManagementClient_AddPeer(t *testing.T) {
 	req := &api.AddPeerRequest{MultiAddress: multiAddr}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.ManagementPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.ManagementPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)

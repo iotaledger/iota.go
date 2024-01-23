@@ -24,7 +24,7 @@ func Test_EventAPIEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.MQTTPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.MQTTPluginName},
 	}
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
 
@@ -36,7 +36,7 @@ func Test_EventAPIDisabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{"someplugin/v1"},
+		Routes: []iotago.PrefixedStringUint8{"someplugin/v1"},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)

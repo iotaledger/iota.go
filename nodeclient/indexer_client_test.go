@@ -54,7 +54,7 @@ func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.IndexerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.IndexerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -69,7 +69,7 @@ func Test_IndexerDisabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{"someplugin/v1"},
+		Routes: []iotago.PrefixedStringUint8{"someplugin/v1"},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -91,7 +91,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.IndexerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.IndexerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
