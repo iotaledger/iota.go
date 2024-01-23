@@ -11,12 +11,6 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
-func testAPI() iotago.API {
-	params := tpkg.FixedGenesisV3TestProtocolParameters
-
-	return iotago.V3API(params)
-}
-
 func Test_CoreAPIDeSerialize(t *testing.T) {
 	tests := []*frameworks.DeSerializeTest{
 		{
