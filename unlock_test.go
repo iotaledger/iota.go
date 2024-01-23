@@ -8,44 +8,45 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestUnlock_DeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok - signature",
-			source: tpkg.RandEd25519SignatureUnlock(),
-			target: &iotago.SignatureUnlock{},
+			Name:   "ok - signature",
+			Source: tpkg.RandEd25519SignatureUnlock(),
+			Target: &iotago.SignatureUnlock{},
 		},
 		{
-			name:   "ok - reference",
-			source: tpkg.RandReferenceUnlock(),
-			target: &iotago.ReferenceUnlock{},
+			Name:   "ok - reference",
+			Source: tpkg.RandReferenceUnlock(),
+			Target: &iotago.ReferenceUnlock{},
 		},
 		{
-			name:   "ok - account",
-			source: tpkg.RandAccountUnlock(),
-			target: &iotago.AccountUnlock{},
+			Name:   "ok - account",
+			Source: tpkg.RandAccountUnlock(),
+			Target: &iotago.AccountUnlock{},
 		},
 		{
-			name:   "ok - anchor",
-			source: tpkg.RandAnchorUnlock(),
-			target: &iotago.AnchorUnlock{},
+			Name:   "ok - anchor",
+			Source: tpkg.RandAnchorUnlock(),
+			Target: &iotago.AnchorUnlock{},
 		},
 		{
-			name:   "ok - NFT",
-			source: tpkg.RandNFTUnlock(),
-			target: &iotago.NFTUnlock{},
+			Name:   "ok - NFT",
+			Source: tpkg.RandNFTUnlock(),
+			Target: &iotago.NFTUnlock{},
 		},
 		{
-			name:   "ok - Multi",
-			source: tpkg.RandMultiUnlock(),
-			target: &iotago.MultiUnlock{},
+			Name:   "ok - Multi",
+			Source: tpkg.RandMultiUnlock(),
+			Target: &iotago.MultiUnlock{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

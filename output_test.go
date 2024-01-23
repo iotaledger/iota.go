@@ -10,6 +10,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestOutputTypeString(t *testing.T) {
@@ -30,10 +31,10 @@ func TestOutputTypeString(t *testing.T) {
 }
 
 func TestOutputsDeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - BasicOutput",
-			source: &iotago.BasicOutput{
+			Name: "ok - BasicOutput",
+			Source: &iotago.BasicOutput{
 				Amount: 1337,
 				Mana:   500,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{
@@ -55,11 +56,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					tpkg.RandNativeTokenFeature(),
 				},
 			},
-			target: &iotago.BasicOutput{},
+			Target: &iotago.BasicOutput{},
 		},
 		{
-			name: "ok - AccountOutput",
-			source: &iotago.AccountOutput{
+			Name: "ok - AccountOutput",
+			Source: &iotago.AccountOutput{
 				Amount:         1337,
 				Mana:           500,
 				AccountID:      tpkg.RandAccountAddress().AccountID(),
@@ -86,11 +87,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(100)}},
 				},
 			},
-			target: &iotago.AccountOutput{},
+			Target: &iotago.AccountOutput{},
 		},
 		{
-			name: "ok - AnchorOutput",
-			source: &iotago.AnchorOutput{
+			Name: "ok - AnchorOutput",
+			Source: &iotago.AnchorOutput{
 				Amount:     1337,
 				Mana:       500,
 				AnchorID:   tpkg.RandAnchorAddress().AnchorID(),
@@ -108,11 +109,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(100)}},
 				},
 			},
-			target: &iotago.AnchorOutput{},
+			Target: &iotago.AnchorOutput{},
 		},
 		{
-			name: "ok - FoundryOutput",
-			source: &iotago.FoundryOutput{
+			Name: "ok - FoundryOutput",
+			Source: &iotago.FoundryOutput{
 				Amount:       1337,
 				SerialNumber: 0,
 				TokenScheme: &iotago.SimpleTokenScheme{
@@ -131,11 +132,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(100)}},
 				},
 			},
-			target: &iotago.FoundryOutput{},
+			Target: &iotago.FoundryOutput{},
 		},
 		{
-			name: "ok - NFTOutput",
-			source: &iotago.NFTOutput{
+			Name: "ok - NFTOutput",
+			Source: &iotago.NFTOutput{
 				Amount: 1337,
 				Mana:   500,
 				NFTID:  tpkg.Rand32ByteArray(),
@@ -161,11 +162,11 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"immutable": tpkg.RandBytes(10)}},
 				},
 			},
-			target: &iotago.NFTOutput{},
+			Target: &iotago.NFTOutput{},
 		},
 		{
-			name: "ok - DelegationOutput",
-			source: &iotago.DelegationOutput{
+			Name: "ok - DelegationOutput",
+			Source: &iotago.DelegationOutput{
 				Amount:           1337,
 				DelegatedAmount:  1337,
 				DelegationID:     tpkg.Rand32ByteArray(),
@@ -176,12 +177,12 @@ func TestOutputsDeSerialize(t *testing.T) {
 					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 				},
 			},
-			target: &iotago.DelegationOutput{},
+			Target: &iotago.DelegationOutput{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

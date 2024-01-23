@@ -17,6 +17,7 @@ import (
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestBlock_DeSerialize(t *testing.T) {
@@ -24,30 +25,30 @@ func TestBlock_DeSerialize(t *testing.T) {
 	blockID2 := iotago.MustBlockIDFromHexString("0xc9e20c8bf3b1655b6fc385aebde8e25a668bd4109f5c698eb1b30b31fbbcfb5e6b9dd933")
 	blockID3 := iotago.MustBlockIDFromHexString("0xf2520bde652b46d7119a6d2a3b83947ce2d8a79867d37262e91f129215e5098f3f011d8e")
 
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok - no payload",
-			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),
-			target: &iotago.Block{},
+			Name:   "ok - no payload",
+			Source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),
+			Target: &iotago.Block{},
 		},
 		{
-			name:   "ok - transaction",
-			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 0),
-			target: &iotago.Block{},
+			Name:   "ok - transaction",
+			Source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 0),
+			Target: &iotago.Block{},
 		},
 		{
-			name:   "ok - tagged data",
-			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0),
-			target: &iotago.Block{},
+			Name:   "ok - tagged data",
+			Source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 0),
+			Target: &iotago.Block{},
 		},
 		{
-			name:   "ok - validation block",
-			source: tpkg.RandBlock(tpkg.RandValidationBlockBody(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
-			target: &iotago.Block{},
+			Name:   "ok - validation block",
+			Source: tpkg.RandBlock(tpkg.RandValidationBlockBody(tpkg.ZeroCostTestAPI), tpkg.ZeroCostTestAPI, 0),
+			Target: &iotago.Block{},
 		},
 		{
-			name: "ok - basic block parent ids sorted",
-			source: func() *iotago.Block {
+			Name: "ok - basic block parent ids sorted",
+			Source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
 				//nolint:forcetypeassert
 				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
@@ -61,11 +62,11 @@ func TestBlock_DeSerialize(t *testing.T) {
 
 				return block
 			}(),
-			target: &iotago.Block{},
+			Target: &iotago.Block{},
 		},
 		{
-			name: "fail - basic block strong parent ids unsorted",
-			source: func() *iotago.Block {
+			Name: "fail - basic block strong parent ids unsorted",
+			Source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
 				//nolint:forcetypeassert
 				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
@@ -79,13 +80,13 @@ func TestBlock_DeSerialize(t *testing.T) {
 
 				return block
 			}(),
-			target:    &iotago.Block{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			Target:    &iotago.Block{},
+			SeriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			DeSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
-			name: "fail - validation block weak parent ids unsorted",
-			source: func() *iotago.Block {
+			Name: "fail - validation block weak parent ids unsorted",
+			Source: func() *iotago.Block {
 				block := tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadTaggedData), tpkg.ZeroCostTestAPI, 1)
 				//nolint:forcetypeassert
 				basicBlockBody := block.Body.(*iotago.BasicBlockBody)
@@ -101,13 +102,13 @@ func TestBlock_DeSerialize(t *testing.T) {
 
 				return block
 			}(),
-			target:    &iotago.Block{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			Target:    &iotago.Block{},
+			SeriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			DeSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
-			name: "fail - max block size exceeded",
-			source: func() *iotago.Block {
+			Name: "fail - max block size exceeded",
+			Source: func() *iotago.Block {
 				bigBasicOutput := func() *iotago.BasicOutput {
 					return &iotago.BasicOutput{
 						Amount: 10_000_000,
@@ -138,14 +139,14 @@ func TestBlock_DeSerialize(t *testing.T) {
 
 				return block
 			}(),
-			target:    &iotago.Block{},
-			seriErr:   iotago.ErrBlockMaxSizeExceeded,
-			deSeriErr: iotago.ErrBlockMaxSizeExceeded,
+			Target:    &iotago.Block{},
+			SeriErr:   iotago.ErrBlockMaxSizeExceeded,
+			DeSeriErr: iotago.ErrBlockMaxSizeExceeded,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
