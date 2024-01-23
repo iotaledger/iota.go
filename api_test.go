@@ -2,13 +2,8 @@
 package iotago_test
 
 import (
-	"bytes"
-	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
@@ -34,28 +29,6 @@ func TestProtocolParameters_DeSerialize(t *testing.T) {
 	}
 }
 
-// jsonEncodeTest is used to check if the JSON encoding is equal to a manually provided JSON string.
-type jsonEncodeTest struct {
-	name   string
-	source any
-	// the target should be an indented JSON string (tabs instead of spaces)
-	target string
-}
-
-func (test *jsonEncodeTest) run(t *testing.T) {
-	t.Helper()
-
-	sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
-	require.NoError(t, err, "JSON encoding")
-
-	var b bytes.Buffer
-	err = json.Indent(&b, sourceJSON, "", "\t")
-	require.NoError(t, err, "JSON indenting")
-	indentedJSON := b.String()
-
-	require.EqualValues(t, test.target, string(indentedJSON))
-}
-
 func TestProtocolParametersJSONMarshalling(t *testing.T) {
 
 	protoParams := iotago.NewV3SnapshotProtocolParameters(
@@ -69,11 +42,11 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		3,
 	}
 
-	tests := []*jsonEncodeTest{
+	tests := []*frameworks.JSONEncodeTest{
 		{
-			name:   "ok",
-			source: protoParams,
-			target: `{
+			Name:   "ok",
+			Source: protoParams,
+			Target: `{
 	"type": 0,
 	"version": 3,
 	"networkName": "testnet",
@@ -156,6 +129,6 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.run)
+		t.Run(tt.Name, tt.Run)
 	}
 }

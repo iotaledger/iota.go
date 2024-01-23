@@ -1,15 +1,10 @@
 package api_test
 
 import (
-	"bytes"
-	"encoding/json"
 	"math"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -281,28 +276,6 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 	}
 }
 
-// jsonEncodeTest is used to check if the JSON encoding is equal to a manually provided JSON string.
-type jsonEncodeTest struct {
-	name   string
-	source any
-	// the target should be an indented JSON string (4 white spaces)
-	target string
-}
-
-func (test *jsonEncodeTest) run(t *testing.T) {
-	t.Helper()
-
-	sourceJSON, err := tpkg.ZeroCostTestAPI.JSONEncode(test.source, serix.WithValidation())
-	require.NoError(t, err, "JSON encoding")
-
-	var b bytes.Buffer
-	err = json.Indent(&b, sourceJSON, "", "\t")
-	require.NoError(t, err, "JSON indenting")
-	indentedJSON := b.String()
-
-	require.EqualValues(t, test.target, string(indentedJSON))
-}
-
 func Test_CoreAPIJSONSerialization(t *testing.T) {
 
 	protoParams := iotago.NewV3SnapshotProtocolParameters(
@@ -316,10 +289,10 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		3,
 	}
 
-	tests := []*jsonEncodeTest{
+	tests := []*frameworks.JSONEncodeTest{
 		{
-			name: "ok - InfoResponse",
-			source: &api.InfoResponse{
+			Name: "ok - InfoResponse",
+			Source: &api.InfoResponse{
 				Name:    "test",
 				Version: "2.0.0",
 				Status: &api.InfoResNodeStatus{
@@ -353,7 +326,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					Decimals:     6,
 				},
 			},
-			target: `{
+			Target: `{
 	"name": "test",
 	"version": "2.0.0",
 	"status": {
@@ -467,14 +440,14 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - InfoResBaseToken - omitempty",
-			source: &api.InfoResBaseToken{
+			Name: "ok - InfoResBaseToken - omitempty",
+			Source: &api.InfoResBaseToken{
 				Name:         "IOTA",
 				TickerSymbol: "IOTA",
 				Unit:         "MIOTA",
 				// No Subunit
 			},
-			target: `{
+			Target: `{
 	"name": "IOTA",
 	"tickerSymbol": "IOTA",
 	"unit": "MIOTA",
@@ -482,8 +455,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - IssuanceBlockHeaderResponse",
-			source: &api.IssuanceBlockHeaderResponse{
+			Name: "ok - IssuanceBlockHeaderResponse",
+			Source: &api.IssuanceBlockHeaderResponse{
 				StrongParents: iotago.BlockIDs{
 					iotago.BlockID{0x9},
 				},
@@ -504,7 +477,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					ReferenceManaCost:    123,
 				},
 			},
-			target: `{
+			Target: `{
 	"strongParents": [
 		"0x090000000000000000000000000000000000000000000000000000000000000000000000"
 	],
@@ -527,17 +500,17 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - BlockCreatedResponse",
-			source: &api.BlockCreatedResponse{
+			Name: "ok - BlockCreatedResponse",
+			Source: &api.BlockCreatedResponse{
 				BlockID: iotago.BlockID{0x1},
 			},
-			target: `{
+			Target: `{
 	"blockId": "0x010000000000000000000000000000000000000000000000000000000000000000000000"
 }`,
 		},
 		{
-			name: "ok - BlockMetadataResponse",
-			source: &api.BlockMetadataResponse{
+			Name: "ok - BlockMetadataResponse",
+			Source: &api.BlockMetadataResponse{
 				BlockID:            iotago.BlockID{0x9},
 				BlockState:         api.BlockStateFailed,
 				BlockFailureReason: api.BlockFailureParentNotFound,
@@ -547,7 +520,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
 				},
 			},
-			target: `{
+			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockState": "failed",
 	"blockFailureReason": 3,
@@ -559,19 +532,19 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - BlockMetadataResponse - omitempty",
-			source: &api.BlockMetadataResponse{
+			Name: "ok - BlockMetadataResponse - omitempty",
+			Source: &api.BlockMetadataResponse{
 				BlockID:    iotago.BlockID{0x9},
 				BlockState: api.BlockStateConfirmed,
 			},
-			target: `{
+			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockState": "confirmed"
 }`,
 		},
 		{
-			name: "ok - OutputMetadata",
-			source: &api.OutputMetadata{
+			Name: "ok - OutputMetadata",
+			Source: &api.OutputMetadata{
 				OutputID: iotago.OutputID{0x01},
 				BlockID:  iotago.BlockID{0x02},
 				Included: &api.OutputInclusionMetadata{
@@ -586,7 +559,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				},
 				LatestCommitmentID: iotago.CommitmentID{0x9},
 			},
-			target: `{
+			Target: `{
 	"outputId": "0x0100000000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockId": "0x020000000000000000000000000000000000000000000000000000000000000000000000",
 	"included": {
@@ -603,8 +576,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - OutputMetadata - omitempty",
-			source: &api.OutputMetadata{
+			Name: "ok - OutputMetadata - omitempty",
+			Source: &api.OutputMetadata{
 				OutputID: iotago.OutputID{0x01},
 				BlockID:  iotago.BlockID{0x02},
 				Included: &api.OutputInclusionMetadata{
@@ -615,7 +588,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				// Spent is omitted
 				LatestCommitmentID: iotago.CommitmentID{0x9},
 			},
-			target: `{
+			Target: `{
 	"outputId": "0x0100000000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockId": "0x020000000000000000000000000000000000000000000000000000000000000000000000",
 	"included": {
@@ -626,8 +599,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - UTXOChangesResponse",
-			source: &api.UTXOChangesResponse{
+			Name: "ok - UTXOChangesResponse",
+			Source: &api.UTXOChangesResponse{
 				CommitmentID: iotago.NewCommitmentID(42, iotago.Identifier{}),
 				CreatedOutputs: iotago.OutputIDs{
 					iotago.OutputID{0x1},
@@ -636,7 +609,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					iotago.OutputID{0x2},
 				},
 			},
-			target: `{
+			Target: `{
 	"commitmentId": "0x00000000000000000000000000000000000000000000000000000000000000002a000000",
 	"createdOutputs": [
 		"0x0100000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -647,8 +620,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - UTXOChangesFullResponse",
-			source: &api.UTXOChangesFullResponse{
+			Name: "ok - UTXOChangesFullResponse",
+			Source: &api.UTXOChangesFullResponse{
 				CommitmentID: iotago.NewCommitmentID(42, iotago.Identifier{}),
 				CreatedOutputs: []*api.OutputWithID{
 					{
@@ -681,7 +654,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					},
 				},
 			},
-			target: `{
+			Target: `{
 	"commitmentId": "0x00000000000000000000000000000000000000000000000000000000000000002a000000",
 	"createdOutputs": [
 		{
@@ -724,14 +697,14 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - CongestionResponse",
-			source: &api.CongestionResponse{
+			Name: "ok - CongestionResponse",
+			Source: &api.CongestionResponse{
 				Slot:                 12,
 				Ready:                true,
 				ReferenceManaCost:    100,
 				BlockIssuanceCredits: 80,
 			},
-			target: `{
+			Target: `{
 	"slot": 12,
 	"ready": true,
 	"referenceManaCost": "100",
@@ -739,8 +712,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - ValidatorsResponse",
-			source: &api.ValidatorsResponse{
+			Name: "ok - ValidatorsResponse",
+			Source: &api.ValidatorsResponse{
 				Validators: []*api.ValidatorResponse{
 					{
 						AddressBech32:                  iotago.AccountID{0xFF}.ToAddress().Bech32(iotago.PrefixTestnet),
@@ -755,7 +728,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				Cursor:   "0,1",
 				PageSize: 50,
 			},
-			target: `{
+			Target: `{
 	"stakers": [
 		{
 			"address": "rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx",
@@ -773,14 +746,14 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - ManaRewardsResponse",
-			source: &api.ManaRewardsResponse{
+			Name: "ok - ManaRewardsResponse",
+			Source: &api.ManaRewardsResponse{
 				StartEpoch:                      123,
 				EndEpoch:                        133,
 				Rewards:                         456,
 				LatestCommittedEpochPoolRewards: 555,
 			},
-			target: `{
+			Target: `{
 	"startEpoch": 123,
 	"endEpoch": 133,
 	"rewards": "456",
@@ -788,8 +761,8 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 }`,
 		},
 		{
-			name: "ok - CommitteeResponse",
-			source: &api.CommitteeResponse{
+			Name: "ok - CommitteeResponse",
+			Source: &api.CommitteeResponse{
 				Committee: []*api.CommitteeMemberResponse{
 					{
 						AddressBech32:  iotago.AccountID{0xFF}.ToAddress().Bech32(iotago.PrefixTestnet),
@@ -802,7 +775,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				TotalValidatorStake: 123,
 				Epoch:               872,
 			},
-			target: `{
+			Target: `{
 	"committee": [
 		{
 			"address": "rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx",
@@ -819,6 +792,6 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.run)
+		t.Run(tt.Name, tt.Run)
 	}
 }
