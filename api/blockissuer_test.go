@@ -27,3 +27,23 @@ func Test_BlockIssuerAPIDeSerialize(t *testing.T) {
 		t.Run(tt.Name, tt.Run)
 	}
 }
+
+func Test_BlockIssuerAPIJSONSerialization(t *testing.T) {
+	tests := []*frameworks.JSONEncodeTest{
+		{
+			Name: "ok - BlockIssuerInfo",
+			Source: &api.BlockIssuerInfo{
+				BlockIssuerAddress:     iotago.AccountID{0xFF}.ToAddress().Bech32(iotago.PrefixTestnet),
+				PowTargetTrailingZeros: 10,
+			},
+			Target: `{
+	"blockIssuerAddress": "rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx",
+	"powTargetTrailingZeros": 10
+}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
+	}
+}
