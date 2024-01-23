@@ -11,7 +11,7 @@ import (
 )
 
 func TestUnlock_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok - signature",
 			source: tpkg.RandEd25519SignatureUnlock(),

@@ -15,7 +15,7 @@ import (
 )
 
 func TestEd25519Signature_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok",
 			source: tpkg.RandEd25519Signature(),

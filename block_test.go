@@ -24,7 +24,7 @@ func TestBlock_DeSerialize(t *testing.T) {
 	blockID2 := iotago.MustBlockIDFromHexString("0xc9e20c8bf3b1655b6fc385aebde8e25a668bd4109f5c698eb1b30b31fbbcfb5e6b9dd933")
 	blockID3 := iotago.MustBlockIDFromHexString("0xf2520bde652b46d7119a6d2a3b83947ce2d8a79867d37262e91f129215e5098f3f011d8e")
 
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok - no payload",
 			source: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, 255), tpkg.ZeroCostTestAPI, 0),

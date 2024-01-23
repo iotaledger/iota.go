@@ -10,7 +10,7 @@ import (
 )
 
 func TestStorageScoreParameters_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok",
 			source: tpkg.RandStorageScoreParameters(),

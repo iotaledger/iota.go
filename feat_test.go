@@ -14,7 +14,7 @@ import (
 )
 
 func TestFeaturesDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok - StakingFeature",
 			source: &iotago.StakingFeature{
@@ -82,7 +82,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 }
 
 func TestFeaturesMetadata(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok - MetadataFeature",
 			source: &iotago.MetadataFeature{

@@ -7,7 +7,7 @@ import (
 )
 
 func TestCandidacyAnnouncmentDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok",
 			source: &iotago.CandidacyAnnouncement{},

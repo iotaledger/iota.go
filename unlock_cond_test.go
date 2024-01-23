@@ -8,7 +8,7 @@ import (
 )
 
 func TestUnlockConditionsDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok - AddressUnlockCondition",
 			source: &iotago.AddressUnlockCondition{
