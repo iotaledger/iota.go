@@ -15,7 +15,7 @@ type IndexerResponse struct {
 	// The output IDs (transaction hash + output index) of the found outputs.
 	Items iotago.HexOutputIDs `serix:",lenPrefix=uint16"`
 	// The cursor to use for getting the next results.
-	Cursor string `serix:",omitempty"`
+	Cursor string `serix:",omitempty,lenPrefix=uint8"`
 }
 
 // IndexerCursorParams define page size and cursor query parameters.

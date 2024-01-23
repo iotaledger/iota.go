@@ -8,6 +8,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestInputsSyntacticalUnique(t *testing.T) {
@@ -155,46 +156,46 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 }
 
 func TestInputDeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - UTXO",
-			source: &iotago.UTXOInput{
+			Name: "ok - UTXO",
+			Source: &iotago.UTXOInput{
 				TransactionID:          [36]byte{},
 				TransactionOutputIndex: 0,
 			},
-			target:    &iotago.UTXOInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.UTXOInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - Commitment",
-			source: &iotago.CommitmentInput{
+			Name: "ok - Commitment",
+			Source: &iotago.CommitmentInput{
 				CommitmentID: iotago.CommitmentID{},
 			},
-			target:    &iotago.CommitmentInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.CommitmentInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - BIC",
-			source: &iotago.BlockIssuanceCreditInput{
+			Name: "ok - BIC",
+			Source: &iotago.BlockIssuanceCreditInput{
 				AccountID: tpkg.RandAccountID(),
 			},
-			target:    &iotago.BlockIssuanceCreditInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.BlockIssuanceCreditInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - Reward",
-			source: &iotago.RewardInput{
+			Name: "ok - Reward",
+			Source: &iotago.RewardInput{
 				Index: 6,
 			},
-			target:    &iotago.RewardInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.RewardInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }

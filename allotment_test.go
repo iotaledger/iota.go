@@ -5,6 +5,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestAllotmentDeSerialize(t *testing.T) {
@@ -90,14 +91,14 @@ func TestAllotmentDeSerialize(t *testing.T) {
 			},
 		})
 
-		tst := deSerializeTest{
-			name:      test.name,
-			source:    stx,
-			target:    &iotago.SignedTransaction{},
-			seriErr:   test.seriErr,
-			deSeriErr: test.deSeriErr,
+		tst := &frameworks.DeSerializeTest{
+			Name:      test.name,
+			Source:    stx,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   test.seriErr,
+			DeSeriErr: test.deSeriErr,
 		}
 
-		t.Run(tst.name, tst.deSerialize)
+		t.Run(tst.Name, tst.Run)
 	}
 }

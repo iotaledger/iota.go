@@ -17,7 +17,7 @@ func TestBlockIssuerClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.BlockIssuerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.BlockIssuerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -32,7 +32,7 @@ func TestBlockIssuerClient_Disabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{"someplugin/v1"},
+		Routes: []iotago.PrefixedStringUint8{"someplugin/v1"},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -52,7 +52,7 @@ func TestBlockIssuerClient_Info(t *testing.T) {
 	}
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.BlockIssuerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.BlockIssuerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)

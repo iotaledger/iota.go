@@ -12,19 +12,20 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestTransactionEssence_DeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok",
-			source: tpkg.RandTransaction(tpkg.ZeroCostTestAPI),
-			target: &iotago.Transaction{API: tpkg.ZeroCostTestAPI},
+			Name:   "ok",
+			Source: tpkg.RandTransaction(tpkg.ZeroCostTestAPI),
+			Target: &iotago.Transaction{API: tpkg.ZeroCostTestAPI},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
@@ -42,11 +43,11 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 	nftAddress := iotago.NFTAddressFromOutputID(inputIDs[0])
 	nftID := nftAddress.NFTID()
 
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
 			// we transition the same Account twice
-			name: "transition the same Account twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "transition the same Account twice",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
 					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
@@ -75,14 +76,14 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 					},
 				}),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: iotago.ErrNonUniqueChainOutputs,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrNonUniqueChainOutputs,
+			DeSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same Anchor twice
-			name: "transition the same Anchor twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "transition the same Anchor twice",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
 					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
@@ -113,14 +114,14 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 					},
 				}),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: iotago.ErrNonUniqueChainOutputs,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrNonUniqueChainOutputs,
+			DeSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same NFT twice
-			name: "transition the same NFT twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "transition the same NFT twice",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
 					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
@@ -147,14 +148,14 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 					},
 				}),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: iotago.ErrNonUniqueChainOutputs,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrNonUniqueChainOutputs,
+			DeSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 		{
 			// we transition the same Foundry twice
-			name: "transition the same Foundry twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "transition the same Foundry twice",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
 					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
@@ -199,14 +200,14 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 						},
 					},
 				}),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrNonUniqueChainOutputs,
-			deSeriErr: iotago.ErrNonUniqueChainOutputs,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrNonUniqueChainOutputs,
+			DeSeriErr: iotago.ErrNonUniqueChainOutputs,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
@@ -216,10 +217,10 @@ func TestAllotmentUniqueness(t *testing.T) {
 	accountAddress := iotago.AccountAddressFromOutputID(inputIDs[0])
 	accountID := accountAddress.AccountID()
 
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "allot to the same account twice",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "allot to the same account twice",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				&iotago.Transaction{
 					API: tpkg.ZeroCostTestAPI,
 					TransactionEssence: &iotago.TransactionEssence{
@@ -246,14 +247,14 @@ func TestAllotmentUniqueness(t *testing.T) {
 						tpkg.RandBasicOutput(iotago.AddressEd25519),
 					},
 				}),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			DeSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
@@ -454,15 +455,15 @@ func TestTransactionInputUniqueness(t *testing.T) {
 			},
 		})
 
-		tst := deSerializeTest{
-			name:      test.name,
-			source:    stx,
-			target:    &iotago.SignedTransaction{},
-			seriErr:   test.seriErr,
-			deSeriErr: test.deseriErr,
+		tst := &frameworks.DeSerializeTest{
+			Name:      test.name,
+			Source:    stx,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   test.seriErr,
+			DeSeriErr: test.deseriErr,
 		}
 
-		t.Run(tst.name, tst.deSerialize)
+		t.Run(tst.Name, tst.Run)
 	}
 }
 
@@ -607,15 +608,15 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 
 		stx := tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI, tx)
 
-		tst := &deSerializeTest{
-			name:      test.name,
-			source:    stx,
-			target:    &iotago.SignedTransaction{},
-			seriErr:   test.wantErr,
-			deSeriErr: test.wantErr,
+		tst := &frameworks.DeSerializeTest{
+			Name:      test.name,
+			Source:    stx,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   test.wantErr,
+			DeSeriErr: test.wantErr,
 		}
 
-		t.Run(test.name, tst.deSerialize)
+		t.Run(test.name, tst.Run)
 	}
 }
 
@@ -626,7 +627,7 @@ type transactionSerializeTest struct {
 	deseriErr error
 }
 
-func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
+func (test *transactionSerializeTest) ToDeserializeTest() *frameworks.DeSerializeTest {
 	txBuilder := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI)
 	txBuilder.WithTransactionCapabilities(
 		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
@@ -640,12 +641,12 @@ func (test *transactionSerializeTest) ToDeserializeTest() *deSerializeTest {
 	txBuilder.AddOutput(test.output)
 	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
 
-	return &deSerializeTest{
-		name:      test.name,
-		source:    tx,
-		target:    &iotago.SignedTransaction{},
-		seriErr:   test.seriErr,
-		deSeriErr: test.deseriErr,
+	return &frameworks.DeSerializeTest{
+		Name:      test.name,
+		Source:    tx,
+		Target:    &iotago.SignedTransaction{},
+		SeriErr:   test.seriErr,
+		DeSeriErr: test.deseriErr,
 	}
 }
 
@@ -805,7 +806,7 @@ func TestTransactionOutputUnlockConditionsLexicalOrderAndUniqueness(t *testing.T
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.ToDeserializeTest().deSerialize)
+		t.Run(test.name, test.ToDeserializeTest().Run)
 	}
 }
 
@@ -1016,7 +1017,7 @@ func TestTransactionOutputFeatureLexicalOrderAndUniqueness(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.ToDeserializeTest().deSerialize)
+		t.Run(test.name, test.ToDeserializeTest().Run)
 	}
 }
 
@@ -1166,7 +1167,7 @@ func TestTransactionOutputImmutableFeatureLexicalOrderAndUniqueness(t *testing.T
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, test.ToDeserializeTest().deSerialize)
+		t.Run(test.name, test.ToDeserializeTest().Run)
 	}
 }
 
@@ -1181,47 +1182,47 @@ func TestTransactionIDsLexicalOrderAndUniqueness(t *testing.T) {
 	txID2 := iotago.MustTransactionIDFromHexString("0xc988b403f48b71adbd0a0dba3b2c0665283f8c3290028e220eab35d1c86c60f747eb2624")
 	txID3 := iotago.MustTransactionIDFromHexString("0xfe25a362ae9483819ec35387a47476408e7a65d868651832d7714935fd5ca7596aa8828b")
 
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - transaction ids lexically ordered and unique",
-			source: &transactionIDTestHelper{
+			Name: "ok - transaction ids lexically ordered and unique",
+			Source: &transactionIDTestHelper{
 				IDs: iotago.TransactionIDs{
 					txID1,
 					txID2,
 					txID3,
 				},
 			},
-			target: &transactionIDTestHelper{},
+			Target: &transactionIDTestHelper{},
 		},
 		{
-			name: "fail - transaction ids lexically unordered",
-			source: &transactionIDTestHelper{
+			Name: "fail - transaction ids lexically unordered",
+			Source: &transactionIDTestHelper{
 				IDs: iotago.TransactionIDs{
 					txID1,
 					txID3,
 					txID2,
 				},
 			},
-			target:    &transactionIDTestHelper{},
-			seriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
-			deSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			Target:    &transactionIDTestHelper{},
+			SeriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			DeSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
-			name: "fail - transaction ids contains duplicates",
-			source: &transactionIDTestHelper{
+			Name: "fail - transaction ids contains duplicates",
+			Source: &transactionIDTestHelper{
 				IDs: iotago.TransactionIDs{
 					txID1,
 					txID2,
 					txID2,
 				},
 			},
-			target:    &transactionIDTestHelper{},
-			seriErr:   iotago.ErrArrayValidationViolatesUniqueness,
-			deSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+			Target:    &transactionIDTestHelper{},
+			SeriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			DeSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }

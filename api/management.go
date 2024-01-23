@@ -8,25 +8,25 @@ type (
 	// AddPeerRequest defines the request for a POST peer REST API call.
 	AddPeerRequest struct {
 		// The libp2p multi address of the peer.
-		MultiAddress string `serix:""`
-		// The alias of to identify the peer.
-		Alias string `serix:",omitempty"`
+		MultiAddress string `serix:",lenPrefix=uint8"`
+		// The alias to identify the peer.
+		Alias string `serix:",lenPrefix=uint8,omitempty"`
 	}
 
 	// PeerInfo defines the response of a GET peer REST API call.
 	PeerInfo struct {
 		// The libp2p identifier of the peer.
-		ID string `serix:""`
+		ID string `serix:",lenPrefix=uint8"`
 		// The libp2p multi addresses of the peer.
-		MultiAddresses []string `serix:",lenPrefix=uint8"`
+		MultiAddresses []iotago.PrefixedStringUint8 `serix:",lenPrefix=uint8"`
 		// The alias to identify the peer.
-		Alias string `serix:",omitempty"`
+		Alias string `serix:",lenPrefix=uint8,omitempty"`
 		// The relation (static, autopeered) of the peer.
-		Relation string `serix:""`
+		Relation string `serix:",lenPrefix=uint8"`
 		// Whether the peer is connected.
 		Connected bool `serix:""`
 		// The gossip related information about this peer.
-		Gossip *GossipInfo `serix:",omitempty"`
+		Gossip *GossipInfo `serix:",optional,omitempty"`
 	}
 
 	PeersResponse struct {
@@ -94,7 +94,7 @@ type (
 		// The pruning depth.
 		Depth iotago.EpochIndex `serix:",omitempty"`
 		// The target size of the database.
-		TargetDatabaseSize string `serix:",omitempty"`
+		TargetDatabaseSize string `serix:",lenPrefix=uint8,omitempty"`
 	}
 
 	// PruneDatabaseResponse defines the response of a prune database REST API call.
@@ -109,11 +109,11 @@ type (
 		Slot iotago.SlotIndex `serix:""`
 	}
 
-	// CreateSnapshotsResponse defines the response of a create snapshots REST API call.
-	CreateSnapshotsResponse struct {
+	// CreateSnapshotResponse defines the response of a create snapshot REST API call.
+	CreateSnapshotResponse struct {
 		// The slot of the snapshot.
 		Slot iotago.SlotIndex `serix:""`
 		// The file path of the snapshot file.
-		FilePath string `serix:""`
+		FilePath string `serix:",lenPrefix=uint8"`
 	}
 )

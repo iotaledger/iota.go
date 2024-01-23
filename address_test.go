@@ -13,79 +13,80 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/stream"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestAddressDeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok - Ed25519Address",
-			source: tpkg.RandEd25519Address(),
-			target: &iotago.Ed25519Address{},
+			Name:   "ok - Ed25519Address",
+			Source: tpkg.RandEd25519Address(),
+			Target: &iotago.Ed25519Address{},
 		},
 		{
-			name:   "ok - AccountAddress",
-			source: tpkg.RandAccountAddress(),
-			target: &iotago.AccountAddress{},
+			Name:   "ok - AccountAddress",
+			Source: tpkg.RandAccountAddress(),
+			Target: &iotago.AccountAddress{},
 		},
 		{
-			name:   "ok - NFTAddress",
-			source: tpkg.RandNFTAddress(),
-			target: &iotago.NFTAddress{},
+			Name:   "ok - NFTAddress",
+			Source: tpkg.RandNFTAddress(),
+			Target: &iotago.NFTAddress{},
 		},
 		{
-			name:   "ok - AnchorAddress",
-			source: tpkg.RandAnchorAddress(),
-			target: &iotago.AnchorAddress{},
+			Name:   "ok - AnchorAddress",
+			Source: tpkg.RandAnchorAddress(),
+			Target: &iotago.AnchorAddress{},
 		},
 		{
-			name:   "ok - ImplicitAccountCreationAddress",
-			source: tpkg.RandImplicitAccountCreationAddress(),
-			target: &iotago.ImplicitAccountCreationAddress{},
+			Name:   "ok - ImplicitAccountCreationAddress",
+			Source: tpkg.RandImplicitAccountCreationAddress(),
+			Target: &iotago.ImplicitAccountCreationAddress{},
 		},
 		{
-			name:   "ok - MultiAddress",
-			source: tpkg.RandMultiAddress(),
-			target: &iotago.MultiAddress{},
+			Name:   "ok - MultiAddress",
+			Source: tpkg.RandMultiAddress(),
+			Target: &iotago.MultiAddress{},
 		},
 		{
-			name:   "ok - RestrictedEd25519Address without capabilities",
-			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedEd25519Address without capabilities",
+			Source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{}),
+			Target: &iotago.RestrictedAddress{},
 		},
 		{
-			name:   "ok - RestrictedEd25519Address with capabilities",
-			source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedEd25519Address with capabilities",
+			Source: tpkg.RandRestrictedEd25519Address(iotago.AddressCapabilitiesBitMask{0xff}),
+			Target: &iotago.RestrictedAddress{},
 		},
 		{
-			name:   "ok - RestrictedAccountAddress with capabilities",
-			source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedAccountAddress with capabilities",
+			Source: tpkg.RandRestrictedAccountAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			Target: &iotago.RestrictedAddress{},
 		},
 		{
-			name:   "ok - RestrictedNFTAddress with capabilities",
-			source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedNFTAddress with capabilities",
+			Source: tpkg.RandRestrictedNFTAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			Target: &iotago.RestrictedAddress{},
 		},
 		{
-			name:   "ok - RestrictedAnchorAddress with capabilities",
-			source: tpkg.RandRestrictedAnchorAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedAnchorAddress with capabilities",
+			Source: tpkg.RandRestrictedAnchorAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			Target: &iotago.RestrictedAddress{},
 		},
 		{
-			name:   "ok - RestrictedMultiAddress with capabilities",
-			source: tpkg.RandRestrictedMultiAddress(iotago.AddressCapabilitiesBitMask{0xff}),
-			target: &iotago.RestrictedAddress{},
+			Name:   "ok - RestrictedMultiAddress with capabilities",
+			Source: tpkg.RandRestrictedMultiAddress(iotago.AddressCapabilitiesBitMask{0xff}),
+			Target: &iotago.RestrictedAddress{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.deSerialize(t)
+		t.Run(tt.Name, func(t *testing.T) {
+			tt.Run(t)
 
 			// test the AddressFromReader func
 			//nolint:forcetypeassert
-			address := tt.source.(iotago.Address)
+			address := tt.Source.(iotago.Address)
 			addressBytes, err := tpkg.ZeroCostTestAPI.Encode(address, serix.WithValidation())
 			require.NoError(t, err)
 

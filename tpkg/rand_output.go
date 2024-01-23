@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/iotaledger/hive.go/lo"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -44,6 +45,11 @@ func RandOutputIDs(count uint16) iotago.OutputIDs {
 	}
 
 	return outputIDs
+}
+
+func RandOutputIDProof(api iotago.API) *iotago.OutputIDProof {
+	tx := RandTransaction(api, WithOutputCount(1))
+	return lo.PanicOnErr(iotago.OutputIDProofFromTransaction(tx, 0))
 }
 
 // RandBasicOutput returns a random basic output (with no features).

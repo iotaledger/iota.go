@@ -11,148 +11,149 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestFeaturesDeSerialize(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - StakingFeature",
-			source: &iotago.StakingFeature{
+			Name: "ok - StakingFeature",
+			Source: &iotago.StakingFeature{
 				StakedAmount: 100,
 				FixedCost:    12,
 				StartEpoch:   100,
 				EndEpoch:     1236,
 			},
-			target: &iotago.StakingFeature{},
+			Target: &iotago.StakingFeature{},
 		},
 		{
-			name: "ok - BlockIssuerFeature",
-			source: &iotago.BlockIssuerFeature{
+			Name: "ok - BlockIssuerFeature",
+			Source: &iotago.BlockIssuerFeature{
 				BlockIssuerKeys: iotago.NewBlockIssuerKeys(
 					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 				),
 				ExpirySlot: 10,
 			},
-			target: &iotago.BlockIssuerFeature{},
+			Target: &iotago.BlockIssuerFeature{},
 		},
 		{
-			name:   "ok - SenderFeature",
-			source: &iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
-			target: &iotago.SenderFeature{},
+			Name:   "ok - SenderFeature",
+			Source: &iotago.SenderFeature{Address: tpkg.RandEd25519Address()},
+			Target: &iotago.SenderFeature{},
 		},
 		{
-			name:   "ok - Issuer",
-			source: &iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
-			target: &iotago.IssuerFeature{},
+			Name:   "ok - Issuer",
+			Source: &iotago.IssuerFeature{Address: tpkg.RandEd25519Address()},
+			Target: &iotago.IssuerFeature{},
 		},
 		{
-			name: "ok - MetadataFeature",
-			source: &iotago.MetadataFeature{
+			Name: "ok - MetadataFeature",
+			Source: &iotago.MetadataFeature{
 				Entries: iotago.MetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
 					"":         []byte(""),
 				},
 			},
-			target: &iotago.MetadataFeature{},
+			Target: &iotago.MetadataFeature{},
 		},
 		{
-			name: "ok - StateMetadataFeature",
-			source: &iotago.StateMetadataFeature{
+			Name: "ok - StateMetadataFeature",
+			Source: &iotago.StateMetadataFeature{
 				Entries: iotago.StateMetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
 					"":         []byte(""),
 				},
 			},
-			target: &iotago.StateMetadataFeature{},
+			Target: &iotago.StateMetadataFeature{},
 		},
 		{
-			name: "ok - TagFeature",
-			source: &iotago.TagFeature{
+			Name: "ok - TagFeature",
+			Source: &iotago.TagFeature{
 				Tag: []byte("hello world"),
 			},
-			target: &iotago.TagFeature{},
+			Target: &iotago.TagFeature{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
 func TestFeaturesMetadata(t *testing.T) {
-	tests := []*deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - MetadataFeature",
-			source: &iotago.MetadataFeature{
+			Name: "ok - MetadataFeature",
+			Source: &iotago.MetadataFeature{
 				Entries: iotago.MetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
 					"empty":    []byte(""),
 				},
 			},
-			target: &iotago.MetadataFeature{},
+			Target: &iotago.MetadataFeature{},
 		},
 		{
-			name: "fail - MetadataFeature - non ASCII char in key",
-			source: &iotago.MetadataFeature{
+			Name: "fail - MetadataFeature - non ASCII char in key",
+			Source: &iotago.MetadataFeature{
 				Entries: iotago.MetadataFeatureEntries{
 					"hellö": []byte("world"),
 				},
 			},
-			seriErr:   iotago.ErrInvalidMetadataKey,
-			deSeriErr: iotago.ErrInvalidMetadataKey,
-			target:    &iotago.MetadataFeature{},
+			SeriErr:   iotago.ErrInvalidMetadataKey,
+			DeSeriErr: iotago.ErrInvalidMetadataKey,
+			Target:    &iotago.MetadataFeature{},
 		},
 		{
-			name: "ok - StateMetadataFeature",
-			source: &iotago.StateMetadataFeature{
+			Name: "ok - StateMetadataFeature",
+			Source: &iotago.StateMetadataFeature{
 				Entries: iotago.StateMetadataFeatureEntries{
 					"hello":    []byte("world"),
 					"did:iota": []byte("hello digital autonomy"),
 					"empty":    []byte(""),
 				},
 			},
-			target: &iotago.StateMetadataFeature{},
+			Target: &iotago.StateMetadataFeature{},
 		},
 		{
-			name: "fail - StateMetadataFeature - non ASCII char in key",
-			source: &iotago.StateMetadataFeature{
+			Name: "fail - StateMetadataFeature - non ASCII char in key",
+			Source: &iotago.StateMetadataFeature{
 				Entries: iotago.StateMetadataFeatureEntries{
 					"hellö": []byte("world"),
 				},
 			},
-			seriErr:   iotago.ErrInvalidStateMetadataKey,
-			deSeriErr: iotago.ErrInvalidStateMetadataKey,
-			target:    &iotago.StateMetadataFeature{},
+			SeriErr:   iotago.ErrInvalidStateMetadataKey,
+			DeSeriErr: iotago.ErrInvalidStateMetadataKey,
+			Target:    &iotago.StateMetadataFeature{},
 		},
 		{
-			name: "fail - StateMetadataFeature - space char in key",
-			source: &iotago.StateMetadataFeature{
+			Name: "fail - StateMetadataFeature - space char in key",
+			Source: &iotago.StateMetadataFeature{
 				Entries: iotago.StateMetadataFeatureEntries{
 					"space-> ": []byte("world"),
 				},
 			},
-			seriErr:   iotago.ErrInvalidStateMetadataKey,
-			deSeriErr: iotago.ErrInvalidStateMetadataKey,
-			target:    &iotago.StateMetadataFeature{},
+			SeriErr:   iotago.ErrInvalidStateMetadataKey,
+			DeSeriErr: iotago.ErrInvalidStateMetadataKey,
+			Target:    &iotago.StateMetadataFeature{},
 		},
 		{
-			name: "fail - StateMetadataFeature - ASCII control-character in key",
-			source: &iotago.StateMetadataFeature{
+			Name: "fail - StateMetadataFeature - ASCII control-character in key",
+			Source: &iotago.StateMetadataFeature{
 				Entries: iotago.StateMetadataFeatureEntries{
 					"\x07": []byte("world"),
 				},
 			},
-			seriErr:   iotago.ErrInvalidStateMetadataKey,
-			deSeriErr: iotago.ErrInvalidStateMetadataKey,
-			target:    &iotago.StateMetadataFeature{},
+			SeriErr:   iotago.ErrInvalidStateMetadataKey,
+			DeSeriErr: iotago.ErrInvalidStateMetadataKey,
+			Target:    &iotago.StateMetadataFeature{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
@@ -381,6 +382,6 @@ func TestMetadataMaxSize(t *testing.T) {
 
 	for _, test := range tests {
 		tst := test.ToDeserializeTest()
-		t.Run(test.name, tst.deSerialize)
+		t.Run(test.name, tst.Run)
 	}
 }

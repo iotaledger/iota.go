@@ -8,6 +8,13 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
+type (
+	PrefixedStringUint8  string
+	PrefixedStringUint16 string
+	PrefixedStringUint32 string
+	PrefixedStringUint64 string
+)
+
 var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
 	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
@@ -91,6 +98,13 @@ var (
 
 func CommonSerixAPI() *serix.API {
 	api := serix.NewAPI()
+
+	{
+		must(api.RegisterTypeSettings(PrefixedStringUint8(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)))
+		must(api.RegisterTypeSettings(PrefixedStringUint16(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)))
+		must(api.RegisterTypeSettings(PrefixedStringUint32(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32)))
+		must(api.RegisterTypeSettings(PrefixedStringUint64(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint64)))
+	}
 
 	{
 		must(api.RegisterTypeSettings(Ed25519Address{},
