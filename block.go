@@ -267,6 +267,16 @@ func (b *Block) Size() int {
 	return b.Header.Size() + b.Body.Size() + b.Signature.Size()
 }
 
+// ManaCost returns the cost of the block in Mana, which is the given rmc multiplied by the block's workscore.
+func (b *Block) ManaCost(rmc Mana) (Mana, error) {
+	workScore, err := b.WorkScore()
+	if err != nil {
+		return 0, err
+	}
+
+	return ManaCost(rmc, workScore)
+}
+
 // syntacticallyValidate syntactically validates the Block.
 func (b *Block) syntacticallyValidate() error {
 	if b.Size() > MaxBlockSize {
@@ -392,15 +402,6 @@ func (b *BasicBlockBody) WorkScore(workScoreParameters *WorkScoreParameters) (Wo
 
 	// offset for block plus payload.
 	return workScoreParameters.Block.Add(workScorePayload)
-}
-
-func (b *BasicBlockBody) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters) (Mana, error) {
-	workScore, err := b.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
-
-	return ManaCost(rmc, workScore)
 }
 
 func (b *BasicBlockBody) Size() int {
