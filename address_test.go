@@ -16,7 +16,7 @@ import (
 )
 
 func TestAddressDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok - Ed25519Address",
 			source: tpkg.RandEd25519Address(),

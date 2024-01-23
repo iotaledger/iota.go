@@ -11,7 +11,7 @@ import (
 )
 
 func TestTransactionDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok - UTXO",
 			source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI),
@@ -72,7 +72,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 }
 
 func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
@@ -122,7 +122,7 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 }
 
 func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:      "ok",
 			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount),
@@ -144,7 +144,7 @@ func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
 }
 
 func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:      "ok",
 			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount),
@@ -166,7 +166,7 @@ func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
 }
 
 func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name: "ok",
 			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,

@@ -10,7 +10,7 @@ import (
 func TestTaggedDataDeSerialize(t *testing.T) {
 	const tag = "寿司を作って"
 
-	tests := []deSerializeTest{
+	tests := []*deSerializeTest{
 		{
 			name:   "ok",
 			source: tpkg.RandTaggedData([]byte(tag)),
