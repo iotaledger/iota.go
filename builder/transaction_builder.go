@@ -157,7 +157,7 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
 
-func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, storedManaOutputIndex int) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
@@ -167,7 +167,7 @@ func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIn
 		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -203,7 +203,7 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, minRequiredMana, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, minRequiredMana)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -233,7 +233,7 @@ func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssu
 		return b
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -244,106 +244,44 @@ func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssu
 	return b
 }
 
-func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+func (b *TransactionBuilder) calculateAvailableManaLeftover(targetSlot iotago.SlotIndex, minRequiredMana iotago.Mana) (iotago.Mana, error) {
+	var err error
+
 	// calculate the available mana on input side
-	availableManaInputs, err := b.CalculateAvailableMana(targetSlot)
+	totalIn, err := b.CalculateAvailableMana(targetSlot)
 	if err != nil {
 		return 0, ierrors.Wrap(err, "failed to calculate the available mana on input side")
 	}
 
-	// update the account bound mana balances if they exist and/or the onbound mana balance
-	updateUnboundAndAccountBoundManaBalances := func(accountID iotago.AccountID, accountBoundManaOut iotago.Mana) error {
-		// check if there is account bound mana for this account on the input side
-		if accountBalance, exists := availableManaInputs.AccountBoundMana[accountID]; exists {
-			// check if there is enough account bound mana for this account on the input side
-			if accountBalance < accountBoundManaOut {
-				// not enough mana for this account on the input side
-				// => set the remaining account bound mana for this account to 0
-				availableManaInputs.AccountBoundMana[accountID] = 0
-
-				// subtract the remainder from the unbound mana
-				availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, accountBoundManaOut-accountBalance)
-				if err != nil {
-					return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s while subtracting remainder", accountID.String())
-				}
-
-				return nil
-			}
-
-			// there is enough account bound mana for this account, subtract it from there
-			availableManaInputs.AccountBoundMana[accountID] -= accountBoundManaOut
-
-			return nil
-		}
-
-		// no account bound mana available for the given account, subtract it from the unbounded mana
-		availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, accountBoundManaOut)
+	var totalOut iotago.Mana
+	// add the stored mana on the outputs side
+	for _, output := range b.transaction.Outputs {
+		totalOut, err = safemath.SafeAdd(totalOut, output.StoredMana())
 		if err != nil {
-			return ierrors.Wrapf(err, "not enough unbound mana on the input side for account %s", accountID.String())
-		}
-
-		return nil
-	}
-
-	// subtract the stored mana on the outputs side
-	for _, o := range b.transaction.Outputs {
-		switch output := o.(type) {
-		case *iotago.AccountOutput:
-			// mana on account outputs is locked to this account
-			if err = updateUnboundAndAccountBoundManaBalances(output.AccountID, output.StoredMana()); err != nil {
-				return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side for account output")
-			}
-
-		default:
-			// check if the output locked mana to a certain account
-			if accountID, isManaLocked := b.hasManalockCondition(output); isManaLocked {
-				if err = updateUnboundAndAccountBoundManaBalances(accountID, output.StoredMana()); err != nil {
-					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side, while checking locked mana")
-				}
-			} else {
-				availableManaInputs.UnboundMana, err = safemath.SafeSub(availableManaInputs.UnboundMana, output.StoredMana())
-				if err != nil {
-					return 0, ierrors.Wrap(err, "failed to subtract the stored mana on the outputs side")
-				}
-			}
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add stored mana on output side: %w", err)
 		}
 	}
 
-	// subtract the already alloted mana
+	// add the already alloted mana
 	for _, allotment := range b.transaction.Allotments {
-		if err = updateUnboundAndAccountBoundManaBalances(allotment.AccountID, allotment.Mana); err != nil {
-			return 0, ierrors.Wrap(err, "failed to subtract the already alloted mana")
+		totalOut, err = safemath.SafeAdd(totalOut, allotment.Mana)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add allotted mana: %w", err)
 		}
 	}
 
-	// subtract the minimum required mana to issue the block
-	if err = updateUnboundAndAccountBoundManaBalances(blockIssuerAccountID, minRequiredMana); err != nil {
-		return 0, ierrors.Wrap(err, "failed to subtract the minimum required mana to issue the block")
+	// add the minimum required mana to issue the block
+	totalOut, err = safemath.SafeAdd(totalOut, minRequiredMana)
+	if err != nil {
+		return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add minimum required mana: %w", err)
 	}
 
-	return availableManaInputs.UnboundMana, nil
-}
-
-// hasManalockCondition checks if the output is locked for a certain time to an account.
-func (b *TransactionBuilder) hasManalockCondition(output iotago.Output) (iotago.AccountID, bool) {
-	minManalockedSlot := b.transaction.CreationSlot + 2*b.api.ProtocolParameters().MaxCommittableAge()
-
-	if !output.UnlockConditionSet().HasTimelockUntil(minManalockedSlot) {
-		return iotago.EmptyAccountID, false
+	manaLeft, err := safemath.SafeSub(totalIn, totalOut)
+	if err != nil {
+		return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to subtract totalIn and totalOut: %w", err)
 	}
 
-	unlockAddress := output.UnlockConditionSet().Address()
-	if unlockAddress == nil {
-		return iotago.EmptyAccountID, false
-	}
-
-	if unlockAddress.Address.Type() != iotago.AddressAccount {
-		return iotago.EmptyAccountID, false
-	}
-	//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-	accountAddress := unlockAddress.Address.(*iotago.AccountAddress)
-
-	return accountAddress.AccountID(), true
+	return manaLeft, nil
 }
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
@@ -454,60 +392,42 @@ func (a *AvailableManaResult) AddAccountBoundMana(accountID iotago.AccountID, va
 	return nil
 }
 
-func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex) (*AvailableManaResult, error) {
-	result := &AvailableManaResult{
-		AccountBoundMana: make(map[iotago.AccountID]iotago.Mana),
-	}
+func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex) (iotago.Mana, error) {
+	var totalIn iotago.Mana
+	var err error
 
 	for inputID, input := range b.inputs {
 		// calculate the potential mana of the input
-		var inputPotentialMana iotago.Mana
-
 		inputPotentialMana, err := iotago.PotentialMana(b.api.ManaDecayProvider(), b.api.StorageScoreStructure(), input, inputID.CreationSlot(), targetSlot)
 		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to calculate potential mana")
+			return 0, ierrors.Wrap(err, "failed to calculate potential mana")
 		}
 
-		if err := result.AddPotentialMana(inputPotentialMana); err != nil {
-			return nil, err
+		totalIn, err = safemath.SafeAdd(totalIn, inputPotentialMana)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add potential mana: %w", err)
 		}
 
 		// calculate the decayed stored mana of the input
 		inputStoredMana, err := b.api.ManaDecayProvider().DecayManaBySlots(input.StoredMana(), inputID.CreationSlot(), targetSlot)
 		if err != nil {
-			return nil, ierrors.Wrap(err, "failed to calculate stored mana decay")
+			return 0, ierrors.Wrap(err, "failed to calculate stored mana decay")
 		}
 
-		if err := result.AddStoredMana(inputStoredMana); err != nil {
-			return nil, err
+		totalIn, err = safemath.SafeAdd(totalIn, inputStoredMana)
+		if err != nil {
+			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add stored mana: %w", err)
 		}
 
-		if accountOutput, isAccountOutput := input.(*iotago.AccountOutput); isAccountOutput {
-			inputTotalMana, err := safemath.SafeAdd(inputPotentialMana, inputStoredMana)
-			if err != nil {
-				return nil, ierrors.Wrap(err, "failed to add input mana")
-			}
-
-			if err := result.AddAccountBoundMana(accountOutput.AccountID, inputTotalMana); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := result.AddUnboundPotentialMana(inputPotentialMana); err != nil {
-				return nil, err
-			}
-
-			if err := result.AddUnboundStoredMana(inputStoredMana); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	// add the rewards (unbound)
-	if err := result.AddRewards(b.rewards); err != nil {
-		return nil, err
+	totalIn, err = safemath.SafeAdd(totalIn, b.rewards)
+	if err != nil {
+		return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "failed to add rewards:  %w", err)
 	}
 
-	return result, nil
+	return totalIn, nil
 }
 
 // MinRequiredAllotedMana returns the minimum alloted mana required to issue a Block
