@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -54,6 +56,10 @@ func (s *StakingFeature) StorageScore(storageScoreStruct *StorageScoreStructure,
 func (s *StakingFeature) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// staking feature changes require invokation of staking managers so require extra work.
 	return workScoreParameters.Staking, nil
+}
+
+func (s *StakingFeature) Compare(other Feature) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *StakingFeature) Equal(other Feature) bool {

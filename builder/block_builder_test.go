@@ -18,7 +18,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 		Tag:  []byte("hello world"),
 		Data: []byte{1, 2, 3, 4},
 	}
-	block, err := builder.NewBasicBlockBuilder(tpkg.ZeroCostTestAPI).
+	block, err := builder.NewBasicBlockBuilder(iotago.V3API(tpkg.IOTAMainnetV3TestProtocolParameters)).
 		Payload(taggedDataPayload).
 		StrongParents(parents).
 		CalculateAndSetMaxBurnedMana(100).
@@ -28,7 +28,7 @@ func TestBasicBlockBuilder(t *testing.T) {
 	require.Equal(t, iotago.BlockBodyTypeBasic, block.Body.Type())
 
 	basicBlock := block.Body.(*iotago.BasicBlockBody)
-	expectedBurnedMana, err := basicBlock.ManaCost(100, tpkg.ZeroCostTestAPI.ProtocolParameters().WorkScoreParameters())
+	expectedBurnedMana, err := block.ManaCost(100)
 	require.NoError(t, err)
 	require.EqualValues(t, expectedBurnedMana, basicBlock.MaxBurnedMana)
 }

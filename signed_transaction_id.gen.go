@@ -154,6 +154,11 @@ func (t SignedTransactionID) UnregisterAlias() {
 	delete(SignedTransactionIDAliases, t)
 }
 
+// Compare compares two SignedTransactionIDs.
+func (t SignedTransactionID) Compare(other SignedTransactionID) int {
+	return bytes.Compare(t[:], other[:])
+}
+
 type SignedTransactionIDs []SignedTransactionID
 
 // ToHex converts the SignedTransactionIDs to their hex representation.
@@ -183,6 +188,13 @@ func (ids SignedTransactionIDs) RemoveDupsAndSort() SignedTransactionIDs {
 	}
 
 	return result
+}
+
+// Sort sorts the SignedTransactionIDs lexically and in-place.
+func (ids SignedTransactionIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
 }
 
 // SignedTransactionIDsFromHexString converts the given block IDs from their hex to SignedTransactionID representation.

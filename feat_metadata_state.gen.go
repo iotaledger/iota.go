@@ -4,6 +4,7 @@ package iotago
 
 import (
 	"bytes"
+	"cmp"
 
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -37,6 +38,10 @@ func (m StateMetadataFeature) StorageScore(_ *StorageScoreStructure, _ StorageSc
 
 func (m StateMetadataFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
+}
+
+func (m StateMetadataFeature) Compare(other Feature) int {
+	return cmp.Compare(m.Type(), other.Type())
 }
 
 func (m StateMetadataFeature) Equal(other Feature) bool {

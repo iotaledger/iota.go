@@ -75,6 +75,7 @@ type UnlockCondition interface {
 	ProcessableObject
 	constraints.Cloneable[UnlockCondition]
 	constraints.Equalable[UnlockCondition]
+	constraints.Comparable[UnlockCondition]
 
 	// Type returns the type of the UnlockCondition.
 	Type() UnlockConditionType

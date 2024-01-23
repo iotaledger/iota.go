@@ -104,7 +104,10 @@ func RandTransactionWithOptions(api iotago.API, opts ...options.Option[iotago.Tr
 		tx.Outputs = append(tx.Outputs, RandBasicOutput(iotago.AddressEd25519))
 	}
 
-	return options.Apply(tx, opts)
+	tx = options.Apply(tx, opts)
+	tx.TransactionEssence.ContextInputs.Sort()
+
+	return tx
 }
 
 func WithBlockIssuanceCreditInputCount(inputCount int) options.Option[iotago.Transaction] {
@@ -173,6 +176,7 @@ func WithInputs(inputs iotago.TxEssenceInputs) options.Option[iotago.Transaction
 func WithContextInputs(inputs iotago.TxEssenceContextInputs) options.Option[iotago.Transaction] {
 	return func(tx *iotago.Transaction) {
 		tx.TransactionEssence.ContextInputs = inputs
+		tx.TransactionEssence.ContextInputs.Sort()
 	}
 }
 

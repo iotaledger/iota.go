@@ -36,6 +36,7 @@ var (
 	ErrCommitmentInputTooOld              = ierrors.New("a block cannot contain a commitment input with index older than the block's slot minus maxCommittableAge")
 	ErrCommitmentInputTooRecent           = ierrors.New("a block cannot contain a commitment input with index more recent than the block's slot minus minCommittableAge")
 	ErrInvalidBlockVersion                = ierrors.New("block has invalid protocol version")
+	ErrBlockMaxSizeExceeded               = ierrors.New("block exceeds the max size")
 	ErrCommitmentInputNewerThanCommitment = ierrors.New("a block cannot contain a commitment input with index newer than the commitment index")
 	ErrBlockNetworkIDInvalid              = ierrors.New("invalid network ID in block header")
 )
@@ -266,8 +267,22 @@ func (b *Block) Size() int {
 	return b.Header.Size() + b.Body.Size() + b.Signature.Size()
 }
 
+// ManaCost returns the cost of the block in Mana, which is the given rmc multiplied by the block's workscore.
+func (b *Block) ManaCost(rmc Mana) (Mana, error) {
+	workScore, err := b.WorkScore()
+	if err != nil {
+		return 0, err
+	}
+
+	return ManaCost(rmc, workScore)
+}
+
 // syntacticallyValidate syntactically validates the Block.
 func (b *Block) syntacticallyValidate() error {
+	if b.Size() > MaxBlockSize {
+		return ierrors.Wrapf(ErrBlockMaxSizeExceeded, "max size of a block is %d but got %d bytes", MaxBlockSize, b.Size())
+	}
+
 	if b.API.ProtocolParameters().Version() != b.Header.ProtocolVersion {
 		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
 	}
@@ -387,15 +402,6 @@ func (b *BasicBlockBody) WorkScore(workScoreParameters *WorkScoreParameters) (Wo
 
 	// offset for block plus payload.
 	return workScoreParameters.Block.Add(workScorePayload)
-}
-
-func (b *BasicBlockBody) ManaCost(rmc Mana, workScoreParameters *WorkScoreParameters) (Mana, error) {
-	workScore, err := b.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
-
-	return ManaCost(rmc, workScore)
 }
 
 func (b *BasicBlockBody) Size() int {

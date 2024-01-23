@@ -59,7 +59,7 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 	}
 }
 
-func TestContextInputsSyntacticalUnique(t *testing.T) {
+func TestContextInputsRewardInputMaxIndex(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputs  iotago.ContextInputs[iotago.ContextInput]
@@ -87,42 +87,6 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - multiple commitment inputs",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand36ByteArray(),
-				},
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand36ByteArray(),
-				},
-			},
-			wantErr: iotago.ErrMultipleInputCommitments,
-		},
-		{
-			name: "fail - block issuance credit inputs not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.BlockIssuanceCreditInput{
-					AccountID: [32]byte{},
-				},
-				&iotago.BlockIssuanceCreditInput{
-					AccountID: [32]byte{},
-				},
-			},
-			wantErr: iotago.ErrInputBICNotUnique,
-		},
-		{
-			name: "fail - reward input not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.RewardInput{
-					Index: 1,
-				},
-				&iotago.RewardInput{
-					Index: 1,
-				},
-			},
-			wantErr: iotago.ErrInputRewardInvalid,
-		},
-		{
 			name: "fail - reward input references index equal to inputs count",
 			inputs: iotago.ContextInputs[iotago.ContextInput]{
 				&iotago.RewardInput{
@@ -132,12 +96,12 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 					Index: iotago.MaxInputsCount / 2,
 				},
 			},
-			wantErr: iotago.ErrInputRewardInvalid,
+			wantErr: iotago.ErrInputRewardIndexExceedsMaxInputsCount,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.ContextInputsSyntacticalUnique(iotago.MaxInputsCount / 2)
+			valFunc := iotago.ContextInputsRewardInputMaxIndex(iotago.MaxInputsCount / 2)
 			var runErr error
 			for index, input := range tt.inputs {
 				if err := valFunc(index, input); err != nil {

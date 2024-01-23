@@ -37,16 +37,10 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 	basicOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 4, // Max: SenderFeature, MetadataFeature, TagFeature, NativeTokenFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	accountOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -55,25 +49,16 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	accountOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 4, // Max: SenderFeature, MetadataFeature, BlockIssuerFeature, StakingFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	accountOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	anchorOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -83,25 +68,16 @@ var (
 			uint32(UnlockConditionStateControllerAddress): struct{}{},
 			uint32(UnlockConditionGovernorAddress):        struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	anchorOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: MetadataFeature, StateMetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	anchorOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	foundryOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -110,25 +86,16 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionImmutableAccount): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	foundryOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: MetadataFeature, NativeTokenFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	foundryOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 1, // Max: MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	nftOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -137,25 +104,16 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	nftOutputV3FeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 3, // Max: SenderFeature, MetadataFeature, TagFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	nftOutputV3ImmFeatBlocksArrRules = &serix.ArrayRules{
 		Min: 0, // Min: -
 		Max: 2, // Max: IssuerFeature, MetadataFeature
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	delegationOutputV3UnlockCondArrRules = &serix.ArrayRules{
@@ -164,48 +122,31 @@ var (
 		MustOccur: serializer.TypePrefixes{
 			uint32(UnlockConditionAddress): struct{}{},
 		},
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering |
-			serializer.ArrayValidationModeAtMostOneOfEachTypeByte,
 	}
 
 	txEssenceV3ContextInputsArrRules = &serix.ArrayRules{
-		Min:            MinContextInputsCount,
-		Max:            MaxContextInputsCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
+		Min: MinContextInputsCount,
+		Max: MaxContextInputsCount,
 	}
 
 	txEssenceV3InputsArrRules = &serix.ArrayRules{
-		Min:            MinInputsCount,
-		Max:            MaxInputsCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates,
+		Min: MinInputsCount,
+		Max: MaxInputsCount,
 	}
 
 	txEssenceV3OutputsArrRules = &serix.ArrayRules{
-		Min:            MinOutputsCount,
-		Max:            MaxOutputsCount,
-		ValidationMode: serializer.ArrayValidationModeNone,
+		Min: MinOutputsCount,
+		Max: MaxOutputsCount,
 	}
 
 	txEssenceV3AllotmentsArrRules = &serix.ArrayRules{
 		Min: MinAllotmentCount,
 		Max: MaxAllotmentCount,
-		// Uniqueness and lexical order is checked based on the Account ID.
-		UniquenessSliceFunc: func(next []byte) []byte { return next[:AccountIDLength] },
-		ValidationMode:      serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 
 	txV3UnlocksArrRules = &serix.ArrayRules{
 		Min: 1,
 		Max: MaxInputsCount,
-	}
-
-	blockIDsArrRules = &serix.ArrayRules{
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
-	}
-
-	transactionIDsArrRules = &serix.ArrayRules{
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates | serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -344,7 +285,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(MetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidators(MetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key MetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(MetadataFeatureEntriesKey(""), func(ctx context.Context, key MetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidMetadataKey, err)
 			}
@@ -355,7 +296,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)),
 		)
 		must(api.RegisterTypeSettings(MetadataFeatureEntries{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxByteSize(8192)),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1)),
 		)
 		must(api.RegisterTypeSettings(MetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureMetadata))),
@@ -364,7 +305,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StateMetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidators(StateMetadataFeatureEntriesKey(""), nil, func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(StateMetadataFeatureEntriesKey(""), func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidStateMetadataKey, err)
 			}
@@ -375,7 +316,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)),
 		)
 		must(api.RegisterTypeSettings(StateMetadataFeatureEntries{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1).WithMaxByteSize(8192)),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMinLen(1)),
 		)
 		must(api.RegisterTypeSettings(StateMetadataFeature{},
 			serix.TypeSettings{}.WithObjectType(uint8(FeatureStateMetadata))),
@@ -402,7 +343,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StorageDepositReturnUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
-		must(api.RegisterValidators(StorageDepositReturnUnlockCondition{}, nil,
+		must(api.RegisterValidator(StorageDepositReturnUnlockCondition{},
 			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
 			},
@@ -413,7 +354,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(ExpirationUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
-		must(api.RegisterValidators(ExpirationUnlockCondition{}, nil,
+		must(api.RegisterValidator(ExpirationUnlockCondition{},
 			func(ctx context.Context, exp ExpirationUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
 			},
@@ -421,7 +362,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StateControllerAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
-		must(api.RegisterValidators(StateControllerAddressUnlockCondition{}, nil,
+		must(api.RegisterValidator(StateControllerAddressUnlockCondition{},
 			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(stateController.Address)
 			},
@@ -429,7 +370,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(GovernorAddressUnlockCondition{},
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
-		must(api.RegisterValidators(GovernorAddressUnlockCondition{}, nil,
+		must(api.RegisterValidator(GovernorAddressUnlockCondition{},
 			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(gov.Address)
 			},
@@ -630,7 +571,9 @@ func V3API(protoParams ProtocolParameters) API {
 		))
 
 		must(api.RegisterTypeSettings(TxEssenceAllotments{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txEssenceV3AllotmentsArrRules),
+			serix.TypeSettings{}.
+				WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).
+				WithArrayRules(txEssenceV3AllotmentsArrRules),
 		))
 		must(api.RegisterTypeSettings(TransactionCapabilitiesBitMask{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(1),
@@ -649,22 +592,27 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
-		must(api.RegisterValidators(SignedTransaction{}, nil, func(ctx context.Context, tx SignedTransaction) error {
+		must(api.RegisterValidator(SignedTransaction{}, func(ctx context.Context, tx SignedTransaction) error {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
-
 	}
 
 	{
+		must(api.RegisterValidator(BlockIDs{}, func(ctx context.Context, blockIDs BlockIDs) error {
+			return SliceValidator(blockIDs, LexicalOrderAndUniquenessValidator[BlockID]())
+		}))
 		must(api.RegisterTypeSettings(BlockIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(blockIDsArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32),
 		))
 	}
 
 	{
+		must(api.RegisterValidator(TransactionIDs{}, func(ctx context.Context, transactionIDs TransactionIDs) error {
+			return SliceValidator(transactionIDs, LexicalOrderAndUniquenessValidator[TransactionID]())
+		}))
 		must(api.RegisterTypeSettings(TransactionIDs{},
-			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32).WithArrayRules(transactionIDsArrRules),
+			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32),
 		))
 	}
 
@@ -689,14 +637,8 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
 		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
-		must(api.RegisterValidators(Block{}, func(ctx context.Context, bytes []byte) error {
-			if len(bytes) > MaxBlockSize {
-				return ierrors.Errorf("max size of a block is %d but got %d bytes", MaxBlockSize, len(bytes))
-			}
-
-			return nil
-		}, func(ctx context.Context, protocolBlock Block) error {
-			return protocolBlock.syntacticallyValidate()
+		must(api.RegisterValidator(Block{}, func(ctx context.Context, block Block) error {
+			return block.syntacticallyValidate()
 		}))
 	}
 

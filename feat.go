@@ -19,6 +19,8 @@ var (
 	ErrInvalidMetadataKey = ierrors.New("invalid metadata key")
 	// ErrInvalidStateMetadataKey gets returned when a StateMetadataFeature's key is invalid.
 	ErrInvalidStateMetadataKey = ierrors.New("invalid state metadata key")
+	// ErrMetadataExceedsMaxSize gets returned when a StateMetadataFeature or MetadataFeature exceeds the max size.
+	ErrMetadataExceedsMaxSize = ierrors.New("metadata exceeds max allowed size")
 )
 
 // Feature is an abstract building block extending the features of an Output.
@@ -28,6 +30,7 @@ type Feature interface {
 	ProcessableObject
 	constraints.Cloneable[Feature]
 	constraints.Equalable[Feature]
+	constraints.Comparable[Feature]
 
 	// Type returns the type of the Feature.
 	Type() FeatureType

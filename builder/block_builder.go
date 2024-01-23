@@ -46,6 +46,10 @@ type BasicBlockBuilder struct {
 
 // Build builds the Block or returns any error which occurred during the build steps.
 func (b *BasicBlockBuilder) Build() (*iotago.Block, error) {
+	b.basicBlock.ShallowLikeParents.Sort()
+	b.basicBlock.WeakParents.Sort()
+	b.basicBlock.StrongParents.Sort()
+
 	if b.err != nil {
 		return nil, b.err
 	}
@@ -244,6 +248,10 @@ type ValidationBlockBuilder struct {
 
 // Build builds the Block or returns any error which occurred during the build steps.
 func (v *ValidationBlockBuilder) Build() (*iotago.Block, error) {
+	v.validationBlock.ShallowLikeParents.Sort()
+	v.validationBlock.WeakParents.Sort()
+	v.validationBlock.StrongParents.Sort()
+
 	if v.err != nil {
 		return nil, v.err
 	}

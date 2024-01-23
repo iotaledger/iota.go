@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -30,4 +32,10 @@ func (c *CommitmentInput) Size() int {
 func (c *CommitmentInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
 	return workScoreParameters.ContextInput, nil
+}
+
+func (c *CommitmentInput) Compare(other ContextInput) int {
+	// At most one commitment input is allowed.
+	// If we compare based only on the type, we achieve lexical order and "at most one" semantics.
+	return cmp.Compare(c.Type(), other.Type())
 }

@@ -6,7 +6,6 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/byteutils"
@@ -28,11 +27,8 @@ var (
 	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
-	// ErrInputBICNotUnique gets returned if multiple inputs reference the same BIC.
-	ErrInputBICNotUnique = ierrors.New("inputs must each reference a unique BIC")
-	// ErrInputRewardInvalid gets returned if multiple reward inputs reference the same input index
-	// or if they reference an index greater than max inputs count.
-	ErrInputRewardInvalid = ierrors.New("invalid reward input")
+	// ErrInputRewardIndexExceedsMaxInputsCount gets returned if a reward input references an index greater than max inputs count.
+	ErrInputRewardIndexExceedsMaxInputsCount = ierrors.New("reward input references an index greater than max inputs count")
 	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
 	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
@@ -250,25 +246,6 @@ func (t *Transaction) Size() int {
 	return t.TransactionEssence.Size() + t.Outputs.Size()
 }
 
-// allotmentSyntacticValidation checks that the sum of all allotted mana does not exceed 2^(Mana Bits Count) - 1.
-func (t *Transaction) allotmentSyntacticValidation(maxManaValue Mana) error {
-	var sum Mana
-
-	for index, allotment := range t.Allotments {
-		var err error
-		sum, err = safemath.SafeAdd(sum, allotment.Mana)
-		if err != nil {
-			return ierrors.Errorf("%w: %w: allotment mana sum calculation failed at allotment %d", ErrMaxManaExceeded, err, index)
-		}
-
-		if sum > maxManaValue {
-			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
-		}
-	}
-
-	return nil
-}
-
 // syntacticallyValidate checks whether the transaction essence is syntactically valid.
 // The function does not syntactically validate the input or outputs themselves.
 func (t *Transaction) SyntacticallyValidate(api API) error {
@@ -279,11 +256,11 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 	}
 
 	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
-	if err := t.allotmentSyntacticValidation(maxManaValue); err != nil {
-		return err
-	}
 
 	return SyntacticallyValidateOutputs(t.Outputs,
+		OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness(),
+		OutputsSyntacticalFeaturesLexicalOrderAndUniqueness(),
+		OutputsSyntacticalMetadataFeatureMaxSize(),
 		OutputsSyntacticalDepositAmount(protoParams, api.StorageScoreStructure()),
 		OutputsSyntacticalExpirationAndTimelock(),
 		OutputsSyntacticalNativeTokens(),

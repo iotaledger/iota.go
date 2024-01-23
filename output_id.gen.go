@@ -144,6 +144,11 @@ func (o OutputID) UnregisterAlias() {
 	delete(OutputIDAliases, o)
 }
 
+// Compare compares two OutputIDs.
+func (o OutputID) Compare(other OutputID) int {
+	return bytes.Compare(o[:], other[:])
+}
+
 type OutputIDs []OutputID
 
 // ToHex converts the OutputIDs to their hex representation.
@@ -173,6 +178,13 @@ func (ids OutputIDs) RemoveDupsAndSort() OutputIDs {
 	}
 
 	return result
+}
+
+// Sort sorts the OutputIDs lexically and in-place.
+func (ids OutputIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
 }
 
 // OutputIDsFromHexString converts the given block IDs from their hex to OutputID representation.

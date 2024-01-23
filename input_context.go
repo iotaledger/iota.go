@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/iotaledger/hive.go/constraints"
 	"github.com/iotaledger/hive.go/ierrors"
@@ -39,6 +40,7 @@ var contextInputNames = [ContextInputReward + 1]string{"CommitmentInput", "Block
 type ContextInput interface {
 	Sizer
 	constraints.Cloneable[ContextInput]
+	constraints.Comparable[ContextInput]
 	ProcessableObject
 
 	// Type returns the type of ContextInput.
@@ -84,62 +86,29 @@ func (in ContextInputs[T]) Size() int {
 	return sum
 }
 
-// ContextInputsSyntacticalValidationFunc which given the index of an input and the input itself,
-// runs syntactical validations and returns an error if any should fail.
-type ContextInputsSyntacticalValidationFunc func(index int, input ContextInput) error
+// Sort sorts the Context Inputs in lexical order.
+func (in ContextInputs[T]) Sort() {
+	sort.Slice(in, func(i, j int) bool {
+		return in[i].Compare(in[j]) < 0
+	})
+}
 
-// ContextInputsSyntacticalUnique returns a ContextInputsSyntacticalValidationFunc
-// which checks that
-//   - there are exactly 0 or 1 Commitment inputs.
-//   - every Block Issuance Credits Input references a different account.
-//   - every Reward Input references a different input and the index it references is <= max inputs count.
-func ContextInputsSyntacticalUnique(inputsCount uint16) ContextInputsSyntacticalValidationFunc {
-	hasCommitment := false
-	bicSet := map[string]int{}
-	rewardSet := map[uint16]int{}
-
+// ContextInputsRewardInputMaxIndex returns a ElementValidationFunc
+// which checks that every Reward Input references an index <= max inputs count.
+func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[ContextInput] {
 	return func(index int, input ContextInput) error {
 		switch castInput := input.(type) {
-		case *BlockIssuanceCreditInput:
-			accountID := castInput.AccountID
-			k := string(accountID[:])
-			if j, has := bicSet[k]; has {
-				return ierrors.Wrapf(ErrInputBICNotUnique, "input %d and %d share the same Account ref", j, index)
-			}
-			bicSet[k] = index
+		case *CommitmentInput, *BlockIssuanceCreditInput:
 		case *RewardInput:
 			utxoIndex := castInput.Index
 			if utxoIndex >= inputsCount {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d references index %d which is equal or greater than the inputs count %d",
+				return ierrors.Wrapf(ErrInputRewardIndexExceedsMaxInputsCount, "reward input %d references index %d which is equal or greater than the inputs count %d",
 					index, utxoIndex, inputsCount)
 			}
-			if j, has := rewardSet[utxoIndex]; has {
-				return ierrors.Wrapf(ErrInputRewardInvalid, "reward input %d and %d share the same input index", j, index)
-			}
-			rewardSet[utxoIndex] = index
-		case *CommitmentInput:
-			if hasCommitment {
-				return ierrors.Wrapf(ErrMultipleInputCommitments, "input %d is the second commitment input", index)
-			}
-			hasCommitment = true
 		default:
 			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
 		}
 
 		return nil
 	}
-}
-
-// SyntacticallyValidateContextInputs validates the context inputs by running them against
-// the given ContextInputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateContextInputs(contextInputs TxEssenceContextInputs, funcs ...ContextInputsSyntacticalValidationFunc) error {
-	for i, input := range contextInputs {
-		for _, f := range funcs {
-			if err := f(i, input); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

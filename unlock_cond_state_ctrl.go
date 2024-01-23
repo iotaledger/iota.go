@@ -2,6 +2,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -21,6 +23,10 @@ func (s *StateControllerAddressUnlockCondition) StorageScore(storageScoreStruct 
 func (s *StateControllerAddressUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// StateControllerAddressUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
+}
+
+func (s *StateControllerAddressUnlockCondition) Compare(other UnlockCondition) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *StateControllerAddressUnlockCondition) Equal(other UnlockCondition) bool {
