@@ -258,8 +258,6 @@ type (
 		ProtocolParameters []*InfoResProtocolParameters `serix:""`
 		// The base token of the network.
 		BaseToken *InfoResBaseToken `serix:""`
-		// The features this node exposes.
-		Features []string `serix:""`
 	}
 
 	// InfoResProtocolParameters defines the protocol parameters of a node in the InfoResponse.
