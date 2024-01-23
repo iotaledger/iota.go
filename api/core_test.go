@@ -3,6 +3,7 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"testing"
 	"time"
 
@@ -12,12 +13,272 @@ import (
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func testAPI() iotago.API {
 	params := tpkg.FixedGenesisV3TestProtocolParameters
 
 	return iotago.V3API(params)
+}
+
+func Test_CoreAPIDeSerialize(t *testing.T) {
+	tests := []*frameworks.DeSerializeTest{
+		{
+			Name: "ok - InfoResponse",
+			Source: &api.InfoResponse{
+				Name:    "test",
+				Version: "2.0.0",
+				Status: &api.InfoResNodeStatus{
+					IsHealthy:                   false,
+					AcceptedTangleTime:          time.Unix(1690879505, 0).UTC(),
+					RelativeAcceptedTangleTime:  time.Unix(1690879505, 0).UTC(),
+					ConfirmedTangleTime:         time.Unix(1690879505, 0).UTC(),
+					RelativeConfirmedTangleTime: time.Unix(1690879505, 0).UTC(),
+					LatestCommitmentID:          tpkg.RandCommitmentID(),
+					LatestFinalizedSlot:         tpkg.RandSlot(),
+					LatestAcceptedBlockSlot:     tpkg.RandSlot(),
+					LatestConfirmedBlockSlot:    tpkg.RandSlot(),
+					PruningEpoch:                tpkg.RandEpoch(),
+				},
+				Metrics: &api.InfoResNodeMetrics{
+					BlocksPerSecond:          1.1,
+					ConfirmedBlocksPerSecond: 2.2,
+					ConfirmationRate:         3.3,
+				},
+				ProtocolParameters: []*api.InfoResProtocolParameters{
+					{
+						StartEpoch: tpkg.RandEpoch(),
+						Parameters: tpkg.RandProtocolParameters(),
+					},
+				},
+				BaseToken: &api.InfoResBaseToken{
+					Name:         "Shimmer",
+					TickerSymbol: "SMR",
+					Unit:         "SMR",
+					Subunit:      "glow",
+					Decimals:     6,
+				},
+			},
+			Target:    &api.InfoResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - IssuanceBlockHeaderResponse",
+			Source: &api.IssuanceBlockHeaderResponse{
+				StrongParents:                tpkg.SortedRandBlockIDs(2),
+				WeakParents:                  tpkg.SortedRandBlockIDs(2),
+				ShallowLikeParents:           tpkg.SortedRandBlockIDs(2),
+				LatestParentBlockIssuingTime: time.Unix(1690879505, 0).UTC(),
+				LatestFinalizedSlot:          tpkg.RandSlot(),
+				LatestCommitment:             tpkg.RandCommitment(),
+			},
+			Target:    &api.IssuanceBlockHeaderResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - BlockCreatedResponse",
+			Source: &api.BlockCreatedResponse{
+				BlockID: tpkg.RandBlockID(),
+			},
+			Target:    &api.BlockCreatedResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - BlockMetadataResponse",
+			Source: &api.BlockMetadataResponse{
+				BlockID:            tpkg.RandBlockID(),
+				BlockState:         api.BlockStateFailed,
+				BlockFailureReason: api.BlockFailureParentNotFound,
+				TransactionMetadata: &api.TransactionMetadataResponse{
+					TransactionID:            tpkg.RandTransactionID(),
+					TransactionState:         api.TransactionStateFailed,
+					TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+				},
+			},
+			Target:    &api.BlockMetadataResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - BlockWithMetadataResponse",
+			Source: &api.BlockWithMetadataResponse{
+				Block: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 100),
+				Metadata: &api.BlockMetadataResponse{
+					BlockID:            tpkg.RandBlockID(),
+					BlockState:         api.BlockStateFailed,
+					BlockFailureReason: api.BlockFailureParentNotFound,
+					TransactionMetadata: &api.TransactionMetadataResponse{
+						TransactionID:            tpkg.RandTransactionID(),
+						TransactionState:         api.TransactionStateFailed,
+						TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+					},
+				},
+			},
+			Target:    &api.BlockWithMetadataResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - OutputMetadata",
+			Source: &api.OutputMetadata{
+				OutputID: tpkg.RandOutputID(),
+				BlockID:  tpkg.RandBlockID(),
+				Included: &api.OutputInclusionMetadata{
+					Slot:          tpkg.RandSlot(),
+					TransactionID: tpkg.RandTransactionID(),
+					CommitmentID:  tpkg.RandCommitmentID(),
+				},
+				Spent: &api.OutputConsumptionMetadata{
+					Slot:          tpkg.RandSlot(),
+					TransactionID: tpkg.RandTransactionID(),
+					CommitmentID:  tpkg.RandCommitmentID(),
+				},
+				LatestCommitmentID: tpkg.RandCommitmentID(),
+			},
+			Target:    &api.OutputMetadata{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - OutputResponse",
+			Source: &api.OutputResponse{
+				Output:        tpkg.RandOutput(tpkg.RandOutputType()),
+				OutputIDProof: tpkg.RandOutputIDProof(tpkg.ZeroCostTestAPI),
+			},
+			Target:    &api.OutputResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - OutputWithMetadataResponse",
+			Source: &api.OutputWithMetadataResponse{
+				Output:        tpkg.RandOutput(tpkg.RandOutputType()),
+				OutputIDProof: tpkg.RandOutputIDProof(tpkg.ZeroCostTestAPI),
+				Metadata: &api.OutputMetadata{
+					OutputID: tpkg.RandOutputID(),
+					BlockID:  tpkg.RandBlockID(),
+					Included: &api.OutputInclusionMetadata{
+						Slot:          tpkg.RandSlot(),
+						TransactionID: tpkg.RandTransactionID(),
+						CommitmentID:  tpkg.RandCommitmentID(),
+					},
+					Spent: &api.OutputConsumptionMetadata{
+						Slot:          tpkg.RandSlot(),
+						TransactionID: tpkg.RandTransactionID(),
+						CommitmentID:  tpkg.RandCommitmentID(),
+					},
+					LatestCommitmentID: tpkg.RandCommitmentID(),
+				},
+			},
+			Target:    &api.OutputWithMetadataResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - UTXOChangesResponse",
+			Source: &api.UTXOChangesResponse{
+				CommitmentID:    tpkg.RandCommitmentID(),
+				CreatedOutputs:  tpkg.RandOutputIDs(3),
+				ConsumedOutputs: tpkg.RandOutputIDs(3),
+			},
+			Target:    &api.UTXOChangesResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - UTXOChangesFullResponse",
+			Source: &api.UTXOChangesFullResponse{
+				CommitmentID: tpkg.RandCommitmentID(),
+				CreatedOutputs: []*api.OutputWithID{
+					{
+						OutputID: tpkg.RandOutputID(),
+						Output:   tpkg.RandOutput(tpkg.RandOutputType()),
+					},
+				},
+				ConsumedOutputs: []*api.OutputWithID{
+					{
+						OutputID: tpkg.RandOutputID(),
+						Output:   tpkg.RandOutput(tpkg.RandOutputType()),
+					},
+				},
+			},
+			Target:    &api.UTXOChangesFullResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - CongestionResponse",
+			Source: &api.CongestionResponse{
+				Slot:                 tpkg.RandSlot(),
+				Ready:                true,
+				ReferenceManaCost:    tpkg.RandMana(math.MaxUint32),
+				BlockIssuanceCredits: 80,
+			},
+			Target:    &api.CongestionResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - ValidatorsResponse",
+			Source: &api.ValidatorsResponse{
+				Validators: []*api.ValidatorResponse{
+					{
+						AddressBech32:                  tpkg.RandAccountAddress().Bech32(iotago.PrefixTestnet),
+						StakingEndEpoch:                tpkg.RandEpoch(),
+						PoolStake:                      123,
+						ValidatorStake:                 456,
+						FixedCost:                      69,
+						Active:                         true,
+						LatestSupportedProtocolVersion: 9,
+					},
+				},
+				Cursor:   "0,1",
+				PageSize: 50,
+			},
+			Target:    &api.ValidatorsResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - ManaRewardsResponse",
+			Source: &api.ManaRewardsResponse{
+				StartEpoch:                      tpkg.RandEpoch(),
+				EndEpoch:                        tpkg.RandEpoch(),
+				Rewards:                         456,
+				LatestCommittedEpochPoolRewards: 555,
+			},
+			Target:    &api.ManaRewardsResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - CommitteeResponse",
+			Source: &api.CommitteeResponse{
+				Committee: []*api.CommitteeMemberResponse{
+					{
+						AddressBech32:  tpkg.RandAccountAddress().Bech32(iotago.PrefixTestnet),
+						PoolStake:      456,
+						ValidatorStake: 123,
+						FixedCost:      789,
+					},
+				},
+				TotalStake:          456,
+				TotalValidatorStake: 123,
+				Epoch:               tpkg.RandEpoch(),
+			},
+			Target:    &api.CommitteeResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
+	}
 }
 
 // jsonEncodeTest is used to check if the JSON encoding is equal to a manually provided JSON string.
