@@ -30,5 +30,5 @@ func (test *JSONEncodeTest) Run(t *testing.T) {
 	require.NoError(t, err, "JSON indenting")
 	indentedJSON := b.String()
 
-	require.EqualValues(t, test.Target, string(indentedJSON))
+	require.EqualValues(t, test.Target, indentedJSON)
 }
