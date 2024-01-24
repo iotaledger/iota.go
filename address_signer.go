@@ -70,6 +70,7 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 // for the Ed25519Address derived from the public key of the given private key
 // as well as the related ImplicitAccountCreationAddress.
 func NewInMemoryAddressSignerFromEd25519PrivateKey(privKey ed25519.PrivateKey) AddressSigner {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 	pubKey := privKey.Public().(ed25519.PublicKey)
 
 	ed25519Address := Ed25519AddressFromPubKey(pubKey)

@@ -101,6 +101,7 @@ func (b *BasicBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *BasicBlo
 }
 
 func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, privKey ed25519.PrivateKey) *BasicBlockBuilder {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 	pubKey := privKey.Public().(ed25519.PublicKey)
 	ed25519Address := iotago.Ed25519AddressFromPubKey(pubKey)
 
@@ -308,6 +309,7 @@ func (v *ValidationBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *Val
 }
 
 func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, privKey ed25519.PrivateKey) *ValidationBlockBuilder {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
 	pubKey := privKey.Public().(ed25519.PublicKey)
 	ed25519Address := iotago.Ed25519AddressFromPubKey(pubKey)
 

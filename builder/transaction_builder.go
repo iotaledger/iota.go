@@ -198,7 +198,7 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	}
 
 	// calculate the minimum required mana to issue the block
-	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreParameters(), rmc, blockIssuerAccountID)
+	minRequiredMana, err := b.MinRequiredAllotedMana(rmc, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
 	}
@@ -513,7 +513,7 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 // MinRequiredAllotedMana returns the minimum alloted mana required to issue a Block
 // with the transaction payload from the builder and 1 allotment for the block issuer
 // and a Ed25519 block signature.
-func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.WorkScoreParameters, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+func (b *TransactionBuilder) MinRequiredAllotedMana(rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction
 	allotmentsCpy := b.transaction.Allotments.Clone()
 
