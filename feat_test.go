@@ -388,7 +388,7 @@ func TestMetadataMaxSize(t *testing.T) {
 	}
 }
 
-func TestFeaturesBlockIssuerLexicalOrderAndUniqueness(t *testing.T) {
+func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 	bik1 := lo.PanicOnErr(lo.DropCount(
 		iotago.Ed25519PublicKeyHashBlockIssuerKeyFromBytes(
 			lo.PanicOnErr(hexutil.DecodeHex("0x00145d52e861cfe407e6f0c278f09ebd35ed7bcd766b7da2654e475ed4b05e0ddc")))))
@@ -462,6 +462,28 @@ func TestFeaturesBlockIssuerLexicalOrderAndUniqueness(t *testing.T) {
 			Target:    &iotago.SignedTransaction{},
 			SeriErr:   iotago.ErrArrayValidationViolatesUniqueness,
 			DeSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			Name: "ok - BlockIssuerFeature keys below minimum",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(iotago.BlockIssuerKeys{}),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMinElementsNotReached,
+			DeSeriErr: serializer.ErrArrayValidationMinElementsNotReached,
+		},
+		{
+			Name: "ok - BlockIssuerFeature keys exceeds maximum",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(tpkg.RandBlockIssuerKeys(iotago.MaxBlockIssuerKeysCount + 1)),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 
