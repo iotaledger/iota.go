@@ -154,6 +154,11 @@ func (c CommitmentID) UnregisterAlias() {
 	delete(CommitmentIDAliases, c)
 }
 
+// Compare compares two CommitmentIDs.
+func (c CommitmentID) Compare(other CommitmentID) int {
+	return bytes.Compare(c[:], other[:])
+}
+
 type CommitmentIDs []CommitmentID
 
 // ToHex converts the CommitmentIDs to their hex representation.
@@ -183,6 +188,13 @@ func (ids CommitmentIDs) RemoveDupsAndSort() CommitmentIDs {
 	}
 
 	return result
+}
+
+// Sort sorts the CommitmentIDs lexically and in-place.
+func (ids CommitmentIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
 }
 
 // CommitmentIDsFromHexString converts the given block IDs from their hex to CommitmentID representation.

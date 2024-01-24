@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -24,6 +26,10 @@ func (s *TimelockUnlockCondition) StorageScore(_ *StorageScoreStructure, _ Stora
 
 func (s *TimelockUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
+}
+
+func (s *TimelockUnlockCondition) Compare(other UnlockCondition) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *TimelockUnlockCondition) Equal(other UnlockCondition) bool {

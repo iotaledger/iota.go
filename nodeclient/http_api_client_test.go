@@ -124,7 +124,6 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			ConfirmedBlocksPerSecond: 10.0,
 			ConfirmationRate:         50.0,
 		},
-		Features: []string{"Lazers"},
 	}
 
 	mockGetJSON(api.CoreRouteInfo, 200, originInfo)

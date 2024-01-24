@@ -8,6 +8,7 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestInputsSyntacticalUnique(t *testing.T) {
@@ -59,7 +60,7 @@ func TestInputsSyntacticalUnique(t *testing.T) {
 	}
 }
 
-func TestContextInputsSyntacticalUnique(t *testing.T) {
+func TestContextInputsRewardInputMaxIndex(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputs  iotago.ContextInputs[iotago.ContextInput]
@@ -87,42 +88,6 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - multiple commitment inputs",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand36ByteArray(),
-				},
-				&iotago.CommitmentInput{
-					CommitmentID: tpkg.Rand36ByteArray(),
-				},
-			},
-			wantErr: iotago.ErrMultipleInputCommitments,
-		},
-		{
-			name: "fail - block issuance credit inputs not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.BlockIssuanceCreditInput{
-					AccountID: [32]byte{},
-				},
-				&iotago.BlockIssuanceCreditInput{
-					AccountID: [32]byte{},
-				},
-			},
-			wantErr: iotago.ErrInputBICNotUnique,
-		},
-		{
-			name: "fail - reward input not unique",
-			inputs: iotago.ContextInputs[iotago.ContextInput]{
-				&iotago.RewardInput{
-					Index: 1,
-				},
-				&iotago.RewardInput{
-					Index: 1,
-				},
-			},
-			wantErr: iotago.ErrInputRewardInvalid,
-		},
-		{
 			name: "fail - reward input references index equal to inputs count",
 			inputs: iotago.ContextInputs[iotago.ContextInput]{
 				&iotago.RewardInput{
@@ -132,12 +97,12 @@ func TestContextInputsSyntacticalUnique(t *testing.T) {
 					Index: iotago.MaxInputsCount / 2,
 				},
 			},
-			wantErr: iotago.ErrInputRewardInvalid,
+			wantErr: iotago.ErrInputRewardIndexExceedsMaxInputsCount,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.ContextInputsSyntacticalUnique(iotago.MaxInputsCount / 2)
+			valFunc := iotago.ContextInputsRewardInputMaxIndex(iotago.MaxInputsCount / 2)
 			var runErr error
 			for index, input := range tt.inputs {
 				if err := valFunc(index, input); err != nil {
@@ -191,46 +156,46 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 }
 
 func TestInputDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok - UTXO",
-			source: &iotago.UTXOInput{
+			Name: "ok - UTXO",
+			Source: &iotago.UTXOInput{
 				TransactionID:          [36]byte{},
 				TransactionOutputIndex: 0,
 			},
-			target:    &iotago.UTXOInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.UTXOInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - Commitment",
-			source: &iotago.CommitmentInput{
+			Name: "ok - Commitment",
+			Source: &iotago.CommitmentInput{
 				CommitmentID: iotago.CommitmentID{},
 			},
-			target:    &iotago.CommitmentInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.CommitmentInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - BIC",
-			source: &iotago.BlockIssuanceCreditInput{
+			Name: "ok - BIC",
+			Source: &iotago.BlockIssuanceCreditInput{
 				AccountID: tpkg.RandAccountID(),
 			},
-			target:    &iotago.BlockIssuanceCreditInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.BlockIssuanceCreditInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - Reward",
-			source: &iotago.RewardInput{
+			Name: "ok - Reward",
+			Source: &iotago.RewardInput{
 				Index: 6,
 			},
-			target:    &iotago.RewardInput{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.RewardInput{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }

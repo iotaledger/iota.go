@@ -5,25 +5,26 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestTaggedDataDeSerialize(t *testing.T) {
 	const tag = "寿司を作って"
 
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok",
-			source: tpkg.RandTaggedData([]byte(tag)),
-			target: &iotago.TaggedData{},
+			Name:   "ok",
+			Source: tpkg.RandTaggedData([]byte(tag)),
+			Target: &iotago.TaggedData{},
 		},
 		{
-			name:   "empty-tag",
-			source: tpkg.RandTaggedData([]byte{}),
-			target: &iotago.TaggedData{},
+			Name:   "empty-tag",
+			Source: tpkg.RandTaggedData([]byte{}),
+			Target: &iotago.TaggedData{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }

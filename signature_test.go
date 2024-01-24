@@ -12,19 +12,20 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestEd25519Signature_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok",
-			source: tpkg.RandEd25519Signature(),
-			target: &iotago.Ed25519Signature{},
+			Name:   "ok",
+			Source: tpkg.RandEd25519Signature(),
+			Target: &iotago.Ed25519Signature{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

@@ -8,18 +8,19 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestTransactionDeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok - UTXO",
-			source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI),
-			target: &iotago.SignedTransaction{},
+			Name:   "ok - UTXO",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI),
+			Target: &iotago.SignedTransaction{},
 		},
 		{
-			name: "ok -  Commitment",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "ok -  Commitment",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
@@ -28,13 +29,13 @@ func TestTransactionDeSerialize(t *testing.T) {
 						},
 					}),
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - BIC",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "ok - BIC",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
@@ -43,13 +44,13 @@ func TestTransactionDeSerialize(t *testing.T) {
 						},
 					}),
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "ok - Commitment + BIC",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "ok - Commitment + BIC",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
@@ -61,21 +62,21 @@ func TestTransactionDeSerialize(t *testing.T) {
 						},
 					}),
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
 func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "ok",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount),
@@ -83,24 +84,24 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 					tpkg.WithRewardInputCount(iotago.MaxContextInputsCount/2-1),
 					tpkg.WithCommitmentInput(),
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "too many inputs",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "too many inputs",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithUTXOInputCount(iotago.MaxInputsCount+1),
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 		{
-			name: "too many context inputs",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "too many context inputs",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithBlockIssuanceCreditInputCount(iotago.MaxContextInputsCount-1),
@@ -111,91 +112,91 @@ func TestTransactionDeSerialize_MaxInputsCount(t *testing.T) {
 						})
 					},
 				)),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
 func TestTransactionDeSerialize_MaxOutputsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:      "ok",
-			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Name:      "ok",
+			Source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name:      "too many outputs",
-			source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount+1),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			Name:      "too many outputs",
+			Source:    tpkg.RandSignedTransactionWithOutputCount(tpkg.ZeroCostTestAPI, iotago.MaxOutputsCount+1),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
 func TestTransactionDeSerialize_MaxAllotmentsCount(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:      "ok",
-			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Name:      "ok",
+			Source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name:      "too many outputs",
-			source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount+1),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
-			deSeriErr: nil,
+			Name:      "too many allotments",
+			Source:    tpkg.RandSignedTransactionWithAllotmentCount(tpkg.ZeroCostTestAPI, iotago.MaxAllotmentCount+1),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 
 func TestTransactionDeSerialize_RefUTXOIndexMax(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name: "ok",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "ok",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI, tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax,
 					},
 				}))),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   nil,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
 		},
 		{
-			name: "wrong ref index",
-			source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
+			Name: "wrong ref index",
+			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(tpkg.ZeroCostTestAPI, tpkg.WithInputs(iotago.TxEssenceInputs{
 					&iotago.UTXOInput{
 						TransactionID:          tpkg.RandTransactionID(),
 						TransactionOutputIndex: iotago.RefUTXOIndexMax + 1,
 					},
 				}))),
-			target:    &iotago.SignedTransaction{},
-			seriErr:   iotago.ErrRefUTXOIndexInvalid,
-			deSeriErr: nil,
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrRefUTXOIndexInvalid,
+			DeSeriErr: iotago.ErrRefUTXOIndexInvalid,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

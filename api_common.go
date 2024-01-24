@@ -8,6 +8,13 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
+type (
+	PrefixedStringUint8  string
+	PrefixedStringUint16 string
+	PrefixedStringUint32 string
+	PrefixedStringUint64 string
+)
+
 var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
 	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
@@ -93,6 +100,13 @@ func CommonSerixAPI() *serix.API {
 	api := serix.NewAPI()
 
 	{
+		must(api.RegisterTypeSettings(PrefixedStringUint8(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)))
+		must(api.RegisterTypeSettings(PrefixedStringUint16(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16)))
+		must(api.RegisterTypeSettings(PrefixedStringUint32(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint32)))
+		must(api.RegisterTypeSettings(PrefixedStringUint64(""), serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint64)))
+	}
+
+	{
 		must(api.RegisterTypeSettings(Ed25519Address{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressEd25519)).WithFieldKey("pubKeyHash")),
 		)
@@ -111,14 +125,14 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(MultiAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressMulti))),
 		)
-		must(api.RegisterValidators(MultiAddress{}, nil, multiAddressValidatorFunc))
+		must(api.RegisterValidator(MultiAddress{}, multiAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
 		must(api.RegisterTypeSettings(RestrictedAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressRestricted))),
 		)
-		must(api.RegisterValidators(RestrictedAddress{}, nil, restrictedAddressValidatorFunc))
+		must(api.RegisterValidator(RestrictedAddress{}, restrictedAddressValidatorFunc))
 		must(api.RegisterTypeSettings(AddressCapabilitiesBitMask{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithMaxLen(2),
 		))

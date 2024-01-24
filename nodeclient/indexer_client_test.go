@@ -54,7 +54,7 @@ func Test_IndexerEnabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.IndexerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.IndexerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -69,7 +69,7 @@ func Test_IndexerDisabled(t *testing.T) {
 	defer gock.Off()
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{"someplugin/v1"},
+		Routes: []iotago.PrefixedStringUint8{"someplugin/v1"},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -91,7 +91,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	require.NoError(t, err)
 
 	originRoutes := &api.RoutesResponse{
-		Routes: []string{api.IndexerPluginName},
+		Routes: []iotago.PrefixedStringUint8{api.IndexerPluginName},
 	}
 
 	mockGetJSON(api.RouteRoutes, 200, originRoutes)
@@ -99,7 +99,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1337,
 		PageSize:      1,
-		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		Items:         iotago.HexOutputIDsFromOutputIDs(fakeOutputID),
 		Cursor:        "some-offset-key",
 	}, map[string]string{
 		"tag": "some-tag",
@@ -108,7 +108,7 @@ func TestIndexerClient_BasicOutputs(t *testing.T) {
 	mockGetJSONWithParams(api.IndexerRouteOutputsBasic, 200, &api.IndexerResponse{
 		CommittedSlot: 1338,
 		PageSize:      1,
-		Items:         iotago.HexOutputIDs{fakeOutputID.ToHex()},
+		Items:         iotago.HexOutputIDsFromOutputIDs(fakeOutputID),
 	}, map[string]string{
 		"cursor": "some-offset-key",
 		"tag":    "some-tag",

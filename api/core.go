@@ -247,19 +247,17 @@ type (
 	// InfoResponse defines the response of a GET info REST API call.
 	InfoResponse struct {
 		// The name of the node software.
-		Name string `serix:""`
+		Name string `serix:",lenPrefix=uint8"`
 		// The semver version of the node software.
-		Version string `serix:""`
+		Version string `serix:",lenPrefix=uint8"`
 		// The current status of this node.
 		Status *InfoResNodeStatus `serix:""`
 		// The metrics of this node.
 		Metrics *InfoResNodeMetrics `serix:""`
 		// The protocol parameters used by this node.
-		ProtocolParameters []*InfoResProtocolParameters `serix:""`
+		ProtocolParameters []*InfoResProtocolParameters `serix:",lenPrefix=uint8"`
 		// The base token of the network.
 		BaseToken *InfoResBaseToken `serix:""`
-		// The features this node exposes.
-		Features []string `serix:""`
 	}
 
 	// InfoResProtocolParameters defines the protocol parameters of a node in the InfoResponse.
@@ -305,13 +303,13 @@ type (
 	// InfoResBaseToken defines the base token of the node in the InfoResponse.
 	InfoResBaseToken struct {
 		// The base token name.
-		Name string `serix:""`
+		Name string `serix:",lenPrefix=uint8"`
 		// The base token ticker symbol.
-		TickerSymbol string `serix:""`
+		TickerSymbol string `serix:",lenPrefix=uint8"`
 		// The base token unit.
-		Unit string `serix:""`
+		Unit string `serix:",lenPrefix=uint8"`
 		// The base token subunit.
-		Subunit string `serix:",omitempty"`
+		Subunit string `serix:",lenPrefix=uint8,omitempty"`
 		// The base token amount of decimals.
 		Decimals uint32 `serix:""`
 	}
@@ -422,9 +420,9 @@ type (
 		// CommitmentID is the commitment ID of the requested slot that contains the changes.
 		CommitmentID iotago.CommitmentID `serix:""`
 		// The outputs that are created in this slot.
-		CreatedOutputs iotago.OutputIDs `serix:""`
+		CreatedOutputs iotago.OutputIDs `serix:",lenPrefix=uint32"`
 		// The outputs that are consumed in this slot.
-		ConsumedOutputs iotago.OutputIDs `serix:""`
+		ConsumedOutputs iotago.OutputIDs `serix:",lenPrefix=uint32"`
 	}
 
 	// UTXOChangesFullResponse defines the response for the UTXO changes per slot REST API call.
@@ -433,9 +431,9 @@ type (
 		// CommitmentID is the commitment ID of the requested slot that contains the changes.
 		CommitmentID iotago.CommitmentID `serix:""`
 		// The outputs that are created in this slot.
-		CreatedOutputs []*OutputWithID `serix:""`
+		CreatedOutputs []*OutputWithID `serix:",lenPrefix=uint32"`
 		// The outputs that are consumed in this slot.
-		ConsumedOutputs []*OutputWithID `serix:""`
+		ConsumedOutputs []*OutputWithID `serix:",lenPrefix=uint32"`
 	}
 
 	// CongestionResponse defines the response for the congestion REST API call.
@@ -473,9 +471,9 @@ type (
 
 	// ValidatorsResponse defines the response for the staking REST API call.
 	ValidatorsResponse struct {
-		Validators []*ValidatorResponse `serix:"stakers"`
+		Validators []*ValidatorResponse `serix:"stakers,lenPrefix=uint16"`
 		PageSize   uint32               `serix:""`
-		Cursor     string               `serix:",omitempty"`
+		Cursor     string               `serix:",lenPrefix=uint8,omitempty"`
 	}
 
 	// ManaRewardsResponse defines the response for the mana rewards REST API call.
@@ -509,7 +507,7 @@ type (
 
 	// CommitteeResponse defines the response for the staking REST API call.
 	CommitteeResponse struct {
-		Committee           []*CommitteeMemberResponse `serix:""`
+		Committee           []*CommitteeMemberResponse `serix:",lenPrefix=uint8"`
 		TotalStake          iotago.BaseToken           `serix:""`
 		TotalValidatorStake iotago.BaseToken           `serix:""`
 		Epoch               iotago.EpochIndex          `serix:""`

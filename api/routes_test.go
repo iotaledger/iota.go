@@ -3,26 +3,44 @@ package api_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
+	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
-func Test_RoutesResponse(t *testing.T) {
-	testAPI := testAPI()
-	{
-		response := &api.RoutesResponse{
-			Routes: []string{"route1", "route2"},
-		}
+func Test_RoutesAPIDeSerialize(t *testing.T) {
+	tests := []*frameworks.DeSerializeTest{
+		{
+			Name: "ok - RoutesResponse",
+			Source: &api.RoutesResponse{
+				Routes: []iotago.PrefixedStringUint8{"route1", "route2"},
+			},
+			Target: &api.RoutesResponse{},
+		},
+	}
 
-		jsonResponse, err := testAPI.JSONEncode(response)
-		require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
+	}
+}
 
-		expected := "{\"routes\":[\"route1\",\"route2\"]}"
-		require.Equal(t, expected, string(jsonResponse))
+func Test_RoutesAPIJSONSerialization(t *testing.T) {
+	tests := []*frameworks.JSONEncodeTest{
+		{
+			Name: "ok - RoutesResponse",
+			Source: &api.RoutesResponse{
+				Routes: []iotago.PrefixedStringUint8{"route1", "route2"},
+			},
+			Target: `{
+	"routes": [
+		"route1",
+		"route2"
+	]
+}`,
+		},
+	}
 
-		decoded := new(api.RoutesResponse)
-		require.NoError(t, testAPI.JSONDecode(jsonResponse, decoded))
-		require.EqualValues(t, response, decoded)
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
 	}
 }

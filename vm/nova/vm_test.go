@@ -451,10 +451,9 @@ func TestNovaTransactionExecution(t *testing.T) {
 					UnlockConditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident3},
 					},
-					Features: iotago.NFTOutputFeatures{
-						&iotago.IssuerFeature{Address: ident3},
-					},
+					Features: iotago.NFTOutputFeatures{},
 					ImmutableFeatures: iotago.NFTOutputImmFeatures{
+						&iotago.IssuerFeature{Address: ident3},
 						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("transfer to 4")}},
 					},
 				},
@@ -467,10 +466,9 @@ func TestNovaTransactionExecution(t *testing.T) {
 					UnlockConditions: iotago.NFTOutputUnlockConditions{
 						&iotago.AddressUnlockCondition{Address: ident4},
 					},
-					Features: iotago.NFTOutputFeatures{
-						&iotago.IssuerFeature{Address: ident3},
-					},
+					Features: iotago.NFTOutputFeatures{},
 					ImmutableFeatures: iotago.NFTOutputImmFeatures{
+						&iotago.IssuerFeature{Address: ident3},
 						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("going to be destroyed")}},
 					},
 				},
@@ -750,10 +748,9 @@ func TestNovaTransactionExecution(t *testing.T) {
 						UnlockConditions: iotago.NFTOutputUnlockConditions{
 							&iotago.AddressUnlockCondition{Address: ident4},
 						},
-						Features: iotago.NFTOutputFeatures{
-							&iotago.IssuerFeature{Address: ident3},
-						},
+						Features: iotago.NFTOutputFeatures{},
 						ImmutableFeatures: iotago.NFTOutputImmFeatures{
+							&iotago.IssuerFeature{Address: ident3},
 							&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("transfer to 4")}},
 						},
 					},
@@ -1770,10 +1767,9 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 								UnlockConditions: iotago.NFTOutputUnlockConditions{
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
-								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
-								},
+								Features: iotago.NFTOutputFeatures{},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -1795,10 +1791,10 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
 								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -1858,10 +1854,9 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 								UnlockConditions: iotago.NFTOutputUnlockConditions{
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
-								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
-								},
+								Features: iotago.NFTOutputFeatures{},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -1883,10 +1878,10 @@ func TestNovaTransactionExecution_RestrictedAddress(t *testing.T) {
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
 								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[0]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -2740,10 +2735,9 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 								UnlockConditions: iotago.NFTOutputUnlockConditions{
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
-								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
-								},
+								Features: iotago.NFTOutputFeatures{},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -2771,10 +2765,10 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 									&iotago.AddressUnlockCondition{Address: ed25519Addresses[0]},
 								},
 								Features: iotago.NFTOutputFeatures{
-									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("some new metadata")}},
 								},
 								ImmutableFeatures: iotago.NFTOutputImmFeatures{
+									&iotago.IssuerFeature{Address: ed25519Addresses[1]},
 									&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": []byte("immutable")}},
 								},
 							},
@@ -5597,17 +5591,6 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 							},
 						})
 
-						outputs = append(outputs, &iotago.AnchorOutput{
-							Amount: 1337,
-							UnlockConditions: iotago.AnchorOutputUnlockConditions{
-								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-								&iotago.GovernorAddressUnlockCondition{Address: ident1},
-							},
-							Features: iotago.AnchorOutputFeatures{
-								&iotago.SenderFeature{Address: sender},
-							},
-						})
-
 						outputs = append(outputs, &iotago.NFTOutput{
 							Amount: 1337,
 							UnlockConditions: iotago.NFTOutputUnlockConditions{
@@ -5721,13 +5704,21 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AnchorOutput{
-						Amount:   100,
+						Amount:   50,
 						AnchorID: anchorID,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.AnchorOutputFeatures{
+						Features: iotago.AnchorOutputFeatures{},
+					},
+					&iotago.BasicOutput{
+						Amount: 50,
+						Mana:   0,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: anchorAddr},
+						},
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: anchorAddr},
 						},
 					},
@@ -5781,14 +5772,22 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AnchorOutput{
-						Amount:     100,
+						Amount:     50,
 						AnchorID:   anchorID,
 						StateIndex: currentStateIndex + 1,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.AnchorOutputFeatures{
+						Features: iotago.AnchorOutputFeatures{},
+					},
+					&iotago.BasicOutput{
+						Amount: 50,
+						Mana:   0,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: anchorAddr},
+						},
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: anchorAddr},
 						},
 					},
@@ -5840,13 +5839,21 @@ func TestTxSemanticOutputsSender(t *testing.T) {
 				},
 				Outputs: iotago.TxEssenceOutputs{
 					&iotago.AnchorOutput{
-						Amount:   100,
+						Amount:   50,
 						AnchorID: anchorID,
 						UnlockConditions: iotago.AnchorOutputUnlockConditions{
 							&iotago.StateControllerAddressUnlockCondition{Address: stateController},
 							&iotago.GovernorAddressUnlockCondition{Address: governor},
 						},
-						Features: iotago.AnchorOutputFeatures{
+						Features: iotago.AnchorOutputFeatures{},
+					},
+					&iotago.BasicOutput{
+						Amount: 50,
+						Mana:   0,
+						UnlockConditions: iotago.BasicOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{Address: anchorAddr},
+						},
+						Features: iotago.BasicOutputFeatures{
 							&iotago.SenderFeature{Address: governor},
 						},
 					},
@@ -7568,12 +7575,12 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: implicitAccountIdent},
 					},
 					Features: iotago.BasicOutputFeatures{
+						&iotago.SenderFeature{
+							Address: edIdentAddrKeys.Address,
+						},
 						&iotago.MetadataFeature{Entries: iotago.MetadataFeatureEntries{"data": tpkg.RandBytes(40)}},
 						&iotago.TagFeature{
 							Tag: tpkg.RandBytes(12),
-						},
-						&iotago.SenderFeature{
-							Address: edIdentAddrKeys.Address,
 						},
 						&iotago.NativeTokenFeature{
 							ID:     exampleNativeTokenFeature.ID,
@@ -7656,8 +7663,19 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
+				// a basic output will hold the native tokens
+				&iotago.BasicOutput{
+					Amount: 21200,
+					Mana:   0,
+					UnlockConditions: iotago.BasicOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: edIdent},
+					},
+					Features: iotago.BasicOutputFeatures{
+						exampleNativeTokenFeature,
+					},
+				},
 				&iotago.AccountOutput{
-					Amount:    exampleAmount,
+					Amount:    exampleAmount - 21200,
 					Mana:      exampleMana,
 					AccountID: accountID1,
 					UnlockConditions: iotago.AccountOutputUnlockConditions{
@@ -7674,7 +7692,6 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
-						exampleNativeTokenFeature,
 					},
 				},
 			},
@@ -7830,13 +7847,13 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleMetadataFeature,
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
 								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
-						exampleMetadataFeature,
 					},
 				},
 			},

@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"cmp"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
@@ -25,6 +26,10 @@ func (s *TagFeature) StorageScore(storageScoreStruct *StorageScoreStructure, f S
 
 func (s *TagFeature) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	return 0, nil
+}
+
+func (s *TagFeature) Compare(other Feature) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *TagFeature) Equal(other Feature) bool {

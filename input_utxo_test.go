@@ -7,18 +7,19 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestUTXOInput_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "",
-			source: tpkg.RandUTXOInput(),
-			target: &iotago.UTXOInput{},
+			Name:   "",
+			Source: tpkg.RandUTXOInput(),
+			Target: &iotago.UTXOInput{},
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

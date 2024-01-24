@@ -6,28 +6,7 @@ import (
 
 // RandBlock returns a random block with the given inner payload.
 func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iotago.Block {
-	if basicBlock, isBasic := blockBody.(*iotago.BasicBlockBody); isBasic {
-		burnedMana, err := basicBlock.ManaCost(rmc, api.ProtocolParameters().WorkScoreParameters())
-		if err != nil {
-			panic(err)
-		}
-		basicBlock.MaxBurnedMana = burnedMana
-
-		return &iotago.Block{
-			API: api,
-			Header: iotago.BlockHeader{
-				ProtocolVersion:  ZeroCostTestAPI.Version(),
-				NetworkID:        api.ProtocolParameters().NetworkID(),
-				IssuingTime:      RandUTCTime(),
-				SlotCommitmentID: iotago.NewEmptyCommitment(api).MustID(),
-				IssuerID:         RandAccountID(),
-			},
-			Body:      basicBlock,
-			Signature: RandEd25519Signature(),
-		}
-	}
-
-	return &iotago.Block{
+	block := &iotago.Block{
 		API: api,
 		Header: iotago.BlockHeader{
 			ProtocolVersion:  ZeroCostTestAPI.Version(),
@@ -39,6 +18,16 @@ func RandBlock(blockBody iotago.BlockBody, api iotago.API, rmc iotago.Mana) *iot
 		Body:      blockBody,
 		Signature: RandEd25519Signature(),
 	}
+
+	if basicBlock, isBasic := blockBody.(*iotago.BasicBlockBody); isBasic {
+		burnedMana, err := block.ManaCost(rmc)
+		if err != nil {
+			panic(err)
+		}
+		basicBlock.MaxBurnedMana = burnedMana
+	}
+
+	return block
 }
 
 func RandBasicBlockWithIssuerAndRMC(api iotago.API, issuerID iotago.AccountID, rmc iotago.Mana) *iotago.Block {

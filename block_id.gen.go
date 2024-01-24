@@ -154,6 +154,11 @@ func (b BlockID) UnregisterAlias() {
 	delete(BlockIDAliases, b)
 }
 
+// Compare compares two BlockIDs.
+func (b BlockID) Compare(other BlockID) int {
+	return bytes.Compare(b[:], other[:])
+}
+
 type BlockIDs []BlockID
 
 // ToHex converts the BlockIDs to their hex representation.
@@ -183,6 +188,13 @@ func (ids BlockIDs) RemoveDupsAndSort() BlockIDs {
 	}
 
 	return result
+}
+
+// Sort sorts the BlockIDs lexically and in-place.
+func (ids BlockIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
 }
 
 // BlockIDsFromHexString converts the given block IDs from their hex to BlockID representation.

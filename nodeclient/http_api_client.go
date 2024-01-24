@@ -346,7 +346,7 @@ func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool
 		return false, err
 	}
 	for _, p := range routes.Routes {
-		if p == route {
+		if string(p) == route {
 			return true, nil
 		}
 	}

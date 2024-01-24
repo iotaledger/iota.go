@@ -7,19 +7,20 @@ import (
 
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/tpkg"
+	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
 func TestStorageScoreParameters_DeSerialize(t *testing.T) {
-	tests := []deSerializeTest{
+	tests := []*frameworks.DeSerializeTest{
 		{
-			name:   "ok",
-			source: tpkg.RandStorageScoreParameters(),
-			target: &iotago.StorageScoreParameters{},
+			Name:   "ok",
+			Source: tpkg.RandStorageScoreParameters(),
+			Target: &iotago.StorageScoreParameters{},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, tt.deSerialize)
+		t.Run(tt.Name, tt.Run)
 	}
 }
 

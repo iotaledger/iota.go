@@ -154,6 +154,11 @@ func (t TransactionID) UnregisterAlias() {
 	delete(TransactionIDAliases, t)
 }
 
+// Compare compares two TransactionIDs.
+func (t TransactionID) Compare(other TransactionID) int {
+	return bytes.Compare(t[:], other[:])
+}
+
 type TransactionIDs []TransactionID
 
 // ToHex converts the TransactionIDs to their hex representation.
@@ -183,6 +188,13 @@ func (ids TransactionIDs) RemoveDupsAndSort() TransactionIDs {
 	}
 
 	return result
+}
+
+// Sort sorts the TransactionIDs lexically and in-place.
+func (ids TransactionIDs) Sort() {
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i].Compare(ids[j]) < 0
+	})
 }
 
 // TransactionIDsFromHexString converts the given block IDs from their hex to TransactionID representation.

@@ -19,6 +19,8 @@ var (
 	ErrInvalidMetadataKey = ierrors.New("invalid metadata key")
 	// ErrInvalidStateMetadataKey gets returned when a StateMetadataFeature's key is invalid.
 	ErrInvalidStateMetadataKey = ierrors.New("invalid state metadata key")
+	// ErrMetadataExceedsMaxSize gets returned when a StateMetadataFeature or MetadataFeature exceeds the max size.
+	ErrMetadataExceedsMaxSize = ierrors.New("metadata exceeds max allowed size")
 )
 
 // Feature is an abstract building block extending the features of an Output.
@@ -28,6 +30,7 @@ type Feature interface {
 	ProcessableObject
 	constraints.Cloneable[Feature]
 	constraints.Equalable[Feature]
+	constraints.Comparable[Feature]
 
 	// Type returns the type of the Feature.
 	Type() FeatureType
@@ -75,11 +78,17 @@ var featNames = [FeatureStaking + 1]string{
 }
 
 // Features is a slice of Feature(s).
-type Features[T Feature] []Feature
+type Features[T Feature] []T
 
 // Clone clones the Features.
 func (f Features[T]) Clone() Features[T] {
-	return lo.CloneSlice(f)
+	cpy := make(Features[T], len(f))
+	for i, v := range f {
+		//nolint:forcetypeassert // we can safely assume that this is of type T
+		cpy[i] = v.Clone().(T)
+	}
+
+	return cpy
 }
 
 func (f Features[T]) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {

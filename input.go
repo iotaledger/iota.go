@@ -80,11 +80,8 @@ type Input interface {
 	Type() InputType
 }
 
-// InputsSyntacticalValidationFunc which given the index of an input and the input itself, runs syntactical validations and returns an error if any should fail.
-type InputsSyntacticalValidationFunc func(index int, input Input) error
-
-// InputsSyntacticalUnique returns an InputsSyntacticalValidationFunc which checks that every input has a unique UTXO ref.
-func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
+// InputsSyntacticalUnique returns an ElementValidationFunc which checks that every input has a unique UTXO ref.
+func InputsSyntacticalUnique() ElementValidationFunc[Input] {
 	utxoSet := map[string]int{}
 
 	return func(index int, input Input) error {
@@ -104,8 +101,8 @@ func InputsSyntacticalUnique() InputsSyntacticalValidationFunc {
 	}
 }
 
-// InputsSyntacticalIndicesWithinBounds returns an InputsSyntacticalValidationFunc which checks that the UTXO ref index is within bounds.
-func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
+// InputsSyntacticalIndicesWithinBounds returns an ElementValidationFunc which checks that the UTXO ref index is within bounds.
+func InputsSyntacticalIndicesWithinBounds() ElementValidationFunc[Input] {
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
 		case *UTXOInput:
@@ -118,17 +115,4 @@ func InputsSyntacticalIndicesWithinBounds() InputsSyntacticalValidationFunc {
 
 		return nil
 	}
-}
-
-// SyntacticallyValidateInputs validates the inputs by running them against the given InputsSyntacticalValidationFunc(s).
-func SyntacticallyValidateInputs(inputs TxEssenceInputs, funcs ...InputsSyntacticalValidationFunc) error {
-	for i, input := range inputs {
-		for _, f := range funcs {
-			if err := f(i, input); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

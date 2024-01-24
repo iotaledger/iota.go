@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -31,4 +33,21 @@ func (r *RewardInput) Size() int {
 func (r *RewardInput) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// context inputs require invocation of informations in the node, so requires extra work.
 	return workScoreParameters.ContextInput, nil
+}
+
+func (r *RewardInput) Compare(other ContextInput) int {
+	typeCompare := cmp.Compare(r.Type(), other.Type())
+	if typeCompare != 0 {
+		return typeCompare
+	}
+
+	// Causes any two Reward Inputs with the same index to be considered duplicates.
+	//nolint:forcetypeassert // we can safely assume that this is a RewardInput
+	otherRewardInput := other.(*RewardInput)
+	indexCompare := cmp.Compare(r.Index, otherRewardInput.Index)
+	if indexCompare != 0 {
+		return indexCompare
+	}
+
+	return 0
 }

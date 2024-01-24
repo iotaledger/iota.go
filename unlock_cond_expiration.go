@@ -1,6 +1,8 @@
 package iotago
 
 import (
+	"cmp"
+
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -29,6 +31,10 @@ func (s *ExpirationUnlockCondition) StorageScore(storageScoreStruct *StorageScor
 func (s *ExpirationUnlockCondition) WorkScore(_ *WorkScoreParameters) (WorkScore, error) {
 	// ExpirationUnlockCondition does not require a signature check on creation, only consumption.
 	return 0, nil
+}
+
+func (s *ExpirationUnlockCondition) Compare(other UnlockCondition) int {
+	return cmp.Compare(s.Type(), other.Type())
 }
 
 func (s *ExpirationUnlockCondition) Equal(other UnlockCondition) bool {
