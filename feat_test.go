@@ -433,7 +433,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 			Target: &iotago.SignedTransaction{},
 		},
 		{
-			Name: "ok - BlockIssuerFeature keys lexically unordered",
+			Name: "fail - BlockIssuerFeature keys lexically unordered",
 			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(iotago.BlockIssuerKeys{
@@ -448,7 +448,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 			DeSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
 		},
 		{
-			Name: "ok - BlockIssuerFeature keys contains duplicates",
+			Name: "fail - BlockIssuerFeature keys contains duplicates",
 			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(iotago.BlockIssuerKeys{
@@ -464,7 +464,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 			DeSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
 		},
 		{
-			Name: "ok - BlockIssuerFeature keys below minimum",
+			Name: "fail - BlockIssuerFeature keys below minimum",
 			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(iotago.BlockIssuerKeys{}),
@@ -475,7 +475,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 			DeSeriErr: serializer.ErrArrayValidationMinElementsNotReached,
 		},
 		{
-			Name: "ok - BlockIssuerFeature keys exceeds maximum",
+			Name: "fail - BlockIssuerFeature keys exceeds maximum",
 			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(tpkg.RandBlockIssuerKeys(iotago.MaxBlockIssuerKeysCount + 1)),
