@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 
 	"golang.org/x/crypto/blake2b"
@@ -73,8 +74,16 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Equal(other BlockIssuerKey) bool 
 	return key.PublicKeyHash == otherBlockIssuerKey.PublicKeyHash
 }
 
-func (key *Ed25519PublicKeyHashBlockIssuerKey) Compare(other *Ed25519PublicKeyHashBlockIssuerKey) int {
-	return bytes.Compare(key.PublicKeyHash[:], other.PublicKeyHash[:])
+func (key *Ed25519PublicKeyHashBlockIssuerKey) Compare(other BlockIssuerKey) int {
+	typeCompare := cmp.Compare(key.Type(), other.Type())
+	if typeCompare != 0 {
+		return typeCompare
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an Ed25519PublicKeyHashBlockIssuerKey
+	otherBlockIssuerKey := other.(*Ed25519PublicKeyHashBlockIssuerKey)
+
+	return bytes.Compare(key.PublicKeyHash[:], otherBlockIssuerKey.PublicKeyHash[:])
 }
 
 // Size returns the size of the block issuer key when serialized.

@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"slices"
@@ -82,18 +81,7 @@ func (keys BlockIssuerKeys) Has(key BlockIssuerKey) bool {
 // Sort sorts the BlockIssuerKeys in place.
 func (keys BlockIssuerKeys) Sort() {
 	slices.SortFunc(keys, func(x BlockIssuerKey, y BlockIssuerKey) int {
-		if x.Type() == y.Type() {
-			switch o := x.(type) {
-			case *Ed25519PublicKeyHashBlockIssuerKey:
-				//nolint:forcetypeassert
-				return o.Compare(y.(*Ed25519PublicKeyHashBlockIssuerKey))
-			default:
-				panic(ierrors.Errorf("unknown block issuer key typ: %T", o))
-			}
-
-		}
-
-		return bytes.Compare([]byte{byte(x.Type())}, []byte{byte(y.Type())})
+		return x.Compare(y)
 	})
 }
 
@@ -141,6 +129,7 @@ type BlockIssuerKey interface {
 	NonEphemeralObject
 	constraints.Cloneable[BlockIssuerKey]
 	constraints.Equalable[BlockIssuerKey]
+	constraints.Comparable[BlockIssuerKey]
 	serializer.Byter
 
 	// Type returns the BlockIssuerKeyType.

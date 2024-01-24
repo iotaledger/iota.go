@@ -91,8 +91,6 @@ var (
 	blockIssuerKeysArrRules = &serix.ArrayRules{
 		Min: MinBlockIssuerKeysCount,
 		Max: MaxBlockIssuerKeysCount,
-		ValidationMode: serializer.ArrayValidationModeNoDuplicates |
-			serializer.ArrayValidationModeLexicalOrdering,
 	}
 )
 
@@ -161,6 +159,9 @@ func CommonSerixAPI() *serix.API {
 			))
 			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyHashBlockIssuerKey)(nil)))
 
+			must(api.RegisterValidator(BlockIssuerKeys{}, func(ctx context.Context, keys BlockIssuerKeys) error {
+				return SliceValidator(keys, LexicalOrderAndUniquenessValidator[BlockIssuerKey]())
+			}))
 			must(api.RegisterTypeSettings(BlockIssuerKeys{},
 				serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(blockIssuerKeysArrRules),
 			))
