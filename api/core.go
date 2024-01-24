@@ -110,6 +110,17 @@ const (
 	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 13
 )
 
+var blocksErrorsFailureReasonMap = map[error]BlockFailureReason{
+	iotago.ErrIssuerAccountNotFound:     BlockFailureIssuerAccountNotFound,
+	iotago.ErrBurnedInsufficientMana:    BlockFailureBurnedInsufficientMana,
+	iotago.ErrBlockVersionInvalid:       BlockFailureVersionInvalid,
+	iotago.ErrRMCNotFound:               BlockFailureAccountInvalid,
+	iotago.ErrFailedToCalculateManaCost: BlockFailureManaCostCalculationFailed,
+	iotago.ErrNegativeBIC:               BlockFailureAccountInvalid,
+	iotago.ErrAccountExpired:            BlockFailureAccountInvalid,
+	iotago.ErrInvalidSignature:          BlockFailureSignatureInvalid,
+}
+
 func (t BlockFailureReason) Bytes() ([]byte, error) {
 	return []byte{byte(t)}, nil
 }
@@ -120,6 +131,17 @@ func BlockFailureReasonFromBytes(b []byte) (BlockFailureReason, int, error) {
 	}
 
 	return BlockFailureReason(b[0]), BlockFailureReasonLength, nil
+}
+
+func DetermineBlockFailureReason(err error) BlockFailureReason {
+	for errKey, failureReason := range blocksErrorsFailureReasonMap {
+		if ierrors.Is(err, errKey) {
+			return failureReason
+		}
+	}
+
+	// use most general failure reason
+	return BlockFailureInvalid
 }
 
 type TransactionState byte
@@ -231,6 +253,51 @@ const (
 	TxFailureSemanticValidationFailed                 TransactionFailureReason = 255
 )
 
+var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
+	// unknown type / type casting errors
+	iotago.ErrTxTypeInvalid:               TxFailureTxTypeInvalid,
+	iotago.ErrUnknownInputType:            TxFailureUTXOInputInvalid,
+	iotago.ErrUTXOInputInvalid:            TxFailureUTXOInputInvalid,
+	iotago.ErrUnknownOutputType:           TxFailureUTXOInputInvalid,
+	iotago.ErrBICInputInvalid:             TxFailureBICInputInvalid,
+	iotago.ErrRewardInputInvalid:          TxFailureRewardInputInvalid,
+	iotago.ErrCommitmentInputMissing:      TxFailureCommitmentInputInvalid,
+	iotago.ErrCommitmentInputInvalid:      TxFailureCommitmentInputInvalid,
+	iotago.ErrUnlockBlockSignatureInvalid: TxFailureUnlockBlockSignatureInvalid,
+
+	// context inputs errors
+	iotago.ErrNoStakingFeature:              TxFailureNoStakingFeature,
+	iotago.ErrFailedToClaimStakingReward:    TxFailureFailedToClaimStakingReward,
+	iotago.ErrFailedToClaimDelegationReward: TxFailureFailedToClaimDelegationReward,
+
+	// UTXO errors
+	iotago.ErrTxConflicting:     TxFailureConflicting,
+	iotago.ErrInputAlreadySpent: TxFailureUTXOInputAlreadySpent,
+
+	// native token errors
+	iotago.ErrNativeTokenSetInvalid:    TxFailureGivenNativeTokensInvalid,
+	iotago.ErrNativeTokenSumUnbalanced: TxFailureGivenNativeTokensInvalid,
+
+	// vm errors
+	iotago.ErrInputOutputSumMismatch:       TxFailureSumOfInputAndOutputValuesDoesNotMatch,
+	iotago.ErrTimelockNotExpired:           TxFailureConfiguredTimelockNotYetExpired,
+	iotago.ErrReturnAmountNotFulFilled:     TxFailureReturnAmountNotFulfilled,
+	iotago.ErrInvalidInputUnlock:           TxFailureInputUnlockInvalid,
+	iotago.ErrSenderFeatureNotUnlocked:     TxFailureSenderNotUnlocked,
+	iotago.ErrChainTransitionInvalid:       TxFailureChainStateTransitionInvalid,
+	iotago.ErrInputOutputManaMismatch:      TxFailureManaAmountInvalid,
+	iotago.ErrManaAmountInvalid:            TxFailureManaAmountInvalid,
+	iotago.ErrInputCreationAfterTxCreation: TxFailureInputCreationAfterTxCreation,
+
+	// tx capabilities errors
+	iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed: TxFailureCapabilitiesNativeTokenBurningNotAllowed,
+	iotago.ErrTxCapabilitiesManaBurningNotAllowed:        TxFailureCapabilitiesManaBurningNotAllowed,
+	iotago.ErrTxCapabilitiesAccountDestructionNotAllowed: TxFailureCapabilitiesAccountDestructionNotAllowed,
+	iotago.ErrTxCapabilitiesAnchorDestructionNotAllowed:  TxFailureCapabilitiesAnchorDestructionNotAllowed,
+	iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed: TxFailureCapabilitiesFoundryDestructionNotAllowed,
+	iotago.ErrTxCapabilitiesNFTDestructionNotAllowed:     TxFailureCapabilitiesNFTDestructionNotAllowed,
+}
+
 func (t TransactionFailureReason) Bytes() ([]byte, error) {
 	return []byte{byte(t)}, nil
 }
@@ -241,6 +308,17 @@ func TransactionFailureReasonFromBytes(b []byte) (TransactionFailureReason, int,
 	}
 
 	return TransactionFailureReason(b[0]), TransactionFailureReasonLength, nil
+}
+
+func DetermineTransactionFailureReason(err error) TransactionFailureReason {
+	for errKey, failureReason := range txErrorsFailureReasonMap {
+		if ierrors.Is(err, errKey) {
+			return failureReason
+		}
+	}
+
+	// use most general failure reason
+	return TxFailureSemanticValidationFailed
 }
 
 type (
