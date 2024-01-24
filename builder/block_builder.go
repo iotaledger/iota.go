@@ -205,15 +205,9 @@ func (b *BasicBlockBuilder) CalculateAndSetMaxBurnedMana(rmc iotago.Mana) *Basic
 		return b
 	}
 
-	blockWorkScore, err := b.protocolBlock.WorkScore()
+	burnedMana, err := b.protocolBlock.ManaCost(rmc)
 	if err != nil {
-		b.err = ierrors.Errorf("error calculating block workscore: %w", err)
-		return b
-	}
-
-	burnedMana, err := iotago.ManaCost(rmc, blockWorkScore)
-	if err != nil {
-		b.err = ierrors.Errorf("error calculating mana cost: %w", err)
+		b.err = ierrors.Wrap(err, "error calculating mana cost")
 		return b
 	}
 

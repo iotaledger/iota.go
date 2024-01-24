@@ -271,10 +271,15 @@ func (b *Block) Size() int {
 func (b *Block) ManaCost(rmc Mana) (Mana, error) {
 	workScore, err := b.WorkScore()
 	if err != nil {
-		return 0, err
+		return 0, ierrors.Errorf("failed to calculate block workscore: %w", err)
 	}
 
-	return ManaCost(rmc, workScore)
+	manaCost, err := ManaCost(rmc, workScore)
+	if err != nil {
+		return 0, ierrors.Errorf("failed to calculate mana cost: %w", err)
+	}
+
+	return manaCost, nil
 }
 
 // syntacticallyValidate syntactically validates the Block.
