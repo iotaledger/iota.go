@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 
-	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"golang.org/x/crypto/blake2b"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
