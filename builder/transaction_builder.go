@@ -511,7 +511,8 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 }
 
 // MinRequiredAllotedMana returns the minimum alloted mana required to issue a Block
-// with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
+// with the transaction payload from the builder and 1 allotment for the block issuer
+// and a Ed25519 block signature.
 func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.WorkScoreParameters, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction
 	allotmentsCpy := b.transaction.Allotments.Clone()
@@ -531,25 +532,22 @@ func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.
 		return 0, ierrors.Wrap(err, "failed to build the transaction payload")
 	}
 
-	payloadWorkScore, err := dummyTxPayload.WorkScore(workScoreParameters)
+	// create a dummy block builder with the dummy transaction payload to get the correct workscore.
+	dummyBlockBuilder := NewBasicBlockBuilder(b.api).Payload(dummyTxPayload)
+
+	// sign the dummy block with the empty signer to get the correct workscore.
+	dummyBlockBuilder.SignWithSigner(blockIssuerAccountID, &iotago.EmptyAddressSigner{}, &iotago.Ed25519Address{})
+
+	// normally the block should be build first to sort the parents, but we don't need the block itself, just the workscore
+	dummyBlock, err := dummyBlockBuilder.Build()
 	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate the transaction payload workscore")
+		return 0, ierrors.Wrap(err, "failed to build the dummy block")
 	}
 
-	workScore, err := workScoreParameters.Block.Add(payloadWorkScore)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to add the block workscore")
-	}
-
-	manaCost, err := iotago.ManaCost(rmc, workScore)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate the mana cost")
-	}
-
-	return manaCost, nil
+	return dummyBlock.ManaCost(rmc)
 }
 
-// Build sings the inputs with the given signer and returns the built payload.
+// Build signs the inputs with the given signer and returns the built payload.
 func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
