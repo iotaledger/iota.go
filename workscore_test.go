@@ -38,8 +38,8 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 			&iotago.BlockIssuerFeature{
 				ExpirySlot: 300,
 				BlockIssuerKeys: iotago.BlockIssuerKeys{
-					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(keyPair.PublicKey),
-					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(keyPair2.PublicKey),
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(keyPair.PublicKey),
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(keyPair2.PublicKey),
 				},
 			},
 			&iotago.StakingFeature{
