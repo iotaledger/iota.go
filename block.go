@@ -147,17 +147,14 @@ func blockSigningMessage(headerHash Identifier, blockHash Identifier) []byte {
 	return byteutils.ConcatBytes(headerHash[:], blockHash[:])
 }
 
-// Sign produces signatures signing the essence for every given AddressKeys.
-// The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
+// Sign produces a signature by signing the signing message of the block.
+func (b *Block) Sign(signer AddressSigner, addr Address) (Signature, error) {
 	signMsg, err := b.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	signer := NewInMemoryAddressSigner(addrKey)
-
-	return signer.Sign(addrKey.Address, signMsg)
+	return signer.Sign(addr, signMsg)
 }
 
 // VerifySignature verifies the Signature of the block.
