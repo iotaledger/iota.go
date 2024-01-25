@@ -90,7 +90,7 @@ func RandImplicitAccountIdentity() (ed25519.PrivateKey, *iotago.ImplicitAccountC
 }
 
 func RandBlockIssuerKey() iotago.BlockIssuerKey {
-	return iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(RandEd25519PublicKey())
+	return iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(RandEd25519PublicKey())
 }
 
 func RandBlockIssuerKeys(count ...int) iotago.BlockIssuerKeys {

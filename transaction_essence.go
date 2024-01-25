@@ -136,7 +136,9 @@ func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 	err = SliceValidatorMapper(u.ContextInputs,
 		func(input txEssenceContextInput) ContextInput { return input },
 		LexicalOrderAndUniquenessValidator[ContextInput](),
-		ContextInputsRewardInputMaxIndex(inputsCount))
+		ContextInputsRewardInputMaxIndex(inputsCount),
+		ContextInputsCommitmentInputRequirement(),
+	)
 	if err != nil {
 		return err
 	}

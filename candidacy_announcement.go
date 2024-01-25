@@ -19,6 +19,5 @@ func (u *CandidacyAnnouncement) Size() int {
 
 func (u *CandidacyAnnouncement) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// we account for the network traffic only on "Payload" level
-	// TODO: is the work score correct?
 	return workScoreParameters.DataByte.Multiply(u.Size())
 }

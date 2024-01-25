@@ -19,7 +19,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 			Target: &iotago.SignedTransaction{},
 		},
 		{
-			Name: "ok -  Commitment",
+			Name: "ok - Commitment",
 			Source: tpkg.RandSignedTransactionWithTransaction(tpkg.ZeroCostTestAPI,
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
@@ -39,6 +39,7 @@ func TestTransactionDeSerialize(t *testing.T) {
 				tpkg.RandTransactionWithOptions(
 					tpkg.ZeroCostTestAPI,
 					tpkg.WithContextInputs(iotago.TxEssenceContextInputs{
+						&iotago.CommitmentInput{},
 						&iotago.BlockIssuanceCreditInput{
 							AccountID: tpkg.RandAccountID(),
 						},

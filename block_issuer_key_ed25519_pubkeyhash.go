@@ -2,11 +2,12 @@ package iotago
 
 import (
 	"bytes"
+	"cmp"
 	"context"
-	"crypto/ed25519"
 
 	"golang.org/x/crypto/blake2b"
 
+	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -29,7 +30,7 @@ func Ed25519PublicKeyHashBlockIssuerKeyFromImplicitAccountCreationAddress(addres
 }
 
 // Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey creates an Ed25519PublicKeyHashBlockIssuerKey from an Ed25519 public key.
-func Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(pubKey ed25519.PublicKey) *Ed25519PublicKeyHashBlockIssuerKey {
+func Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(pubKey hiveEd25519.PublicKey) *Ed25519PublicKeyHashBlockIssuerKey {
 	pubKeyHash := blake2b.Sum256(pubKey[:])
 	return &Ed25519PublicKeyHashBlockIssuerKey{
 		PublicKeyHash: pubKeyHash,
@@ -73,8 +74,16 @@ func (key *Ed25519PublicKeyHashBlockIssuerKey) Equal(other BlockIssuerKey) bool 
 	return key.PublicKeyHash == otherBlockIssuerKey.PublicKeyHash
 }
 
-func (key *Ed25519PublicKeyHashBlockIssuerKey) Compare(other *Ed25519PublicKeyHashBlockIssuerKey) int {
-	return bytes.Compare(key.PublicKeyHash[:], other.PublicKeyHash[:])
+func (key *Ed25519PublicKeyHashBlockIssuerKey) Compare(other BlockIssuerKey) int {
+	typeCompare := cmp.Compare(key.Type(), other.Type())
+	if typeCompare != 0 {
+		return typeCompare
+	}
+
+	//nolint:forcetypeassert // we can safely assume that this is an Ed25519PublicKeyHashBlockIssuerKey
+	otherBlockIssuerKey := other.(*Ed25519PublicKeyHashBlockIssuerKey)
+
+	return bytes.Compare(key.PublicKeyHash[:], otherBlockIssuerKey.PublicKeyHash[:])
 }
 
 // Size returns the size of the block issuer key when serialized.
