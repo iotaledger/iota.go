@@ -251,12 +251,10 @@ func (b *Block) WorkScore() (WorkScore, error) {
 		return 0, err
 	}
 
-	workScoreSignature, err := b.Signature.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBody.Add(workScoreSignature)
+	// the workscore of the block only consists of the workscore of the block body
+	// because the body should already include an offset for the "block",
+	// which accounts for the signature check of the block as well.
+	return workScoreBody, nil
 }
 
 // Size returns the size of the block in bytes.

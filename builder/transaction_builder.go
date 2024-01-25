@@ -222,7 +222,7 @@ func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, accountID
 }
 
 // getStoredManaOutputAccountID returns the account ID of the output at the given index if it belongs to an account.
-// (account output or output with mana lock condition)
+// (account output or output with mana lock condition).
 func (b *TransactionBuilder) getStoredManaOutputAccountID(storedManaOutputIndex int) (iotago.AccountID, error) {
 	if storedManaOutputIndex >= len(b.transaction.Outputs) {
 		return iotago.EmptyAccountID, ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex)
@@ -636,18 +636,10 @@ func (b *TransactionBuilder) MinRequiredAllottedMana(rmc iotago.Mana, blockIssue
 	// add a dummy allotment to account for the later added allotment for the block issuer in case it does not exist yet
 	b.IncreaseAllotment(blockIssuerAccountID, 1074)
 
-	// create a signed transaction with a empty signer to get the correct workscore.
-	// later the transaction needs to be signed with the correct signer, after the alloted mana was set correctly.
-	dummyTxPayload, err := b.Build(&iotago.EmptyAddressSigner{})
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to build the transaction payload")
-	}
-
-	// create a dummy block builder with the dummy transaction payload to get the correct workscore.
-	dummyBlockBuilder := NewBasicBlockBuilder(b.api).Payload(dummyTxPayload)
-
-	// sign the dummy block with the empty signer to get the correct workscore.
-	dummyBlockBuilder.SignWithSigner(blockIssuerAccountID, &iotago.EmptyAddressSigner{}, &iotago.Ed25519Address{})
+	// create a dummy block builder with the transaction payload to get the correct workscore.
+	// the transaction is signed with an empty signer to get the correct workscore.
+	// later the transaction needs to be signed with the correct signer, after the allotted mana was set correctly.
+	dummyBlockBuilder := b.BuildAndSwapToBlockBuilder(&iotago.EmptyAddressSigner{}, nil)
 
 	// normally the block should be build first to sort the parents, but we don't need the block itself, just the workscore
 	dummyBlock, err := dummyBlockBuilder.Build()
