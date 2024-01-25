@@ -113,7 +113,7 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 	}
 
 	// get the current commitmentID and reference mana cost to calculate
-	// the correct value for the mana that needs to be alloted to the block issuer.
+	// the correct value for the mana that needs to be allotted to the block issuer.
 	blockIssuance, err := client.core.BlockIssuance(ctx)
 	if err != nil {
 		return nil, nil, ierrors.Wrap(err, "failed to get the latest block issuance infos")
@@ -125,7 +125,7 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 	}
 
 	// allot the required mana to the block issuer
-	builder.AllotRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.LatestCommitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
+	builder.AllotMinRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.LatestCommitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
 
 	// sign the transaction
 	payload, err := builder.Build(signer)
