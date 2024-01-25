@@ -239,22 +239,12 @@ func (b *Block) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *Block) WorkScore() (WorkScore, error) {
-	if b.Body.Type() == BlockBodyTypeValidation {
-		// Validator blocks do not incur any work score as they should not burn mana.
-		return 0, nil
-	}
-
 	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
-
-	workScoreBody, err := b.Body.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
 
 	// the workscore of the block only consists of the workscore of the block body
 	// because the body should already include an offset for the "block",
 	// which accounts for the signature check of the block as well.
-	return workScoreBody, nil
+	return b.Body.WorkScore(workScoreParameters)
 }
 
 // Size returns the size of the block in bytes.
