@@ -3679,7 +3679,6 @@ func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 	}
 }
 
-// TODO: add test case for transaction with context inputs.
 func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {
 		name           string
@@ -4528,7 +4527,6 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 }
 
-// TODO: add test case for block issuer with keys (differently priced).
 func TestTxSemanticDeposit(t *testing.T) {
 	type test struct {
 		name           string

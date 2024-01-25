@@ -691,7 +691,5 @@ func TestBlockJSONMarshalling(t *testing.T) {
 }
 
 // TODO: add tests
-//  - max size
 //  - parents parameters basic block
 //  - parents parameters validator block
-//  - decode/encode protocol parameters
