@@ -358,7 +358,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				},
 				"workScoreParameters": {
 					"dataByte": 1,
-					"block": 100,
+					"block": 1500,
 					"input": 10,
 					"contextInput": 20,
 					"output": 20,

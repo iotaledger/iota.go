@@ -36,7 +36,7 @@ func (w WorkScore) Multiply(in int) (WorkScore, error) {
 type WorkScoreParameters struct {
 	// DataByte accounts for the network traffic per byte.
 	DataByte WorkScore `serix:""`
-	// Block accounts for work done to process a block in the node software.
+	// Block accounts for work done to process a block in the node software (includes signature check for the block).
 	Block WorkScore `serix:""`
 	// Input accounts for loading the UTXO from the database and performing the mana calculations.
 	Input WorkScore `serix:""`
@@ -73,63 +73,55 @@ func (w WorkScoreParameters) Equals(other WorkScoreParameters) bool {
 
 // MaxBlockWork is the maximum work score a block can have.
 func (w WorkScoreParameters) MaxBlockWork() (WorkScore, error) {
+	var innerErr error
 	var maxBlockWork WorkScore
+
+	addWorkScore := func(workScore WorkScore, amount int) {
+		result, err := workScore.Multiply(amount)
+		if err != nil {
+			innerErr = err
+		}
+
+		maxBlockWork, err = maxBlockWork.Add(result)
+		if err != nil {
+			innerErr = err
+		}
+	}
+
 	// max basic block payload size data factor
-	dataFactorBytes, err := w.DataByte.Multiply(MaxPayloadSize)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += dataFactorBytes
+	addWorkScore(w.DataByte, MaxPayloadSize)
+
 	// block factor
-	maxBlockWork += w.Block
+	addWorkScore(w.Block, 1)
+
 	// inputs factor for max number of inputs
-	inputsFactor, err := w.Input.Multiply(MaxInputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += inputsFactor
+	addWorkScore(w.Input, MaxInputsCount)
+
 	// context inputs factor for max number of inputs
-	contextInputsFactor, err := w.ContextInput.Multiply(MaxContextInputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += contextInputsFactor
+	addWorkScore(w.ContextInput, MaxContextInputsCount)
+
 	// outputs factor for max number of outputs
-	outputsFactor, err := w.Output.Multiply(MaxOutputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += outputsFactor
+	addWorkScore(w.Output, MaxOutputsCount)
+
 	// native tokens factor for max number of outputs
-	nativeTokensFactor, err := w.NativeToken.Multiply(MaxOutputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += nativeTokensFactor
+	addWorkScore(w.NativeToken, MaxOutputsCount)
+
 	// staking factor for max number of outputs each with a staking feature
-	stakingFactor, err := w.Staking.Multiply(MaxOutputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += stakingFactor
+	addWorkScore(w.Staking, MaxOutputsCount)
+
 	// block issuer factor for max number of outputs each with a block issuer feature
-	blockIssuerFactor, err := w.BlockIssuer.Multiply(MaxOutputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += blockIssuerFactor
+	addWorkScore(w.BlockIssuer, MaxOutputsCount)
+
 	// allotments factor for max number of allotments
-	allotmentsFactor, err := w.Allotment.Multiply(MaxAllotmentCount)
-	if err != nil {
-		return 0, err
+	addWorkScore(w.Allotment, MaxAllotmentCount)
+
+	// signature check for max number of inputs each unlocked by a maximum sized mutli unlock
+	// TODO: this is not correct because the signatures would not even fit in the tx.
+	addWorkScore(w.SignatureEd25519, MaxInputsCount*10)
+
+	if innerErr != nil {
+		return 0, innerErr
 	}
-	maxBlockWork += allotmentsFactor
-	// signature for block and max number of inputs
-	signatureFactor, err := w.SignatureEd25519.Multiply(1 + MaxInputsCount)
-	if err != nil {
-		return 0, err
-	}
-	maxBlockWork += signatureFactor
 
 	return maxBlockWork, nil
 }

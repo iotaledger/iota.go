@@ -229,7 +229,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 			WithVersion(apiV3Version),
 			WithNetworkOptions("testnet", PrefixTestnet),
 			WithStorageOptions(100, 1, 10, 100, 100, 100),
-			WithWorkScoreOptions(1, 100, 10, 20, 20, 20, 5000, 1000, 1000, 1000),
+			WithWorkScoreOptions(1, 1500, 10, 20, 20, 20, 5000, 1000, 1000, 1000),
 			WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
 			WithLivenessOptions(15, 30, 10, 20, 60),
 			WithSupplyOptions(1813620509061365, 63, 1, 17, 32, 21, 70),
