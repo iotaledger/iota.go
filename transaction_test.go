@@ -504,6 +504,9 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		{
 			name: "fail - context inputs lexically unordered",
 			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
 				}, // type 1
@@ -519,6 +522,9 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		{
 			name: "fail - block issuance credits inputs lexically unordered",
 			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID2,
 				}, // type 1
@@ -531,6 +537,9 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		{
 			name: "fail - reward inputs lexically unordered",
 			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
 				&iotago.RewardInput{
 					Index: 1,
 				}, // type 2
@@ -543,6 +552,9 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		{
 			name: "fail - duplicate block issuance credit inputs",
 			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
 				&iotago.BlockIssuanceCreditInput{
 					AccountID: accountID1,
 				}, // type 1
@@ -555,9 +567,9 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 		{
 			name: "fail - duplicate reward inputs",
 			contextInputs: iotago.TxEssenceContextInputs{
-				&iotago.BlockIssuanceCreditInput{
-					AccountID: accountID1,
-				}, // type 1
+				&iotago.CommitmentInput{
+					CommitmentID: commitmentID1,
+				},
 				&iotago.RewardInput{
 					Index: 0,
 				}, // type 2
@@ -582,6 +594,24 @@ func TestTransactionContextInputLexicalOrderAndUniqueness(t *testing.T) {
 				}, // type 2
 			},
 			wantErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			name: "fail - block issuance credit input without commitment input",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.BlockIssuanceCreditInput{
+					AccountID: accountID1,
+				},
+			},
+			wantErr: iotago.ErrCommitmentInputMissing,
+		},
+		{
+			name: "fail - reward input without commitment input",
+			contextInputs: iotago.TxEssenceContextInputs{
+				&iotago.RewardInput{
+					Index: 0,
+				},
+			},
+			wantErr: iotago.ErrCommitmentInputMissing,
 		},
 	}
 
