@@ -226,20 +226,25 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	return b
 }
 
-// AllotAllMana allots all available mana to the provided account, even if the alloted value is less than the minimum required mana value to issue the block.
-func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
+// AllotAllMana allots all available mana to the provided account.
+// It checks if at least the given "minRequiredMana" is available.
+func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, accountID iotago.AccountID, minRequiredMana iotago.Mana) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, accountID)
 	if err != nil {
 		return setBuildError(err)
 	}
 
+	if unboundManaInputsLeftoverBalance < minRequiredMana {
+		return setBuildError(ierrors.Errorf("not enough mana available to allot to the given account (%s): %d < %d", accountID.String(), unboundManaInputsLeftoverBalance, minRequiredMana))
+	}
+
 	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
-	b.IncreaseAllotment(blockIssuerAccountID, unboundManaInputsLeftoverBalance)
+	b.IncreaseAllotment(accountID, unboundManaInputsLeftoverBalance)
 
 	return b
 }
