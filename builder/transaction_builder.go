@@ -157,7 +157,10 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
 
-func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+// StoreRemainingManaInOutput moves the remaining mana to stored mana on the specified output index.
+// The given "ignoreMana" is not considered for the calculation of the remaining mana.
+// It will throw an error if the given "ignoreMana" is less than the available mana.
+func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, accountID iotago.AccountID, ignoreMana iotago.Mana, storedManaOutputIndex int) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
@@ -167,7 +170,7 @@ func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIn
 		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, ignoreMana, accountID)
 	if err != nil {
 		return setBuildError(err)
 	}
