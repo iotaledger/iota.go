@@ -157,7 +157,10 @@ func (b *TransactionBuilder) AddTaggedDataPayload(payload *iotago.TaggedData) *T
 // TransactionFunc is a function which receives a SignedTransaction as its parameter.
 type TransactionFunc func(tx *iotago.SignedTransaction)
 
-func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID, storedManaOutputIndex int) *TransactionBuilder {
+// StoreRemainingManaInOutput moves the remaining mana to stored mana on the specified output index.
+// The given "ignoreMana" is not considered for the calculation of the remaining mana.
+// It will throw an error if the given "ignoreMana" is less than the available mana.
+func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIndex, accountID iotago.AccountID, ignoreMana iotago.Mana, storedManaOutputIndex int) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
@@ -167,7 +170,7 @@ func (b *TransactionBuilder) StoreRemainingManaInOutput(targetSlot iotago.SlotIn
 		return setBuildError(ierrors.Errorf("given storedManaOutputIndex does not exist: %d", storedManaOutputIndex))
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, ignoreMana, accountID)
 	if err != nil {
 		return setBuildError(err)
 	}
@@ -198,7 +201,7 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	}
 
 	// calculate the minimum required mana to issue the block
-	minRequiredMana, err := b.MinRequiredAllotedMana(b.api.ProtocolParameters().WorkScoreParameters(), rmc, blockIssuerAccountID)
+	minRequiredMana, err := b.MinRequiredAllotedMana(rmc, blockIssuerAccountID)
 	if err != nil {
 		return setBuildError(ierrors.Wrap(err, "failed to calculate the minimum required mana to issue the block"))
 	}
@@ -226,20 +229,25 @@ func (b *TransactionBuilder) AllotRequiredManaAndStoreRemainingManaInOutput(targ
 	return b
 }
 
-// AllotAllMana allots all available mana to the provided account, even if the alloted value is less than the minimum required mana value to issue the block.
-func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, blockIssuerAccountID iotago.AccountID) *TransactionBuilder {
+// AllotAllMana allots all available mana to the provided account.
+// It checks if at least the given "minRequiredMana" is available.
+func (b *TransactionBuilder) AllotAllMana(targetSlot iotago.SlotIndex, accountID iotago.AccountID, minRequiredMana iotago.Mana) *TransactionBuilder {
 	setBuildError := func(err error) *TransactionBuilder {
 		b.occurredBuildErr = err
 		return b
 	}
 
-	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, blockIssuerAccountID)
+	unboundManaInputsLeftoverBalance, err := b.calculateAvailableManaLeftover(targetSlot, 0, accountID)
 	if err != nil {
 		return setBuildError(err)
 	}
 
+	if unboundManaInputsLeftoverBalance < minRequiredMana {
+		return setBuildError(ierrors.Errorf("not enough mana available to allot to the given account (%s): %d < %d", accountID.String(), unboundManaInputsLeftoverBalance, minRequiredMana))
+	}
+
 	// allot the mana to the block issuer account (we increase the value, so we don't interfere with the already alloted value)
-	b.IncreaseAllotment(blockIssuerAccountID, unboundManaInputsLeftoverBalance)
+	b.IncreaseAllotment(accountID, unboundManaInputsLeftoverBalance)
 
 	return b
 }
@@ -511,8 +519,9 @@ func (b *TransactionBuilder) CalculateAvailableMana(targetSlot iotago.SlotIndex)
 }
 
 // MinRequiredAllotedMana returns the minimum alloted mana required to issue a Block
-// with 4 strong parents, the transaction payload from the builder and 1 allotment for the block issuer.
-func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.WorkScoreParameters, rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
+// with the transaction payload from the builder and 1 allotment for the block issuer
+// and a Ed25519 block signature.
+func (b *TransactionBuilder) MinRequiredAllotedMana(rmc iotago.Mana, blockIssuerAccountID iotago.AccountID) (iotago.Mana, error) {
 	// clone the essence allotments to not modify the original transaction
 	allotmentsCpy := b.transaction.Allotments.Clone()
 
@@ -531,25 +540,22 @@ func (b *TransactionBuilder) MinRequiredAllotedMana(workScoreParameters *iotago.
 		return 0, ierrors.Wrap(err, "failed to build the transaction payload")
 	}
 
-	payloadWorkScore, err := dummyTxPayload.WorkScore(workScoreParameters)
+	// create a dummy block builder with the dummy transaction payload to get the correct workscore.
+	dummyBlockBuilder := NewBasicBlockBuilder(b.api).Payload(dummyTxPayload)
+
+	// sign the dummy block with the empty signer to get the correct workscore.
+	dummyBlockBuilder.SignWithSigner(blockIssuerAccountID, &iotago.EmptyAddressSigner{}, &iotago.Ed25519Address{})
+
+	// normally the block should be build first to sort the parents, but we don't need the block itself, just the workscore
+	dummyBlock, err := dummyBlockBuilder.Build()
 	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate the transaction payload workscore")
+		return 0, ierrors.Wrap(err, "failed to build the dummy block")
 	}
 
-	workScore, err := workScoreParameters.Block.Add(payloadWorkScore)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to add the block workscore")
-	}
-
-	manaCost, err := iotago.ManaCost(rmc, workScore)
-	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to calculate the mana cost")
-	}
-
-	return manaCost, nil
+	return dummyBlock.ManaCost(rmc)
 }
 
-// Build sings the inputs with the given signer and returns the built payload.
+// Build signs the inputs with the given signer and returns the built payload.
 func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:

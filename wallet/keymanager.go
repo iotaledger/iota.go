@@ -92,15 +92,9 @@ func (k *KeyManager) Mnemonic() bip39.Mnemonic {
 
 // AddressSigner returns an address signer.
 func (k *KeyManager) AddressSigner() iotago.AddressSigner {
-	privKey, pubKey := k.KeyPair()
+	privKey, _ := k.KeyPair()
 
-	// add both address types for simplicity in tests
-	ed25519Address := iotago.Ed25519AddressFromPubKey(pubKey)
-	ed25519AddressKey := iotago.NewAddressKeysForEd25519Address(ed25519Address, privKey)
-	implicitAccountCreationAddress := iotago.ImplicitAccountCreationAddressFromPubKey(pubKey)
-	implicitAccountCreationAddressKey := iotago.NewAddressKeysForImplicitAccountCreationAddress(implicitAccountCreationAddress, privKey)
-
-	return iotago.NewInMemoryAddressSigner(ed25519AddressKey, implicitAccountCreationAddressKey)
+	return iotago.NewInMemoryAddressSignerFromEd25519PrivateKey(privKey)
 }
 
 // Address calculates an address of the specified type.
