@@ -100,14 +100,26 @@ func (b *BasicBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *BasicBlo
 	return b
 }
 
-func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *BasicBlockBuilder {
+func (b *BasicBlockBuilder) Sign(accountID iotago.AccountID, privKey ed25519.PrivateKey) *BasicBlockBuilder {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	pubKey := privKey.Public().(ed25519.PublicKey)
+	ed25519Address := iotago.Ed25519AddressFromPubKey(pubKey)
+
+	signer := iotago.NewInMemoryAddressSigner(
+		iotago.NewAddressKeysForEd25519Address(ed25519Address, privKey),
+	)
+
+	return b.SignWithSigner(accountID, signer, ed25519Address)
+}
+
+func (b *BasicBlockBuilder) SignWithSigner(accountID iotago.AccountID, signer iotago.AddressSigner, addr iotago.Address) *BasicBlockBuilder {
 	if b.err != nil {
 		return b
 	}
 
 	b.protocolBlock.Header.IssuerID = accountID
 
-	signature, err := b.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
+	signature, err := b.protocolBlock.Sign(signer, addr)
 	if err != nil {
 		b.err = ierrors.Errorf("error signing block: %w", err)
 
@@ -194,15 +206,9 @@ func (b *BasicBlockBuilder) CalculateAndSetMaxBurnedMana(rmc iotago.Mana) *Basic
 		return b
 	}
 
-	blockWorkScore, err := b.protocolBlock.WorkScore()
+	burnedMana, err := b.protocolBlock.ManaCost(rmc)
 	if err != nil {
-		b.err = ierrors.Errorf("error calculating block workscore: %w", err)
-		return b
-	}
-
-	burnedMana, err := iotago.ManaCost(rmc, blockWorkScore)
-	if err != nil {
-		b.err = ierrors.Errorf("error calculating mana cost: %w", err)
+		b.err = ierrors.Wrap(err, "error calculating mana cost")
 		return b
 	}
 
@@ -302,14 +308,26 @@ func (v *ValidationBlockBuilder) LatestFinalizedSlot(slot iotago.SlotIndex) *Val
 	return v
 }
 
-func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, prvKey ed25519.PrivateKey) *ValidationBlockBuilder {
+func (v *ValidationBlockBuilder) Sign(accountID iotago.AccountID, privKey ed25519.PrivateKey) *ValidationBlockBuilder {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	pubKey := privKey.Public().(ed25519.PublicKey)
+	ed25519Address := iotago.Ed25519AddressFromPubKey(pubKey)
+
+	signer := iotago.NewInMemoryAddressSigner(
+		iotago.NewAddressKeysForEd25519Address(ed25519Address, privKey),
+	)
+
+	return v.SignWithSigner(accountID, signer, ed25519Address)
+}
+
+func (v *ValidationBlockBuilder) SignWithSigner(accountID iotago.AccountID, signer iotago.AddressSigner, addr iotago.Address) *ValidationBlockBuilder {
 	if v.err != nil {
 		return v
 	}
 
 	v.protocolBlock.Header.IssuerID = accountID
 
-	signature, err := v.protocolBlock.Sign(iotago.NewAddressKeysForEd25519Address(iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey)), prvKey))
+	signature, err := v.protocolBlock.Sign(signer, addr)
 	if err != nil {
 		v.err = ierrors.Errorf("error signing block: %w", err)
 

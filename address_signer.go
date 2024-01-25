@@ -66,6 +66,23 @@ func NewInMemoryAddressSigner(addrKeys ...AddressKeys) AddressSigner {
 	return ss
 }
 
+// NewInMemoryAddressSignerFromEd25519PrivateKey creates a new InMemoryAddressSigner
+// for the Ed25519Address derived from the public key of the given private key
+// as well as the related ImplicitAccountCreationAddress.
+func NewInMemoryAddressSignerFromEd25519PrivateKey(privKey ed25519.PrivateKey) AddressSigner {
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	pubKey := privKey.Public().(ed25519.PublicKey)
+
+	ed25519Address := Ed25519AddressFromPubKey(pubKey)
+	ed25519AddressKey := NewAddressKeysForEd25519Address(ed25519Address, privKey)
+
+	implicitAccountCreationAddress := ImplicitAccountCreationAddressFromPubKey(pubKey)
+	implicitAccountCreationAddressKey := NewAddressKeysForImplicitAccountCreationAddress(implicitAccountCreationAddress, privKey)
+
+	// add both address types for simplicity
+	return NewInMemoryAddressSigner(ed25519AddressKey, implicitAccountCreationAddressKey)
+}
+
 // InMemoryAddressSigner implements AddressSigner by holding keys simply in-memory.
 type InMemoryAddressSigner struct {
 	addrKeys map[string]interface{}
