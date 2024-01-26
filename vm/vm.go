@@ -484,7 +484,7 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 			}
 
 			if err := unlockedIdentities.SigUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrUnlockBlockSignatureInvalid, err)
+				return ierrors.Join(iotago.ErrUnlockSignatureInvalid, err)
 			}
 
 		default:

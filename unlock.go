@@ -52,6 +52,8 @@ var (
 var (
 	// ErrSigUnlockNotUnique gets returned if sig unlocks making part of a transaction aren't unique.
 	ErrSigUnlockNotUnique = ierrors.New("signature unlock must be unique")
+	// ErrUnlockSignatureInvalid gets returned when a signature in an unlock is invalid.
+	ErrUnlockSignatureInvalid = ierrors.New("signature in unlock is invalid")
 	// ErrMultiUnlockNotUnique gets returned if multi unlocks making part of a transaction aren't unique.
 	ErrMultiUnlockNotUnique = ierrors.New("multi unlock must be unique")
 	// ErrMultiAddressUnlockThresholdNotReached gets returned if multi address unlock threshold was not reached.

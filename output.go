@@ -132,6 +132,8 @@ var (
 	ErrChainMissing = ierrors.New("chain missing")
 	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
 	ErrNonUniqueChainOutputs = ierrors.New("non unique chain outputs")
+	// ErrChainTransitionInvalid gets returned when the chain transition was invalid.
+	ErrChainTransitionInvalid = ierrors.New("chain transition is invalid")
 )
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.

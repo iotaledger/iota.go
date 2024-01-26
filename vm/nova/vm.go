@@ -974,7 +974,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 
 func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutput) error {
 	if !current.DelegationID.Empty() {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationNonZeroedID, "%w", iotago.ErrInvalidDelegationTransition)
+		return ierrors.Join(iotago.ErrInvalidDelegationTransition, iotago.ErrInvalidDelegationNonZeroedID)
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
