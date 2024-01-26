@@ -147,17 +147,14 @@ func blockSigningMessage(headerHash Identifier, blockHash Identifier) []byte {
 	return byteutils.ConcatBytes(headerHash[:], blockHash[:])
 }
 
-// Sign produces signatures signing the essence for every given AddressKeys.
-// The produced signatures are in the same order as the AddressKeys.
-func (b *Block) Sign(addrKey AddressKeys) (Signature, error) {
+// Sign produces a signature by signing the signing message of the block.
+func (b *Block) Sign(signer AddressSigner, addr Address) (Signature, error) {
 	signMsg, err := b.SigningMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	signer := NewInMemoryAddressSigner(addrKey)
-
-	return signer.Sign(addrKey.Address, signMsg)
+	return signer.Sign(addr, signMsg)
 }
 
 // VerifySignature verifies the Signature of the block.
@@ -242,24 +239,12 @@ func (b *Block) ForEachParent(consumer func(parent Parent)) {
 }
 
 func (b *Block) WorkScore() (WorkScore, error) {
-	if b.Body.Type() == BlockBodyTypeValidation {
-		// Validator blocks do not incur any work score as they should not burn mana.
-		return 0, nil
-	}
-
 	workScoreParameters := b.API.ProtocolParameters().WorkScoreParameters()
 
-	workScoreBody, err := b.Body.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
-
-	workScoreSignature, err := b.Signature.WorkScore(workScoreParameters)
-	if err != nil {
-		return 0, err
-	}
-
-	return workScoreBody.Add(workScoreSignature)
+	// the workscore of the block only consists of the workscore of the block body
+	// because the body should already include an offset for the "block",
+	// which accounts for the signature check of the block as well.
+	return b.Body.WorkScore(workScoreParameters)
 }
 
 // Size returns the size of the block in bytes.
@@ -271,10 +256,15 @@ func (b *Block) Size() int {
 func (b *Block) ManaCost(rmc Mana) (Mana, error) {
 	workScore, err := b.WorkScore()
 	if err != nil {
-		return 0, err
+		return 0, ierrors.Errorf("failed to calculate block workscore: %w", err)
 	}
 
-	return ManaCost(rmc, workScore)
+	manaCost, err := ManaCost(rmc, workScore)
+	if err != nil {
+		return 0, ierrors.Errorf("failed to calculate mana cost: %w", err)
+	}
+
+	return manaCost, nil
 }
 
 // syntacticallyValidate syntactically validates the Block.

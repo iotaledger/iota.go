@@ -100,7 +100,7 @@ func NewStorageScoreStructure(storageScoreParameters *StorageScoreParameters) *S
 		Features: AccountOutputFeatures{
 			&BlockIssuerFeature{
 				BlockIssuerKeys: BlockIssuerKeys{
-					&Ed25519PublicKeyBlockIssuerKey{},
+					&Ed25519PublicKeyHashBlockIssuerKey{},
 				},
 			},
 		},

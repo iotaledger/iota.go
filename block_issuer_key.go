@@ -1,7 +1,6 @@
 package iotago
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"slices"
@@ -17,10 +16,8 @@ import (
 type BlockIssuerKeyType byte
 
 const (
-	// BlockIssuerKeyEd25519PublicKey denotes a Ed25519PublicKeyBlockIssuerKey.
-	BlockIssuerKeyEd25519PublicKey BlockIssuerKeyType = iota
 	// BlockIssuerKeyPublicKeyHash denotes a Ed25519PublicKeyHashBlockIssuerKey.
-	BlockIssuerKeyPublicKeyHash
+	BlockIssuerKeyPublicKeyHash BlockIssuerKeyType = iota
 )
 
 // BlockIssuerKeys are the keys allowed to issue blocks from an account with a BlockIssuerFeature.
@@ -84,21 +81,7 @@ func (keys BlockIssuerKeys) Has(key BlockIssuerKey) bool {
 // Sort sorts the BlockIssuerKeys in place.
 func (keys BlockIssuerKeys) Sort() {
 	slices.SortFunc(keys, func(x BlockIssuerKey, y BlockIssuerKey) int {
-		if x.Type() == y.Type() {
-			switch o := x.(type) {
-			case *Ed25519PublicKeyHashBlockIssuerKey:
-				//nolint:forcetypeassert
-				return o.Compare(y.(*Ed25519PublicKeyHashBlockIssuerKey))
-			case *Ed25519PublicKeyBlockIssuerKey:
-				//nolint:forcetypeassert
-				return o.Compare(y.(*Ed25519PublicKeyBlockIssuerKey))
-			default:
-				panic(ierrors.Errorf("unknown block issuer key typ: %T", o))
-			}
-
-		}
-
-		return bytes.Compare([]byte{byte(x.Type())}, []byte{byte(y.Type())})
+		return x.Compare(y)
 	})
 }
 
@@ -146,6 +129,7 @@ type BlockIssuerKey interface {
 	NonEphemeralObject
 	constraints.Cloneable[BlockIssuerKey]
 	constraints.Equalable[BlockIssuerKey]
+	constraints.Comparable[BlockIssuerKey]
 	serializer.Byter
 
 	// Type returns the BlockIssuerKeyType.
@@ -178,13 +162,6 @@ func BlockIssuerKeyFromReader(reader io.ReadSeeker) (BlockIssuerKey, error) {
 	}
 
 	switch BlockIssuerKeyType(blockIssuerKeyType) {
-	case BlockIssuerKeyEd25519PublicKey:
-		readBytes, err := stream.ReadBytes(reader, Ed25519PublicKeyBlockIssuerKeyLength)
-		if err != nil {
-			return nil, ierrors.Wrap(err, "unable to read block issuer key bytes")
-		}
-
-		return lo.DropCount(Ed25519PublicKeyBlockIssuerKeyFromBytes(readBytes))
 	case BlockIssuerKeyPublicKeyHash:
 		readBytes, err := stream.ReadBytes(reader, Ed25519PublicKeyHashBlockIssuerKeyLength)
 		if err != nil {

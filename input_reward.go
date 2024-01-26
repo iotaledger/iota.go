@@ -44,10 +44,6 @@ func (r *RewardInput) Compare(other ContextInput) int {
 	// Causes any two Reward Inputs with the same index to be considered duplicates.
 	//nolint:forcetypeassert // we can safely assume that this is a RewardInput
 	otherRewardInput := other.(*RewardInput)
-	indexCompare := cmp.Compare(r.Index, otherRewardInput.Index)
-	if indexCompare != 0 {
-		return indexCompare
-	}
 
-	return 0
+	return cmp.Compare(r.Index, otherRewardInput.Index)
 }

@@ -7,9 +7,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
@@ -30,7 +32,7 @@ func TestFeaturesDeSerialize(t *testing.T) {
 			Name: "ok - BlockIssuerFeature",
 			Source: &iotago.BlockIssuerFeature{
 				BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 				),
 				ExpirySlot: 10,
 			},
@@ -383,5 +385,109 @@ func TestMetadataMaxSize(t *testing.T) {
 	for _, test := range tests {
 		tst := test.ToDeserializeTest()
 		t.Run(test.name, tst.Run)
+	}
+}
+
+func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
+	bik1 := lo.PanicOnErr(lo.DropCount(
+		iotago.Ed25519PublicKeyHashBlockIssuerKeyFromBytes(
+			lo.PanicOnErr(hexutil.DecodeHex("0x00145d52e861cfe407e6f0c278f09ebd35ed7bcd766b7da2654e475ed4b05e0ddc")))))
+	bik2 := lo.PanicOnErr(lo.DropCount(
+		iotago.Ed25519PublicKeyHashBlockIssuerKeyFromBytes(
+			lo.PanicOnErr(hexutil.DecodeHex("0x006f49dd17390fda4ec3b7c959496b4b9ac50428c47f0ffe445a94130547fbe519")))))
+	bik3 := lo.PanicOnErr(lo.DropCount(
+		iotago.Ed25519PublicKeyHashBlockIssuerKeyFromBytes(
+			lo.PanicOnErr(hexutil.DecodeHex("0x009a224f3c94a5c281d984930216c20e1f4a79c3bad325cf92237f1dac1ff22b10")))))
+
+	accountWithKeys := func(biks iotago.BlockIssuerKeys) *iotago.AccountOutput {
+		return &iotago.AccountOutput{
+			Amount: 100_000_000,
+			UnlockConditions: iotago.AccountOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: tpkg.RandAccountAddress(),
+				},
+			},
+			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+			Features: iotago.AccountOutputFeatures{
+				&iotago.BlockIssuerFeature{
+					ExpirySlot:      100,
+					BlockIssuerKeys: biks,
+				},
+			},
+		}
+	}
+
+	tests := []*frameworks.DeSerializeTest{
+		{
+			Name: "ok - BlockIssuerFeature keys lexically ordered and unique",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(iotago.BlockIssuerKeys{
+						bik1,
+						bik2,
+						bik3,
+					}),
+				}
+			},
+			),
+			Target: &iotago.SignedTransaction{},
+		},
+		{
+			Name: "fail - BlockIssuerFeature keys lexically unordered",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(iotago.BlockIssuerKeys{
+						bik2,
+						bik1,
+						bik3,
+					}),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+			DeSeriErr: iotago.ErrArrayValidationOrderViolatesLexicalOrder,
+		},
+		{
+			Name: "fail - BlockIssuerFeature keys contains duplicates",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(iotago.BlockIssuerKeys{
+						bik1,
+						bik1,
+						bik1,
+						bik2,
+					}),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrArrayValidationViolatesUniqueness,
+			DeSeriErr: iotago.ErrArrayValidationViolatesUniqueness,
+		},
+		{
+			Name: "fail - BlockIssuerFeature keys below minimum",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(iotago.BlockIssuerKeys{}),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMinElementsNotReached,
+			DeSeriErr: serializer.ErrArrayValidationMinElementsNotReached,
+		},
+		{
+			Name: "fail - BlockIssuerFeature keys exceeds maximum",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithKeys(tpkg.RandBlockIssuerKeys(iotago.MaxBlockIssuerKeysCount + 1)),
+				}
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
+			DeSeriErr: serializer.ErrArrayValidationMaxElementsExceeded,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
 	}
 }

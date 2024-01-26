@@ -54,11 +54,11 @@ func TestAccountOutputBuilder(t *testing.T) {
 		immMetadataEntries                  = iotago.MetadataFeatureEntries{"data": []byte("654321")}
 		immIssuer                           = tpkg.RandEd25519Address()
 
-		blockIssuerKey1    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
-		blockIssuerKey2    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
-		blockIssuerKey3    = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
-		newBlockIssuerKey1 = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
-		newBlockIssuerKey2 = iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey1    = iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey2    = iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		blockIssuerKey3    = iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		newBlockIssuerKey1 = iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+		newBlockIssuerKey2 = iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 	)
 
 	accountOutput, err := builder.NewAccountOutputBuilder(addr, amount).

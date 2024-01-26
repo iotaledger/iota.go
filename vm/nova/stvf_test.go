@@ -57,7 +57,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 	currentEpoch := iotago.EpochIndex(20)
 	currentSlot := tpkg.ZeroCostTestAPI.TimeProvider().EpochStart(currentEpoch)
 
-	blockIssuerPubKey := iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+	blockIssuerPubKey := iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: iotago.NewBlockIssuerKeys(blockIssuerPubKey),
 		ExpirySlot:      currentSlot + tpkg.ZeroCostTestAPI.ProtocolParameters().MaxCommittableAge(),
@@ -3699,7 +3699,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 
 	currentEpoch := iotago.EpochIndex(20)
 	currentSlot := tpkg.ZeroCostTestAPI.TimeProvider().EpochStart(currentEpoch)
-	blockIssuerPubKey := iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
+	blockIssuerPubKey := iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray())
 	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: iotago.NewBlockIssuerKeys(blockIssuerPubKey),
 		ExpirySlot:      currentSlot + tpkg.ZeroCostTestAPI.ProtocolParameters().MaxCommittableAge(),

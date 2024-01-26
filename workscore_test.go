@@ -38,8 +38,8 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 			&iotago.BlockIssuerFeature{
 				ExpirySlot: 300,
 				BlockIssuerKeys: iotago.BlockIssuerKeys{
-					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(keyPair.PublicKey),
-					iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(keyPair2.PublicKey),
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(keyPair.PublicKey),
+					iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(keyPair2.PublicKey),
 				},
 			},
 			&iotago.StakingFeature{
@@ -77,22 +77,26 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
 	require.NoError(t, err)
 
-	workScoreParameters := api.ProtocolParameters().WorkScoreParameters()
-
-	workScore, err := tx.WorkScore(workScoreParameters)
+	block, err := builder.NewBasicBlockBuilder(api).Payload(tx).Build()
 	require.NoError(t, err)
+
+	workScore, err := block.WorkScore()
+	require.NoError(t, err)
+
+	workScoreParameters := api.ProtocolParameters().WorkScoreParameters()
 
 	// Calculate work score as defined in TIP-45 for verification.
 	expectedWorkScore := workScoreParameters.DataByte*iotago.WorkScore(tx.Size()) +
-		workScoreParameters.Output*2 +
+		workScoreParameters.Block*1 +
 		workScoreParameters.Input*2 +
 		workScoreParameters.ContextInput*3 +
-		// Accounts for one Signature unlock.
-		workScoreParameters.SignatureEd25519 +
-		workScoreParameters.BlockIssuer +
-		workScoreParameters.Staking +
+		workScoreParameters.Output*2 +
 		workScoreParameters.NativeToken*1 +
-		workScoreParameters.Allotment*2
+		workScoreParameters.Staking +
+		workScoreParameters.BlockIssuer +
+		workScoreParameters.Allotment*2 +
+		// Accounts for one Signature unlock.
+		workScoreParameters.SignatureEd25519
 
 	require.Equal(t, expectedWorkScore, workScore, "work score expected: %d, actual: %d", expectedWorkScore, workScore)
 }

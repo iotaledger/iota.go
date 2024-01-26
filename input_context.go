@@ -112,3 +112,30 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[
 		return nil
 	}
 }
+
+// ContextInputsCommitmentInputRequirement returns an ElementValidationFunc which
+// checks that a Commitment Input is present if a BIC or Reward Input is present.
+func ContextInputsCommitmentInputRequirement() ElementValidationFunc[ContextInput] {
+	// Once we see the first BIC or Reward Input and there was no Commitment Input before, then due to lexical ordering
+	// a commitment input cannot appear later, so we can error immediately.
+	seenCommitmentInput := false
+
+	return func(index int, input ContextInput) error {
+		switch input.(type) {
+		case *CommitmentInput:
+			seenCommitmentInput = true
+		case *BlockIssuanceCreditInput:
+			if !seenCommitmentInput {
+				return ierrors.Wrapf(ErrCommitmentInputMissing, "block issuance credit input at index %d requires a commitment input", index)
+			}
+		case *RewardInput:
+			if !seenCommitmentInput {
+				return ierrors.Wrapf(ErrCommitmentInputMissing, "reward input at index %d requires a commitment input", index)
+			}
+		default:
+			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
+		}
+
+		return nil
+	}
+}

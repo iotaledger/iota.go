@@ -3679,7 +3679,6 @@ func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 	}
 }
 
-// TODO: add test case for transaction with context inputs.
 func TestTxSemanticInputUnlocks(t *testing.T) {
 	type test struct {
 		name           string
@@ -4528,7 +4527,6 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 	}
 }
 
-// TODO: add test case for block issuer with keys (differently priced).
 func TestTxSemanticDeposit(t *testing.T) {
 	type test struct {
 		name           string
@@ -7627,9 +7625,9 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7687,9 +7685,9 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7803,7 +7801,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7851,7 +7849,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7907,7 +7905,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7963,7 +7961,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -7981,7 +7979,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -8025,7 +8023,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 						&iotago.BlockIssuerFeature{
 							ExpirySlot: iotago.MaxSlotIndex,
 							BlockIssuerKeys: iotago.NewBlockIssuerKeys(
-								iotago.Ed25519PublicKeyBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
+								iotago.Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(tpkg.Rand32ByteArray()),
 							),
 						},
 					},
@@ -8119,7 +8117,7 @@ func TestTxSyntacticImplicitAccountMinDeposit(t *testing.T) {
 		Features: iotago.AccountOutputFeatures{
 			&iotago.BlockIssuerFeature{
 				BlockIssuerKeys: iotago.BlockIssuerKeys{
-					&iotago.Ed25519PublicKeyBlockIssuerKey{},
+					&iotago.Ed25519PublicKeyHashBlockIssuerKey{},
 				},
 			},
 		},
