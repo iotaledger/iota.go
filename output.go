@@ -270,20 +270,6 @@ func (outputs Outputs[T]) NativeTokenSum() (NativeTokenSum, error) {
 	return sum, nil
 }
 
-// NewAccounts returns an AccountOutputsSet for all AccountOutputs which are new.
-func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
-	set := make(AccountOutputsSet)
-	for utxoInputID, output := range outputSet {
-		accountOutput, is := output.(*AccountOutput)
-		if !is || !accountOutput.AccountID.Empty() {
-			continue
-		}
-		set[AccountIDFromOutputID(utxoInputID)] = accountOutput
-	}
-
-	return set
-}
-
 // This is a helper function to check if an output is unlockable by a given target.
 func outputUnlockableBy(output Output, next TransDepIdentOutput, target Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
 	unlockConds := output.UnlockConditionSet()

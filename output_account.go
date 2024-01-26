@@ -10,75 +10,12 @@ var (
 	ErrNonUniqueAccountOutputs = ierrors.New("non unique accounts within outputs")
 	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
 	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
-	// ErrAccountMissing gets returned when an account is missing.
-	ErrAccountMissing = ierrors.New("account is missing")
 	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
 	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
 	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one
 	// Implicit Account Creation Address on the input side of a transaction.
 	ErrMultipleImplicitAccountCreationAddresses = ierrors.New("multiple implicit account creation addresses on the input side")
 )
-
-// AccountOutputs is a slice of AccountOutput(s).
-type AccountOutputs []*AccountOutput
-
-// Every checks whether every element passes f.
-// Returns either -1 if all elements passed f or the index of the first element which didn't.
-func (outputs AccountOutputs) Every(f func(output *AccountOutput) bool) int {
-	for i, output := range outputs {
-		if !f(output) {
-			return i
-		}
-	}
-
-	return -1
-}
-
-// AccountOutputsSet is a set of AccountOutput(s).
-type AccountOutputsSet map[AccountID]*AccountOutput
-
-// Includes checks whether all accounts included in other exist in this set.
-func (set AccountOutputsSet) Includes(other AccountOutputsSet) error {
-	for accountID := range other {
-		if _, has := set[accountID]; !has {
-			return ierrors.Wrapf(ErrAccountMissing, "%s missing in source", accountID.ToHex())
-		}
-	}
-
-	return nil
-}
-
-// EveryTuple runs f for every key which exists in both this set and other.
-func (set AccountOutputsSet) EveryTuple(other AccountOutputsSet, f func(in *AccountOutput, out *AccountOutput) error) error {
-	for k, v := range set {
-		v2, has := other[k]
-		if !has {
-			continue
-		}
-		if err := f(v, v2); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Merge merges other with this set in a new set.
-// Returns an error if an account isn't unique across both sets.
-func (set AccountOutputsSet) Merge(other AccountOutputsSet) (AccountOutputsSet, error) {
-	newSet := make(AccountOutputsSet)
-	for k, v := range set {
-		newSet[k] = v
-	}
-	for k, v := range other {
-		if _, has := newSet[k]; has {
-			return nil, ierrors.Wrapf(ErrNonUniqueAccountOutputs, "account %s exists in both sets", k.ToHex())
-		}
-		newSet[k] = v
-	}
-
-	return newSet, nil
-}
 
 type (
 	AccountOutputUnlockCondition  interface{ UnlockCondition }
