@@ -18,8 +18,8 @@ var (
 	ErrInvalidDelegationTransition = ierrors.New("invalid delegation output transition")
 	// ErrInvalidDelegationRewardsClaiming gets returned when it is invalid to claim rewards from a delegation output.
 	ErrInvalidDelegationRewardsClaiming = ierrors.New("invalid delegation mana rewards claiming")
-	// ErrInvalidDelegationNonZeroedID gets returned when a delegation output's delegation ID is not zeroed initially.
-	ErrInvalidDelegationNonZeroedID = ierrors.New("delegation ID must be zeroed initially")
+	// ErrDelegationOutputTransitionedTwice gets returned when a delegation output is attempted to be transitioned twice.
+	ErrDelegationOutputTransitionedTwice = ierrors.New("delegation output attempted to be transitioned twice")
 	// ErrInvalidDelegationModified gets returned when a delegation output's immutable fields are modified.
 	ErrInvalidDelegationModified = ierrors.New("delegated amount, validator ID and start epoch cannot be modified")
 	// ErrInvalidDelegationStartEpoch gets returned when a delegation output's start epoch is not set correctly

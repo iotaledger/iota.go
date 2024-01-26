@@ -1598,7 +1598,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAccountStateTransition,
+			wantErr: iotago.ErrChainOutputImmutableFeaturesChanged,
 		},
 		{
 			name: "fail - update expired block issuer feature with extending expiration before MCA",
@@ -2010,7 +2010,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAccountStateTransition,
+			wantErr: iotago.ErrAccountInvalidFoundryCounter,
 		},
 	}
 
@@ -3250,7 +3250,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+			wantErr: iotago.ErrNewChainOutputHasNonZeroedID,
 		},
 		{
 			name: "fail - invalid genesis - delegated amount does not match amount",
@@ -3376,7 +3376,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationNonZeroedID,
+			wantErr: iotago.ErrDelegationOutputTransitionedTwice,
 		},
 		{
 			name: "fail - invalid transition - modified delegated amount, start epoch and validator id",

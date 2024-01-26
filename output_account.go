@@ -6,8 +6,6 @@ import (
 )
 
 var (
-	// ErrNonUniqueAccountOutputs gets returned when multiple AccountOutputs(s) with the same AccountID exist within sets.
-	ErrNonUniqueAccountOutputs = ierrors.New("non unique accounts within outputs")
 	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
 	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
 	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
@@ -15,6 +13,9 @@ var (
 	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one
 	// Implicit Account Creation Address on the input side of a transaction.
 	ErrMultipleImplicitAccountCreationAddresses = ierrors.New("multiple implicit account creation addresses on the input side")
+	// ErrAccountInvalidFoundryCounter gets returned when the foundry counter in an account decreased
+	// or did not increase by the number of new foundries.
+	ErrAccountInvalidFoundryCounter = ierrors.New("foundry counter in account decreased or did not increase by the number of new foundries")
 )
 
 type (

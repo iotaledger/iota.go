@@ -134,6 +134,10 @@ var (
 	ErrNonUniqueChainOutputs = ierrors.New("non unique chain outputs")
 	// ErrChainTransitionInvalid gets returned when the chain transition was invalid.
 	ErrChainTransitionInvalid = ierrors.New("chain transition is invalid")
+	// ErrNewChainOutputHasNonZeroedID gets returned when a new chain output has a non-zeroed ID.
+	ErrNewChainOutputHasNonZeroedID = ierrors.New("new chain output has non-zeroed ID")
+	// ErrChainOutputImmutableFeaturesChanged gets returned when a chain output's immutable features are modified in a transition.
+	ErrChainOutputImmutableFeaturesChanged = ierrors.New("immutable features in chain output modified during transition")
 )
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
