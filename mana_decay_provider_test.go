@@ -125,7 +125,7 @@ func TestManaDecay_StoredMana(t *testing.T) {
 			storedMana:  0,
 			createdSlot: testTimeProvider.EpochStart(2),
 			targetSlot:  testTimeProvider.EpochStart(1),
-			wantErr:     iotago.ErrWrongEpochIndex,
+			wantErr:     iotago.ErrManaDecayCreationIndexExceedsTargetIndex,
 		},
 		{
 			name:        "check if mana decay works for exactly the amount of epochs in the lookup table",
@@ -203,7 +203,7 @@ func TestManaDecay_PotentialMana(t *testing.T) {
 			amount:      0,
 			createdSlot: testTimeProvider.EpochStart(2),
 			targetSlot:  testTimeProvider.EpochStart(1),
-			wantErr:     iotago.ErrWrongEpochIndex,
+			wantErr:     iotago.ErrManaDecayCreationIndexExceedsTargetIndex,
 		},
 		{
 			name:        "check if mana decay works for exactly the amount of epochs in the lookup table",
@@ -302,7 +302,7 @@ func TestManaDecay_Rewards(t *testing.T) {
 			rewards:      0,
 			rewardEpoch:  2,
 			claimedEpoch: 1,
-			wantErr:      iotago.ErrWrongEpochIndex,
+			wantErr:      iotago.ErrManaDecayCreationIndexExceedsTargetIndex,
 		},
 		{
 			name:         "check if mana decay works for exactly the amount of epochs in the lookup table",
