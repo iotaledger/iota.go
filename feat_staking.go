@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
+	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrInvalidStakingStartEpoch gets returned when a new Staking Feature's start epoch
 	// is not set to the epoch of the transaction.
 	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch of the transaction")
@@ -26,8 +28,8 @@ var (
 	ErrInvalidStakingRewardInputRequired = ierrors.New("staking feature removal or resetting requires a reward input")
 	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed without removing or resetting the staking feature.
 	ErrInvalidStakingRewardClaim = ierrors.New("staking feature must be removed or reset in order to claim rewards")
-	// ErrInvalidStakingCommitmentInput gets returned when no commitment input was passed in a TX containing a staking feature.
-	ErrInvalidStakingCommitmentInput = ierrors.New("staking feature validation requires a commitment input")
+	// ErrInvalidStakingCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a staking feature.
+	ErrInvalidStakingCommitmentInputMissing = ierrors.New("staking feature validation requires a commitment input")
 )
 
 // StakingFeature is a feature which indicates that this account wants to register as a validator.

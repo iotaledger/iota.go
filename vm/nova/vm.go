@@ -452,7 +452,7 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInputMissing)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -485,7 +485,7 @@ func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOu
 	// It should already never be nil here, but for 100% safety, we'll check again.
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
-		return iotago.ErrInvalidStakingCommitmentInput
+		return iotago.ErrInvalidStakingCommitmentInputMissing
 	}
 
 	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Slot)
@@ -632,7 +632,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		// which also requires a commitment input.
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInput)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInputMissing)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
