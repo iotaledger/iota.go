@@ -1217,7 +1217,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 					},
 				},
 
-				wantErr: iotago.ErrInvalidBlockIssuerTransition,
+				wantErr: iotago.ErrBlockIssuerNotExpired,
 			}
 		}(),
 
@@ -7731,7 +7731,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 				},
 			},
 			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerNotExpired,
 		},
 		{
 			name: "fail - attempt to destroy implicit account",
@@ -8039,7 +8039,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 				},
 			},
 			keys:    []iotago.AddressKeys{implicitAccountIdentAddrKeys},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrManaMovedOffBlockIssuerAccount,
 		},
 	}
 

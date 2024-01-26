@@ -185,7 +185,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerExpiryTooEarly,
 		},
 		{
 			name: "fail - block issuer genesis expired but within MCA",
@@ -225,7 +225,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerExpiryTooEarly,
 		},
 		{
 			name: "ok - staking genesis transition",
@@ -1272,7 +1272,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerNotExpired,
 		},
 		{
 			name: "ok - expired block issuer destroy transition",
@@ -1365,7 +1365,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerNotExpired,
 		},
 		{
 			name: "ok - remove expired block issuer feature transition",
@@ -1656,7 +1656,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerExpiryTooEarly,
 		},
 		{
 			name: "fail - update expired block issuer feature with extending expiration to the past before MCA",
@@ -1714,7 +1714,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerExpiryTooEarly,
 		},
 		{
 			name: "fail - update block issuer account with negative BIC",
@@ -3813,7 +3813,7 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidBlockIssuerTransition,
+			wantErr: iotago.ErrBlockIssuerNotExpired,
 		},
 	}
 

@@ -221,6 +221,10 @@ func implicitAccountSTVF(vmParams *vm.Params, implicitAccount *vm.ImplicitAccoun
 		Output:   implicitAccount,
 	}
 
+	if err := accountBlockIssuanceCreditLocked(implicitAccountChainOutput, vmParams.WorkingSet.BIC); err != nil {
+		return err
+	}
+
 	implicitAccountBlockIssuerFeature := &iotago.BlockIssuerFeature{
 		BlockIssuerKeys: iotago.NewBlockIssuerKeys(),
 		// Setting MaxSlotIndex means one cannot remove the block issuer feature in the transition, but it does allow for setting
@@ -289,11 +293,14 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 
 	if nextBlockIssuerFeat := next.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
 		}
 
-		if nextBlockIssuerFeat.ExpirySlot < vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Slot) {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon")
+		pastBoundedSlot := vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Slot)
+		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
+			)
 		}
 	}
 
@@ -346,17 +353,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if vmParams.WorkingSet.Commitment == nil {
-		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
-	}
-
-	// else if the account has negative bic, this is invalid.
-	// new block issuers may not have a bic registered yet.
-	if bic, exists := vmParams.WorkingSet.BIC[next.AccountID]; exists {
-		if bic < 0 {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "negative block issuer credit: %d", bic)
-		}
-	} else {
-		return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "no BIC provided for block issuer feature validation")
+		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
 	}
 
 	commitmentInputSlot := vmParams.WorkingSet.Commitment.Slot
@@ -365,17 +362,23 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputSlot {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "cannot remove block issuer feature until it expires (current slot: %d, expiry slot: %d)", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot)
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "(current slot: %d, expiry slot: %d)", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot),
+			)
 		}
 		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon (is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
+			)
 		}
 	} else if nextBlockIssuerFeat != nil {
 		// The block issuer feature was newly added,
 		// or the current feature has expired but it was not removed.
 		// In both cases the expiry slot must be set sufficiently far in the future.
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature expiry set too soon (is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
+			)
 		}
 	}
 
@@ -433,7 +436,9 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if manaIn < manaOut {
-		return ierrors.Wrapf(iotago.ErrInvalidBlockIssuerTransition, "cannot move Mana off an account: mana in %d, mana out %d", manaIn, manaOut)
+		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+			ierrors.WithMessagef(iotago.ErrManaMovedOffBlockIssuerAccount, "mana in %d, mana out %d", manaIn, manaOut),
+		)
 	}
 
 	return nil
@@ -606,11 +611,14 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	blockIssuerFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if blockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "block issuer feature validation requires a commitment input")
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
 		}
 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Slot {
-			return ierrors.Wrap(iotago.ErrInvalidBlockIssuerTransition, "cannot destroy output until the block issuer feature expires")
+			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
+				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "(current slot: %d, expiry slot: %d)",
+					vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot),
+			)
 		}
 
 		if err := accountBlockIssuanceCreditLocked(input, vmParams.WorkingSet.BIC); err != nil {

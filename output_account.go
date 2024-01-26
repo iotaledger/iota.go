@@ -12,6 +12,14 @@ var (
 	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
 	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
 	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
+	// ErrBlockIssuerCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Block Issuer Feature.
+	ErrBlockIssuerCommitmentInputMissing = ierrors.New("block issuer feature transitioned without a commitment input")
+	// ErrBlockIssuerNotExpired gets returned when an unexpired block issuer feature is removed.
+	ErrBlockIssuerNotExpired = ierrors.New("block issuer feature has not expired")
+	// ErrBlockIssuerExpiryTooEarly gets returned when the expiry slot in a block issuer feature is set too early.
+	ErrBlockIssuerExpiryTooEarly = ierrors.New("block issuer feature expiry set too early")
+	// ErrManaMovedOffBlockIssuerAccount gets returned when mana is moved off block issuer accounts
+	ErrManaMovedOffBlockIssuerAccount = ierrors.New("mana cannot be moved off block issuer accounts except with manalocks")
 	// ErrAccountLocked gets returned when an account has negative block issuance credits.
 	ErrAccountLocked = ierrors.New("account is locked due to negative block issuance credits")
 	// ErrBlockIssuanceCreditInputRequired gets returned when a transaction containing an account with a block issuer feature
