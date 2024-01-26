@@ -1050,7 +1050,10 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w: delegation output can only be transitioned if it has a zeroed ID", iotago.ErrDelegationOutputTransitionedTwice)
+		return ierrors.Join(iotago.ErrInvalidDelegationTransition,
+			ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
+				"delegation output can only be transitioned if it has a zeroed ID",
+			))
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||
