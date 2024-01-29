@@ -20,8 +20,6 @@ var (
 	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
-	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
-	ErrInvalidInputUnlock = ierrors.New("invalid input unlock")
 	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
 	ErrSenderFeatureNotUnlocked = ierrors.New("sender feature is not unlocked")
 	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.

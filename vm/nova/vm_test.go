@@ -2696,7 +2696,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						}
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidMultiAddressUnlock,
 			}
 		}(),
 
@@ -3961,7 +3961,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
 			}
 		}(),
 
@@ -4008,7 +4008,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4056,7 +4056,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4103,7 +4103,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4150,7 +4150,85 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.NFTUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
+			}
+		}(),
+
+		// fail - should contain sig unlock
+		func() *test {
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(2)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: iotago.AccountID{},
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+			}}
+
+			_, err := transaction.Sign(ident1AddressKeys)
+			require.NoError(t, err)
+
+			return &test{
+				name: "fail - should contain sig unlock",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.SignedTransaction{
+					API:         testAPI,
+					Transaction: transaction,
+					Unlocks: iotago.Unlocks{
+						&iotago.AccountUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
+			}
+		}(),
+
+		// fail - reference unlock pointee invalid
+		func() *test {
+			_, ident1, ident1AddressKeys := tpkg.RandEd25519Identity()
+			inputIDs := tpkg.RandOutputIDs(1)
+
+			inputs := vm.InputSet{
+				inputIDs[0]: &iotago.AccountOutput{
+					Amount:    100,
+					AccountID: iotago.AccountID{},
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: ident1},
+					},
+				},
+			}
+
+			transaction := &iotago.Transaction{API: testAPI, TransactionEssence: &iotago.TransactionEssence{
+				Inputs: inputIDs.UTXOInputs(),
+			}}
+
+			_, err := transaction.Sign(ident1AddressKeys)
+			require.NoError(t, err)
+
+			return &test{
+				name: "fail - reference unlock pointee invalid",
+				vmParams: &vm.Params{
+					API: testAPI,
+				},
+				resolvedInputs: vm.ResolvedInputs{InputSet: inputs},
+				tx: &iotago.SignedTransaction{
+					API:         testAPI,
+					Transaction: transaction,
+					Unlocks: iotago.Unlocks{
+						&iotago.ReferenceUnlock{Reference: 0},
+					},
+				},
+				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
 			}
 		}(),
 
@@ -4309,7 +4387,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AccountUnlock{Reference: 1},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4377,7 +4455,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AnchorUnlock{Reference: 1},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4440,7 +4518,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AnchorUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 
@@ -4510,7 +4588,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidInputUnlock,
+				wantErr: iotago.ErrInvalidChainAddressUnlock,
 			}
 		}(),
 	}
