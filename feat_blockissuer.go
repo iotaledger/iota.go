@@ -23,7 +23,7 @@ var (
 	ErrBlockIssuerNotExpired = ierrors.New("block issuer feature has not expired")
 	// ErrBlockIssuerExpiryTooEarly gets returned when the expiry slot in a block issuer feature is set too early.
 	ErrBlockIssuerExpiryTooEarly = ierrors.New("block issuer feature expiry set too early")
-	// ErrManaMovedOffBlockIssuerAccount gets returned when mana is moved off block issuer accounts
+	// ErrManaMovedOffBlockIssuerAccount gets returned when mana is moved off block issuer accounts.
 	ErrManaMovedOffBlockIssuerAccount = ierrors.New("mana cannot be moved off block issuer accounts except with manalocks")
 	// ErrAccountLocked gets returned when an account has negative block issuance credits.
 	ErrAccountLocked = ierrors.New("account is locked due to negative block issuance credits")
