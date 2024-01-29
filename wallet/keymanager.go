@@ -91,14 +91,27 @@ func (k *KeyManager) Mnemonic() bip39.Mnemonic {
 }
 
 // AddressSigner returns an address signer.
-func (k *KeyManager) AddressSigner() iotago.AddressSigner {
-	privKey, _ := k.KeyPair()
+func (k *KeyManager) AddressSigner(indexes ...uint32) iotago.AddressSigner {
+	if len(indexes) == 0 {
+		indexes = []uint32{0}
+	}
+	privKeys := make([]ed25519.PrivateKey, len(indexes))
+	for i, index := range indexes {
+		k.path[len(k.path)-1] = index
+		privKeys[i], _ = k.KeyPair()
+	}
 
-	return iotago.NewInMemoryAddressSignerFromEd25519PrivateKey(privKey)
+	return iotago.NewInMemoryAddressSignerFromEd25519PrivateKeys(privKeys...)
 }
 
 // Address calculates an address of the specified type.
-func (k *KeyManager) Address(addressType iotago.AddressType) iotago.DirectUnlockableAddress {
+func (k *KeyManager) Address(addressType iotago.AddressType, index ...uint32) iotago.DirectUnlockableAddress {
+	if len(index) > 0 {
+		k.path[len(k.path)-1] = index[0]
+	} else {
+		k.path[len(k.path)-1] = 0
+	}
+
 	_, pubKey := k.KeyPair()
 
 	//nolint:exhaustive // we only support two address types
