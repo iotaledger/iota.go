@@ -820,7 +820,7 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 	startSerial := inAccount.FoundryCounter
 	endIncSerial := outAccount.FoundryCounter
 	if startSerial >= current.SerialNumber || current.SerialNumber > endIncSerial {
-		return ierrors.Wrapf(iotago.ErrInvalidFoundryStateTransition, "new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID, startSerial, endIncSerial)
+		return ierrors.Wrapf(iotago.ErrInvalidFoundryStateTransition, "new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID, current.SerialNumber, startSerial, endIncSerial)
 	}
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output

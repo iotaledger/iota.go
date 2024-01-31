@@ -97,7 +97,7 @@ func (k *KeyManager) AddressSigner(indexes ...uint32) iotago.AddressSigner {
 	}
 	privKeys := make([]ed25519.PrivateKey, len(indexes))
 	for i, index := range indexes {
-		k.path[len(k.path)-1] = index
+		k.SetIndex(index)
 		privKeys[i], _ = k.KeyPair()
 	}
 
@@ -107,9 +107,9 @@ func (k *KeyManager) AddressSigner(indexes ...uint32) iotago.AddressSigner {
 // Address calculates an address of the specified type.
 func (k *KeyManager) Address(addressType iotago.AddressType, index ...uint32) iotago.DirectUnlockableAddress {
 	if len(index) > 0 {
-		k.path[len(k.path)-1] = index[0]
+		k.SetIndex(index[0])
 	} else {
-		k.path[len(k.path)-1] = 0
+		k.SetIndex(0)
 	}
 
 	_, pubKey := k.KeyPair()
@@ -123,4 +123,13 @@ func (k *KeyManager) Address(addressType iotago.AddressType, index ...uint32) io
 	default:
 		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
 	}
+}
+
+func (k *KeyManager) SetIndex(index uint32) {
+	if len(k.path) != 5 {
+		panic("invalid path length")
+	}
+
+	// Set the index
+	k.path[4] = index | (1 << 31)
 }

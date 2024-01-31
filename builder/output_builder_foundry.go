@@ -63,6 +63,12 @@ func (builder *FoundryOutputBuilder) ImmutableMetadata(entries iotago.MetadataFe
 	return builder
 }
 
+func (builder *FoundryOutputBuilder) TokenScheme(tokenScheme iotago.TokenScheme) *FoundryOutputBuilder {
+	builder.output.TokenScheme = tokenScheme
+
+	return builder
+}
+
 // Build builds the iotago.FoundryOutput.
 func (builder *FoundryOutputBuilder) Build() (*iotago.FoundryOutput, error) {
 	if builder.prev != nil {
