@@ -18,14 +18,14 @@ var (
 	ErrExpirationConditionZero = ierrors.New("expiration condition is zero")
 	// ErrTimelockConditionZero gets returned when a TimelockUnlockCondition has set the slot index to zero.
 	ErrTimelockConditionZero = ierrors.New("timelock condition is zero")
-	// ErrTimelockConditionCommitmentInputRequired gets returned when a TX containing a TimelockUnlockCondition
+	// ErrTimelockCommitmentInputMissing gets returned when a TX containing a TimelockUnlockCondition
 	// does not have a commitment input.
-	ErrTimelockConditionCommitmentInputRequired = ierrors.New("transaction's containing a timelock condition require a commitment input")
-	// ErrExpirationConditionCommitmentInputRequired gets returned when a TX containing an ExpirationUnlockCondition
+	ErrTimelockCommitmentInputMissing = ierrors.New("transaction's containing a timelock condition require a commitment input")
+	// ErrExpirationCommitmentInputMissing gets returned when a TX containing an ExpirationUnlockCondition
 	// does not have a commitment input.
-	ErrExpirationConditionCommitmentInputRequired = ierrors.New("transaction's containing an expiration condition require a commitment input")
-	// ErrExpirationConditionUnlockFailed gets returned when a ExpirationUnlockCondition could not be unlocked.
-	ErrExpirationConditionUnlockFailed = ierrors.New("expiration condition unlock failed")
+	ErrExpirationCommitmentInputMissing = ierrors.New("transaction's containing an expiration condition require a commitment input")
+	// ErrExpirationNotUnlockable gets returned when a ExpirationUnlockCondition cannot be unlocked by return ident or the owner.
+	ErrExpirationNotUnlockable = ierrors.New("expiration unlock condition cannot be unlocked")
 )
 
 // UnlockConditionType defines the type of UnlockCondition.
@@ -223,7 +223,7 @@ func (f UnlockConditionSet) CheckExpirationCondition(futureBoundedSlotIndex, pas
 		}
 
 		if !f.OwnerIdentCanUnlock(pastBoundedSlotIndex) {
-			return nil, ErrExpirationConditionUnlockFailed
+			return nil, ErrExpirationNotUnlockable
 		}
 	}
 

@@ -434,20 +434,13 @@ func identToUnlock(transaction *iotago.Transaction, input iotago.Output, inputIn
 func checkExpiration(output iotago.Output, commitmentInput VMCommitmentInput, protocolParameters iotago.ProtocolParameters) (iotago.Address, error) {
 	if output.UnlockConditionSet().HasExpirationCondition() {
 		if commitmentInput == nil {
-			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
-		}
-
-		futureBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MinCommittableAge()
-		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
-			return returnIdent, nil
+			return nil, iotago.ErrExpirationCommitmentInputMissing
 		}
 
 		pastBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MaxCommittableAge()
-		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
-			return nil, nil
-		}
+		futureBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MinCommittableAge()
 
-		return nil, iotago.ErrExpirationConditionUnlockFailed
+		return output.UnlockConditionSet().CheckExpirationCondition(futureBoundedSlotIndex, pastBoundedSlotIndex)
 	}
 
 	return nil, nil
@@ -648,7 +641,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		}
 
 		if in != out {
-			return ierrors.Wrapf(iotago.ErrInputOutputSumMismatch, "in %d, out %d", in, out)
+			return ierrors.Wrapf(iotago.ErrInputOutputBaseTokenMismatch, "in %d, out %d", in, out)
 		}
 
 		for ident, returnSum := range inputSumReturnAmountPerIdent {
@@ -673,7 +666,7 @@ func ExecFuncTimelocks() ExecFunc {
 				commitment := vmParams.WorkingSet.Commitment
 
 				if commitment == nil {
-					return iotago.ErrTimelockConditionCommitmentInputRequired
+					return iotago.ErrTimelockCommitmentInputMissing
 				}
 				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
