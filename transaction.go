@@ -52,8 +52,6 @@ var (
 	// ErrManaDecayCreationIndexExceedsTargetIndex gets returned when the creation slot/epoch index
 	// exceeds the target slot/epoch index in mana decay.
 	ErrManaDecayCreationIndexExceedsTargetIndex = ierrors.New("mana decay creation slot/epoch index exceeds target slot/epoch index")
-	// ErrManaAmountInvalid gets returned when the mana amount is invalid.
-	ErrManaAmountInvalid = ierrors.New("invalid mana amount, calculation error or overflow")
 )
 
 type (

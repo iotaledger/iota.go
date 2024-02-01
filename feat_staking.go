@@ -10,26 +10,26 @@ import (
 var (
 	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
 	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
-	// ErrInvalidStakingStartEpoch gets returned when a new Staking Feature's start epoch
+	// ErrStakingStartEpochInvalid gets returned when a new Staking Feature's start epoch
 	// is not set to the epoch of the transaction.
-	ErrInvalidStakingStartEpoch = ierrors.New("staking start epoch must be the epoch of the transaction")
-	// ErrInvalidStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
+	ErrStakingStartEpochInvalid = ierrors.New("staking start epoch must be the epoch of the transaction")
+	// ErrStakingEndEpochTooEarly gets returned when a new Staking Feature's end epoch
 	// is not at least set to the transaction epoch plus the unbonding period.
-	ErrInvalidStakingEndEpochTooEarly = ierrors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")
-	// ErrInvalidStakingBlockIssuerRequired gets returned when an account contains a Staking Feature
+	ErrStakingEndEpochTooEarly = ierrors.New("staking end epoch must be set to the transaction epoch plus the unbonding period")
+	// ErrStakingBlockIssuerFeatureMissing gets returned when an account contains a Staking Feature
 	// but no Block Issuer Feature.
-	ErrInvalidStakingBlockIssuerRequired = ierrors.New("staking feature requires a block issuer feature")
-	// ErrInvalidStakingBondedRemoval gets returned when a staking feature is removed before the end of the unbonding period.
-	ErrInvalidStakingBondedRemoval = ierrors.New("staking feature can only be removed after the unbonding period")
-	// ErrInvalidStakingBondedModified gets returned when a staking feature's start epoch, fixed cost or
+	ErrStakingBlockIssuerFeatureMissing = ierrors.New("block issuer feature missing for account with staking feature")
+	// ErrStakingFeatureRemovedBeforeUnbonding gets returned when a staking feature is removed before the end of the unbonding period.
+	ErrStakingFeatureRemovedBeforeUnbonding = ierrors.New("staking feature can only be removed after the unbonding period")
+	// ErrStakingFeatureModifiedBeforeUnbonding gets returned when a staking feature's start epoch, fixed cost or
 	// staked amount are modified before the unboding period.
-	ErrInvalidStakingBondedModified = ierrors.New("staking start epoch, fixed cost and staked amount cannot be modified while bonded")
-	// ErrInvalidStakingRewardInputRequired get returned when a staking feature is removed or resetted without a reward input.
-	ErrInvalidStakingRewardInputRequired = ierrors.New("staking feature removal or resetting requires a reward input")
-	// ErrInvalidStakingRewardClaim gets returned when mana rewards are claimed without removing or resetting the staking feature.
-	ErrInvalidStakingRewardClaim = ierrors.New("staking feature must be removed or reset in order to claim rewards")
-	// ErrInvalidStakingCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a staking feature.
-	ErrInvalidStakingCommitmentInputMissing = ierrors.New("staking feature validation requires a commitment input")
+	ErrStakingFeatureModifiedBeforeUnbonding = ierrors.New("staking start epoch, fixed cost and staked amount cannot be modified while bonded")
+	// ErrStakingRewardInputMissing get returned when a staking feature is removed or reset without a reward input.
+	ErrStakingRewardInputMissing = ierrors.New("staking feature removal or resetting requires a reward input")
+	// ErrStakingRewardClaimingInvalid gets returned when mana rewards are claimed without removing or resetting the staking feature.
+	ErrStakingRewardClaimingInvalid = ierrors.New("staking feature must be removed or reset in order to claim rewards")
+	// ErrStakingCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a staking feature.
+	ErrStakingCommitmentInputMissing = ierrors.New("staking feature validation requires a commitment input")
 )
 
 // StakingFeature is a feature which indicates that this account wants to register as a validator.

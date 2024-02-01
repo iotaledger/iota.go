@@ -72,7 +72,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 		workingSet.Rewards,
 	)
 	if err != nil {
-		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
+		return nil, err
 	}
 
 	workingSet.TotalManaOut, err = vm.TotalManaOut(
@@ -80,7 +80,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 		workingSet.Tx.Allotments,
 	)
 	if err != nil {
-		return nil, ierrors.Join(iotago.ErrManaAmountInvalid, err)
+		return nil, err
 	}
 
 	return workingSet, nil
@@ -276,11 +276,11 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	}
 
 	if isClaimingRewards && !*isRemovingStakingFeature {
-		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardClaim)
+		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingRewardClaimingInvalid)
 	}
 
 	if !isClaimingRewards && *isRemovingStakingFeature {
-		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingRewardInputRequired)
+		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingRewardInputMissing)
 	}
 
 	return nil
@@ -455,7 +455,7 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInputMissing)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingCommitmentInputMissing)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -488,7 +488,7 @@ func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOu
 	// It should already never be nil here, but for 100% safety, we'll check again.
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
-		return iotago.ErrInvalidStakingCommitmentInputMissing
+		return iotago.ErrStakingCommitmentInputMissing
 	}
 
 	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Slot)
@@ -496,16 +496,16 @@ func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOu
 	pastBoundedEpoch := timeProvider.EpochFromSlot(pastBoundedSlot)
 
 	if stakingFeat.StartEpoch != pastBoundedEpoch {
-		return iotago.ErrInvalidStakingStartEpoch
+		return iotago.ErrStakingStartEpochInvalid
 	}
 
 	unbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
+		return ierrors.Wrapf(iotago.ErrStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	if next.FeatureSet().BlockIssuer() == nil {
-		return iotago.ErrInvalidStakingBlockIssuerRequired
+		return iotago.ErrStakingBlockIssuerFeatureMissing
 	}
 
 	return nil
@@ -520,22 +520,22 @@ func accountStakingNonExpiredValidation(
 	nextHasBlockIssuerFeat bool,
 ) error {
 	if nextStakingFeat == nil {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBondedRemoval)
+		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingFeatureRemovedBeforeUnbonding)
 	}
 
 	if !nextHasBlockIssuerFeat {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBlockIssuerRequired)
+		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingBlockIssuerFeatureMissing)
 	}
 
 	if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
 		currentStakingFeat.FixedCost != nextStakingFeat.FixedCost ||
 		currentStakingFeat.StartEpoch != nextStakingFeat.StartEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrInvalidStakingBondedModified)
+		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingFeatureModifiedBeforeUnbonding)
 	}
 
 	if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch &&
 		nextStakingFeat.EndEpoch < earliestUnbondingEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrInvalidStakingEndEpochTooEarly, nextStakingFeat.EndEpoch, earliestUnbondingEpoch)
+		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrStakingEndEpochTooEarly, nextStakingFeat.EndEpoch, earliestUnbondingEpoch)
 	}
 
 	return nil
@@ -643,7 +643,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		// which also requires a commitment input.
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrInvalidStakingCommitmentInputMissing)
+			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingCommitmentInputMissing)
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -652,7 +652,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 
 		if futureBoundedEpoch <= stakingFeat.EndEpoch {
 			return ierrors.WithMessagef(
-				iotago.ErrInvalidStakingBondedRemoval, "(current epoch is %d, must be > %d)", futureBoundedEpoch, stakingFeat.EndEpoch,
+				iotago.ErrStakingFeatureRemovedBeforeUnbonding, "(current epoch is %d, must be > %d)", futureBoundedEpoch, stakingFeat.EndEpoch,
 			)
 		}
 
@@ -665,12 +665,12 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 func accountBlockIssuanceCreditLocked(input *vm.ChainOutputWithIDs, bicSet vm.BlockIssuanceCreditInputSet) error {
 	accountID, is := input.ChainID.(iotago.AccountID)
 	if !is {
-		return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputRequired, "cannot convert chain ID %s to account ID",
+		return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputMissing, "cannot convert chain ID %s to account ID",
 			input.ChainID.ToHex())
 	}
 
 	if bic, exists := bicSet[accountID]; !exists {
-		return iotago.ErrBlockIssuanceCreditInputRequired
+		return iotago.ErrBlockIssuanceCreditInputMissing
 	} else if bic < 0 {
 		return ierrors.Wrapf(iotago.ErrAccountLocked, "cannot destroy locked account with ID %s", accountID.ToHex())
 	}
@@ -989,7 +989,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	case iotago.ChainTransitionTypeStateChange:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if isClaiming {
-			return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w: cannot claim rewards during delegation output transition", iotago.ErrInvalidDelegationRewardsClaiming)
+			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot claim rewards during delegation output transition", iotago.ErrDelegationRewardsClaimingInvalid)
 		}
 		//nolint:forcetypeassert // we can safely assume that this is an DelegationOutput
 		current := input.Output.(*iotago.DelegationOutput)
@@ -999,7 +999,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w: cannot destroy delegation output without a rewards input", iotago.ErrInvalidDelegationRewardsClaiming)
+			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot destroy delegation output without a rewards input", iotago.ErrDelegationRewardsClaimingInvalid)
 		}
 
 		return nil
@@ -1012,13 +1012,13 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 
 func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutput) error {
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrInvalidDelegationTransition, iotago.ErrNewChainOutputHasNonZeroedID)
+		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrNewChainOutputHasNonZeroedID)
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
-		return iotago.ErrDelegationCommitmentInputRequired
+		return iotago.ErrDelegationCommitmentInputMissing
 	}
 	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Slot)
 	pastBoundedEpoch := timeProvider.EpochFromSlot(pastBoundedSlot)
@@ -1032,15 +1032,15 @@ func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutpu
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w (is %d, expected %d)", iotago.ErrInvalidDelegationStartEpoch, current.StartEpoch, expectedStartEpoch)
+		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w (is %d, expected %d)", iotago.ErrDelegationStartEpochInvalid, current.StartEpoch, expectedStartEpoch)
 	}
 
 	if current.DelegatedAmount != current.Amount {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationAmount)
+		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationAmountMismatch)
 	}
 
 	if current.EndEpoch != 0 {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationNonZeroEndEpoch)
+		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationEndEpochNotZero)
 	}
 
 	return nil
@@ -1050,7 +1050,7 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrInvalidDelegationTransition,
+		return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
 			ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
 				"delegation output can only be transitioned if it has a zeroed ID",
 			))
@@ -1059,13 +1059,13 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	if current.DelegatedAmount != next.DelegatedAmount ||
 		!current.ValidatorAddress.Equal(next.ValidatorAddress) ||
 		current.StartEpoch != next.StartEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w", iotago.ErrInvalidDelegationModified)
+		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationModified)
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
-		return iotago.ErrDelegationCommitmentInputRequired
+		return iotago.ErrDelegationCommitmentInputMissing
 	}
 	futureBoundedSlot := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 	futureBoundedEpoch := timeProvider.EpochFromSlot(futureBoundedSlot)
@@ -1079,7 +1079,7 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	}
 
 	if next.EndEpoch != expectedEndEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidDelegationTransition, "%w (is %d, expected %d)", iotago.ErrInvalidDelegationEndEpoch, next.EndEpoch, expectedEndEpoch)
+		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w (is %d, expected %d)", iotago.ErrDelegationEndEpochInvalid, next.EndEpoch, expectedEndEpoch)
 	}
 
 	return nil

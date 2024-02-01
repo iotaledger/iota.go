@@ -13,6 +13,7 @@ import (
 	"github.com/iotaledger/hive.go/lo"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/builder"
 	"github.com/iotaledger/iota.go/v4/tpkg"
 	"github.com/iotaledger/iota.go/v4/vm"
@@ -1356,7 +1357,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
+				wantErr: iotago.ErrBlockIssuanceCreditInputMissing,
 			}
 		}(),
 
@@ -1424,7 +1425,7 @@ func TestNovaTransactionExecution(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
+				wantErr: iotago.ErrBlockIssuanceCreditInputMissing,
 			}
 		}(),
 	}
@@ -4275,7 +4276,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrExpirationConditionUnlockFailed,
+				wantErr: iotago.ErrExpirationNotUnlockable,
 			}
 		}(),
 
@@ -4596,6 +4597,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := novaVM.ValidateUnlocks(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
+				api.DetermineTransactionFailureReason(err)
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
@@ -4822,7 +4824,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInputOutputSumMismatch,
+				wantErr: iotago.ErrInputOutputBaseTokenMismatch,
 			}
 		}(),
 
@@ -4871,7 +4873,7 @@ func TestTxSemanticDeposit(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInputOutputSumMismatch,
+				wantErr: iotago.ErrInputOutputBaseTokenMismatch,
 			}
 		}(),
 
@@ -6591,7 +6593,7 @@ func TestTxSemanticTimelocks(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrTimelockConditionCommitmentInputRequired,
+				wantErr: iotago.ErrTimelockCommitmentInputMissing,
 			}
 		}(),
 	}

@@ -32,26 +32,26 @@ var (
 
 // Errors that can occur before the transaction is executed.
 var (
-	// ErrUTXOInputInvalid gets returned when the UTXO input is invalid.
-	ErrUTXOInputInvalid = ierrors.New("UTXO input is invalid")
-	// ErrBICInputReferenceInvalid gets returned when the BIC input is invalid.
-	ErrBICInputReferenceInvalid = ierrors.New("BIC input reference cannot be loaded")
-	// ErrRewardInputReferenceInvalid gets returned when the reward input references an invalid output.
-	ErrRewardInputReferenceInvalid = ierrors.New("reward input references invalid output (i.e. not a staking account or delegation output)")
-	// ErrCommitmentInputReferenceInvalid gets returned when the commitment input references an invalid commitment.
-	ErrCommitmentInputReferenceInvalid = ierrors.New("commitment input references an invalid or non-existent commitment")
 	// ErrTxTypeInvalid gets returned for invalid transaction type.
 	ErrTxTypeInvalid = ierrors.New("transaction type is invalid")
+	// ErrUTXOInputInvalid gets returned when the UTXO input is invalid.
+	ErrUTXOInputInvalid = ierrors.New("UTXO input is invalid")
 	// ErrUnknownInputType gets returned for unknown input types.
 	ErrUnknownInputType = ierrors.New("unknown input type")
 	// ErrUnknownOutputType gets returned for unknown output types.
 	ErrUnknownOutputType = ierrors.New("unknown output type")
 	// ErrCommitmentInputMissing gets returned when the commitment has not been provided when needed.
 	ErrCommitmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
-	// ErrStakingRewardCalculation gets returned when the validator reward could not be calculated due to storage issues or overflow.
-	ErrStakingRewardCalculation = ierrors.New("staking rewards could not be calculated due to storage issues or overflow")
-	// ErrDelegationRewardCalculation gets returned when the delegation reward could not be calculated due to storage issues or overflow.
-	ErrDelegationRewardCalculation = ierrors.New("delegation rewards could not be calculated due to storage issues or overflow")
+	// ErrCommitmentInputReferenceInvalid gets returned when the commitment input references an invalid commitment.
+	ErrCommitmentInputReferenceInvalid = ierrors.New("commitment input references an invalid or non-existent commitment")
+	// ErrBICInputReferenceInvalid gets returned when the BIC input is invalid.
+	ErrBICInputReferenceInvalid = ierrors.New("BIC input reference cannot be loaded")
+	// ErrRewardInputReferenceInvalid gets returned when the reward input does not reference a staking account or a delegation output.
+	ErrRewardInputReferenceInvalid = ierrors.New("reward input does not reference a staking account or a delegation output")
+	// ErrStakingRewardCalculationFailure gets returned when the validator reward could not be calculated due to storage issues or overflow.
+	ErrStakingRewardCalculationFailure = ierrors.New("staking rewards could not be calculated due to storage issues or overflow")
+	// ErrDelegationRewardCalculationFailure gets returned when the delegation reward could not be calculated due to storage issues or overflow.
+	ErrDelegationRewardCalculationFailure = ierrors.New("delegation rewards could not be calculated due to storage issues or overflow")
 	// ErrTxConflicting gets returned when the transaction is conflicting.
 	ErrTxConflicting = ierrors.New("transaction is conflicting")
 	// ErrInputAlreadySpent gets returned when the input is already spent.

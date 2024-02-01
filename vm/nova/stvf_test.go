@@ -307,7 +307,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingStartEpoch,
+			wantErr: iotago.ErrStakingStartEpochInvalid,
 		},
 		{
 			name: "fail - staking genesis end epoch too early",
@@ -348,7 +348,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
+			wantErr: iotago.ErrStakingEndEpochTooEarly,
 		},
 		{
 			name: "fail - staking feature without block issuer feature",
@@ -388,7 +388,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
+			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
 		},
 		{
 			name: "ok - valid staking transition",
@@ -550,7 +550,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingStartEpoch,
+			wantErr: iotago.ErrStakingStartEpochInvalid,
 		},
 		{
 			name: "fail - negative BIC during account state transition",
@@ -654,7 +654,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingBondedRemoval,
+			wantErr: iotago.ErrStakingFeatureRemovedBeforeUnbonding,
 		},
 		{
 			name: "fail - changing staking feature's staked amount",
@@ -714,7 +714,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingBondedModified,
+			wantErr: iotago.ErrStakingFeatureModifiedBeforeUnbonding,
 		},
 		{
 			name: "fail - reducing staking feature's end epoch by more than the unbonding period",
@@ -774,7 +774,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingEndEpochTooEarly,
+			wantErr: iotago.ErrStakingEndEpochTooEarly,
 		},
 		{
 			name: "fail - account removes block issuer feature while having a staking feature",
@@ -836,7 +836,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingBlockIssuerRequired,
+			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
 		},
 		{
 			name: "fail - expired staking feature removed without specifying reward input",
@@ -890,7 +890,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
+			wantErr: iotago.ErrStakingRewardInputMissing,
 		},
 		{
 			name: "fail - changing an expired staking feature without claiming",
@@ -950,7 +950,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					BIC: exampleBIC,
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
+			wantErr: iotago.ErrStakingRewardInputMissing,
 		},
 		{
 			name: "fail - claiming rewards of an expired staking feature without resetting start epoch",
@@ -1013,7 +1013,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingStartEpoch,
+			wantErr: iotago.ErrStakingStartEpochInvalid,
 		},
 		{
 			name: "fail - claiming rewards without removing staking feature",
@@ -1076,7 +1076,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingRewardClaim,
+			wantErr: iotago.ErrStakingRewardClaimingInvalid,
 		},
 		{
 			name: "fail - destroy account with expired staking feature but without claiming rewards",
@@ -1125,7 +1125,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Rewards: map[iotago.ChainID]iotago.Mana{},
 				},
 			},
-			wantErr: iotago.ErrInvalidStakingRewardInputRequired,
+			wantErr: iotago.ErrStakingRewardInputMissing,
 		},
 		{
 			name: "ok - destroy transition",
@@ -1234,7 +1234,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
+			wantErr: iotago.ErrBlockIssuanceCreditInputMissing,
 		},
 		{
 			name: "fail - non-expired block issuer destroy transition",
@@ -1828,7 +1828,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrBlockIssuanceCreditInputRequired,
+			wantErr: iotago.ErrBlockIssuanceCreditInputMissing,
 		},
 		{
 			name: "ok - update block issuer feature expiration to earlier slot",
@@ -3281,7 +3281,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationAmount,
+			wantErr: iotago.ErrDelegationAmountMismatch,
 		},
 		{
 			name: "fail - invalid genesis - non-zero end epoch",
@@ -3312,7 +3312,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationNonZeroEndEpoch,
+			wantErr: iotago.ErrDelegationEndEpochNotZero,
 		},
 		{
 			name: "fail - invalid transition - start epoch not set to expected epoch",
@@ -3342,7 +3342,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationStartEpoch,
+			wantErr: iotago.ErrDelegationStartEpochInvalid,
 		},
 		{
 			name: "fail - invalid transition - non-zero delegation id on input",
@@ -3428,7 +3428,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationModified,
+			wantErr: iotago.ErrDelegationModified,
 		},
 		{
 			name: "fail - invalid pre-registration slot transition - end epoch not set to expected epoch",
@@ -3472,7 +3472,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationEndEpoch,
+			wantErr: iotago.ErrDelegationEndEpochInvalid,
 		},
 		{
 			name: "fail - invalid post-registration slot transition - end epoch not set to expected epoch",
@@ -3516,7 +3516,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationEndEpoch,
+			wantErr: iotago.ErrDelegationEndEpochInvalid,
 		},
 		{
 			name: "fail - invalid transition - cannot claim rewards during transition",
@@ -3554,7 +3554,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+			wantErr: iotago.ErrDelegationRewardsClaimingInvalid,
 		},
 		{
 			name: "ok - valid destruction",
@@ -3627,7 +3627,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidDelegationRewardsClaiming,
+			wantErr: iotago.ErrDelegationRewardsClaimingInvalid,
 		},
 		{
 			name: "fail - invalid genesis - missing commitment input",
@@ -3657,7 +3657,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationCommitmentInputRequired,
+			wantErr: iotago.ErrDelegationCommitmentInputMissing,
 		},
 	}
 
