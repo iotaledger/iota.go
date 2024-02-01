@@ -206,7 +206,7 @@ func TestClient_Congestion(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCongestion, api.ParameterBech32Address, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
-	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
+	res, err := nodeAPI.Congestion(context.Background(), accountAddress, 200)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
