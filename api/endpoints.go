@@ -56,6 +56,9 @@ const (
 
 	// ParameterPeerID is used to identify a peer.
 	ParameterPeerID = "peerId"
+
+	// ParameterWorkScore is used to identify work score.
+	ParameterWorkScore = "workScore"
 )
 
 const (
