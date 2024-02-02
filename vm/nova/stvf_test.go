@@ -3627,7 +3627,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrDelegationRewardsClaimingInvalid,
+			wantErr: iotago.ErrDelegationRewardInputMissing,
 		},
 		{
 			name: "fail - invalid genesis - missing commitment input",

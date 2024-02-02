@@ -999,7 +999,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot destroy delegation output without a rewards input", iotago.ErrDelegationRewardsClaimingInvalid)
+			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot destroy delegation output without a rewards input", iotago.ErrDelegationRewardInputMissing)
 		}
 
 		return nil

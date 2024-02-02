@@ -524,7 +524,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	"transactionMetadata": {
 		"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
 		"transactionState": "failed",
-		"transactionFailureReason": 51
+		"transactionFailureReason": 52
 	}
 }`,
 		},

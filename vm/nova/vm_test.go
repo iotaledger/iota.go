@@ -2172,7 +2172,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						}
 					},
 				},
-				wantErr: iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch,
+				wantErr: iotago.ErrMultiAddressLengthUnlockLengthMismatch,
 			}
 		}(),
 

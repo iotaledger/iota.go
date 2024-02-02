@@ -200,7 +200,7 @@ func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, 
 // adds the index of the input to the set of unlocked inputs by this identity.
 func (unlockedIdents UnlockedIdentities) MultiUnlock(ident *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, inputIndex uint16, unlockedIdentities UnlockedIdentities, essenceMsgToSign []byte) error {
 	if len(ident.Addresses) != len(multiUnlock.Unlocks) {
-		return ierrors.Wrapf(iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, ident, len(ident.Addresses), len(multiUnlock.Unlocks))
+		return ierrors.Wrapf(iotago.ErrMultiAddressLengthUnlockLengthMismatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, ident, len(ident.Addresses), len(multiUnlock.Unlocks))
 	}
 
 	var cumulativeUnlockedWeight uint16

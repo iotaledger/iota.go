@@ -252,9 +252,9 @@ const (
 	TxFailureNativeTokenSumExceedsUint256  TransactionFailureReason = 17
 	TxFailureNativeTokenSumUnbalanced      TransactionFailureReason = 18
 
-	TxFailureMultiAddressAndUnlockLengthDoesNotMatch TransactionFailureReason = 19
-	TxFailureMultiAddressUnlockThresholdNotReached   TransactionFailureReason = 20
-	TxFailureNestedMultiUnlock                       TransactionFailureReason = 21
+	TxFailureMultiAddressLengthUnlockLengthMismatch TransactionFailureReason = 19
+	TxFailureMultiAddressUnlockThresholdNotReached  TransactionFailureReason = 20
+	TxFailureNestedMultiUnlock                      TransactionFailureReason = 21
 
 	TxFailureSenderFeatureNotUnlocked TransactionFailureReason = 22
 
@@ -296,20 +296,21 @@ const (
 	TxFailureFoundrySerialInvalid            TransactionFailureReason = 49
 
 	TxFailureDelegationCommitmentInputMissing  TransactionFailureReason = 50
-	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 51
-	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 52
-	TxFailureDelegationModified                TransactionFailureReason = 53
-	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 54
-	TxFailureDelegationAmountMismatch          TransactionFailureReason = 55
-	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 56
-	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 57
+	TxFailureDelegationRewardInputMissing      TransactionFailureReason = 51
+	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 52
+	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 53
+	TxFailureDelegationModified                TransactionFailureReason = 54
+	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 55
+	TxFailureDelegationAmountMismatch          TransactionFailureReason = 56
+	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 57
+	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 58
 
-	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 58
-	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 59
-	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 60
-	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 61
-	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 62
-	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 63
+	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 59
+	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 60
+	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 61
+	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 62
+	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 63
+	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 64
 
 	TxFailureSemanticValidationFailed TransactionFailureReason = 255
 )
@@ -356,10 +357,9 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	iotago.ErrNativeTokenSumUnbalanced:           TxFailureNativeTokenSumUnbalanced,
 
 	// multi address
-	// TODO: Align name.
-	iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch: TxFailureMultiAddressAndUnlockLengthDoesNotMatch,
-	iotago.ErrNestedMultiUnlock:                       TxFailureNestedMultiUnlock,
-	iotago.ErrMultiAddressUnlockThresholdNotReached:   TxFailureMultiAddressUnlockThresholdNotReached,
+	iotago.ErrMultiAddressLengthUnlockLengthMismatch: TxFailureMultiAddressLengthUnlockLengthMismatch,
+	iotago.ErrNestedMultiUnlock:                      TxFailureNestedMultiUnlock,
+	iotago.ErrMultiAddressUnlockThresholdNotReached:  TxFailureMultiAddressUnlockThresholdNotReached,
 
 	// sender feature
 	iotago.ErrSenderFeatureNotUnlocked: TxFailureSenderFeatureNotUnlocked,
@@ -413,6 +413,7 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 
 	// delegation
 	iotago.ErrDelegationCommitmentInputMissing:  TxFailureDelegationCommitmentInputMissing,
+	iotago.ErrDelegationRewardInputMissing:      TxFailureDelegationRewardInputMissing,
 	iotago.ErrDelegationRewardsClaimingInvalid:  TxFailureDelegationRewardsClaimingInvalid,
 	iotago.ErrDelegationOutputTransitionedTwice: TxFailureDelegationOutputTransitionedTwice,
 	iotago.ErrDelegationModified:                TxFailureDelegationModified,

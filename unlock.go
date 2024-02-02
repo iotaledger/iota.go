@@ -58,8 +58,8 @@ var (
 	ErrMultiUnlockNotUnique = ierrors.New("multi unlock must be unique")
 	// ErrMultiAddressUnlockThresholdNotReached gets returned if multi address unlock threshold was not reached.
 	ErrMultiAddressUnlockThresholdNotReached = ierrors.New("multi address unlock threshold not reached")
-	// ErrMultiAddressAndUnlockLengthDoesNotMatch gets returned if multi address length and multi unlock length do not match.
-	ErrMultiAddressAndUnlockLengthDoesNotMatch = ierrors.New("multi address length and multi unlock length do not match")
+	// ErrMultiAddressLengthUnlockLengthMismatch gets returned if multi address length and multi unlock length do not match.
+	ErrMultiAddressLengthUnlockLengthMismatch = ierrors.New("multi address length and multi unlock length do not match")
 	// ErrReferentialUnlockInvalid gets returned when a ReferentialUnlock is invalid.
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSigUnlockHasNilSig gets returned if a signature unlock contains a nil signature.

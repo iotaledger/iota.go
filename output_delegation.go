@@ -16,6 +16,10 @@ const (
 var (
 	// ErrDelegationTransitionInvalid gets returned when a Delegation Output is doing an invalid state transition.
 	ErrDelegationTransitionInvalid = ierrors.New("invalid delegation output transition")
+	// ErrDelegationCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Delegation Output.
+	ErrDelegationCommitmentInputMissing = ierrors.New("delegation output validation requires a commitment input")
+	// ErrDelegationRewardInputMissing gets returned when no reward input was passed in a TX destroying a Delegation Output.
+	ErrDelegationRewardInputMissing = ierrors.New("delegation output cannot be destroyed without a reward input")
 	// ErrDelegationRewardsClaimingInvalid gets returned when it is invalid to claim rewards from a delegation output.
 	ErrDelegationRewardsClaimingInvalid = ierrors.New("invalid delegation mana rewards claiming")
 	// ErrDelegationOutputTransitionedTwice gets returned when a delegation output is attempted to be transitioned twice.
@@ -32,8 +36,6 @@ var (
 	// ErrDelegationEndEpochInvalid gets returned when a delegation output's end epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
 	ErrDelegationEndEpochInvalid = ierrors.New("delegation end epoch does not match current epoch")
-	// ErrDelegationCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Delegation Output.
-	ErrDelegationCommitmentInputMissing = ierrors.New("delegation output validation requires a commitment input")
 	// ErrDelegationValidatorAddressEmpty gets returned when the Validator Address in a Delegation Output is empty.
 	ErrDelegationValidatorAddressEmpty = ierrors.New("delegation output's validator address is empty")
 	emptyDelegationID                  = [DelegationIDLength]byte{}
