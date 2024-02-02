@@ -59,6 +59,14 @@ const (
 )
 
 const (
+	// QueryParameterPageSize is used to specify the page size.
+	QueryParameterPageSize = "pageSize"
+
+	// QueryParameterCursor is used to specify the the point from which the response should continue for paginater results.
+	QueryParameterCursor = "cursor"
+)
+
+const (
 	MIMEApplicationJSON                   = "application/json"
 	MIMEApplicationVendorIOTASerializerV2 = "application/vnd.iota.serializer-v2"
 )

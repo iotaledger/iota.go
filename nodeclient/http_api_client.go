@@ -298,15 +298,49 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 	return res, nil
 }
 
-func (client *Client) Validators(ctx context.Context) (*api.ValidatorsResponse, error) {
+func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ...string) (*api.ValidatorsResponse, error) {
 	res := new(api.ValidatorsResponse)
+	query := api.CoreRouteValidators
+
+	if pageSize > 0 {
+		query += fmt.Sprintf("?%s=%d", api.QueryParameterPageSize, pageSize)
+	}
+
+	if len(cursor) > 0 {
+		query += fmt.Sprintf("?%s=%s", api.QueryParameterCursor, cursor[0])
+	}
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, api.CoreRouteValidators, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
+}
+
+func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int) (validators []*api.ValidatorResponse, allRetrieved bool, err error) {
+	validatorsResponses := make([]*api.ValidatorResponse, 0)
+	resp, err := client.Validators(ctx, 0)
+	if err != nil {
+		return nil, false, err
+	}
+	validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+	cursor := resp.Cursor
+	for count := 0; cursor != ""; count++ {
+		if len(maxRequests) > 0 && count >= maxRequests[0] {
+			return validatorsResponses, cursor == "", nil
+		}
+		resp, err = client.Validators(ctx, 0, cursor)
+		if err != nil {
+			return nil, false, err
+		}
+		validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+		cursor = resp.Cursor
+	}
+
+	return validatorsResponses, true, nil
 }
 
 func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {
