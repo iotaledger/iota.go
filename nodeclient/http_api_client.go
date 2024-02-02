@@ -318,7 +318,7 @@ func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ..
 	return res, nil
 }
 
-func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int) (validators []*api.ValidatorResponse, allRetrieved bool, err error) {
+func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
 	validatorsResponses := make([]*api.ValidatorResponse, 0)
 	resp, err := client.Validators(ctx, 0)
 	if err != nil {
@@ -329,7 +329,7 @@ func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int
 	cursor := resp.Cursor
 	for count := 0; cursor != ""; count++ {
 		if len(maxRequests) > 0 && count >= maxRequests[0] {
-			return validatorsResponses, cursor == "", nil
+			return &api.ValidatorsResponse{Validators: validatorsResponses}, cursor == "", nil
 		}
 		resp, err = client.Validators(ctx, 0, cursor)
 		if err != nil {
@@ -340,7 +340,7 @@ func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int
 		cursor = resp.Cursor
 	}
 
-	return validatorsResponses, true, nil
+	return &api.ValidatorsResponse{Validators: validatorsResponses}, true, nil
 }
 
 func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {
