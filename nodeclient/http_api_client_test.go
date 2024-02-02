@@ -234,8 +234,11 @@ func TestClient_Rewards(t *testing.T) {
 func TestClient_Validators(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
-		{
+	validatorsNumber := 100
+
+	originRes := make([]*api.ValidatorResponse, 0)
+	for i := 0; i < validatorsNumber; i++ {
+		originRes = append(originRes, &api.ValidatorResponse{
 			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
 			StakingEndEpoch:                iotago.EpochIndex(123),
 			PoolStake:                      iotago.BaseToken(100),
@@ -243,24 +246,17 @@ func TestClient_Validators(t *testing.T) {
 			FixedCost:                      iotago.Mana(10),
 			Active:                         true,
 			LatestSupportedProtocolVersion: 1,
-		},
-		{
-			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
-			StakingEndEpoch:                iotago.EpochIndex(124),
-			PoolStake:                      iotago.BaseToken(1000),
-			ValidatorStake:                 iotago.BaseToken(100),
-			FixedCost:                      iotago.Mana(20),
-			Active:                         true,
-			LatestSupportedProtocolVersion: 1,
-		},
-	}}
+		})
+	}
 
 	mockGetJSON(api.CoreRouteValidators, 200, originRes)
 
 	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.Validators(context.Background())
+	validatorResponses, allRetrieved, err := nodeAPI.ValidatorsAllPages(context.Background())
 	require.NoError(t, err)
-	require.EqualValues(t, originRes, res)
+	require.True(t, allRetrieved)
+	require.EqualValues(t, validatorsNumber, len(validatorResponses))
+	require.EqualValues(t, originRes, validatorResponses)
 }
 
 func TestClient_StakingByAccountID(t *testing.T) {
