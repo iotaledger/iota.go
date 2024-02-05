@@ -6,8 +6,6 @@ import (
 )
 
 var (
-	// ErrNonUniqueAnchorOutputs gets returned when multiple AnchorOutputs(s) with the same AnchorID exist within sets.
-	ErrNonUniqueAnchorOutputs = ierrors.New("non unique anchors within outputs")
 	// ErrInvalidAnchorStateTransition gets returned when an anchor is doing an invalid state transition.
 	ErrInvalidAnchorStateTransition = ierrors.New("invalid anchor state transition")
 	// ErrInvalidAnchorGovernanceTransition gets returned when an anchor is doing an invalid governance transition.
@@ -15,67 +13,6 @@ var (
 	// ErrAnchorMissing gets returned when an anchor is missing.
 	ErrAnchorMissing = ierrors.New("anchor is missing")
 )
-
-// AnchorOutputs is a slice of AnchorOutput(s).
-type AnchorOutputs []*AnchorOutput
-
-// Every checks whether every element passes f.
-// Returns either -1 if all elements passed f or the index of the first element which didn't.
-func (outputs AnchorOutputs) Every(f func(output *AnchorOutput) bool) int {
-	for i, output := range outputs {
-		if !f(output) {
-			return i
-		}
-	}
-
-	return -1
-}
-
-// AnchorOutputsSet is a set of AnchorOutput(s).
-type AnchorOutputsSet map[AnchorID]*AnchorOutput
-
-// Includes checks whether all anchors included in other exist in this set.
-func (set AnchorOutputsSet) Includes(other AnchorOutputsSet) error {
-	for anchorID := range other {
-		if _, has := set[anchorID]; !has {
-			return ierrors.Wrapf(ErrAnchorMissing, "%s missing in source", anchorID.ToHex())
-		}
-	}
-
-	return nil
-}
-
-// EveryTuple runs f for every key which exists in both this set and other.
-func (set AnchorOutputsSet) EveryTuple(other AnchorOutputsSet, f func(in *AnchorOutput, out *AnchorOutput) error) error {
-	for k, v := range set {
-		v2, has := other[k]
-		if !has {
-			continue
-		}
-		if err := f(v, v2); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Merge merges other with this set in a new set.
-// Returns an error if an anchor isn't unique across both sets.
-func (set AnchorOutputsSet) Merge(other AnchorOutputsSet) (AnchorOutputsSet, error) {
-	newSet := make(AnchorOutputsSet)
-	for k, v := range set {
-		newSet[k] = v
-	}
-	for k, v := range other {
-		if _, has := newSet[k]; has {
-			return nil, ierrors.Wrapf(ErrNonUniqueAnchorOutputs, "anchor %s exists in both sets", k.ToHex())
-		}
-		newSet[k] = v
-	}
-
-	return newSet, nil
-}
 
 type (
 	AnchorOutputUnlockCondition  interface{ UnlockCondition }

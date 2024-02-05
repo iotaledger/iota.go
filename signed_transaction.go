@@ -12,16 +12,14 @@ import (
 var (
 	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
 	ErrMissingUTXO = ierrors.New("missing utxo")
-	// ErrInputOutputSumMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
-	ErrInputOutputSumMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount")
+	// ErrInputOutputBaseTokenMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
+	ErrInputOutputBaseTokenMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount of base tokens")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
 	// ErrUnknownSignatureType gets returned for unknown signature types.
 	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
-	// ErrInvalidInputUnlock gets returned when an input unlock is invalid.
-	ErrInvalidInputUnlock = ierrors.New("invalid input unlock")
 	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
 	ErrSenderFeatureNotUnlocked = ierrors.New("sender feature is not unlocked")
 	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.

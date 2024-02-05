@@ -14,26 +14,28 @@ const (
 )
 
 var (
-	// ErrInvalidDelegationTransition gets returned when a Delegation Output is doing an invalid state transition.
-	ErrInvalidDelegationTransition = ierrors.New("invalid delegation output transition")
-	// ErrInvalidDelegationRewardsClaiming gets returned when it is invalid to claim rewards from a delegation output.
-	ErrInvalidDelegationRewardsClaiming = ierrors.New("invalid delegation mana rewards claiming")
-	// ErrInvalidDelegationNonZeroedID gets returned when a delegation output's delegation ID is not zeroed initially.
-	ErrInvalidDelegationNonZeroedID = ierrors.New("delegation ID must be zeroed initially")
-	// ErrInvalidDelegationModified gets returned when a delegation output's immutable fields are modified.
-	ErrInvalidDelegationModified = ierrors.New("delegated amount, validator ID and start epoch cannot be modified")
-	// ErrInvalidDelegationStartEpoch gets returned when a delegation output's start epoch is not set correctly
+	// ErrDelegationTransitionInvalid gets returned when a Delegation Output is doing an invalid state transition.
+	ErrDelegationTransitionInvalid = ierrors.New("invalid delegation output transition")
+	// ErrDelegationCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Delegation Output.
+	ErrDelegationCommitmentInputMissing = ierrors.New("delegation output validation requires a commitment input")
+	// ErrDelegationRewardInputMissing gets returned when no reward input was passed in a TX destroying a Delegation Output.
+	ErrDelegationRewardInputMissing = ierrors.New("delegation output cannot be destroyed without a reward input")
+	// ErrDelegationRewardsClaimingInvalid gets returned when it is invalid to claim rewards from a delegation output.
+	ErrDelegationRewardsClaimingInvalid = ierrors.New("invalid delegation mana rewards claiming")
+	// ErrDelegationOutputTransitionedTwice gets returned when a delegation output is attempted to be transitioned twice.
+	ErrDelegationOutputTransitionedTwice = ierrors.New("delegation output attempted to be transitioned twice")
+	// ErrDelegationModified gets returned when a delegation output's immutable fields are modified.
+	ErrDelegationModified = ierrors.New("delegated amount, validator ID and start epoch cannot be modified")
+	// ErrDelegationStartEpochInvalid gets returned when a delegation output's start epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
-	ErrInvalidDelegationStartEpoch = ierrors.New("invalid start epoch")
-	// ErrInvalidDelegationAmount gets returned when a delegation output's delegated amount is not equal to the amount.
-	ErrInvalidDelegationAmount = ierrors.New("delegated amount equal to the amount")
-	// ErrInvalidDelegationNonZeroEndEpoch gets returned when a delegation output's end epoch is not zero at genesis.
-	ErrInvalidDelegationNonZeroEndEpoch = ierrors.New("end epoch must be set to zero at output genesis")
-	// ErrInvalidDelegationEndEpoch gets returned when a delegation output's end epoch is not set correctly
+	ErrDelegationStartEpochInvalid = ierrors.New("invalid start epoch")
+	// ErrDelegationAmountMismatch gets returned when a delegation output's delegated amount is not equal to the amount.
+	ErrDelegationAmountMismatch = ierrors.New("delegated amount does not match amount")
+	// ErrDelegationEndEpochNotZero gets returned when a delegation output's end epoch is not zero at genesis.
+	ErrDelegationEndEpochNotZero = ierrors.New("end epoch must be set to zero at output genesis")
+	// ErrDelegationEndEpochInvalid gets returned when a delegation output's end epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
-	ErrInvalidDelegationEndEpoch = ierrors.New("invalid end epoch")
-	// ErrDelegationCommitmentInputRequired gets returned when no commitment input was passed in a TX containing a Delegation Output.
-	ErrDelegationCommitmentInputRequired = ierrors.New("delegation output validation requires a commitment input")
+	ErrDelegationEndEpochInvalid = ierrors.New("delegation end epoch does not match current epoch")
 	// ErrDelegationValidatorAddressEmpty gets returned when the Validator Address in a Delegation Output is empty.
 	ErrDelegationValidatorAddressEmpty = ierrors.New("delegation output's validator address is empty")
 	emptyDelegationID                  = [DelegationIDLength]byte{}

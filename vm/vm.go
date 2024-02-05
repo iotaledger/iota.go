@@ -200,7 +200,7 @@ func (unlockedIdents UnlockedIdentities) RefUnlock(identKey string, ref uint16, 
 // adds the index of the input to the set of unlocked inputs by this identity.
 func (unlockedIdents UnlockedIdentities) MultiUnlock(ident *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, inputIndex uint16, unlockedIdentities UnlockedIdentities, essenceMsgToSign []byte) error {
 	if len(ident.Addresses) != len(multiUnlock.Unlocks) {
-		return ierrors.Wrapf(iotago.ErrMultiAddressAndUnlockLengthDoesNotMatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, ident, len(ident.Addresses), len(multiUnlock.Unlocks))
+		return ierrors.Wrapf(iotago.ErrMultiAddressLengthUnlockLengthMismatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, ident, len(ident.Addresses), len(multiUnlock.Unlocks))
 	}
 
 	var cumulativeUnlockedWeight uint16
@@ -434,20 +434,13 @@ func identToUnlock(transaction *iotago.Transaction, input iotago.Output, inputIn
 func checkExpiration(output iotago.Output, commitmentInput VMCommitmentInput, protocolParameters iotago.ProtocolParameters) (iotago.Address, error) {
 	if output.UnlockConditionSet().HasExpirationCondition() {
 		if commitmentInput == nil {
-			return nil, iotago.ErrExpirationConditionCommitmentInputRequired
-		}
-
-		futureBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MinCommittableAge()
-		if ok, returnIdent := output.UnlockConditionSet().ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
-			return returnIdent, nil
+			return nil, iotago.ErrExpirationCommitmentInputMissing
 		}
 
 		pastBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MaxCommittableAge()
-		if output.UnlockConditionSet().OwnerIdentCanUnlock(pastBoundedSlotIndex) {
-			return nil, nil
-		}
+		futureBoundedSlotIndex := commitmentInput.Slot + protocolParameters.MinCommittableAge()
 
-		return nil, iotago.ErrExpirationConditionUnlockFailed
+		return output.UnlockConditionSet().CheckExpirationCondition(futureBoundedSlotIndex, pastBoundedSlotIndex)
 	}
 
 	return nil, nil
@@ -458,11 +451,14 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 	case iotago.ChainAddress:
 		refUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
 		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
-			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a chain address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(
+				iotago.ErrInvalidChainAddressUnlock,
+				"input %d has a chain address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type(),
+			)
 		}
 
 		if err := unlockedIdentities.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-			return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "chain address %s (%T)", owner, owner))
+			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidChainAddressUnlock, owner, owner.Type(), err)
 		}
 
 	case iotago.DirectUnlockableAddress:
@@ -470,50 +466,59 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 		case iotago.ReferentialUnlock:
 			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner ident is not a ChainAddress.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
+				return ierrors.WithMessagef(
+					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					"input %d has a non-chain address of type %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type(),
+				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "direct unlockable address %s (%T)", owner, owner))
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidDirectUnlockableAddressUnlock, owner, owner.Type(), err)
 			}
 
 		case *iotago.SignatureUnlock:
 			// owner must not be unlocked already
-			if unlockedAtIndex, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
+			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
+				return ierrors.WithMessagef(
+					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					"input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock of type %s", inputIndex, unlockedIdent.UnlockedAt, unlock.Type(),
+				)
 			}
 
 			if err := unlockedIdentities.SigUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrUnlockBlockSignatureInvalid, err)
+				return ierrors.Join(iotago.ErrInvalidDirectUnlockableAddressUnlock, iotago.ErrUnlockSignatureInvalid, err)
 			}
 
 		default:
-			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a direct unlockable address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(iotago.ErrInvalidDirectUnlockableAddressUnlock, "input %d has a direct unlockable address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
 		}
 
 	case *iotago.MultiAddress:
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type())
+				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock,
+					"input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed",
+					inputIndex, owner.Type(), unlock.Type(),
+				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrInvalidInputUnlock, ierrors.Wrapf(err, "multi address %s (%T)", owner, owner))
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidMultiAddressUnlock, owner, owner.Type(), err)
 			}
 
 		case *iotago.MultiUnlock:
 			// owner must not be unlocked already
-			if unlockedAtIndex, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
-				return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAtIndex)
+			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
+				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedIdent.UnlockedAt)
 			}
 
 			if err := unlockedIdentities.MultiUnlock(owner, uBlock, inputIndex, unlockedIdentities, essenceMsgToSign); err != nil {
-				return ierrors.Join(iotago.ErrInvalidInputUnlock, err)
+				return ierrors.Join(iotago.ErrInvalidMultiAddressUnlock, err)
 			}
 
 		default:
-			return ierrors.Wrapf(iotago.ErrInvalidInputUnlock, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
 		}
 
 	default:
@@ -636,7 +641,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		}
 
 		if in != out {
-			return ierrors.Wrapf(iotago.ErrInputOutputSumMismatch, "in %d, out %d", in, out)
+			return ierrors.Wrapf(iotago.ErrInputOutputBaseTokenMismatch, "in %d, out %d", in, out)
 		}
 
 		for ident, returnSum := range inputSumReturnAmountPerIdent {
@@ -661,7 +666,7 @@ func ExecFuncTimelocks() ExecFunc {
 				commitment := vmParams.WorkingSet.Commitment
 
 				if commitment == nil {
-					return iotago.ErrTimelockConditionCommitmentInputRequired
+					return iotago.ErrTimelockCommitmentInputMissing
 				}
 				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {

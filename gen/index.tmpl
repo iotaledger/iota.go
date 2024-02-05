@@ -10,11 +10,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-var (
-	// ErrWrong{{.Name}}Index gets returned when a wrong {{firstLower .Name}} index was passed.
-	ErrWrong{{.Name}}Index = ierrors.New("wrong {{firstLower .Name}} index")
-)
-
 const (
 	{{.Name}}IndexLength = serializer.UInt32ByteSize
 	Max{{.Name}}Index    = {{.Name}}Index(math.MaxUint32)
