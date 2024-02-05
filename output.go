@@ -132,6 +132,12 @@ var (
 	ErrChainMissing = ierrors.New("chain missing")
 	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
 	ErrNonUniqueChainOutputs = ierrors.New("non unique chain outputs")
+	// ErrChainTransitionInvalid gets returned when the chain transition was invalid.
+	ErrChainTransitionInvalid = ierrors.New("chain transition is invalid")
+	// ErrNewChainOutputHasNonZeroedID gets returned when a new chain output has a non-zeroed ID.
+	ErrNewChainOutputHasNonZeroedID = ierrors.New("new chain output has non-zeroed ID")
+	// ErrChainOutputImmutableFeaturesChanged gets returned when a chain output's immutable features are modified in a transition.
+	ErrChainOutputImmutableFeaturesChanged = ierrors.New("immutable features in chain output modified during transition")
 )
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
@@ -268,20 +274,6 @@ func (outputs Outputs[T]) NativeTokenSum() (NativeTokenSum, error) {
 	}
 
 	return sum, nil
-}
-
-// NewAccounts returns an AccountOutputsSet for all AccountOutputs which are new.
-func (outputSet OutputSet) NewAccounts() AccountOutputsSet {
-	set := make(AccountOutputsSet)
-	for utxoInputID, output := range outputSet {
-		accountOutput, is := output.(*AccountOutput)
-		if !is || !accountOutput.AccountID.Empty() {
-			continue
-		}
-		set[AccountIDFromOutputID(utxoInputID)] = accountOutput
-	}
-
-	return set
 }
 
 // This is a helper function to check if an output is unlockable by a given target.

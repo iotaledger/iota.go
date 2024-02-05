@@ -268,9 +268,13 @@ func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHead
 	return res, nil
 }
 
-func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
+func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, workScore iotago.WorkScore, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
 	//nolint:contextcheck
 	query := client.endpointReplaceAddressParameter(api.CoreRouteCongestion, accountAddress)
+
+	if workScore > 0 {
+		query += fmt.Sprintf("?%s=%d", api.ParameterWorkScore, workScore)
+	}
 
 	if len(optCommitmentID) > 0 {
 		query += fmt.Sprintf("?%s=%s", api.ParameterCommitmentID, optCommitmentID[0].ToHex())

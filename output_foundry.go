@@ -17,10 +17,13 @@ const (
 )
 
 var (
-	// ErrNonUniqueFoundryOutputs gets returned when multiple FoundryOutput(s) with the same FoundryID exist within an OutputsByType.
-	ErrNonUniqueFoundryOutputs = ierrors.New("non unique foundries within outputs")
 	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
 	ErrInvalidFoundryStateTransition = ierrors.New("invalid foundry state transition")
+	// ErrFoundryTransitionWithoutAccount gets returned when a foundry output is transitioned
+	// without an accompanying account on the input or output side.
+	ErrFoundryTransitionWithoutAccount = ierrors.New("foundry output transitioned without accompanying account on input or output side")
+	// ErrFoundrySerialInvalid gets returned when the foundry output's serial number is invalid.
+	ErrFoundrySerialInvalid = ierrors.New("foundry output serial number is invalid")
 
 	emptyFoundryID = [FoundryIDLength]byte{}
 )

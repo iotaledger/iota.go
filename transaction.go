@@ -29,8 +29,6 @@ var (
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputRewardIndexExceedsMaxInputsCount gets returned if a reward input references an index greater than max inputs count.
 	ErrInputRewardIndexExceedsMaxInputsCount = ierrors.New("reward input references an index greater than max inputs count")
-	// ErrMultipleInputCommitments gets returned if multiple commitment inputs are provided.
-	ErrMultipleInputCommitments = ierrors.New("there are multiple commitment inputs")
 	// ErrAccountOutputNonEmptyState gets returned if an AccountOutput with zeroed AccountID contains state (counters non-zero etc.).
 	ErrAccountOutputNonEmptyState = ierrors.New("account output is not empty state")
 	// ErrAccountOutputCyclicAddress gets returned if an AccountOutput's AccountID results into the same address as the address field within the output.
@@ -51,6 +49,9 @@ var (
 	ErrStorageDepositExceedsTargetOutputAmount = ierrors.New("storage deposit return amount exceeds target output's base token amount")
 	// ErrMaxManaExceeded gets returned when the sum of stored mana in all outputs or the sum of Mana in all allotments exceeds the maximum Mana value.
 	ErrMaxManaExceeded = ierrors.New("max mana value exceeded")
+	// ErrManaDecayCreationIndexExceedsTargetIndex gets returned when the creation slot/epoch index
+	// exceeds the target slot/epoch index in mana decay.
+	ErrManaDecayCreationIndexExceedsTargetIndex = ierrors.New("mana decay creation slot/epoch index exceeds target slot/epoch index")
 )
 
 type (

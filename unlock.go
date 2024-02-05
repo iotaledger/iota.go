@@ -52,12 +52,14 @@ var (
 var (
 	// ErrSigUnlockNotUnique gets returned if sig unlocks making part of a transaction aren't unique.
 	ErrSigUnlockNotUnique = ierrors.New("signature unlock must be unique")
+	// ErrUnlockSignatureInvalid gets returned when a signature in an unlock is invalid.
+	ErrUnlockSignatureInvalid = ierrors.New("signature in unlock is invalid")
 	// ErrMultiUnlockNotUnique gets returned if multi unlocks making part of a transaction aren't unique.
 	ErrMultiUnlockNotUnique = ierrors.New("multi unlock must be unique")
 	// ErrMultiAddressUnlockThresholdNotReached gets returned if multi address unlock threshold was not reached.
 	ErrMultiAddressUnlockThresholdNotReached = ierrors.New("multi address unlock threshold not reached")
-	// ErrMultiAddressAndUnlockLengthDoesNotMatch gets returned if multi address length and multi unlock length do not match.
-	ErrMultiAddressAndUnlockLengthDoesNotMatch = ierrors.New("multi address length and multi unlock length do not match")
+	// ErrMultiAddressLengthUnlockLengthMismatch gets returned if multi address length and multi unlock length do not match.
+	ErrMultiAddressLengthUnlockLengthMismatch = ierrors.New("multi address length and multi unlock length do not match")
 	// ErrReferentialUnlockInvalid gets returned when a ReferentialUnlock is invalid.
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSigUnlockHasNilSig gets returned if a signature unlock contains a nil signature.
@@ -68,6 +70,12 @@ var (
 	ErrNestedMultiUnlock = ierrors.New("multi unlocks can't be nested")
 	// ErrEmptyUnlockOutsideMultiUnlock gets returned when an empty unlock was not nested inside of a multi unlock.
 	ErrEmptyUnlockOutsideMultiUnlock = ierrors.New("empty unlocks are only allowed inside of a multi unlock")
+	// ErrInvalidChainAddressUnlock gets returned when an invalid unlock for chain addresses is encountered.
+	ErrInvalidChainAddressUnlock = ierrors.New("invalid unlock for chain address")
+	// ErrInvalidDirectUnlockableAddressUnlock gets returned when an invalid unlock for direct unlockable addresses is encountered.
+	ErrInvalidDirectUnlockableAddressUnlock = ierrors.New("invalid unlock for direct unlockable address")
+	// ErrInvalidMultiAddressUnlock gets returned when an invalid unlock for multi addresses is encountered.
+	ErrInvalidMultiAddressUnlock = ierrors.New("invalid unlock for multi address")
 )
 
 type Unlocks []Unlock

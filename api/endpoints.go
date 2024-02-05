@@ -62,6 +62,9 @@ const (
 
 	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
 	ParameterCursor = "cursor"
+
+	// ParameterWorkScore is used to identify work score.
+	ParameterWorkScore = "workScore"
 )
 
 const (
