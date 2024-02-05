@@ -330,7 +330,7 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	iotago.ErrUnlockSignatureInvalid:       TxFailureUnlockSignatureInvalid,
 
 	// context inputs
-	iotago.ErrCommitmentInputMissing:          TxFailureAccountLocked,
+	iotago.ErrCommitmentInputMissing:          TxFailureCommitmentInputMissing,
 	iotago.ErrCommitmentInputReferenceInvalid: TxFailureCommitmentInputReferenceInvalid,
 	iotago.ErrBICInputReferenceInvalid:        TxFailureBICInputReferenceInvalid,
 	iotago.ErrRewardInputReferenceInvalid:     TxFailureRewardInputReferenceInvalid,

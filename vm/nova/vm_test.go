@@ -4597,7 +4597,6 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := novaVM.ValidateUnlocks(tt.tx, tt.resolvedInputs)
 			if tt.wantErr != nil {
-				api.DetermineTransactionFailureReason(err)
 				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
