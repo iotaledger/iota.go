@@ -283,13 +283,13 @@ func TestClient_Validators(t *testing.T) {
 	for i, cursor := range cursorValues[:len(cursorValues)-1] {
 		query := api.CoreRouteValidators
 		if cursor != "" {
-			mockGetJSONWithQuery(query, api.QueryParameterCursor, cursor, 200, originResponses[i])
+			mockGetJSONWithQuery(query, api.ParameterCursor, cursor, 200, originResponses[i])
 		} else {
 			mockGetJSON(query, 200, originResponses[i])
 		}
 	}
 	nodeAPI := nodeClient(t)
-	validatorResponses, allRetrieved, err := nodeAPI.ValidatorsAllPages(context.Background())
+	validatorResponses, allRetrieved, err := nodeAPI.ValidatorsAll(context.Background())
 	require.NoError(t, err)
 	require.True(t, allRetrieved)
 	require.EqualValues(t, validatorsNumber, len(validatorResponses.Validators))

@@ -56,14 +56,12 @@ const (
 
 	// ParameterPeerID is used to identify a peer.
 	ParameterPeerID = "peerId"
-)
 
-const (
-	// QueryParameterPageSize is used to specify the page size.
-	QueryParameterPageSize = "pageSize"
+	// ParameterPageSize is used to specify the page size.
+	ParameterPageSize = "pageSize"
 
-	// QueryParameterCursor is used to specify the the point from which the response should continue for paginater results.
-	QueryParameterCursor = "cursor"
+	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
+	ParameterCursor = "cursor"
 )
 
 const (

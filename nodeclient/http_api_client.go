@@ -303,11 +303,11 @@ func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ..
 	query := api.CoreRouteValidators
 
 	if pageSize > 0 {
-		query += fmt.Sprintf("?%s=%d", api.QueryParameterPageSize, pageSize)
+		query += fmt.Sprintf("?%s=%d", api.ParameterPageSize, pageSize)
 	}
 
 	if len(cursor) > 0 {
-		query += fmt.Sprintf("?%s=%s", api.QueryParameterCursor, cursor[0])
+		query += fmt.Sprintf("?%s=%s", api.ParameterCursor, cursor[0])
 	}
 
 	//nolint:bodyclose
@@ -318,7 +318,7 @@ func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ..
 	return res, nil
 }
 
-func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
+func (client *Client) ValidatorsAll(ctx context.Context, maxPages ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
 	validatorsResponses := make([]*api.ValidatorResponse, 0)
 	resp, err := client.Validators(ctx, 0)
 	if err != nil {
@@ -327,9 +327,9 @@ func (client *Client) ValidatorsAllPages(ctx context.Context, maxRequests ...int
 	validatorsResponses = append(validatorsResponses, resp.Validators...)
 
 	cursor := resp.Cursor
-	for count := 0; cursor != ""; count++ {
-		if len(maxRequests) > 0 && count >= maxRequests[0] {
-			return &api.ValidatorsResponse{Validators: validatorsResponses}, cursor == "", nil
+	for count := 1; cursor != ""; count++ {
+		if len(maxPages) > 0 && count >= maxPages[0] {
+			return &api.ValidatorsResponse{Validators: validatorsResponses}, false, nil
 		}
 		resp, err = client.Validators(ctx, 0, cursor)
 		if err != nil {
