@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	// MaxBlockSize defines the maximum size of a block.
+	// MaxBlockSize defines the maximum size of a block in bytes.
 	MaxBlockSize = 32768
 	// BasicBlockMaxParents defines the maximum number of parents in a basic block.
 	BasicBlockMaxParents = 8
