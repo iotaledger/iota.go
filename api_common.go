@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/iotaledger/hive.go/ierrors"
-	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
 )
 
@@ -19,9 +18,8 @@ var (
 	// the addresses need to be unique and lexically ordered to calculate a deterministic bech32 address for a MultiAddress.
 	// HINT: the uniqueness is checked within a custom validator function, which is on MultiAddress level.
 	addressesWithWeightArrRules = &serix.ArrayRules{
-		Min:            2,
-		Max:            10,
-		ValidationMode: serializer.ArrayValidationModeLexicalOrdering | serializer.ArrayValidationModeNoDuplicates,
+		Min: 2,
+		Max: 10,
 	}
 
 	// multiAddressValidatorFunc is a validator which checks that:
@@ -127,6 +125,9 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
+		must(api.RegisterValidator(AddressesWithWeight{}, func(ctx context.Context, keys AddressesWithWeight) error {
+			return SliceValidator(keys, LexicalOrderAndUniquenessValidator[*AddressWithWeight]())
+		}))
 		must(api.RegisterTypeSettings(RestrictedAddress{},
 			serix.TypeSettings{}.WithObjectType(uint8(AddressRestricted))),
 		)
