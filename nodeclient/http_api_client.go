@@ -302,15 +302,49 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 	return res, nil
 }
 
-func (client *Client) Validators(ctx context.Context) (*api.ValidatorsResponse, error) {
+func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ...string) (*api.ValidatorsResponse, error) {
 	res := new(api.ValidatorsResponse)
+	query := api.CoreRouteValidators
+
+	if pageSize > 0 {
+		query += fmt.Sprintf("?%s=%d", api.ParameterPageSize, pageSize)
+	}
+
+	if len(cursor) > 0 {
+		query += fmt.Sprintf("?%s=%s", api.ParameterCursor, cursor[0])
+	}
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, api.CoreRouteValidators, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
+}
+
+func (client *Client) ValidatorsAll(ctx context.Context, maxPages ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
+	validatorsResponses := make([]*api.ValidatorResponse, 0)
+	resp, err := client.Validators(ctx, 0)
+	if err != nil {
+		return nil, false, err
+	}
+	validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+	cursor := resp.Cursor
+	for count := 1; cursor != ""; count++ {
+		if len(maxPages) > 0 && count >= maxPages[0] {
+			return &api.ValidatorsResponse{Validators: validatorsResponses}, false, nil
+		}
+		resp, err = client.Validators(ctx, 0, cursor)
+		if err != nil {
+			return nil, false, err
+		}
+		validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+		cursor = resp.Cursor
+	}
+
+	return &api.ValidatorsResponse{Validators: validatorsResponses}, true, nil
 }
 
 func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {

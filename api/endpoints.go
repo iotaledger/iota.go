@@ -57,6 +57,12 @@ const (
 	// ParameterPeerID is used to identify a peer.
 	ParameterPeerID = "peerId"
 
+	// ParameterPageSize is used to specify the page size.
+	ParameterPageSize = "pageSize"
+
+	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
+	ParameterCursor = "cursor"
+
 	// ParameterWorkScore is used to identify work score.
 	ParameterWorkScore = "workScore"
 )
