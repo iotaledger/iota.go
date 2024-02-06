@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"sort"
 
 	"golang.org/x/crypto/blake2b"
 
@@ -37,8 +38,19 @@ func (a *AddressWithWeight) Size() int {
 	return a.Address.Size() + AddressWeightSerializedBytesSize
 }
 
+func (a *AddressWithWeight) Compare(other *AddressWithWeight) int {
+	return bytes.Compare(a.Address.ID(), other.Address.ID())
+}
+
 // AddressesWithWeight is a set of AddressWithWeight.
 type AddressesWithWeight []*AddressWithWeight
+
+// Sort sorts the addresses in lexical order.
+func (a AddressesWithWeight) Sort() {
+	sort.Slice(a, func(i, j int) bool {
+		return a[i].Compare(a[j]) < 0
+	})
+}
 
 // MultiAddress defines a multi address that consists of addresses with weights and
 // a threshold value that needs to be reached to unlock the multi address.

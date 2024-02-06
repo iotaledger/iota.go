@@ -840,7 +840,7 @@ func TestMultiAddressSyntacticalValidation(t *testing.T) {
 						},
 					}
 				},
-				wantErr: serializer.ErrArrayValidationViolatesUniqueness,
+				wantErr: iotago.ErrArrayValidationViolatesUniqueness,
 			}
 		}(),
 
