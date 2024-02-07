@@ -16,70 +16,9 @@ import (
 	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
-const (
-	// EventAPICommitmentInfoLatest is the name of the latest commitment info event channel.
-	EventAPICommitmentInfoLatest = "commitment-info/latest"
-	// EventAPICommitmentInfoFinalized is the name of the finalized commitment info event channel.
-	EventAPICommitmentInfoFinalized = "commitment-info/finalized"
-	// EventAPICommitments is the name of the commitment event channel.
-	EventAPICommitments = "commitments"
-
-	// EventAPIBlocks is the name of the received blocks event channel.
-	EventAPIBlocks = "blocks"
-	// EventAPIBlocksAccepted is the name of the accepted blocks event channel.
-	EventAPIBlocksAccepted = "blocks/accepted"
-	// EventAPIBlocksConfirmed is the name of the confirmed blocks event channel.
-	EventAPIBlocksConfirmed = "blocks/confirmed"
-	// EventAPIBlocksTransaction is the name of the blocks containing transactions event channel.
-	EventAPIBlocksTransaction = "blocks/transaction"
-	// EventAPIBlocksTransactionTaggedData is the name of the blocks containing transaction with tagged data event channel.
-	EventAPIBlocksTransactionTaggedData = "blocks/transaction/tagged-data"
-	// EventAPIBlocksTransactionTaggedDataTag is the name of the blocks containing transaction with a specific tagged data event channel.
-	EventAPIBlocksTransactionTaggedDataTag = "blocks/transaction/tagged-data/{tag}"
-	// EventAPIBlocksTaggedData is the name of the blocks containing tagged data event channel.
-	EventAPIBlocksTaggedData = "blocks/tagged-data"
-	// EventAPIBlocksTaggedDataTag is the name of the blocks containing a specific tagged data event channel.
-	EventAPIBlocksTaggedDataTag = "blocks/tagged-data/{tag}"
-
-	// EventAPITransactionsIncludedBlock is the name of the included transaction block event channel.
-	EventAPITransactionsIncludedBlock = "transactions/{transactionId}/included-block"
-
-	// EventAPIBlockMetadata is the name of the block metadata event channel.
-	EventAPIBlockMetadata = "block-metadata/{blockId}"
-
-	// EventAPIOutputs is the name of the outputs event channel.
-	EventAPIOutputs = "outputs/{outputId}"
-	// EventAPIOutputMetadata is the name of the outputs event channel.
-	EventAPIOutputMetadata = "output-metadata/{outputId}"
-	// EventAPINFTOutputs is the name of the NFT output event channel to retrieve NFT mutations by their ID.
-	EventAPINFTOutputs = "outputs/nft/{nftId}"
-	// EventAPIAccountOutputs is the name of the Account output event channel to retrieve Account mutations by their ID.
-	EventAPIAccountOutputs = "outputs/account/{accountId}"
-	// EventAPIFoundryOutputs is the name of the Foundry output event channel to retrieve Foundry mutations by their ID.
-	EventAPIFoundryOutputs = "outputs/foundry/{foundryId}"
-	// EventAPIOutputsByUnlockConditionAndAddress is the name of the outputs by unlock condition address event channel.
-	EventAPIOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}"
-	// EventAPISpentOutputsByUnlockConditionAndAddress is the name of the spent outputs by unlock condition address event channel.
-	EventAPISpentOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}/spent"
-)
-
 var (
 	// ErrEventAPIClientInactive gets returned when an EventAPIClient is inactive.
 	ErrEventAPIClientInactive = ierrors.New("event api client is inactive")
-)
-
-// EventAPIUnlockCondition denotes the different unlock conditions.
-type EventAPIUnlockCondition string
-
-// Unlock conditions.
-const (
-	UnlockConditionAny              EventAPIUnlockCondition = "+"
-	UnlockConditionAddress          EventAPIUnlockCondition = "address"
-	UnlockConditionStorageReturn    EventAPIUnlockCondition = "storage-return"
-	UnlockConditionExpirationReturn EventAPIUnlockCondition = "expiration"
-	UnlockConditionStateController  EventAPIUnlockCondition = "state-controller"
-	UnlockConditionGovernor         EventAPIUnlockCondition = "governor"
-	UnlockConditionImmutableAccount EventAPIUnlockCondition = "immutable-account"
 )
 
 func randMQTTClientID() string {

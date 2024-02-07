@@ -65,6 +65,24 @@ const (
 
 	// ParameterWorkScore is used to identify work score.
 	ParameterWorkScore = "workScore"
+
+	// ParameterTag is used to identify a tag.
+	ParameterTag = "tag"
+
+	// ParameterAccountAddress is used to identify an account address.
+	ParameterAccountAddress = "accountAddress"
+
+	// ParameterAnchorAddress is used to identify an anchor address.
+	ParameterAnchorAddress = "anchorAddress"
+
+	// ParameterNFTAddress is used to identify an NFT address.
+	ParameterNFTAddress = "nftAddress"
+
+	// ParameterAddress is used to identify an address.
+	ParameterAddress = "address"
+
+	// ParameterCondition is used to identify an unlock condition.
+	ParameterCondition = "condition"
 )
 
 const (
@@ -459,6 +477,60 @@ var (
 	IndexerRouteOutputsDelegations      = route(IndexerPluginName, IndexerEndpointOutputsDelegations)
 	IndexerRouteOutputsDelegationByID   = route(IndexerPluginName, IndexerEndpointOutputsDelegationByID)
 	IndexerRouteMultiAddressByAddress   = route(IndexerPluginName, IndexerEndpointMultiAddressByAddress)
+)
+
+const (
+	TopicSuffixAccepted  = "accepted"
+	TopicSuffixConfirmed = "confirmed"
+
+	// HINT: all existing topics always have a "/raw" suffix for the raw payload as well.
+	TopicCommitmentsLatest    = "commitments/latest"    // iotago.Commitment
+	TopicCommitmentsFinalized = "commitments/finalized" // iotago.Commitment
+
+	TopicBlocks                              = "blocks"                                     // iotago.Block (track all incoming blocks)
+	TopicBlocksValidation                    = "blocks/validation"                          // iotago.Block (track all incoming validation blocks)
+	TopicBlocksBasic                         = "blocks/basic"                               // iotago.Block (track all incoming basic blocks)
+	TopicBlocksBasicTaggedData               = "blocks/basic/tagged-data"                   // iotago.Block (track all incoming basic blocks with tagged data payload)
+	TopicBlocksBasicTaggedDataTag            = "blocks/basic/tagged-data/{tag}"             // iotago.Block (track all incoming basic blocks with specific tagged data payload)
+	TopicBlocksBasicTransaction              = "blocks/basic/transaction"                   // iotago.Block (track all incoming basic blocks with transactions)
+	TopicBlocksBasicTransactionTaggedData    = "blocks/basic/transaction/tagged-data"       // iotago.Block (track all incoming basic blocks with transactions and tagged data)
+	TopicBlocksBasicTransactionTaggedDataTag = "blocks/basic/transaction/tagged-data/{tag}" // iotago.Block (track all incoming basic blocks with transactions and specific tagged data)
+
+	// single block on subscribe and changes in it's metadata (accepted, confirmed).
+	TopicTransactionsIncludedBlock = "transactions/{transactionId}/included-block" // api.BlockWithMetadataResponse (track inclusion of a single transaction)
+	TopicTransactionMetadata       = "transaction-metadata/{transactionId}"        // api.TransactionMetadataResponse (track a specific transaction)
+
+	// single block on subscribe and changes in it's metadata (accepted, confirmed).
+	TopicBlockMetadata = "block-metadata/{blockId}" // api.BlockMetadataResponse (track changes to a single block)
+
+	// all blocks that arrive after subscribing.
+	TopicBlockMetadataAccepted  = "block-metadata/" + TopicSuffixAccepted  // api.BlockMetadataResponse (track acceptance of all blocks)
+	TopicBlockMetadataConfirmed = "block-metadata/" + TopicSuffixConfirmed // api.BlockMetadataResponse (track confirmation of all blocks)
+
+	// single output on subscribe and changes in it's metadata (accepted, committed, spent).
+	TopicOutputs = "outputs/{outputId}" // api.OutputWithMetadataResponse (track changes to a single output)
+
+	// all outputs that arrive after subscribing (on transaction accepted and transaction committed).
+	TopicAccountOutputs                     = "outputs/account/{accountAddress}"     // api.OutputWithMetadataResponse (all changes of the chain output)
+	TopicAnchorOutputs                      = "outputs/anchor/{anchorAddress}"       // api.OutputWithMetadataResponse (all changes of the chain output)
+	TopicFoundryOutputs                     = "outputs/foundry/{foundryId}"          // api.OutputWithMetadataResponse (all changes of the chain output)
+	TopicNFTOutputs                         = "outputs/nft/{nftAddress}"             // api.OutputWithMetadataResponse (all changes of the chain output)
+	TopicDelegationOutputs                  = "outputs/delegation/{delegationId}"    // api.OutputWithMetadataResponse (all changes of the chain output)
+	TopicOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}" // api.OutputWithMetadataResponse (all changes to outputs that match the unlock condition)
+)
+
+// EventAPIUnlockCondition denotes the different unlock conditions.
+type EventAPIUnlockCondition string
+
+// Unlock conditions.
+const (
+	UnlockConditionAny              EventAPIUnlockCondition = "+"
+	UnlockConditionAddress          EventAPIUnlockCondition = "address"
+	UnlockConditionStorageReturn    EventAPIUnlockCondition = "storage-return"
+	UnlockConditionExpiration       EventAPIUnlockCondition = "expiration"
+	UnlockConditionStateController  EventAPIUnlockCondition = "state-controller"
+	UnlockConditionGovernor         EventAPIUnlockCondition = "governor"
+	UnlockConditionImmutableAccount EventAPIUnlockCondition = "immutable-account"
 )
 
 const (
