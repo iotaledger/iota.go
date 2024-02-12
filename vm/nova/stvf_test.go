@@ -2571,7 +2571,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &iotago.ChainTransitionError{},
+			wantErr: iotago.ErrSimpleTokenSchemeGenesisInvalid,
 		},
 		{
 			name:      "fail - genesis transition - serial number not in interval",
@@ -2598,10 +2598,12 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					OutChains: map[iotago.ChainID]iotago.ChainOutput{
 						exampleAccountIdent.AccountID(): &iotago.AccountOutput{FoundryCounter: 7},
 					},
-					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{},
+					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
+						exampleFoundry.MustNativeTokenID(): startingSupply,
+					},
 				},
 			},
-			wantErr: &iotago.ChainTransitionError{},
+			wantErr: iotago.ErrFoundrySerialInvalid,
 		},
 		{
 			name:      "fail - genesis transition - foundries unsorted",
@@ -2648,7 +2650,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &iotago.ChainTransitionError{},
+			wantErr: iotago.ErrFoundrySerialInvalid,
 		},
 		{
 			name: "ok - state transition - metadata feature",
@@ -2824,7 +2826,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			wantErr: iotago.ErrSimpleTokenSchemeMintingInvalid,
 		},
 		{
 			name: "fail - state transition - mint (out: deficit)",
@@ -2855,7 +2857,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			wantErr: iotago.ErrSimpleTokenSchemeMintingInvalid,
 		},
 		{
 			name: "fail - state transition - melt (out: excess)",
@@ -2889,7 +2891,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrNativeTokenSumUnbalanced,
+			wantErr: iotago.ErrSimpleTokenSchemeMeltingInvalid,
 		},
 		{
 			name: "fail - state transition",
@@ -2916,7 +2918,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &iotago.ChainTransitionError{},
+			wantErr: iotago.ErrSimpleTokenSchemeMaximumSupplyChanged,
 		},
 		{
 			name: "ok - destroy transition",
@@ -2975,8 +2977,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
-						//nolint:gosec // false positive
-						require.ErrorAs(t, err, &tt.wantErr)
+						require.ErrorIs(t, err, tt.wantErr)
 						return
 					}
 					require.NoError(t, err)
@@ -2990,8 +2991,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 
 			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
-				//nolint:gosec // false positive
-				require.ErrorAs(t, err, &tt.wantErr)
+				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 			require.NoError(t, err)
