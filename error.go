@@ -32,8 +32,6 @@ var (
 
 // Errors that can occur before the transaction is executed.
 var (
-	// ErrTxTypeInvalid gets returned for invalid transaction type.
-	ErrTxTypeInvalid = ierrors.New("transaction type is invalid")
 	// ErrUTXOInputInvalid gets returned when the UTXO input is invalid.
 	ErrUTXOInputInvalid = ierrors.New("UTXO input is invalid")
 	// ErrUnknownInputType gets returned for unknown input types.

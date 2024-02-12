@@ -228,7 +228,6 @@ func (t *TransactionState) DecodeJSON(state any) error {
 const (
 	TxFailureNone TransactionFailureReason = 0
 
-	TxFailureTypeInvalid TransactionFailureReason = 1
 	TxFailureConflicting TransactionFailureReason = 2
 
 	TxFailureInputAlreadySpent            TransactionFailureReason = 3
@@ -325,7 +324,6 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	// ================================
 
 	// tx level errors
-	iotago.ErrTxTypeInvalid: TxFailureTypeInvalid,
 	iotago.ErrTxConflicting: TxFailureConflicting,
 
 	// input
