@@ -100,8 +100,8 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	"epochNearingThreshold": 60,
 	"congestionControlParameters": {
 		"minReferenceManaCost": "1",
-		"increase": "10",
-		"decrease": "10",
+		"increase": "1",
+		"decrease": "1",
 		"increaseThreshold": 400000000,
 		"decreaseThreshold": 250000000,
 		"schedulerRate": 50000000,
