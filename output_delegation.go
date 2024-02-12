@@ -28,7 +28,7 @@ var (
 	ErrDelegationModified = ierrors.New("delegated amount, validator ID and start epoch cannot be modified")
 	// ErrDelegationStartEpochInvalid gets returned when a delegation output's start epoch is not set correctly
 	// relative to the slot of the current epoch in which the voting power is calculated.
-	ErrDelegationStartEpochInvalid = ierrors.New("invalid start epoch")
+	ErrDelegationStartEpochInvalid = ierrors.New("delegation output has invalid start epoch")
 	// ErrDelegationAmountMismatch gets returned when a delegation output's delegated amount is not equal to the amount.
 	ErrDelegationAmountMismatch = ierrors.New("delegated amount does not match amount")
 	// ErrDelegationEndEpochNotZero gets returned when a delegation output's end epoch is not zero at genesis.
