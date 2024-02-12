@@ -249,6 +249,12 @@ const (
 
 	TxFailureNativeTokenSumUnbalanced TransactionFailureReason = 18
 
+	TxFailureSimpleTokenSchemeMintedMeltedTokenDecrease TransactionFailureReason = 200
+	TxFailureSimpleTokenSchemeMintingInvalid            TransactionFailureReason = 200
+	TxFailureSimpleTokenSchemeMeltingInvalid            TransactionFailureReason = 200
+	TxFailureSimpleTokenSchemeMaximumSupplyChanged      TransactionFailureReason = 200
+	TxFailureSimpleTokenSchemeGenesisInvalid            TransactionFailureReason = 200
+
 	TxFailureMultiAddressLengthUnlockLengthMismatch TransactionFailureReason = 19
 	TxFailureMultiAddressUnlockThresholdNotReached  TransactionFailureReason = 20
 	TxFailureNestedMultiUnlock                      TransactionFailureReason = 21
@@ -349,8 +355,15 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	iotago.ErrInputOutputManaMismatch:                  TxFailureInputOutputManaMismatch,
 	iotago.ErrManaDecayCreationIndexExceedsTargetIndex: TxFailureManaDecayCreationIndexExceedsTargetIndex,
 
-	// native token errors
+	// native token
 	iotago.ErrNativeTokenSumUnbalanced: TxFailureNativeTokenSumUnbalanced,
+
+	// simple token scheme
+	iotago.ErrSimpleTokenSchemeMintedMeltedTokenDecrease: TxFailureSimpleTokenSchemeMintedMeltedTokenDecrease,
+	iotago.ErrSimpleTokenSchemeMintingInvalid:            TxFailureSimpleTokenSchemeMintingInvalid,
+	iotago.ErrSimpleTokenSchemeMeltingInvalid:            TxFailureSimpleTokenSchemeMeltingInvalid,
+	iotago.ErrSimpleTokenSchemeMaximumSupplyChanged:      TxFailureSimpleTokenSchemeMaximumSupplyChanged,
+	iotago.ErrSimpleTokenSchemeGenesisInvalid:            TxFailureSimpleTokenSchemeGenesisInvalid,
 
 	// multi address
 	iotago.ErrMultiAddressLengthUnlockLengthMismatch: TxFailureMultiAddressLengthUnlockLengthMismatch,
