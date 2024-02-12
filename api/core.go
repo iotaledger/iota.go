@@ -224,7 +224,6 @@ func (t *TransactionState) DecodeJSON(state any) error {
 	return nil
 }
 
-// TODO: Fix counter.
 const (
 	TxFailureNone TransactionFailureReason = 0
 
