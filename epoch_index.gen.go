@@ -10,11 +10,6 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-var (
-	// ErrWrongEpochIndex gets returned when a wrong epoch index was passed.
-	ErrWrongEpochIndex = ierrors.New("wrong epoch index")
-)
-
 const (
 	EpochIndexLength = serializer.UInt32ByteSize
 	MaxEpochIndex    = EpochIndex(math.MaxUint32)

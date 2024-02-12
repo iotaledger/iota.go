@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 	"github.com/iotaledger/iota.go/v4/api"
 	"github.com/iotaledger/iota.go/v4/tpkg"
@@ -85,7 +88,7 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 				TransactionMetadata: &api.TransactionMetadataResponse{
 					TransactionID:            tpkg.RandTransactionID(),
 					TransactionState:         api.TransactionStateFailed,
-					TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+					TransactionFailureReason: api.TxFailureDelegationRewardCalculationFailure,
 				},
 			},
 			Target:    &api.BlockMetadataResponse{},
@@ -103,7 +106,7 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 					TransactionMetadata: &api.TransactionMetadataResponse{
 						TransactionID:            tpkg.RandTransactionID(),
 						TransactionState:         api.TransactionStateFailed,
-						TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+						TransactionFailureReason: api.TxFailureDelegationRewardsClaimingInvalid,
 					},
 				},
 			},
@@ -511,7 +514,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				TransactionMetadata: &api.TransactionMetadataResponse{
 					TransactionID:            iotago.TransactionID{0x1},
 					TransactionState:         api.TransactionStateFailed,
-					TransactionFailureReason: api.TxFailureFailedToClaimDelegationReward,
+					TransactionFailureReason: api.TxFailureDelegationRewardsClaimingInvalid,
 				},
 			},
 			Target: `{
@@ -521,7 +524,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	"transactionMetadata": {
 		"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
 		"transactionState": "failed",
-		"transactionFailureReason": 20
+		"transactionFailureReason": 52
 	}
 }`,
 		},
@@ -787,5 +790,48 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, tt.Run)
+	}
+}
+
+func TestTransactionFailureReasonDetermination(t *testing.T) {
+	type txFailureTest struct {
+		name     string
+		err      error
+		expected api.TransactionFailureReason
+	}
+
+	tests := []*txFailureTest{
+		{
+			name:     "last error of a series of joined errors is mapped first",
+			err:      ierrors.Join(iotago.ErrAccountLocked, iotago.ErrDelegationAmountMismatch, iotago.ErrBlockIssuerCommitmentInputMissing),
+			expected: api.TxFailureBlockIssuerCommitmentInputMissing,
+		},
+		{
+			name: "first visited error of a post-order depth traversed error tree is mapped first",
+			err: func() error {
+				err1 := ierrors.WithMessage(iotago.ErrAccountLocked, "message1")
+				errTree1 := ierrors.WithMessage(err1, "message2")
+
+				subtreeErr := ierrors.WithMessage(iotago.ErrRewardInputReferenceInvalid, "message3")
+				subTree := ierrors.WithMessage(subtreeErr, "message4")
+
+				err2 := ierrors.WithMessage(iotago.ErrAccountInvalidFoundryCounter, "message5")
+				errTree2 := ierrors.Join(err2, subTree)
+
+				return ierrors.Join(errTree1, errTree2)
+			}(),
+			expected: api.TxFailureRewardInputReferenceInvalid,
+		},
+	}
+
+	for _, test := range tests {
+		err := test.err
+		expected := test.expected
+
+		t.Run(test.name, func(t *testing.T) {
+			txFailureReason := api.DetermineTransactionFailureReason(err)
+			require.Equal(t, expected, txFailureReason,
+				"expected %d, got %d", expected, txFailureReason)
+		})
 	}
 }

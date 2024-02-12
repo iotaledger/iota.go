@@ -41,9 +41,22 @@ func mockGetJSON(route string, status int, body interface{}, persist ...bool) {
 	if len(persist) > 0 && persist[0] {
 		m.Persist()
 	}
-
+	b := lo.PanicOnErr(mockAPI.JSONEncode(body))
 	m.Reply(status).SetHeader("Content-Type", api.MIMEApplicationJSON).
-		BodyString(string(lo.PanicOnErr(mockAPI.JSONEncode(body))))
+		BodyString(string(b))
+}
+
+func mockGetJSONWithQuery(route string, key string, value string, status int, body interface{}, persist ...bool) {
+	m := gock.New(nodeAPIUrl).
+		Get(route).
+		MatchParam(key, value)
+	if len(persist) > 0 && persist[0] {
+		m.Persist()
+	}
+
+	b := lo.PanicOnErr(mockAPI.JSONEncode(body))
+	m.Reply(status).SetHeader("Content-Type", api.MIMEApplicationJSON).
+		BodyString(string(b))
 }
 
 //nolint:unparam // false positive
@@ -206,7 +219,7 @@ func TestClient_Congestion(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteCongestion, api.ParameterBech32Address, accountAddress.Bech32(nodeAPI.CommittedAPI().ProtocolParameters().Bech32HRP())), 200, originRes)
 
-	res, err := nodeAPI.Congestion(context.Background(), accountAddress)
+	res, err := nodeAPI.Congestion(context.Background(), accountAddress, 200)
 	require.NoError(t, err)
 	require.EqualValues(t, originRes, res)
 }
@@ -234,33 +247,53 @@ func TestClient_Rewards(t *testing.T) {
 func TestClient_Validators(t *testing.T) {
 	defer gock.Off()
 
-	originRes := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
-		{
-			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
-			StakingEndEpoch:                iotago.EpochIndex(123),
-			PoolStake:                      iotago.BaseToken(100),
-			ValidatorStake:                 iotago.BaseToken(10),
-			FixedCost:                      iotago.Mana(10),
-			Active:                         true,
-			LatestSupportedProtocolVersion: 1,
-		},
-		{
-			AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
-			StakingEndEpoch:                iotago.EpochIndex(124),
-			PoolStake:                      iotago.BaseToken(1000),
-			ValidatorStake:                 iotago.BaseToken(100),
-			FixedCost:                      iotago.Mana(20),
-			Active:                         true,
-			LatestSupportedProtocolVersion: 1,
-		},
-	}}
+	requestsNumber := 3
+	validatorsNumber := requestsNumber * 2
+	cursorValues := []string{"", "1,3", "1,5", ""}
+	pageSize := uint32(2)
 
-	mockGetJSON(api.CoreRouteValidators, 200, originRes)
+	originResponses := make([]*api.ValidatorsResponse, 0)
+	expectedAllResponses := &api.ValidatorsResponse{Validators: make([]*api.ValidatorResponse, 0)}
+	for i := 0; i < requestsNumber; i++ {
+		validators := &api.ValidatorsResponse{Validators: []*api.ValidatorResponse{
+			{
+				AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
+				StakingEndEpoch:                iotago.EpochIndex(123),
+				PoolStake:                      iotago.BaseToken(100),
+				ValidatorStake:                 iotago.BaseToken(10),
+				FixedCost:                      iotago.Mana(10),
+				Active:                         true,
+				LatestSupportedProtocolVersion: 1,
+			},
+			{
+				AddressBech32:                  tpkg.RandAccountID().ToAddress().Bech32(iotago.PrefixTestnet),
+				StakingEndEpoch:                iotago.EpochIndex(123),
+				PoolStake:                      iotago.BaseToken(100),
+				ValidatorStake:                 iotago.BaseToken(10),
+				FixedCost:                      iotago.Mana(10),
+				Active:                         true,
+				LatestSupportedProtocolVersion: 1,
+			},
+		}, PageSize: pageSize, Cursor: cursorValues[i+1]}
+		originResponses = append(originResponses, validators)
+		expectedAllResponses.Validators = append(expectedAllResponses.Validators, validators.Validators...)
+	}
 
+	//
+	for i, cursor := range cursorValues[:len(cursorValues)-1] {
+		query := api.CoreRouteValidators
+		if cursor != "" {
+			mockGetJSONWithQuery(query, api.ParameterCursor, cursor, 200, originResponses[i])
+		} else {
+			mockGetJSON(query, 200, originResponses[i])
+		}
+	}
 	nodeAPI := nodeClient(t)
-	res, err := nodeAPI.Validators(context.Background())
+	validatorResponses, allRetrieved, err := nodeAPI.ValidatorsAll(context.Background())
 	require.NoError(t, err)
-	require.EqualValues(t, originRes, res)
+	require.True(t, allRetrieved)
+	require.EqualValues(t, validatorsNumber, len(validatorResponses.Validators))
+	require.EqualValues(t, expectedAllResponses, validatorResponses)
 }
 
 func TestClient_StakingByAccountID(t *testing.T) {

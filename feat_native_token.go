@@ -25,6 +25,8 @@ var (
 	ErrNativeTokenSumUnbalanced = ierrors.New("native token sums are unbalanced")
 	// ErrFoundryIDNativeTokenIDMismatch gets returned when a native token features exists in a foundry output but the IDs mismatch.
 	ErrFoundryIDNativeTokenIDMismatch = ierrors.New("native token ID in foundry output must match the foundry ID")
+	// ErrNativeTokenSetInvalid gets returned when the provided native tokens are invalid.
+	ErrNativeTokenSetInvalid = ierrors.New("provided native tokens are invalid")
 )
 
 // NativeTokenID is an identifier which uniquely identifies a NativeToken.
