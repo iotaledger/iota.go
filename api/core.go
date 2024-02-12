@@ -234,7 +234,6 @@ const (
 	TxFailureInputCreationAfterTxCreation TransactionFailureReason = 4
 	TxFailureUnlockSignatureInvalid       TransactionFailureReason = 5
 
-	TxFailureCommitmentInputMissing          TransactionFailureReason = 6
 	TxFailureCommitmentInputReferenceInvalid TransactionFailureReason = 7
 	TxFailureBICInputReferenceInvalid        TransactionFailureReason = 8
 	TxFailureRewardInputReferenceInvalid     TransactionFailureReason = 9
@@ -248,9 +247,7 @@ const (
 	TxFailureInputOutputManaMismatch                  TransactionFailureReason = 14
 	TxFailureManaDecayCreationIndexExceedsTargetIndex TransactionFailureReason = 15
 
-	TxFailureNativeTokenAmountLessThanZero TransactionFailureReason = 16
-	TxFailureNativeTokenSumExceedsUint256  TransactionFailureReason = 17
-	TxFailureNativeTokenSumUnbalanced      TransactionFailureReason = 18
+	TxFailureNativeTokenSumUnbalanced TransactionFailureReason = 18
 
 	TxFailureMultiAddressLengthUnlockLengthMismatch TransactionFailureReason = 19
 	TxFailureMultiAddressUnlockThresholdNotReached  TransactionFailureReason = 20
@@ -332,7 +329,6 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	iotago.ErrUnlockSignatureInvalid:       TxFailureUnlockSignatureInvalid,
 
 	// context inputs
-	iotago.ErrCommitmentInputMissing:          TxFailureCommitmentInputMissing,
 	iotago.ErrCommitmentInputReferenceInvalid: TxFailureCommitmentInputReferenceInvalid,
 	iotago.ErrBICInputReferenceInvalid:        TxFailureBICInputReferenceInvalid,
 	iotago.ErrRewardInputReferenceInvalid:     TxFailureRewardInputReferenceInvalid,
@@ -354,9 +350,7 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 	iotago.ErrManaDecayCreationIndexExceedsTargetIndex: TxFailureManaDecayCreationIndexExceedsTargetIndex,
 
 	// native token errors
-	iotago.ErrNativeTokenAmountLessThanEqualZero: TxFailureNativeTokenAmountLessThanZero,
-	iotago.ErrNativeTokenSumExceedsUint256:       TxFailureNativeTokenSumExceedsUint256,
-	iotago.ErrNativeTokenSumUnbalanced:           TxFailureNativeTokenSumUnbalanced,
+	iotago.ErrNativeTokenSumUnbalanced: TxFailureNativeTokenSumUnbalanced,
 
 	// multi address
 	iotago.ErrMultiAddressLengthUnlockLengthMismatch: TxFailureMultiAddressLengthUnlockLengthMismatch,
