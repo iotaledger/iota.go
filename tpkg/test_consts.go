@@ -18,7 +18,7 @@ var ShimmerMainnetV3TestProtocolParameters = iotago.NewV3SnapshotProtocolParamet
 	iotago.WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
 	iotago.WithLivenessOptions(15, 30, 10, 20, 60),
 	iotago.WithSupplyOptions(1813620509061365, 63, 1, 17, 32, 21, 70),
-	iotago.WithCongestionControlOptions(1, 10, 10, 400_000_000, 250_000_000, 50_000_000, 1000, 100),
+	iotago.WithCongestionControlOptions(1, 1, 1, 400_000_000, 250_000_000, 50_000_000, 1000, 100),
 	iotago.WithStakingOptions(10, 10, 10),
 	iotago.WithVersionSignalingOptions(7, 5, 7),
 	iotago.WithRewardsOptions(8, 8, 11, 2, 1, 384),

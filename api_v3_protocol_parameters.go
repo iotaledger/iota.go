@@ -233,7 +233,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 			WithTimeProviderOptions(0, time.Now().Unix(), 10, 13),
 			WithLivenessOptions(15, 30, 10, 20, 60),
 			WithSupplyOptions(1813620509061365, 63, 1, 17, 32, 21, 70),
-			WithCongestionControlOptions(1, 10, 10, 400_000_000, 250_000_000, 50_000_000, 1000, 100),
+			WithCongestionControlOptions(1, 1, 1, 400_000_000, 250_000_000, 50_000_000, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
 			WithRewardsOptions(8, 8, 11, 2, 1, 384),
