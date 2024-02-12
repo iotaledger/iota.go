@@ -33,5 +33,11 @@ func (u *TaggedData) Size() int {
 
 func (u *TaggedData) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
 	// we account for the network traffic only on "Payload" level
-	return workScoreParameters.DataByte.Multiply(u.Size())
+	workScoreData, err := workScoreParameters.DataByte.Multiply(u.Size())
+	if err != nil {
+		return 0, err
+	}
+
+	// we include the block offset in the payload WorkScore
+	return workScoreParameters.Block.Add(workScoreData)
 }

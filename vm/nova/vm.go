@@ -854,7 +854,7 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
 			ierrors.WithMessagef(
 				iotago.ErrFoundrySerialInvalid,
-				"new foundry output %s's serial number is not between the foundry counter interval of [%d,%d)", thisFoundryID, startSerial, endIncSerial,
+				"new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID, current.SerialNumber, startSerial, endIncSerial,
 			))
 	}
 
