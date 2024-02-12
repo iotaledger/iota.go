@@ -270,18 +270,24 @@ func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHead
 func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, workScore iotago.WorkScore, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
 	//nolint:contextcheck
 	query := client.endpointReplaceAddressParameter(api.CoreRouteCongestion, accountAddress)
+	queryParams := url.Values{}
 
 	if workScore > 0 {
-		query = api.EndpointWithQueryParameterValue(query, api.ParameterWorkScore, workScore)
+		queryParams.Add(api.ParameterWorkScore, strconv.FormatUint(uint64(workScore), 10))
 	}
 	if len(optCommitmentID) > 0 {
-		query = api.EndpointWithQueryParameterValue(query, api.ParameterCommitmentID, optCommitmentID[0].ToHex())
+		queryParams.Add(api.ParameterCommitmentID, optCommitmentID[0].ToHex())
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
 	}
 
 	res := new(api.CongestionResponse)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -303,17 +309,23 @@ func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*a
 func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ...string) (*api.ValidatorsResponse, error) {
 	res := new(api.ValidatorsResponse)
 	query := api.CoreRouteValidators
+	queryParams := url.Values{}
 
 	if pageSize > 0 {
-		query = api.EndpointWithQueryParameterValue(query, api.ParameterPageSize, pageSize)
+		queryParams.Add(api.ParameterPageSize, strconv.FormatUint(pageSize, 10))
 	}
 
 	if len(cursor) > 0 {
-		query = api.EndpointWithQueryParameterValue(query, api.ParameterCursor, cursor[0])
+		queryParams.Add(api.ParameterCursor, cursor[0])
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
 	}
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -361,14 +373,21 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 
 func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*api.CommitteeResponse, error) {
 	query := api.CoreRouteCommittee
+	queryParams := url.Values{}
+
 	if len(optEpochIndex) > 0 {
-		query = api.EndpointWithQueryParameterValue(query, api.ParameterEpoch, optEpochIndex[0])
+		queryParams.Add(api.ParameterEpoch, strconv.FormatUint(uint64(optEpochIndex[0]), 10))
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
 	}
 
 	res := new(api.CommitteeResponse)
 
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
 		return nil, err
 	}
 
