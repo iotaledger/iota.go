@@ -713,7 +713,7 @@ func anchorSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iot
 
 func anchorGenesisValid(vmParams *vm.Params, current *iotago.AnchorOutput, anchorIDMustBeZeroed bool) error {
 	if anchorIDMustBeZeroed && !current.AnchorID.Empty() {
-		return ierrors.Join(iotago.ErrInvalidAnchorStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
+		return ierrors.Join(iotago.ErrAnchorInvalidStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
 	}
 
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
@@ -725,9 +725,9 @@ func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOut
 
 	isGovTransition := current.StateIndex == next.StateIndex
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		err := iotago.ErrInvalidAnchorStateTransition
+		err := iotago.ErrAnchorInvalidStateTransition
 		if isGovTransition {
-			err = iotago.ErrInvalidAnchorGovernanceTransition
+			err = iotago.ErrAnchorInvalidGovernanceTransition
 		}
 
 		return ierrors.Join(err,
@@ -750,13 +750,13 @@ func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutpu
 
 	switch {
 	case current.Amount != next.Amount:
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
 	case current.StateIndex != next.StateIndex:
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
 	}
 
 	if err := iotago.FeatureUnchanged(iotago.FeatureStateMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorGovernanceTransition, "%w", err)
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "%w", err)
 	}
 
 	return nil
@@ -767,15 +767,15 @@ func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) er
 	current := input.Output.(*iotago.AnchorOutput)
 	switch {
 	case !current.StateController().Equal(next.StateController()):
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "state controller changed, in %v / out %v", current.StateController(), next.StateController())
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "state controller changed, in %v / out %v", current.StateController(), next.StateController())
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "governance controller changed, in %v / out %v", current.GovernorAddress(), next.GovernorAddress())
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "governance controller changed, in %v / out %v", current.GovernorAddress(), next.GovernorAddress())
 	case current.StateIndex+1 != next.StateIndex:
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
 	}
 
 	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
-		return ierrors.Wrapf(iotago.ErrInvalidAnchorStateTransition, "%w", err)
+		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "%w", err)
 	}
 
 	return nil
@@ -783,7 +783,7 @@ func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) er
 
 func anchorDestructionValid(vmParams *vm.Params) error {
 	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyAnchorOutputs() {
-		return ierrors.Join(iotago.ErrInvalidAnchorStateTransition, iotago.ErrTxCapabilitiesAnchorDestructionNotAllowed)
+		return ierrors.Join(iotago.ErrAnchorInvalidStateTransition, iotago.ErrTxCapabilitiesAnchorDestructionNotAllowed)
 	}
 
 	return nil
