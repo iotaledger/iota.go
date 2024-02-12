@@ -685,12 +685,13 @@ type (
 	CongestionResponse struct {
 		// Slot is the slot for which the estimate is provided.
 		Slot iotago.SlotIndex `serix:""`
-		// Ready indicates if a node is ready to issue a block in a current congestion or should wait.
+		// Ready indicates if a node is ready to schedule a block issued by the specified account, or if the issuer should wait.
 		Ready bool `serix:""`
-		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in Slot slot.
+		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in slot Slot.
+		// TODO: make this return the Cost as a Mana value as we provide WorkScore to this endpoint so can get this from RMC.
 		ReferenceManaCost iotago.Mana `serix:""`
-		// BlockIssuanceCredits (BIC) is the mana a user has on its BIC account exactly slot - MaxCommittableASge in the past.
-		// This balance needs to be > 0 zero, otherwise account is locked
+		// BlockIssuanceCredits (BIC) provides the BIC of the account in slot Slot.
+		// This balance needs to be non-negative, otherwise account is locked
 		BlockIssuanceCredits iotago.BlockIssuanceCredits `serix:""`
 	}
 
