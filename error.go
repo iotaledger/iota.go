@@ -50,8 +50,8 @@ var (
 	ErrStakingRewardCalculationFailure = ierrors.New("staking rewards could not be calculated due to storage issues or overflow")
 	// ErrDelegationRewardCalculationFailure gets returned when the delegation reward could not be calculated due to storage issues or overflow.
 	ErrDelegationRewardCalculationFailure = ierrors.New("delegation rewards could not be calculated due to storage issues or overflow")
-	// ErrTxConflicting gets returned when the transaction is conflicting.
-	ErrTxConflicting = ierrors.New("transaction is conflicting")
+	// ErrTxConflictRejected gets returned when the transaction was conflicting and the transaction was rejected.
+	ErrTxConflictRejected = ierrors.New("transaction was conflicting and was rejected")
 	// ErrInputAlreadySpent gets returned when the input is already spent.
 	ErrInputAlreadySpent = ierrors.New("input already spent")
 )
