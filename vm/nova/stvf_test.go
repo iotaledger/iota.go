@@ -2272,7 +2272,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAnchorGovernanceTransition,
+			wantErr: iotago.ErrAnchorInvalidGovernanceTransition,
 		},
 		{
 			name: "fail - update anchor immutable features in state transition",
@@ -2317,7 +2317,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAnchorStateTransition,
+			wantErr: iotago.ErrAnchorInvalidStateTransition,
 		},
 		{
 			name: "fail - gov transition",
@@ -2366,7 +2366,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAnchorGovernanceTransition,
+			wantErr: iotago.ErrAnchorInvalidGovernanceTransition,
 		},
 		{
 			name: "fail - state transition",
@@ -2430,7 +2430,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrInvalidAnchorStateTransition,
+			wantErr: iotago.ErrAnchorInvalidStateTransition,
 		},
 	}
 

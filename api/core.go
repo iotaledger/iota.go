@@ -224,6 +224,7 @@ func (t *TransactionState) DecodeJSON(state any) error {
 	return nil
 }
 
+// TODO: Fix counter.
 const (
 	TxFailureNone TransactionFailureReason = 0
 
@@ -291,6 +292,9 @@ const (
 	TxFailureMultipleImplicitAccountCreationAddresses TransactionFailureReason = 46
 
 	TxFailureAccountInvalidFoundryCounter TransactionFailureReason = 47
+
+	TxFailureAnchorInvalidStateTransition      TransactionFailureReason = 200
+	TxFailureAnchorInvalidGovernanceTransition TransactionFailureReason = 200
 
 	TxFailureFoundryTransitionWithoutAccount TransactionFailureReason = 48
 	TxFailureFoundrySerialInvalid            TransactionFailureReason = 49
@@ -406,6 +410,9 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 
 	// account
 	iotago.ErrAccountInvalidFoundryCounter: TxFailureAccountInvalidFoundryCounter,
+
+	iotago.ErrAnchorInvalidStateTransition:      TxFailureAnchorInvalidStateTransition,
+	iotago.ErrAnchorInvalidGovernanceTransition: TxFailureAnchorInvalidGovernanceTransition,
 
 	// foundry
 	iotago.ErrFoundryTransitionWithoutAccount: TxFailureFoundryTransitionWithoutAccount,
