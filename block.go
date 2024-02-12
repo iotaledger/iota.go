@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	// MaxBlockSize defines the maximum size of a block.
+	// MaxBlockSize defines the maximum size of a block in bytes.
 	MaxBlockSize = 32768
 	// BasicBlockMaxParents defines the maximum number of parents in a basic block.
 	BasicBlockMaxParents = 8
@@ -381,17 +381,13 @@ func (b *BasicBlockBody) Hash() (Identifier, error) {
 }
 
 func (b *BasicBlockBody) WorkScore(workScoreParameters *WorkScoreParameters) (WorkScore, error) {
-	var err error
-	var workScorePayload WorkScore
 	if b.Payload != nil {
-		workScorePayload, err = b.Payload.WorkScore(workScoreParameters)
-		if err != nil {
-			return 0, err
-		}
+		// offset for the block is included in the payload WorkScore.
+		return b.Payload.WorkScore(workScoreParameters)
 	}
 
-	// offset for block plus payload.
-	return workScoreParameters.Block.Add(workScorePayload)
+	// if the payload is nil, just return the offset for block.
+	return workScoreParameters.Block, nil
 }
 
 func (b *BasicBlockBody) Size() int {
