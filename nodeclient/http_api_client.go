@@ -2,7 +2,6 @@ package nodeclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -273,11 +272,10 @@ func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.Acc
 	query := client.endpointReplaceAddressParameter(api.CoreRouteCongestion, accountAddress)
 
 	if workScore > 0 {
-		query += fmt.Sprintf("?%s=%d", api.ParameterWorkScore, workScore)
+		query = api.EndpointWithQueryParameterValue(query, api.ParameterWorkScore, workScore)
 	}
-
 	if len(optCommitmentID) > 0 {
-		query += fmt.Sprintf("?%s=%s", api.ParameterCommitmentID, optCommitmentID[0].ToHex())
+		query = api.EndpointWithQueryParameterValue(query, api.ParameterCommitmentID, optCommitmentID[0].ToHex())
 	}
 
 	res := new(api.CongestionResponse)
@@ -307,11 +305,11 @@ func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ..
 	query := api.CoreRouteValidators
 
 	if pageSize > 0 {
-		query += fmt.Sprintf("?%s=%d", api.ParameterPageSize, pageSize)
+		query = api.EndpointWithQueryParameterValue(query, api.ParameterPageSize, pageSize)
 	}
 
 	if len(cursor) > 0 {
-		query += fmt.Sprintf("?%s=%s", api.ParameterCursor, cursor[0])
+		query = api.EndpointWithQueryParameterValue(query, api.ParameterCursor, cursor[0])
 	}
 
 	//nolint:bodyclose
@@ -364,7 +362,7 @@ func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago
 func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*api.CommitteeResponse, error) {
 	query := api.CoreRouteCommittee
 	if len(optEpochIndex) > 0 {
-		query += fmt.Sprintf("?%s=%d", api.ParameterEpoch, optEpochIndex[0])
+		query = api.EndpointWithQueryParameterValue(query, api.ParameterEpoch, optEpochIndex[0])
 	}
 
 	res := new(api.CommitteeResponse)

@@ -2,8 +2,11 @@ package api
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/iotaledger/hive.go/constraints"
 )
 
 const (
@@ -95,6 +98,20 @@ func EndpointWithNamedParameterValue(endpoint string, parameter string, value st
 
 func EndpointWithEchoParameters(endpoint string) string {
 	return regexp.MustCompile(`\{([^}]*)\}`).ReplaceAllString(endpoint, ":$1")
+}
+
+func EndpointWithQueryParameterValue[T constraints.Numeric | string](endpoint string, parameter string, value T) string {
+	query := endpoint
+
+	if strings.Contains(endpoint, "?") {
+		query += "&"
+	}
+
+	if reflect.TypeOf(value).Kind() == reflect.String {
+		return fmt.Sprintf("%s?%s=%s", query, parameter, value)
+	} else {
+		return fmt.Sprintf("%s?%s=%d", query, parameter, value)
+	}
 }
 
 const (
