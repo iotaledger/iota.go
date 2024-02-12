@@ -359,34 +359,34 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 		amount := output.BaseTokenAmount()
 
 		if amount == 0 {
-			return ierrors.Wrapf(ErrAmountMustBeGreaterThanZero, "output %d", index)
+			return ierrors.WithMessagef(ErrAmountMustBeGreaterThanZero, "output %d", index)
 		}
 
 		var err error
 		sum, err = safemath.SafeAdd(sum, amount)
 		if err != nil {
-			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "%w: output %d", err, index)
+			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "%w: output %d", err, index)
 		}
 		if sum > protoParams.TokenSupply() {
-			return ierrors.Wrapf(ErrOutputsSumExceedsTotalSupply, "output %d", index)
+			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "output %d", index)
 		}
 
 		// check whether base token amount fulfills the storage deposit cost
 		if _, err := storageScoreStructure.CoversMinDeposit(output, amount); err != nil {
-			return ierrors.Wrapf(err, "output %d", index)
+			return ierrors.WithMessagef(err, "output %d", index)
 		}
 
 		// check whether the amount in the return condition allows the receiver to fulfill the storage deposit for the return output
 		if storageDep := output.UnlockConditionSet().StorageDepositReturn(); storageDep != nil {
 			minStorageDepositForReturnOutput, err := storageScoreStructure.MinStorageDepositForReturnOutput(storageDep.ReturnAddress)
 			if err != nil {
-				return ierrors.Wrapf(err, "failed to calculate storage deposit for output index %d", index)
+				return ierrors.WithMessagef(err, "failed to calculate storage deposit for output index %d", index)
 			}
 			switch {
 			case storageDep.Amount < minStorageDepositForReturnOutput:
-				return ierrors.Wrapf(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
+				return ierrors.WithMessagef(ErrStorageDepositLessThanMinReturnOutputStorageDeposit, "output %d, needed %d, have %d", index, minStorageDepositForReturnOutput, storageDep.Amount)
 			case storageDep.Amount > amount:
-				return ierrors.Wrapf(ErrStorageDepositExceedsTargetOutputAmount, "output %d, target output's base token amount %d < storage deposit %d", index, amount, storageDep.Amount)
+				return ierrors.WithMessagef(ErrStorageDepositExceedsTargetOutputAmount, "output %d, target output's base token amount %d < storage deposit %d", index, amount, storageDep.Amount)
 			}
 		}
 
@@ -404,7 +404,7 @@ func OutputsSyntacticalNativeTokens() ElementValidationFunc[Output] {
 		}
 
 		if nativeToken.Amount.Cmp(common.Big0) == 0 {
-			return ierrors.Wrapf(ErrNativeTokenAmountLessThanEqualZero, "output %d", index)
+			return ierrors.WithMessagef(ErrNativeTokenAmountLessThanEqualZero, "output %d", index)
 		}
 
 		return nil
@@ -422,11 +422,11 @@ func OutputsSyntacticalStoredMana(maxManaValue Mana) ElementValidationFunc[Outpu
 		var err error
 		sum, err = safemath.SafeAdd(sum, storedMana)
 		if err != nil {
-			return ierrors.Wrapf(ErrMaxManaExceeded, "%w: stored mana sum calculation failed at output %d", err, index)
+			return ierrors.WithMessagef(ErrMaxManaExceeded, "%w: stored mana sum calculation failed at output %d", err, index)
 		}
 
 		if sum > maxManaValue {
-			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of stored mana exceeds max value with output %d", index)
+			return ierrors.WithMessagef(ErrMaxManaExceeded, "sum of stored mana exceeds max value with output %d", index)
 		}
 
 		return nil
@@ -441,13 +441,13 @@ func OutputsSyntacticalExpirationAndTimelock() ElementValidationFunc[Output] {
 
 		if expiration := unlockConditionSet.Expiration(); expiration != nil {
 			if expiration.Slot == 0 {
-				return ErrExpirationConditionZero
+				return ierrors.WithMessagef(ErrExpirationConditionZero, "output %d", index)
 			}
 		}
 
 		if timelock := unlockConditionSet.Timelock(); timelock != nil {
 			if timelock.Slot == 0 {
-				return ErrTimelockConditionZero
+				return ierrors.WithMessagef(ErrTimelockConditionZero, "output %d", index)
 			}
 		}
 
@@ -468,17 +468,17 @@ func OutputsSyntacticalAccount() ElementValidationFunc[Output] {
 
 		if accountOutput.AccountID.Empty() {
 			if accountOutput.FoundryCounter != 0 {
-				return ierrors.Wrapf(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
+				return ierrors.WithMessagef(ErrAccountOutputNonEmptyState, "output %d, foundry counter not zero", index)
 			}
 		}
 
 		if addr, ok := accountOutput.Ident().(*AccountAddress); ok && AccountAddress(accountOutput.AccountID) == *addr {
-			return ierrors.Wrapf(ErrAccountOutputCyclicAddress, "output %d", index)
+			return ierrors.WithMessagef(ErrAccountOutputCyclicAddress, "output %d", index)
 		}
 
 		if stakingFeat := accountOutput.FeatureSet().Staking(); stakingFeat != nil {
 			if accountOutput.Amount < stakingFeat.StakedAmount {
-				return ierrors.Wrapf(ErrAccountOutputAmountLessThanStakedAmount, "output %d", index)
+				return ierrors.WithMessagef(ErrAccountOutputAmountLessThanStakedAmount, "output %d", index)
 			}
 		}
 
@@ -498,7 +498,7 @@ func OutputsSyntacticalAnchor() ElementValidationFunc[Output] {
 
 		if anchorOutput.AnchorID.Empty() {
 			if anchorOutput.StateIndex != 0 {
-				return ierrors.Wrapf(ErrAnchorOutputNonEmptyState, "output %d, state index not zero", index)
+				return ierrors.WithMessagef(ErrAnchorOutputNonEmptyState, "output %d, state index not zero", index)
 			}
 
 			// can not be cyclic when the AnchorOutput is new
@@ -507,10 +507,10 @@ func OutputsSyntacticalAnchor() ElementValidationFunc[Output] {
 
 		outputAnchorAddr := AnchorAddress(anchorOutput.AnchorID)
 		if stateCtrlAddr, ok := anchorOutput.StateController().(*AnchorAddress); ok && outputAnchorAddr == *stateCtrlAddr {
-			return ierrors.Wrapf(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=StateController", index)
+			return ierrors.WithMessagef(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=StateController", index)
 		}
 		if govCtrlAddr, ok := anchorOutput.GovernorAddress().(*AnchorAddress); ok && outputAnchorAddr == *govCtrlAddr {
-			return ierrors.Wrapf(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=GovernanceController", index)
+			return ierrors.WithMessagef(ErrAnchorOutputCyclicAddress, "output %d, AnchorID=GovernanceController", index)
 		}
 
 		return nil
@@ -528,7 +528,7 @@ func OutputsSyntacticalFoundry() ElementValidationFunc[Output] {
 		}
 
 		if err := foundryOutput.TokenScheme.SyntacticalValidation(); err != nil {
-			return ierrors.Wrapf(err, "output %d", index)
+			return ierrors.WithMessagef(err, "output %d", index)
 		}
 
 		nativeTokenFeature := foundryOutput.FeatureSet().NativeToken()
@@ -543,7 +543,7 @@ func OutputsSyntacticalFoundry() ElementValidationFunc[Output] {
 
 		// NativeTokenFeature ID should have the same ID as the foundry
 		if !foundryID.Matches(nativeTokenFeature.ID) {
-			return ierrors.Wrapf(ErrFoundryIDNativeTokenIDMismatch, "FoundryID: %s, NativeTokenID: %s", foundryID, nativeTokenFeature.ID)
+			return ierrors.WithMessagef(ErrFoundryIDNativeTokenIDMismatch, "output %d, FoundryID: %s, NativeTokenID: %s", index, foundryID, nativeTokenFeature.ID)
 		}
 
 		return nil
@@ -565,7 +565,7 @@ func OutputsSyntacticalNFT() ElementValidationFunc[Output] {
 		}
 
 		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
-			return ierrors.Wrapf(ErrNFTOutputCyclicAddress, "output %d", index)
+			return ierrors.WithMessagef(ErrNFTOutputCyclicAddress, "output %d", index)
 		}
 
 		return nil
@@ -582,7 +582,7 @@ func OutputsSyntacticalDelegation() ElementValidationFunc[Output] {
 		}
 
 		if delegationOutput.ValidatorAddress.AccountID().Empty() {
-			return ierrors.Wrapf(ErrDelegationValidatorAddressEmpty, "output %d", index)
+			return ierrors.WithMessagef(ErrDelegationValidatorAddressEmpty, "output %d", index)
 		}
 
 		return nil
@@ -643,22 +643,22 @@ func OutputsSyntacticalAddressRestrictions() ElementValidationFunc[Output] {
 	return func(index int, output Output) error {
 		if addressUnlockCondition := output.UnlockConditionSet().Address(); addressUnlockCondition != nil {
 			if err := checkAddressRestrictions(output, addressUnlockCondition.Address); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 		if stateControllerUnlockCondition := output.UnlockConditionSet().StateControllerAddress(); stateControllerUnlockCondition != nil {
 			if err := checkAddressRestrictions(output, stateControllerUnlockCondition.Address); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 		if governorUnlockCondition := output.UnlockConditionSet().GovernorAddress(); governorUnlockCondition != nil {
 			if err := checkAddressRestrictions(output, governorUnlockCondition.Address); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 		if expirationUnlockCondition := output.UnlockConditionSet().Expiration(); expirationUnlockCondition != nil {
 			if err := checkAddressRestrictions(output, expirationUnlockCondition.ReturnAddress); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 
@@ -677,7 +677,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 		case *AccountOutput, *NFTOutput, *DelegationOutput:
 			// The serialization rules enforce that these output types always have an address unlock condition set.
 			if output.UnlockConditionSet().Address().Address.Type() == AddressImplicitAccountCreation {
-				return ErrImplicitAccountCreationAddressInInvalidOutput
+				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		case *AnchorOutput:
 			// The serialization rules enforce that these addresses are always set.
@@ -686,7 +686,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 
 			if (stateControllerAddress.Type() == AddressImplicitAccountCreation) ||
 				(governorAddress.Type() == AddressImplicitAccountCreation) {
-				return ErrImplicitAccountCreationAddressInInvalidOutput
+				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		default:
 			panic("unrecognized output type")
@@ -704,37 +704,37 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 		case *BasicOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		case *AccountOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		case *AnchorOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		case *FoundryOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		case *NFTOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		case *DelegationOutput:
 			for idx, uc := range typedOutput.UnlockConditions {
 				if err := lexicalOrderUniquenessValidator(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, unlock condition index: %d", index, idx)
 				}
 			}
 		default:
@@ -755,52 +755,52 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 		case *BasicOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, feature index: %d", index, idx)
 				}
 			}
 			// This output does not have immutable features.
 		case *AccountOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, feature index: %d", index, idx)
 				}
 			}
 			for idx, uc := range typedOutput.ImmutableFeatures {
 				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, immutable feature index: %d", index, idx)
 				}
 			}
 		case *AnchorOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, feature index: %d", index, idx)
 				}
 			}
 			for idx, uc := range typedOutput.ImmutableFeatures {
 				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, immutable feature index: %d", index, idx)
 				}
 			}
 		case *FoundryOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, feature index: %d", index, idx)
 				}
 			}
 			for idx, uc := range typedOutput.ImmutableFeatures {
 				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, immutable feature index: %d", index, idx)
 				}
 			}
 		case *NFTOutput:
 			for idx, uc := range typedOutput.Features {
 				if err := featureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, feature index: %d", index, idx)
 				}
 			}
 			for idx, uc := range typedOutput.ImmutableFeatures {
 				if err := immutableFeatureValidationFunc(idx, uc); err != nil {
-					return err
+					return ierrors.WithMessagef(err, "output %d, immutable feature index: %d", index, idx)
 				}
 			}
 		case *DelegationOutput:
@@ -844,7 +844,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() ElementValidationFunc[
 		}
 
 		if _, has := chainConstrainedOutputs[chainID]; has {
-			return ierrors.Wrapf(ErrNonUniqueChainOutputs, "output with chainID %s already exist on the output side", chainID.ToHex())
+			return ierrors.WithMessagef(ErrNonUniqueChainOutputs, "output %d with chainID %s already exist on the output side", index, chainID.ToHex())
 		}
 
 		chainConstrainedOutputs[chainID] = chainConstrainedOutput
@@ -857,7 +857,7 @@ func OutputsSyntacticalChainConstrainedOutputUniqueness() ElementValidationFunc[
 func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
 	checkMaxSize := func(index int, featType FeatureType, mapSize int) error {
 		if mapSize > MaxMetadataMapSize {
-			return ierrors.Wrapf(ErrMetadataExceedsMaxSize,
+			return ierrors.WithMessagef(ErrMetadataExceedsMaxSize,
 				"the %s of the output at index %d has size %d; max allowed: %d",
 				featType, index, mapSize, MaxMetadataMapSize,
 			)
@@ -871,7 +871,7 @@ func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
 		if stateMetadataFeat != nil {
 			mapSize := stateMetadataFeat.mapSize()
 			if err := checkMaxSize(index, stateMetadataFeat.Type(), mapSize); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 
@@ -879,7 +879,7 @@ func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
 		if metadataFeat != nil {
 			mapSize := metadataFeat.mapSize()
 			if err := checkMaxSize(index, metadataFeat.Type(), mapSize); err != nil {
-				return err
+				return ierrors.WithMessagef(err, "output %d", index)
 			}
 		}
 

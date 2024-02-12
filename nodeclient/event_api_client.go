@@ -100,7 +100,7 @@ func newEventAPIClient(nc *Client) *EventAPIClient {
 	clientOpts.ClientID = randMQTTClientID()
 	clientOpts.AddBroker(brokerURLFromClient(nc))
 	errChan := make(chan error)
-	clientOpts.OnConnectionLost = func(client mqtt.Client, err error) { sendErrOrDrop(errChan, err) }
+	clientOpts.OnConnectionLost = func(_ mqtt.Client, err error) { sendErrOrDrop(errChan, err) }
 
 	return &EventAPIClient{
 		Client:     nc,
@@ -198,7 +198,7 @@ func (eac *EventAPIClient) Close() {
 func subscribeToTopic[T any](eac *EventAPIClient, topic string, deseriFunc func(payload []byte) (T, error)) (<-chan T, *EventAPIClientSubscription) {
 	panicIfEventAPIClientInactive(eac)
 	channel := make(chan T)
-	if token := eac.MQTTClient.Subscribe(topic, 2, func(client mqtt.Client, mqttMsg mqtt.Message) {
+	if token := eac.MQTTClient.Subscribe(topic, 2, func(_ mqtt.Client, mqttMsg mqtt.Message) {
 		obj, err := deseriFunc(mqttMsg.Payload())
 		if err != nil {
 			sendErrOrDrop(eac.Errors, err)

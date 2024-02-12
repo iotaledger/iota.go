@@ -1,4 +1,4 @@
-//nolint:scopelint,dupl
+//nolint:scopelint,dupl,revive
 package iotago_test
 
 import (
