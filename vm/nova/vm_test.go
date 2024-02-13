@@ -1,4 +1,4 @@
-//nolint:forcetypeassert,dupl,nlreturn,scopelint
+//nolint:forcetypeassert,dupl,nlreturn,scopelint,revive
 package nova_test
 
 import (
@@ -3499,7 +3499,7 @@ func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 			}
 		}(),
 
-		// ok - burn and melt native tokens (burning enabled)
+		// fail - burn and melt native tokens (burning enabled)
 		func() *txExecTest {
 			return &txExecTest{
 				name:      "fail - burn and melt native tokens (burning enabled)",
@@ -3509,7 +3509,7 @@ func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 						iotago.WithTransactionCanBurnNativeTokens(true),
 					)
 				},
-				wantErr: iotago.ErrNativeTokenSumUnbalanced,
+				wantErr: iotago.ErrSimpleTokenSchemeMeltingInvalid,
 			}
 		}(),
 
@@ -3524,7 +3524,7 @@ func TestNovaTransactionExecution_TxCapabilities(t *testing.T) {
 						iotago.WithTransactionCanBurnNativeTokens(false),
 					)
 				},
-				wantErr: iotago.ErrNativeTokenSumUnbalanced,
+				wantErr: iotago.ErrSimpleTokenSchemeMeltingInvalid,
 			}
 		}(),
 

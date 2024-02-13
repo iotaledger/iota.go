@@ -72,6 +72,10 @@ func (w WorkScoreParameters) Equals(other WorkScoreParameters) bool {
 }
 
 // MaxBlockWork is the maximum work score a block can have.
+// This provides an overestimation of the maximum workscore as some constraints prevent
+// a block from reaching this WorkScore, e.g., native tokens can't present on an account output,
+// and the a block with this many signatures would exceed the maximum payload size.
+// It is ok to have an overestimation as we only need this to ensure no block with larger WorkScore can exist.
 func (w WorkScoreParameters) MaxBlockWork() (WorkScore, error) {
 	var innerErr error
 	var maxBlockWork WorkScore
@@ -116,7 +120,6 @@ func (w WorkScoreParameters) MaxBlockWork() (WorkScore, error) {
 	addWorkScore(w.Allotment, MaxAllotmentCount)
 
 	// signature check for max number of inputs each unlocked by a maximum sized mutli unlock
-	// TODO: this is not correct because the signatures would not even fit in the tx.
 	addWorkScore(w.SignatureEd25519, MaxInputsCount*10)
 
 	if innerErr != nil {

@@ -335,6 +335,8 @@ func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedIdents
 // ExecFunc is a function which given the context, input, outputs and
 // unlocks runs a specific execution/validation. The function might also modify the Params
 // in order to supply information to subsequent ExecFunc(s).
+//
+//nolint:revive
 type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 
 // ValidateUnlocks produces the UnlockedIdentities which will be set into the given Params and verifies that inputs are
@@ -557,7 +559,7 @@ func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentI
 // ExecFuncSenderUnlocked validates that for SenderFeature occurring on the output side,
 // the given identity is unlocked on the input side.
 func ExecFuncSenderUnlocked() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		for outputIndex, output := range vmParams.WorkingSet.Tx.Outputs {
 			senderFeat := output.FeatureSet().SenderFeature()
 			if senderFeat == nil {
@@ -577,7 +579,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 
 // ExecFuncBalancedMana validates that Mana is balanced from the input/output side.
 func ExecFuncBalancedMana() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		txCreationSlot := vmParams.WorkingSet.Tx.CreationSlot
 		for outputID := range vmParams.WorkingSet.UTXOInputsSet {
 			if outputID.CreationSlot() > txCreationSlot {
@@ -605,7 +607,7 @@ func ExecFuncBalancedMana() ExecFunc {
 // It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
 func ExecFuncBalancedBaseTokens() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		// note that due to syntactic validation of outputs, input and output base token amount sums
 		// are always within bounds of the total token supply
 		var in, out iotago.BaseToken
@@ -660,7 +662,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 
 // ExecFuncTimelocks validates that the inputs' timelocks are expired.
 func ExecFuncTimelocks() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsSet {
 			if input.UnlockConditionSet().HasTimelockCondition() {
 				commitment := vmParams.WorkingSet.Commitment
@@ -714,7 +716,7 @@ func ExecFuncChainTransitions() ExecFunc {
 //   - The NativeTokens between Inputs / Outputs must be balanced or have a deficit on the output side if there is no foundry state transition for a given NativeToken.
 //   - Max MaxNativeTokensCount native tokens within inputs + outputs
 func ExecFuncBalancedNativeTokens() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		// native token set creates handle overflows
 		var err error
 		vmParams.WorkingSet.InNativeTokens, err = vmParams.WorkingSet.UTXOInputs.NativeTokenSum()
@@ -766,7 +768,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 // Returns a func that checks that no more than one Implicit Account Creation Address
 // is on the input side of a transaction.
 func ExecFuncAtMostOneImplicitAccountCreationAddress() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		transactionHasImplicitAccountCreationAddress := false
 		for _, input := range vmParams.WorkingSet.UTXOInputs {
 			addressUnlockCondition := input.UnlockConditionSet().Address()

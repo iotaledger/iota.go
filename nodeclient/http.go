@@ -175,3 +175,20 @@ func do(
 
 	return res, nil
 }
+
+func encodeURLWithQueryParams(endpoint string, queryParams url.Values) (string, error) {
+	if len(queryParams) > 0 {
+		base, err := url.Parse(endpoint)
+		if err != nil {
+			return "", ierrors.Errorf("failed to parse endpoint: %w", err)
+		}
+
+		// encode the query params
+		base.RawQuery = queryParams.Encode()
+
+		// create a valid URL string
+		return base.String(), nil
+	}
+
+	return endpoint, nil
+}

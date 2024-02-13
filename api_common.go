@@ -26,7 +26,7 @@ var (
 	//  1. ImplicitAccountCreationAddress, MultiAddresses, RestrictedAddress are not nested inside the MultiAddress.
 	//  2. The weight of each address is at least 1.
 	//  3. The threshold is smaller or equal to the cumulative weight of all addresses.
-	multiAddressValidatorFunc = func(ctx context.Context, addr MultiAddress) error {
+	multiAddressValidatorFunc = func(_ context.Context, addr MultiAddress) error {
 		var cumulativeWeight uint16
 		for idx, address := range addr.Addresses {
 			switch addr := address.Address.(type) {
@@ -67,7 +67,7 @@ var (
 	//  1. ImplicitAccountCreationAddress are not nested inside the RestrictedAddress.
 	//  2. RestrictedAddresses are not nested inside the RestrictedAddress.
 	//  3. The bitmask does not contain trailing zero bytes.
-	restrictedAddressValidatorFunc = func(ctx context.Context, addr RestrictedAddress) error {
+	restrictedAddressValidatorFunc = func(_ context.Context, addr RestrictedAddress) error {
 		if err := BitMaskNonTrailingZeroBytesValidatorFunc(addr.AllowedCapabilities); err != nil {
 			return ierrors.Wrapf(ErrInvalidRestrictedAddress, "invalid allowed capabilities bitmask: %w", err)
 		}
@@ -125,7 +125,7 @@ func CommonSerixAPI() *serix.API {
 		must(api.RegisterTypeSettings(AddressesWithWeight{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte).WithArrayRules(addressesWithWeightArrRules),
 		))
-		must(api.RegisterValidator(AddressesWithWeight{}, func(ctx context.Context, keys AddressesWithWeight) error {
+		must(api.RegisterValidator(AddressesWithWeight{}, func(_ context.Context, keys AddressesWithWeight) error {
 			return SliceValidator(keys, LexicalOrderAndUniquenessValidator[*AddressWithWeight]())
 		}))
 		must(api.RegisterTypeSettings(RestrictedAddress{},
@@ -160,7 +160,7 @@ func CommonSerixAPI() *serix.API {
 			))
 			must(api.RegisterInterfaceObjects((*BlockIssuerKey)(nil), (*Ed25519PublicKeyHashBlockIssuerKey)(nil)))
 
-			must(api.RegisterValidator(BlockIssuerKeys{}, func(ctx context.Context, keys BlockIssuerKeys) error {
+			must(api.RegisterValidator(BlockIssuerKeys{}, func(_ context.Context, keys BlockIssuerKeys) error {
 				return SliceValidator(keys, LexicalOrderAndUniquenessValidator[BlockIssuerKey]())
 			}))
 			must(api.RegisterTypeSettings(BlockIssuerKeys{},

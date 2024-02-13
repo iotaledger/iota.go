@@ -60,16 +60,16 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 		"offsetDelegation": "100"
 	},
 	"workScoreParameters": {
-		"dataByte": 1,
-		"block": 1500,
-		"input": 10,
-		"contextInput": 20,
-		"output": 20,
-		"nativeToken": 20,
-		"staking": 5000,
-		"blockIssuer": 1000,
-		"allotment": 1000,
-		"signatureEd25519": 1000
+		"dataByte": 500,
+		"block": 110000,
+		"input": 7500,
+		"contextInput": 40000,
+		"output": 90000,
+		"nativeToken": 50000,
+		"staking": 40000,
+		"blockIssuer": 70000,
+		"allotment": 5000,
+		"signatureEd25519": 15000
 	},
 	"manaParameters": {
 		"bitsCount": 63,
@@ -100,11 +100,11 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	"epochNearingThreshold": 60,
 	"congestionControlParameters": {
 		"minReferenceManaCost": "1",
-		"increase": "10",
-		"decrease": "10",
-		"increaseThreshold": 800000,
-		"decreaseThreshold": 500000,
-		"schedulerRate": 100000,
+		"increase": "1",
+		"decrease": "1",
+		"increaseThreshold": 400000000,
+		"decreaseThreshold": 250000000,
+		"schedulerRate": 50000000,
 		"maxBufferSize": 1000,
 		"maxValidationBufferSize": 100
 	},

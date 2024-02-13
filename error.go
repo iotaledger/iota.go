@@ -16,14 +16,10 @@ var (
 	ErrIssuerAccountNotFound = ierrors.New("could not retrieve account information for block issuer")
 	// ErrBurnedInsufficientMana gets returned when the issuer account burned insufficient Mana for a block.
 	ErrBurnedInsufficientMana = ierrors.New("block issuer account burned insufficient Mana")
-	// ErrBlockVersionInvalid gets returned when the block version is invalid to retrieve API.
-	ErrBlockVersionInvalid = ierrors.New("could not retrieve API for block version")
 	// ErrRMCNotFound gets returned when the RMC could not be found from the slot commitment.
 	ErrRMCNotFound = ierrors.New("could not retrieve RMC for slot commitment")
 	// ErrFailedToCalculateManaCost gets returned when the Mana cost could not be calculated.
 	ErrFailedToCalculateManaCost = ierrors.New("could not calculate Mana cost for block")
-	// ErrNegativeBIC gets returned when the BIC of the issuer account is negative.
-	ErrNegativeBIC = ierrors.New("negative BIC")
 	// ErrAccountExpired gets returned when the account is expired.
 	ErrAccountExpired = ierrors.New("account expired")
 	// ErrInvalidSignature gets returned when the signature is invalid.
@@ -32,8 +28,6 @@ var (
 
 // Errors that can occur before the transaction is executed.
 var (
-	// ErrTxTypeInvalid gets returned for invalid transaction type.
-	ErrTxTypeInvalid = ierrors.New("transaction type is invalid")
 	// ErrUTXOInputInvalid gets returned when the UTXO input is invalid.
 	ErrUTXOInputInvalid = ierrors.New("UTXO input is invalid")
 	// ErrUnknownInputType gets returned for unknown input types.
@@ -52,8 +46,8 @@ var (
 	ErrStakingRewardCalculationFailure = ierrors.New("staking rewards could not be calculated due to storage issues or overflow")
 	// ErrDelegationRewardCalculationFailure gets returned when the delegation reward could not be calculated due to storage issues or overflow.
 	ErrDelegationRewardCalculationFailure = ierrors.New("delegation rewards could not be calculated due to storage issues or overflow")
-	// ErrTxConflicting gets returned when the transaction is conflicting.
-	ErrTxConflicting = ierrors.New("transaction is conflicting")
+	// ErrTxConflictRejected gets returned when the transaction was conflicting and the transaction was rejected.
+	ErrTxConflictRejected = ierrors.New("transaction was conflicting and was rejected")
 	// ErrInputAlreadySpent gets returned when the input is already spent.
 	ErrInputAlreadySpent = ierrors.New("input already spent")
 )

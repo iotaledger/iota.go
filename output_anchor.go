@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	// ErrInvalidAnchorStateTransition gets returned when an anchor is doing an invalid state transition.
-	ErrInvalidAnchorStateTransition = ierrors.New("invalid anchor state transition")
-	// ErrInvalidAnchorGovernanceTransition gets returned when an anchor is doing an invalid governance transition.
-	ErrInvalidAnchorGovernanceTransition = ierrors.New("invalid anchor governance transition")
+	// ErrAnchorInvalidStateTransition gets returned when an anchor is doing an invalid state transition.
+	ErrAnchorInvalidStateTransition = ierrors.New("invalid anchor state transition")
+	// ErrAnchorInvalidGovernanceTransition gets returned when an anchor is doing an invalid governance transition.
+	ErrAnchorInvalidGovernanceTransition = ierrors.New("invalid anchor governance transition")
 	// ErrAnchorMissing gets returned when an anchor is missing.
 	ErrAnchorMissing = ierrors.New("anchor is missing")
 )
