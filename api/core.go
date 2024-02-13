@@ -3,8 +3,6 @@ package api
 import (
 	"time"
 
-	"github.com/samber/lo"
-
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v4"
@@ -461,9 +459,10 @@ func unwrapErrors(err error, errList []error) []error {
 	//nolint:errorlint // false positive: we're not switching on a specific error type.
 	switch x := err.(type) {
 	case interface{ Unwrap() []error }:
-		// Reverse, so we walk the tree in post-order.
-		reversedErrors := lo.Reverse(x.Unwrap())
-		for _, err := range reversedErrors {
+		errors := x.Unwrap()
+		// Iterate the errors in reverse, so we walk the tree in post-order.
+		for i := len(errors) - 1; i >= 0; i-- {
+			err := errors[i]
 			if err != nil {
 				errList = unwrapErrors(err, errList)
 				errList = append(errList, err)
