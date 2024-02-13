@@ -16,14 +16,10 @@ var (
 	ErrIssuerAccountNotFound = ierrors.New("could not retrieve account information for block issuer")
 	// ErrBurnedInsufficientMana gets returned when the issuer account burned insufficient Mana for a block.
 	ErrBurnedInsufficientMana = ierrors.New("block issuer account burned insufficient Mana")
-	// ErrBlockVersionInvalid gets returned when the block version is invalid to retrieve API.
-	ErrBlockVersionInvalid = ierrors.New("could not retrieve API for block version")
 	// ErrRMCNotFound gets returned when the RMC could not be found from the slot commitment.
 	ErrRMCNotFound = ierrors.New("could not retrieve RMC for slot commitment")
 	// ErrFailedToCalculateManaCost gets returned when the Mana cost could not be calculated.
 	ErrFailedToCalculateManaCost = ierrors.New("could not calculate Mana cost for block")
-	// ErrNegativeBIC gets returned when the BIC of the issuer account is negative.
-	ErrNegativeBIC = ierrors.New("negative BIC")
 	// ErrAccountExpired gets returned when the account is expired.
 	ErrAccountExpired = ierrors.New("account expired")
 	// ErrInvalidSignature gets returned when the signature is invalid.
