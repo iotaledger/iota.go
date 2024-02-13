@@ -511,6 +511,7 @@ var (
 
 // Event API endpoints.
 const (
+	EventAPITopicSuffixRaw       = "/raw"
 	EventAPITopicSuffixAccepted  = "accepted"
 	EventAPITopicSuffixConfirmed = "confirmed"
 
