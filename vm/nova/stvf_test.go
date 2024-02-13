@@ -3126,7 +3126,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 					},
 				},
 			},
-			wantErr: &iotago.ChainTransitionError{},
+			wantErr: iotago.ErrChainOutputImmutableFeaturesChanged,
 		},
 	}
 
@@ -3141,8 +3141,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 					err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, cpy)
 					if tt.wantErr != nil {
-						//nolint:gosec // false positive
-						require.ErrorAs(t, err, &tt.wantErr)
+						require.ErrorIs(t, err, tt.wantErr)
 						return
 					}
 					require.NoError(t, err)
@@ -3156,8 +3155,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 
 			err := novaVM.ChainSTVF(tt.svCtx, tt.transType, tt.input, tt.next)
 			if tt.wantErr != nil {
-				//nolint:gosec // false positive
-				require.ErrorAs(t, err, &tt.wantErr)
+				require.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 			require.NoError(t, err)
