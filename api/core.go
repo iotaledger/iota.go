@@ -97,29 +97,23 @@ const (
 	BlockFailureIsTooOld                  BlockFailureReason = 1
 	BlockFailureParentIsTooOld            BlockFailureReason = 2
 	BlockFailureParentNotFound            BlockFailureReason = 3
-	BlockFailureParentInvalid             BlockFailureReason = 4
-	BlockFailureIssuerAccountNotFound     BlockFailureReason = 5
-	BlockFailureVersionInvalid            BlockFailureReason = 6
-	BlockFailureManaCostCalculationFailed BlockFailureReason = 7
-	BlockFailureBurnedInsufficientMana    BlockFailureReason = 8
-	BlockFailureAccountInvalid            BlockFailureReason = 9
-	BlockFailureSignatureInvalid          BlockFailureReason = 10
-	BlockFailureDroppedDueToCongestion    BlockFailureReason = 11
-	BlockFailurePayloadInvalid            BlockFailureReason = 12
+	BlockFailureIssuerAccountNotFound     BlockFailureReason = 4
+	BlockFailureManaCostCalculationFailed BlockFailureReason = 5
+	BlockFailureBurnedInsufficientMana    BlockFailureReason = 6
+	BlockFailureAccountLocked             BlockFailureReason = 7
+	BlockFailureAccountExpired            BlockFailureReason = 8
+	BlockFailureSignatureInvalid          BlockFailureReason = 9
+	BlockFailureDroppedDueToCongestion    BlockFailureReason = 10
+	BlockFailurePayloadInvalid            BlockFailureReason = 11
 	BlockFailureInvalid                   BlockFailureReason = 255
-
-	// TODO: see if needed after congestion PR is done.
-	BlockFailureOrphanedDueNegativeCreditsBalance BlockFailureReason = 13
 )
 
 var blocksErrorsFailureReasonMap = map[error]BlockFailureReason{
 	iotago.ErrIssuerAccountNotFound:     BlockFailureIssuerAccountNotFound,
 	iotago.ErrBurnedInsufficientMana:    BlockFailureBurnedInsufficientMana,
-	iotago.ErrBlockVersionInvalid:       BlockFailureVersionInvalid,
-	iotago.ErrRMCNotFound:               BlockFailureAccountInvalid,
 	iotago.ErrFailedToCalculateManaCost: BlockFailureManaCostCalculationFailed,
-	iotago.ErrNegativeBIC:               BlockFailureAccountInvalid,
-	iotago.ErrAccountExpired:            BlockFailureAccountInvalid,
+	iotago.ErrAccountLocked:             BlockFailureAccountLocked,
+	iotago.ErrAccountExpired:            BlockFailureAccountExpired,
 	iotago.ErrInvalidSignature:          BlockFailureSignatureInvalid,
 }
 
@@ -136,13 +130,18 @@ func BlockFailureReasonFromBytes(b []byte) (BlockFailureReason, int, error) {
 }
 
 func DetermineBlockFailureReason(err error) BlockFailureReason {
-	for errKey, failureReason := range blocksErrorsFailureReasonMap {
-		if ierrors.Is(err, errKey) {
-			return failureReason
+	errorList := make([]error, 0)
+	errorList = unwrapErrors(err, errorList)
+
+	// Map the error to the block failure reason.
+	// The strategy is to map the first failure reason that exists in order of most-detailed to least-detailed error.
+	for _, err := range errorList {
+		if blockFailureReason, matches := blocksErrorsFailureReasonMap[err]; matches {
+			return blockFailureReason
 		}
 	}
 
-	// use most general failure reason
+	// Use most general failure reason if no other error matches.
 	return BlockFailureInvalid
 }
 
