@@ -4,21 +4,21 @@ go 1.21
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
-	github.com/ethereum/go-ethereum v1.13.11
+	github.com/ethereum/go-ethereum v1.13.12
 	github.com/holiman/uint256 v1.2.4
-	github.com/iotaledger/hive.go/constraints v0.0.0-20240126143305-9caf79103e85
-	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20240124161008-b987a3ca53b2
-	github.com/iotaledger/hive.go/crypto v0.0.0-20240126143305-9caf79103e85
-	github.com/iotaledger/hive.go/ierrors v0.0.0-20240126143305-9caf79103e85
-	github.com/iotaledger/hive.go/lo v0.0.0-20240126143305-9caf79103e85
-	github.com/iotaledger/hive.go/runtime v0.0.0-20240126143305-9caf79103e85
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240124161008-b987a3ca53b2
-	github.com/iotaledger/hive.go/stringify v0.0.0-20240126143305-9caf79103e85
+	github.com/iotaledger/hive.go/constraints v0.0.0-20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/crypto v0.0.0-20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/lo v0.0.0-20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/runtime v0.0.0-20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240214175801-9ca9f93790f5
+	github.com/iotaledger/hive.go/stringify v0.0.0-20240214175801-9ca9f93790f5
 	github.com/iotaledger/iota-crypto-demo v0.0.0-20231208171603-786bb32fdb00
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.18.0
+	golang.org/x/crypto v0.19.0
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
 
@@ -30,14 +30,14 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20240126143305-9caf79103e85 // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20240214175801-9ca9f93790f5 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
