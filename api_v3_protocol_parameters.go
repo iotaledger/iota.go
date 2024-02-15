@@ -263,9 +263,9 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 		newProtocolParams.SlotDurationInSeconds(),
 	)
 
-	initalRewards, finalRewards := deriveInitialAndFinalRewardRates(newProtocolParams)
-	newProtocolParams.basicProtocolParameters.RewardsParameters.InitialRewardsRate = initalRewards
-	newProtocolParams.basicProtocolParameters.RewardsParameters.FinalRewardsRate = finalRewards
+	initialTargetRewardsRate, finalTargetRewardsRate := deriveTargetRewardsRates(newProtocolParams)
+	newProtocolParams.basicProtocolParameters.RewardsParameters.InitialTargetRewardsRate = initialTargetRewardsRate
+	newProtocolParams.basicProtocolParameters.RewardsParameters.FinalTargetRewardsRate = finalTargetRewardsRate
 
 	// Sanity checks
 	manaSupplySanityCheck(newProtocolParams)
@@ -309,7 +309,7 @@ func deriveBootstrappingDuration(annualDecayFactorPercentage uint8, slotsPerEpoc
 	return EpochIndex(epochsPerYear / beta)
 }
 
-func deriveInitialAndFinalRewardRates(protoParams ProtocolParameters) (initialRewards, finalRewards Mana) {
+func deriveTargetRewardsRates(protoParams ProtocolParameters) (Mana, Mana) {
 	// final reward, after bootstrapping phase
 	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), uint64(protoParams.RewardsParameters().RewardToGenerationRatio))
 	if err != nil {
@@ -326,24 +326,21 @@ func deriveInitialAndFinalRewardRates(protoParams ProtocolParameters) (initialRe
 		panic("failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
 	}
 
-	finalRewardRate := result >> subExponent
+	finalTargetRewardsRate := result >> subExponent
 
 	// delta represents the epoch duration in years, beta is a constant 1/3 and T is the bootstrapping duration in epochs.
-	delta := float64(protoParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protoParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
-	beta := 1 / 3.0
-	T := float64(protoParams.RewardsParameters().BootstrappingDuration)
-	decayBalancingConstant := uint64(math.E * delta / (T * (1 - math.Exp(delta*beta))))
+	epochDurationInYears := float64(protoParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protoParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
+	annualDecayFactor := float64(protoParams.ManaParameters().AnnualDecayFactorPercentage) / 100.0
+	bootstrappingDurationInYears := float64(protoParams.RewardsParameters().BootstrappingDuration) * epochDurationInYears
+	decayBalancingConstant := 1 / math.Pow(annualDecayFactor, bootstrappingDurationInYears)
 
-	initialRewardRate, err := safemath.SafeMul(finalRewardRate, decayBalancingConstant)
-	if err != nil {
-		panic("failed to calculate initial reward due to finalReward and decayBalancingConstant multiplication overflow")
-	}
+	initialTargetRewardsRate := float64(finalTargetRewardsRate) * decayBalancingConstant
 
-	return Mana(initialRewardRate), Mana(finalRewardRate)
+	return Mana(initialTargetRewardsRate), Mana(finalTargetRewardsRate)
 }
 
 func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
-	beta := -math.Log(float64(protocolParams.ManaParameters().AnnualDecayFactorPercentage))
+	beta := -math.Log(float64(protocolParams.ManaParameters().AnnualDecayFactorPercentage) / 100.0)
 	epochDurationInYears := float64(protocolParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
 	maxManaSupply := 21.0 * float64(protocolParams.TokenSupply()) * float64(protocolParams.ManaParameters().GenerationRate) * math.Pow(2.0, float64(protocolParams.SlotsPerEpochExponent())-float64(protocolParams.ManaParameters().GenerationRateExponent)) / (beta * epochDurationInYears)
 	if maxManaSupply >= math.Pow(2.0, float64(protocolParams.ManaParameters().BitsCount)) {

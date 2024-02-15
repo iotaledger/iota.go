@@ -116,9 +116,9 @@ func TestProtocolParametersJSONMarshalling(t *testing.T) {
 	"rewardsParameters": {
 		"profitMarginExponent": 8,
 		"bootstrappingDuration": 1079,
-		"rewardToGenerationRatio": "2",
-		"initialRewardsRate": "1",
-		"finalRewardsRate": "1",
+		"rewardToGenerationRatio": 2,
+		"initialTargetRewardsRate": "616067521149261",
+		"finalTargetRewardsRate": "226702563632670",
 		"poolCoefficientExponent": 11,
 		"retentionPeriod": 384
 	},
