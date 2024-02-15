@@ -66,10 +66,6 @@ type API interface {
 	ManaDecayProvider() *ManaDecayProvider
 	// MaxBlockWork returns the maximum block work score.
 	MaxBlockWork() WorkScore
-	// ComputedInitialReward returns the initial reward calculated from the parameters.
-	ComputedInitialReward() Mana
-	// ComputedFinalReward returns the final reward calculated from the parameters.
-	ComputedFinalReward() Mana
 }
 
 func LatestProtocolVersion() Version {

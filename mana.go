@@ -44,12 +44,12 @@ type RewardsParameters struct {
 	ProfitMarginExponent uint8 `serix:""`
 	// BootstrappingDuration is the length in epochs of the bootstrapping phase, (approx 3 years).
 	BootstrappingDuration EpochIndex `serix:""`
-	// ManaShareCoefficient is the coefficient used for calculation of initial rewards, relative to the term theta/(1-theta) from the Whitepaper, with theta = 2/3.
-	ManaShareCoefficient uint64 `serix:""`
-	// DecayBalancingConstantExponent is the exponent used for calculation of the initial reward.
-	DecayBalancingConstantExponent uint8 `serix:""`
-	// DecayBalancingConstant needs to be an integer approximation calculated based on chosen DecayBalancingConstantExponent.
-	DecayBalancingConstant uint64 `serix:""`
+	// RewardToGenerationRatio is the ratio of the final rewards rate to the generation rate of Mana.
+	RewardToGenerationRatio uint8 `serix:""`
+	// InitialRewardsRate is the rate of Mana rewards at the start of the bootstrapping phase.
+	InitialRewardsRate Mana `serix:""`
+	// FinalRewardsRate is the rate of Mana rewards after the bootstrapping phase.
+	FinalRewardsRate Mana `serix:""`
 	// PoolCoefficientExponent is the exponent used for shifting operation in the pool rewards calculations.
 	PoolCoefficientExponent uint8 `serix:""`
 	// The number of epochs for which rewards are retained.
@@ -57,21 +57,22 @@ type RewardsParameters struct {
 }
 
 func (r RewardsParameters) Equals(other RewardsParameters) bool {
-	return r.ProfitMarginExponent == other.ProfitMarginExponent && r.BootstrappingDuration == other.BootstrappingDuration &&
-		r.ManaShareCoefficient == other.ManaShareCoefficient &&
-		r.DecayBalancingConstantExponent == other.DecayBalancingConstantExponent &&
-		r.DecayBalancingConstant == other.DecayBalancingConstant &&
+	return r.ProfitMarginExponent == other.ProfitMarginExponent &&
+		r.BootstrappingDuration == other.BootstrappingDuration &&
+		r.RewardToGenerationRatio == other.RewardToGenerationRatio &&
+		r.InitialRewardsRate == other.InitialRewardsRate &&
+		r.FinalRewardsRate == other.FinalRewardsRate &&
 		r.PoolCoefficientExponent == other.PoolCoefficientExponent &&
 		r.RetentionPeriod == other.RetentionPeriod
 }
 
 func (r RewardsParameters) TargetReward(epoch EpochIndex, api API) (Mana, error) {
 	if epoch > r.BootstrappingDuration {
-		return api.ComputedFinalReward(), nil
+		return api.ProtocolParameters().RewardsParameters().FinalRewardsRate, nil
 	}
 
 	// Rewards start at epoch 0.
-	decayedInitialReward, err := api.ManaDecayProvider().DecayManaByEpochs(api.ComputedInitialReward(), 0, epoch)
+	decayedInitialReward, err := api.ManaDecayProvider().DecayManaByEpochs(api.ProtocolParameters().RewardsParameters().InitialRewardsRate, 0, epoch)
 	if err != nil {
 		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
 	}

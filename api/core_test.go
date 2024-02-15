@@ -416,9 +416,9 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				"rewardsParameters": {
 					"profitMarginExponent": 8,
 					"bootstrappingDuration": 1079,
-					"manaShareCoefficient": "2",
-					"decayBalancingConstantExponent": 8,
-					"decayBalancingConstant": "1",
+					"rewardToGenerationRatio": "2",
+					"initialRewardsRate": 1,
+					"finalRewardsRate": 1,
 					"poolCoefficientExponent": 11,
 					"retentionPeriod": 384
 				},

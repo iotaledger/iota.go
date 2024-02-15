@@ -236,7 +236,7 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 			WithCongestionControlOptions(1, 1, 1, 400_000_000, 250_000_000, 50_000_000, 1000, 100),
 			WithStakingOptions(10, 10, 10),
 			WithVersionSignalingOptions(7, 5, 7),
-			WithRewardsOptions(8, 8, 11, 2, 1, 384),
+			WithRewardsOptions(8, 11, 2, 384),
 			WithTargetCommitteeSize(32),
 			WithChainSwitchingThreshold(3),
 		},
@@ -262,6 +262,10 @@ func NewV3SnapshotProtocolParameters(opts ...options.Option[V3ProtocolParameters
 		newProtocolParams.SlotsPerEpochExponent(),
 		newProtocolParams.SlotDurationInSeconds(),
 	)
+
+	initalRewards, finalRewards := deriveInitialAndFinalRewardRates(newProtocolParams)
+	newProtocolParams.basicProtocolParameters.RewardsParameters.InitialRewardsRate = initalRewards
+	newProtocolParams.basicProtocolParameters.RewardsParameters.FinalRewardsRate = finalRewards
 
 	// Sanity checks
 	manaSupplySanityCheck(newProtocolParams)
@@ -303,6 +307,39 @@ func deriveBootstrappingDuration(annualDecayFactorPercentage uint8, slotsPerEpoc
 	beta := -math.Log(annualDecayFactor)
 
 	return EpochIndex(epochsPerYear / beta)
+}
+
+func deriveInitialAndFinalRewardRates(protoParams ProtocolParameters) (initialRewards, finalRewards Mana) {
+	// final reward, after bootstrapping phase
+	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), uint64(protoParams.RewardsParameters().RewardToGenerationRatio))
+	if err != nil {
+		panic("failed to calculate target reward due to tokenSupply and rewardToGenerationRatio multiplication overflow")
+	}
+
+	result, err = safemath.SafeMul(result, uint64(protoParams.ManaParameters().GenerationRate))
+	if err != nil {
+		panic("failed to calculate target reward due to multiplication with generationRate overflow")
+	}
+
+	subExponent, err := safemath.SafeSub(protoParams.ManaParameters().GenerationRateExponent, protoParams.SlotsPerEpochExponent())
+	if err != nil {
+		panic("failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
+	}
+
+	finalRewardRate := result >> subExponent
+
+	// delta represents the epoch duration in years, beta is a constant 1/3 and T is the bootstrapping duration in epochs.
+	delta := float64(protoParams.SlotDurationInSeconds()) * math.Pow(2.0, float64(protoParams.SlotsPerEpochExponent())) / (365 * 24 * 60 * 60)
+	beta := 1 / 3.0
+	T := float64(protoParams.RewardsParameters().BootstrappingDuration)
+	decayBalancingConstant := uint64(math.E * delta / (T * (1 - math.Exp(delta*beta))))
+
+	initialRewardRate, err := safemath.SafeMul(finalRewardRate, decayBalancingConstant)
+	if err != nil {
+		panic("failed to calculate initial reward due to finalReward and decayBalancingConstant multiplication overflow")
+	}
+
+	return Mana(initialRewardRate), Mana(finalRewardRate)
 }
 
 func manaSupplySanityCheck(protocolParams *V3ProtocolParameters) {
@@ -472,12 +509,10 @@ func WithVersionSignalingOptions(windowSize uint8, windowTargetRatio uint8, acti
 	}
 }
 
-func WithRewardsOptions(profitMarginExponent, decayBalancingConstantExponent, poolCoefficientExponent uint8, manaShareCoefficient, decayBalancingConstant uint64, retentionPeriod uint16) options.Option[V3ProtocolParameters] {
+func WithRewardsOptions(profitMarginExponent, poolCoefficientExponent, rewardToGenerationRatio uint8, retentionPeriod uint16) options.Option[V3ProtocolParameters] {
 	return func(p *V3ProtocolParameters) {
 		p.basicProtocolParameters.RewardsParameters.ProfitMarginExponent = profitMarginExponent
-		p.basicProtocolParameters.RewardsParameters.ManaShareCoefficient = manaShareCoefficient
-		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstantExponent = decayBalancingConstantExponent
-		p.basicProtocolParameters.RewardsParameters.DecayBalancingConstant = decayBalancingConstant
+		p.basicProtocolParameters.RewardsParameters.RewardToGenerationRatio = rewardToGenerationRatio
 		p.basicProtocolParameters.RewardsParameters.PoolCoefficientExponent = poolCoefficientExponent
 		p.basicProtocolParameters.RewardsParameters.RetentionPeriod = retentionPeriod
 	}
