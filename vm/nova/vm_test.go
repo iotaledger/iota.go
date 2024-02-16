@@ -2696,7 +2696,7 @@ func TestNovaTransactionExecution_MultiAddress(t *testing.T) {
 						}
 					},
 				},
-				wantErr: iotago.ErrInvalidMultiAddressUnlock,
+				wantErr: iotago.ErrMultiAddressUnlockInvalid,
 			}
 		}(),
 
@@ -3961,7 +3961,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.SignatureUnlock{Signature: sigs[0]},
 					},
 				},
-				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
+				wantErr: iotago.ErrDirectUnlockableAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4008,7 +4008,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4056,7 +4056,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4103,7 +4103,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4150,7 +4150,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.NFTUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4189,7 +4189,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AccountUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
+				wantErr: iotago.ErrDirectUnlockableAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4228,7 +4228,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidDirectUnlockableAddressUnlock,
+				wantErr: iotago.ErrDirectUnlockableAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4387,7 +4387,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AccountUnlock{Reference: 1},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4455,7 +4455,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AnchorUnlock{Reference: 1},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4518,7 +4518,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.AnchorUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 
@@ -4588,7 +4588,7 @@ func TestTxSemanticInputUnlocks(t *testing.T) {
 						&iotago.ReferenceUnlock{Reference: 0},
 					},
 				},
-				wantErr: iotago.ErrInvalidChainAddressUnlock,
+				wantErr: iotago.ErrChainAddressUnlockInvalid,
 			}
 		}(),
 	}

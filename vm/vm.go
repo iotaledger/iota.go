@@ -454,13 +454,13 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 		refUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
 		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
 			return ierrors.WithMessagef(
-				iotago.ErrInvalidChainAddressUnlock,
+				iotago.ErrChainAddressUnlockInvalid,
 				"input %d has a chain address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type(),
 			)
 		}
 
 		if err := unlockedIdentities.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidChainAddressUnlock, owner, owner.Type(), err)
+			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrChainAddressUnlockInvalid, owner, owner.Type(), err)
 		}
 
 	case iotago.DirectUnlockableAddress:
@@ -469,58 +469,58 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner ident is not a ChainAddress.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
 				return ierrors.WithMessagef(
-					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					iotago.ErrDirectUnlockableAddressUnlockInvalid,
 					"input %d has a non-chain address of type %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidDirectUnlockableAddressUnlock, owner, owner.Type(), err)
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrDirectUnlockableAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.SignatureUnlock:
 			// owner must not be unlocked already
 			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
 				return ierrors.WithMessagef(
-					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					iotago.ErrDirectUnlockableAddressUnlockInvalid,
 					"input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock of type %s", inputIndex, unlockedIdent.UnlockedAt, unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.SigUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrInvalidDirectUnlockableAddressUnlock, iotago.ErrUnlockSignatureInvalid, err)
+				return ierrors.Join(iotago.ErrDirectUnlockableAddressUnlockInvalid, iotago.ErrUnlockSignatureInvalid, err)
 			}
 
 		default:
-			return ierrors.WithMessagef(iotago.ErrInvalidDirectUnlockableAddressUnlock, "input %d has a direct unlockable address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
+			return ierrors.WithMessagef(iotago.ErrDirectUnlockableAddressUnlockInvalid, "input %d has a direct unlockable address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
 		}
 
 	case *iotago.MultiAddress:
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock,
+				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid,
 					"input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed",
 					inputIndex, owner.Type(), unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidMultiAddressUnlock, owner, owner.Type(), err)
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrMultiAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.MultiUnlock:
 			// owner must not be unlocked already
 			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
-				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedIdent.UnlockedAt)
+				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedIdent.UnlockedAt)
 			}
 
 			if err := unlockedIdentities.MultiUnlock(owner, uBlock, inputIndex, unlockedIdentities, essenceMsgToSign); err != nil {
-				return ierrors.Join(iotago.ErrInvalidMultiAddressUnlock, err)
+				return ierrors.Join(iotago.ErrMultiAddressUnlockInvalid, err)
 			}
 
 		default:
-			return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
 		}
 
 	default:
