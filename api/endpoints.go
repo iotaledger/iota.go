@@ -19,14 +19,26 @@ const (
 	// IndexerPluginName is the name for the indexer plugin.
 	IndexerPluginName = "indexer/v2"
 
-	// MQTTPluginName is the name for the MQTT plugin.
-	MQTTPluginName = "mqtt/v2"
-
 	// BlockIssuerPluginName is the name for the blockissuer plugin.
 	BlockIssuerPluginName = "blockissuer/v1"
+
+	// MQTTPluginName is the name for the MQTT plugin.
+	MQTTPluginName = "mqtt/v2"
 )
 
 const (
+	// ParameterPageSize is used to specify the page size.
+	ParameterPageSize = "pageSize"
+
+	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
+	ParameterCursor = "cursor"
+
+	// ParameterSlot is used to identify a slot.
+	ParameterSlot = "slot"
+
+	// ParameterEpoch is used to identify an epoch.
+	ParameterEpoch = "epoch"
+
 	// ParameterBlockID is used to identify a block by its ID.
 	ParameterBlockID = "blockId"
 
@@ -36,17 +48,8 @@ const (
 	// ParameterOutputID is used to identify an output by its ID.
 	ParameterOutputID = "outputId"
 
-	// ParameterSlot is used to identify a slot.
-	ParameterSlot = "slot"
-
-	// ParameterEpoch is used to identify an epoch.
-	ParameterEpoch = "epoch"
-
 	// ParameterCommitmentID is used to identify a slot commitment by its ID.
 	ParameterCommitmentID = "commitmentId"
-
-	// ParameterBech32Address is used to to represent bech32 address.
-	ParameterBech32Address = "bech32Address"
 
 	// ParameterFoundryID is used to identify a foundry by its ID.
 	ParameterFoundryID = "foundryId"
@@ -57,11 +60,26 @@ const (
 	// ParameterPeerID is used to identify a peer.
 	ParameterPeerID = "peerId"
 
-	// ParameterPageSize is used to specify the page size.
-	ParameterPageSize = "pageSize"
+	// ParameterBech32Address is used to to represent bech32 address.
+	ParameterBech32Address = "bech32Address"
 
-	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
-	ParameterCursor = "cursor"
+	// ParameterAddress is used to identify an address.
+	ParameterAddress = "address"
+
+	// ParameterAccountAddress is used to identify an account address.
+	ParameterAccountAddress = "accountAddress"
+
+	// ParameterAnchorAddress is used to identify an anchor address.
+	ParameterAnchorAddress = "anchorAddress"
+
+	// ParameterNFTAddress is used to identify an NFT address.
+	ParameterNFTAddress = "nftAddress"
+
+	// ParameterTag is used to identify a tag.
+	ParameterTag = "tag"
+
+	// ParameterCondition is used to identify an unlock condition.
+	ParameterCondition = "condition"
 
 	// ParameterWorkScore is used to identify work score.
 	ParameterWorkScore = "workScore"
@@ -97,6 +115,7 @@ func EndpointWithEchoParameters(endpoint string) string {
 	return regexp.MustCompile(`\{([^}]*)\}`).ReplaceAllString(endpoint, ":$1")
 }
 
+// Core API endpoints.
 const (
 	// CoreEndpointInfo is the endpoint for getting the node info.
 	// GET returns the node info.
@@ -287,6 +306,7 @@ var (
 	CoreRouteCommittee                         = route(CorePluginName, CoreEndpointCommittee)
 )
 
+// Management API endpoints.
 const (
 	// ManagementEndpointPeer is the endpoint for getting peers by their peerID.
 	// GET returns the peer.
@@ -329,6 +349,7 @@ var (
 	ManagementRouteSnapshotsCreate = route(ManagementPluginName, ManagementEndpointSnapshotsCreate)
 )
 
+// Indexer API endpoints.
 const (
 	// IndexerEndpointOutputs is the endpoint for getting basic, account, anchor, foundry, nft and delegation outputs filtered by the given parameters.
 	// GET with query parameter returns all outputIDs that fit these filter criteria.
@@ -466,6 +487,7 @@ const (
 	HeaderBlockIssuerCommitmentID     = "X-IOTA-BlockIssuer-Commitment-ID"
 )
 
+// BlockIssuer API endpoints.
 const (
 	// BlockIssuerRouteInfo is the endpoint for getting the info of the block issuer.
 	// GET returns the info.
@@ -485,4 +507,59 @@ const (
 var (
 	BlockIssuerRouteInfo         = route(BlockIssuerPluginName, BlockIssuerEndpointInfo)
 	BlockIssuerRouteIssuePayload = route(BlockIssuerPluginName, BlockIssuerEndpointIssuePayload)
+)
+
+// Event API endpoints.
+const (
+	EventAPITopicSuffixRaw       = "/raw"
+	EventAPITopicSuffixAccepted  = "accepted"
+	EventAPITopicSuffixConfirmed = "confirmed"
+
+	// HINT: all existing topics always have a "/raw" suffix for the raw payload as well.
+	EventAPITopicCommitmentsLatest    = "commitments/latest"    // iotago.Commitment
+	EventAPITopicCommitmentsFinalized = "commitments/finalized" // iotago.Commitment
+
+	EventAPITopicBlocks                              = "blocks"                                     // iotago.Block (track all incoming blocks)
+	EventAPITopicBlocksValidation                    = "blocks/validation"                          // iotago.Block (track all incoming validation blocks)
+	EventAPITopicBlocksBasic                         = "blocks/basic"                               // iotago.Block (track all incoming basic blocks)
+	EventAPITopicBlocksBasicTaggedData               = "blocks/basic/tagged-data"                   // iotago.Block (track all incoming basic blocks with tagged data payload)
+	EventAPITopicBlocksBasicTaggedDataTag            = "blocks/basic/tagged-data/{tag}"             // iotago.Block (track all incoming basic blocks with specific tagged data payload)
+	EventAPITopicBlocksBasicTransaction              = "blocks/basic/transaction"                   // iotago.Block (track all incoming basic blocks with transactions)
+	EventAPITopicBlocksBasicTransactionTaggedData    = "blocks/basic/transaction/tagged-data"       // iotago.Block (track all incoming basic blocks with transactions and tagged data)
+	EventAPITopicBlocksBasicTransactionTaggedDataTag = "blocks/basic/transaction/tagged-data/{tag}" // iotago.Block (track all incoming basic blocks with transactions and specific tagged data)
+
+	// single block on subscribe and changes in it's metadata (accepted, confirmed).
+	EventAPITopicTransactionsIncludedBlockMetadata = "transactions/{transactionId}/included-block-metadata" // api.BlockMetadataResponse (track inclusion of a single transaction)
+	EventAPITopicTransactionMetadata               = "transaction-metadata/{transactionId}"                 // api.TransactionMetadataResponse (track a specific transaction)
+
+	// single block on subscribe and changes in it's metadata (accepted, confirmed).
+	EventAPITopicBlockMetadata = "block-metadata/{blockId}" // api.BlockMetadataResponse (track changes to a single block)
+
+	// all blocks that arrive after subscribing.
+	EventAPITopicBlockMetadataAccepted  = "block-metadata/" + EventAPITopicSuffixAccepted  // api.BlockMetadataResponse (track acceptance of all blocks)
+	EventAPITopicBlockMetadataConfirmed = "block-metadata/" + EventAPITopicSuffixConfirmed // api.BlockMetadataResponse (track confirmation of all blocks)
+
+	// single output on subscribe and changes in it's metadata (accepted, committed, spent).
+	EventAPITopicOutputs = "outputs/{outputId}" // api.OutputWithMetadataResponse (track changes to a single output)
+
+	// all outputs that arrive after subscribing (on transaction accepted and transaction committed).
+	EventAPITopicAccountOutputs                     = "outputs/account/{accountAddress}"     // api.OutputWithMetadataResponse (all changes of the chain output)
+	EventAPITopicAnchorOutputs                      = "outputs/anchor/{anchorAddress}"       // api.OutputWithMetadataResponse (all changes of the chain output)
+	EventAPITopicFoundryOutputs                     = "outputs/foundry/{foundryId}"          // api.OutputWithMetadataResponse (all changes of the chain output)
+	EventAPITopicNFTOutputs                         = "outputs/nft/{nftAddress}"             // api.OutputWithMetadataResponse (all changes of the chain output)
+	EventAPITopicDelegationOutputs                  = "outputs/delegation/{delegationId}"    // api.OutputWithMetadataResponse (all changes of the chain output)
+	EventAPITopicOutputsByUnlockConditionAndAddress = "outputs/unlock/{condition}/{address}" // api.OutputWithMetadataResponse (all changes to outputs that match the unlock condition)
+)
+
+// EventAPIUnlockCondition denotes the different unlock conditions.
+type EventAPIUnlockCondition string
+
+const (
+	EventAPIUnlockConditionAny              EventAPIUnlockCondition = "+"
+	EventAPIUnlockConditionAddress          EventAPIUnlockCondition = "address"
+	EventAPIUnlockConditionStorageReturn    EventAPIUnlockCondition = "storage-return"
+	EventAPIUnlockConditionExpiration       EventAPIUnlockCondition = "expiration"
+	EventAPIUnlockConditionStateController  EventAPIUnlockCondition = "state-controller"
+	EventAPIUnlockConditionGovernor         EventAPIUnlockCondition = "governor"
+	EventAPIUnlockConditionImmutableAccount EventAPIUnlockCondition = "immutable-account"
 )
