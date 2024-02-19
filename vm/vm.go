@@ -335,6 +335,8 @@ func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedIdents
 // ExecFunc is a function which given the context, input, outputs and
 // unlocks runs a specific execution/validation. The function might also modify the Params
 // in order to supply information to subsequent ExecFunc(s).
+//
+//nolint:revive
 type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 
 // ValidateUnlocks produces the UnlockedIdentities which will be set into the given Params and verifies that inputs are
@@ -452,13 +454,13 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 		refUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
 		if !isReferentialUnlock || !refUnlock.Chainable() || !refUnlock.SourceAllowed(ownerIdent) {
 			return ierrors.WithMessagef(
-				iotago.ErrInvalidChainAddressUnlock,
+				iotago.ErrChainAddressUnlockInvalid,
 				"input %d has a chain address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type(),
 			)
 		}
 
 		if err := unlockedIdentities.RefUnlock(owner.Key(), refUnlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidChainAddressUnlock, owner, owner.Type(), err)
+			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrChainAddressUnlockInvalid, owner, owner.Type(), err)
 		}
 
 	case iotago.DirectUnlockableAddress:
@@ -467,58 +469,58 @@ func unlockIdent(ownerIdent iotago.Address, unlock iotago.Unlock, inputIndex uin
 			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner ident is not a ChainAddress.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
 				return ierrors.WithMessagef(
-					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					iotago.ErrDirectUnlockableAddressUnlockInvalid,
 					"input %d has a non-chain address of type %s but its corresponding unlock of type %s is chainable or not allowed", inputIndex, owner.Type(), unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidDirectUnlockableAddressUnlock, owner, owner.Type(), err)
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrDirectUnlockableAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.SignatureUnlock:
 			// owner must not be unlocked already
 			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
 				return ierrors.WithMessagef(
-					iotago.ErrInvalidDirectUnlockableAddressUnlock,
+					iotago.ErrDirectUnlockableAddressUnlockInvalid,
 					"input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock of type %s", inputIndex, unlockedIdent.UnlockedAt, unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.SigUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Join(iotago.ErrInvalidDirectUnlockableAddressUnlock, iotago.ErrUnlockSignatureInvalid, err)
+				return ierrors.Join(iotago.ErrDirectUnlockableAddressUnlockInvalid, iotago.ErrUnlockSignatureInvalid, err)
 			}
 
 		default:
-			return ierrors.WithMessagef(iotago.ErrInvalidDirectUnlockableAddressUnlock, "input %d has a direct unlockable address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
+			return ierrors.WithMessagef(iotago.ErrDirectUnlockableAddressUnlockInvalid, "input %d has a direct unlockable address of type %s but its corresponding unlock is of type %s", inputIndex, owner.Type(), unlock.Type())
 		}
 
 	case *iotago.MultiAddress:
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerIdent) {
-				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock,
+				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid,
 					"input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed",
 					inputIndex, owner.Type(), unlock.Type(),
 				)
 			}
 
 			if err := unlockedIdentities.RefUnlock(owner.Key(), uBlock.Ref(), inputIndex, checkUnlockOnly); err != nil {
-				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrInvalidMultiAddressUnlock, owner, owner.Type(), err)
+				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrMultiAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.MultiUnlock:
 			// owner must not be unlocked already
 			if unlockedIdent, wasAlreadyUnlocked := unlockedIdentities[owner.Key()]; wasAlreadyUnlocked {
-				return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedIdent.UnlockedAt)
+				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedIdent.UnlockedAt)
 			}
 
 			if err := unlockedIdentities.MultiUnlock(owner, uBlock, inputIndex, unlockedIdentities, essenceMsgToSign); err != nil {
-				return ierrors.Join(iotago.ErrInvalidMultiAddressUnlock, err)
+				return ierrors.Join(iotago.ErrMultiAddressUnlockInvalid, err)
 			}
 
 		default:
-			return ierrors.WithMessagef(iotago.ErrInvalidMultiAddressUnlock, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
 		}
 
 	default:
@@ -557,7 +559,7 @@ func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentI
 // ExecFuncSenderUnlocked validates that for SenderFeature occurring on the output side,
 // the given identity is unlocked on the input side.
 func ExecFuncSenderUnlocked() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		for outputIndex, output := range vmParams.WorkingSet.Tx.Outputs {
 			senderFeat := output.FeatureSet().SenderFeature()
 			if senderFeat == nil {
@@ -577,7 +579,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 
 // ExecFuncBalancedMana validates that Mana is balanced from the input/output side.
 func ExecFuncBalancedMana() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		txCreationSlot := vmParams.WorkingSet.Tx.CreationSlot
 		for outputID := range vmParams.WorkingSet.UTXOInputsSet {
 			if outputID.CreationSlot() > txCreationSlot {
@@ -605,7 +607,7 @@ func ExecFuncBalancedMana() ExecFunc {
 // It additionally also incorporates the check whether return amounts via StorageDepositReturnUnlockCondition(s) for specified identities
 // are fulfilled from the output side.
 func ExecFuncBalancedBaseTokens() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		// note that due to syntactic validation of outputs, input and output base token amount sums
 		// are always within bounds of the total token supply
 		var in, out iotago.BaseToken
@@ -660,7 +662,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 
 // ExecFuncTimelocks validates that the inputs' timelocks are expired.
 func ExecFuncTimelocks() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsSet {
 			if input.UnlockConditionSet().HasTimelockCondition() {
 				commitment := vmParams.WorkingSet.Commitment
@@ -714,7 +716,7 @@ func ExecFuncChainTransitions() ExecFunc {
 //   - The NativeTokens between Inputs / Outputs must be balanced or have a deficit on the output side if there is no foundry state transition for a given NativeToken.
 //   - Max MaxNativeTokensCount native tokens within inputs + outputs
 func ExecFuncBalancedNativeTokens() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		// native token set creates handle overflows
 		var err error
 		vmParams.WorkingSet.InNativeTokens, err = vmParams.WorkingSet.UTXOInputs.NativeTokenSum()
@@ -766,7 +768,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 // Returns a func that checks that no more than one Implicit Account Creation Address
 // is on the input side of a transaction.
 func ExecFuncAtMostOneImplicitAccountCreationAddress() ExecFunc {
-	return func(vm VirtualMachine, vmParams *Params) error {
+	return func(_ VirtualMachine, vmParams *Params) error {
 		transactionHasImplicitAccountCreationAddress := false
 		for _, input := range vmParams.WorkingSet.UTXOInputs {
 			addressUnlockCondition := input.UnlockConditionSet().Address()

@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -160,8 +159,6 @@ type v3api struct {
 	livenessThresholdDuration time.Duration
 	storageScoreStructure     *StorageScoreStructure
 	maxBlockWork              WorkScore
-	computedInitialReward     Mana
-	computedFinalReward       Mana
 }
 
 type contextAPIKey = struct{}
@@ -219,14 +216,6 @@ func (v *v3api) MaxBlockWork() WorkScore {
 	return v.maxBlockWork
 }
 
-func (v *v3api) ComputedInitialReward() Mana {
-	return v.computedInitialReward
-}
-
-func (v *v3api) ComputedFinalReward() Mana {
-	return v.computedFinalReward
-}
-
 func (v *v3api) Encode(obj interface{}, opts ...serix.Option) ([]byte, error) {
 	return v.serixAPI.Encode(v.context(), obj, opts...)
 }
@@ -244,9 +233,6 @@ func V3API(protoParams ProtocolParameters) API {
 	maxBlockWork, err := protoParams.WorkScoreParameters().MaxBlockWork()
 	must(err)
 
-	initialReward, finalReward, err := calculateRewards(protoParams)
-	must(err)
-
 	//nolint:forcetypeassert // we can safely assume that these are V3ProtocolParameters
 	v3 := &v3api{
 		serixAPI:              api,
@@ -255,8 +241,6 @@ func V3API(protoParams ProtocolParameters) API {
 		timeProvider:          timeProvider,
 		manaDecayProvider:     NewManaDecayProvider(timeProvider, protoParams.SlotsPerEpochExponent(), protoParams.ManaParameters()),
 		maxBlockWork:          maxBlockWork,
-		computedInitialReward: initialReward,
-		computedFinalReward:   finalReward,
 	}
 
 	must(api.RegisterTypeSettings(TaggedData{},
@@ -285,7 +269,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(MetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidator(MetadataFeatureEntriesKey(""), func(ctx context.Context, key MetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(MetadataFeatureEntriesKey(""), func(_ context.Context, key MetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidMetadataKey, err)
 			}
@@ -305,7 +289,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(StateMetadataFeatureEntriesKey(""),
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsByte)),
 		)
-		must(api.RegisterValidator(StateMetadataFeatureEntriesKey(""), func(ctx context.Context, key StateMetadataFeatureEntriesKey) error {
+		must(api.RegisterValidator(StateMetadataFeatureEntriesKey(""), func(_ context.Context, key StateMetadataFeatureEntriesKey) error {
 			if err := checkPrintableASCIIString(string(key)); err != nil {
 				return ierrors.Join(ErrInvalidStateMetadataKey, err)
 			}
@@ -344,7 +328,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStorageDepositReturn))),
 		)
 		must(api.RegisterValidator(StorageDepositReturnUnlockCondition{},
-			func(ctx context.Context, sdruc StorageDepositReturnUnlockCondition) error {
+			func(_ context.Context, sdruc StorageDepositReturnUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(sdruc.ReturnAddress)
 			},
 		))
@@ -355,7 +339,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionExpiration))),
 		)
 		must(api.RegisterValidator(ExpirationUnlockCondition{},
-			func(ctx context.Context, exp ExpirationUnlockCondition) error {
+			func(_ context.Context, exp ExpirationUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(exp.ReturnAddress)
 			},
 		))
@@ -363,7 +347,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionStateControllerAddress))),
 		)
 		must(api.RegisterValidator(StateControllerAddressUnlockCondition{},
-			func(ctx context.Context, stateController StateControllerAddressUnlockCondition) error {
+			func(_ context.Context, stateController StateControllerAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(stateController.Address)
 			},
 		))
@@ -371,7 +355,7 @@ func V3API(protoParams ProtocolParameters) API {
 			serix.TypeSettings{}.WithObjectType(uint8(UnlockConditionGovernorAddress))),
 		)
 		must(api.RegisterValidator(GovernorAddressUnlockCondition{},
-			func(ctx context.Context, gov GovernorAddressUnlockCondition) error {
+			func(_ context.Context, gov GovernorAddressUnlockCondition) error {
 				return disallowImplicitAccountCreationAddress(gov.Address)
 			},
 		))
@@ -592,14 +576,14 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterTypeSettings(Unlocks{},
 			serix.TypeSettings{}.WithLengthPrefixType(serix.LengthPrefixTypeAsUint16).WithArrayRules(txV3UnlocksArrRules),
 		))
-		must(api.RegisterValidator(SignedTransaction{}, func(ctx context.Context, tx SignedTransaction) error {
+		must(api.RegisterValidator(SignedTransaction{}, func(_ context.Context, tx SignedTransaction) error {
 			return tx.syntacticallyValidate()
 		}))
 		must(api.RegisterInterfaceObjects((*TxEssencePayload)(nil), (*TaggedData)(nil)))
 	}
 
 	{
-		must(api.RegisterValidator(BlockIDs{}, func(ctx context.Context, blockIDs BlockIDs) error {
+		must(api.RegisterValidator(BlockIDs{}, func(_ context.Context, blockIDs BlockIDs) error {
 			return SliceValidator(blockIDs, LexicalOrderAndUniquenessValidator[BlockID]())
 		}))
 		must(api.RegisterTypeSettings(BlockIDs{},
@@ -608,7 +592,7 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	{
-		must(api.RegisterValidator(TransactionIDs{}, func(ctx context.Context, transactionIDs TransactionIDs) error {
+		must(api.RegisterValidator(TransactionIDs{}, func(_ context.Context, transactionIDs TransactionIDs) error {
 			return SliceValidator(transactionIDs, LexicalOrderAndUniquenessValidator[TransactionID]())
 		}))
 		must(api.RegisterTypeSettings(TransactionIDs{},
@@ -641,7 +625,7 @@ func V3API(protoParams ProtocolParameters) API {
 		must(api.RegisterInterfaceObjects((*ApplicationPayload)(nil), (*CandidacyAnnouncement)(nil)))
 
 		must(api.RegisterTypeSettings(Block{}, serix.TypeSettings{}))
-		must(api.RegisterValidator(Block{}, func(ctx context.Context, block Block) error {
+		must(api.RegisterValidator(Block{}, func(_ context.Context, block Block) error {
 			return block.syntacticallyValidate()
 		}))
 	}
@@ -659,34 +643,4 @@ func V3API(protoParams ProtocolParameters) API {
 	}
 
 	return v3
-}
-
-func calculateRewards(protoParams ProtocolParameters) (initialRewards, finalRewards Mana, err error) {
-	// final reward, after bootstrapping phase
-	result, err := safemath.SafeMul(uint64(protoParams.TokenSupply()), protoParams.RewardsParameters().ManaShareCoefficient)
-	if err != nil {
-		return 0, 0, ierrors.Wrap(err, "failed to calculate target reward due to tokenSupply and RewardsManaShareCoefficient multiplication overflow")
-	}
-
-	result, err = safemath.SafeMul(result, uint64(protoParams.ManaParameters().GenerationRate))
-	if err != nil {
-		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to multiplication with generationRate overflow")
-	}
-
-	subExponent, err := safemath.SafeSub(protoParams.ManaParameters().GenerationRateExponent, protoParams.SlotsPerEpochExponent())
-	if err != nil {
-		return 0, 0, ierrors.Wrapf(err, "failed to calculate target reward due to generationRateExponent - slotsPerEpochExponent subtraction overflow")
-	}
-
-	finalRewardsUint := result >> subExponent
-
-	// initial reward for bootstrapping phase
-	initialReward, err := safemath.SafeMul(finalRewardsUint, protoParams.RewardsParameters().DecayBalancingConstant)
-	if err != nil {
-		return 0, 0, ierrors.Wrapf(err, "failed to calculate initial reward due to finalReward and DecayBalancingConstant multiplication overflow")
-	}
-
-	initialRewardsUint := initialReward >> uint64(protoParams.RewardsParameters().DecayBalancingConstantExponent)
-
-	return Mana(initialRewardsUint), Mana(finalRewardsUint), nil
 }

@@ -21,6 +21,8 @@ const (
 )
 
 var (
+	// ErrTxTypeInvalid gets returned for invalid transaction type.
+	ErrTxTypeInvalid = ierrors.New("transaction type is invalid")
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrTxEssenceCapabilitiesInvalid gets returned when the capabilities within a Transaction are invalid.

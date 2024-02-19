@@ -131,5 +131,6 @@ func (t *SignedTransaction) WorkScore(workScoreParameters *WorkScoreParameters) 
 		return 0, err
 	}
 
-	return workScoreSignedTransactionData.Add(workScoreTransaction, workScoreUnlocks)
+	// we include the block offset in the payload WorkScore
+	return workScoreParameters.Block.Add(workScoreSignedTransactionData, workScoreTransaction, workScoreUnlocks)
 }

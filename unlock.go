@@ -70,12 +70,12 @@ var (
 	ErrNestedMultiUnlock = ierrors.New("multi unlocks can't be nested")
 	// ErrEmptyUnlockOutsideMultiUnlock gets returned when an empty unlock was not nested inside of a multi unlock.
 	ErrEmptyUnlockOutsideMultiUnlock = ierrors.New("empty unlocks are only allowed inside of a multi unlock")
-	// ErrInvalidChainAddressUnlock gets returned when an invalid unlock for chain addresses is encountered.
-	ErrInvalidChainAddressUnlock = ierrors.New("invalid unlock for chain address")
-	// ErrInvalidDirectUnlockableAddressUnlock gets returned when an invalid unlock for direct unlockable addresses is encountered.
-	ErrInvalidDirectUnlockableAddressUnlock = ierrors.New("invalid unlock for direct unlockable address")
-	// ErrInvalidMultiAddressUnlock gets returned when an invalid unlock for multi addresses is encountered.
-	ErrInvalidMultiAddressUnlock = ierrors.New("invalid unlock for multi address")
+	// ErrChainAddressUnlockInvalid gets returned when an invalid unlock for chain addresses is encountered.
+	ErrChainAddressUnlockInvalid = ierrors.New("invalid unlock for chain address")
+	// ErrDirectUnlockableAddressUnlockInvalid gets returned when an invalid unlock for direct unlockable addresses is encountered.
+	ErrDirectUnlockableAddressUnlockInvalid = ierrors.New("invalid unlock for direct unlockable address")
+	// ErrMultiAddressUnlockInvalid gets returned when an invalid unlock for multi addresses is encountered.
+	ErrMultiAddressUnlockInvalid = ierrors.New("invalid unlock for multi address")
 )
 
 type Unlocks []Unlock
