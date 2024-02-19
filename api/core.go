@@ -704,7 +704,6 @@ type (
 		// Ready indicates if a node is ready to schedule a block issued by the specified account, or if the issuer should wait.
 		Ready bool `serix:""`
 		// ReferenceManaCost (RMC) is the mana cost a user needs to burn to issue a block in slot Slot.
-		// TODO: make this return the Cost as a Mana value as we provide WorkScore to this endpoint so can get this from RMC.
 		ReferenceManaCost iotago.Mana `serix:""`
 		// BlockIssuanceCredits (BIC) provides the BIC of the account in slot Slot.
 		// This balance needs to be non-negative, otherwise account is locked
