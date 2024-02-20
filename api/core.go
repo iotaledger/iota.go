@@ -22,7 +22,7 @@ const (
 	BlockStateAccepted
 	BlockStateConfirmed
 	BlockStateFinalized
-	BlockStateRejected
+	BlockStateOrphaned
 	BlockStateFailed
 )
 
@@ -33,7 +33,7 @@ func (b BlockState) String() string {
 		"accepted",
 		"confirmed",
 		"finalized",
-		"rejected",
+		"orphaned",
 		"failed",
 	}[b]
 }
@@ -79,8 +79,8 @@ func (b *BlockState) DecodeJSON(state any) error {
 		*b = BlockStateConfirmed
 	case "finalized":
 		*b = BlockStateFinalized
-	case "rejected":
-		*b = BlockStateRejected
+	case "orphaned":
+		*b = BlockStateOrphaned
 	case "failed":
 		*b = BlockStateFailed
 	default:
@@ -601,7 +601,7 @@ type (
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
 		BlockID iotago.BlockID `serix:""`
-		// BlockState might be pending, rejected, failed, confirmed, finalized.
+		// BlockState might be unknown, pending, accepted, orphaned, failed, confirmed, finalized.
 		BlockState BlockState `serix:""`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
