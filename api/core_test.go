@@ -726,7 +726,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				PageSize: 50,
 			},
 			Target: `{
-	"stakers": [
+	"validators": [
 		{
 			"address": "rms1prlsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcyz9fx",
 			"stakingEndEpoch": 0,
