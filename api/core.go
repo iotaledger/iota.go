@@ -732,7 +732,7 @@ type (
 
 	// ValidatorsResponse defines the response for the staking REST API call.
 	ValidatorsResponse struct {
-		Validators []*ValidatorResponse `serix:"stakers,lenPrefix=uint16"`
+		Validators []*ValidatorResponse `serix:",lenPrefix=uint16"`
 		PageSize   uint32               `serix:""`
 		Cursor     string               `serix:",lenPrefix=uint8,omitempty"`
 	}
