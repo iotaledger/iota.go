@@ -623,8 +623,6 @@ type (
 		// BlockFailureDetails contains the detailed error message that occurred during the block processing
 		// if the debug mode was activated in the retainer.
 		BlockFailureDetails string `serix:",omitempty,lenPrefix=uint16"`
-		// TransactionMetadata is the metadata of the transaction that is contained in the block.
-		TransactionMetadata *TransactionMetadataResponse `serix:",optional,omitempty"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
