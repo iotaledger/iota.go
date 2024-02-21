@@ -605,6 +605,9 @@ type (
 		BlockState BlockState `serix:""`
 		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
 		BlockFailureReason BlockFailureReason `serix:",omitempty"`
+		// BlockFailureDetails contains the detailed error message that occurred during the block processing
+		// if the debug mode was activated in the retainer.
+		BlockFailureDetails string `serix:",omitempty,lenPrefix=uint16"`
 		// TransactionMetadata is the metadata of the transaction that is contained in the block.
 		TransactionMetadata *TransactionMetadataResponse `serix:",optional,omitempty"`
 	}
@@ -623,6 +626,9 @@ type (
 		TransactionState TransactionState `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
+		// TransactionFailureDetails contains the detailed error message that occurred during the transaction processing
+		// if the debug mode was activated in the retainer.
+		TransactionFailureDetails string `serix:",omitempty,lenPrefix=uint16"`
 	}
 
 	// OutputResponse defines the response of a GET outputs REST API call.

@@ -82,13 +82,15 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 		{
 			Name: "ok - BlockMetadataResponse",
 			Source: &api.BlockMetadataResponse{
-				BlockID:            tpkg.RandBlockID(),
-				BlockState:         api.BlockStateFailed,
-				BlockFailureReason: api.BlockFailureParentNotFound,
+				BlockID:             tpkg.RandBlockID(),
+				BlockState:          api.BlockStateFailed,
+				BlockFailureReason:  api.BlockFailureParentNotFound,
+				BlockFailureDetails: "details",
 				TransactionMetadata: &api.TransactionMetadataResponse{
-					TransactionID:            tpkg.RandTransactionID(),
-					TransactionState:         api.TransactionStateFailed,
-					TransactionFailureReason: api.TxFailureDelegationRewardCalculationFailure,
+					TransactionID:             tpkg.RandTransactionID(),
+					TransactionState:          api.TransactionStateFailed,
+					TransactionFailureReason:  api.TxFailureDelegationRewardCalculationFailure,
+					TransactionFailureDetails: "details",
 				},
 			},
 			Target:    &api.BlockMetadataResponse{},
