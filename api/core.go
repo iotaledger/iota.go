@@ -17,12 +17,21 @@ const (
 )
 
 const (
+	// BlockStateUnknown indicates that the state of the block is can not be determined by the node for some reason.
 	BlockStateUnknown BlockState = iota
+	// BlockStatePending indicates that the block has been booked by the node but not yet accepted.
 	BlockStatePending
+	// BlockStateAccepted indicates that the block has been accepted by the node.
 	BlockStateAccepted
+	// BlockStateConfirmed indicates that the block has been confirmed by the node.
 	BlockStateConfirmed
+	// BlockStateFinalized indicates that the block is confirmed and the slot containing the block has been finalized by the node.
 	BlockStateFinalized
+	// BlockStateOrphaned indicates that the block's slot has been committed by the node without the block being included.
+	// In this case, the block will never be finalized unless there is a chain switch.
 	BlockStateOrphaned
+	// BlockStateFailed indicates that the block has not been booked/forwarded by the node due to a failure during processing.
+	// Blocks with that were not booked are not retained by the node.
 	BlockStateFailed
 )
 
@@ -152,17 +161,23 @@ const (
 )
 
 const (
-	TransactionStateNoTransaction TransactionState = iota
+	// TransactionStateUnknown indicates that the state of the transaction can not be determined by the node for some reason.
+	TransactionStateUnknown TransactionState = iota
+	// TransactionStatePending indicates that the transaction has been booked by the node but not yet accepted.
 	TransactionStatePending
+	// TransactionStateAccepted indicates that the transaction has been accepted by the node.
 	TransactionStateAccepted
+	// TransactionStateConfirmed indicates that the transaction has been confirmed by the node.
 	TransactionStateConfirmed
+	// TransactionStateFinalized indicates that the transaction is confirmed and the slot containing the transaction has been finalized by the node.
 	TransactionStateFinalized
+	// TransactionStateFailed indicates that the transaction has not been executed by the node due to a failure during processing.
 	TransactionStateFailed
 )
 
 func (t TransactionState) String() string {
 	return []string{
-		"noTransaction",
+		"unknown",
 		"pending",
 		"accepted",
 		"confirmed",
@@ -202,8 +217,8 @@ func (t *TransactionState) DecodeJSON(state any) error {
 	}
 
 	switch transactionState {
-	case "noTransaction":
-		*t = TransactionStateNoTransaction
+	case "unknown":
+		*t = TransactionStateUnknown
 	case "pending":
 		*t = TransactionStatePending
 	case "accepted":
