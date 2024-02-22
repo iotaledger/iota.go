@@ -12,11 +12,6 @@ type BlockState byte
 type BlockFailureReason byte
 
 const (
-	BlockStateLength         = serializer.OneByte
-	BlockFailureReasonLength = serializer.OneByte
-)
-
-const (
 	// BlockStateUnknown indicates that the state of the block is can not be determined by the node for some reason.
 	BlockStateUnknown BlockState = iota
 	// BlockStatePending indicates that the block has been booked by the node but not yet accepted.
@@ -49,14 +44,6 @@ func (b BlockState) String() string {
 
 func (b BlockState) Bytes() ([]byte, error) {
 	return []byte{byte(b)}, nil
-}
-
-func BlockStateFromBytes(b []byte) (BlockState, int, error) {
-	if len(b) < BlockStateLength {
-		return 0, 0, ierrors.New("invalid block state size")
-	}
-
-	return BlockState(b[0]), BlockStateLength, nil
 }
 
 func (b BlockState) EncodeJSON() (any, error) {
@@ -100,56 +87,12 @@ func (b *BlockState) DecodeJSON(state any) error {
 }
 
 const (
-	BlockFailureNone                      BlockFailureReason = 0
-	BlockFailureIsTooOld                  BlockFailureReason = 1
-	BlockFailureParentIsTooOld            BlockFailureReason = 2
-	BlockFailureParentNotFound            BlockFailureReason = 3
-	BlockFailureIssuerAccountNotFound     BlockFailureReason = 4
-	BlockFailureManaCostCalculationFailed BlockFailureReason = 5
-	BlockFailureBurnedInsufficientMana    BlockFailureReason = 6
-	BlockFailureAccountLocked             BlockFailureReason = 7
-	BlockFailureAccountExpired            BlockFailureReason = 8
-	BlockFailureSignatureInvalid          BlockFailureReason = 9
-	BlockFailureDroppedDueToCongestion    BlockFailureReason = 10
-	BlockFailurePayloadInvalid            BlockFailureReason = 11
-	BlockFailureInvalid                   BlockFailureReason = 255
+	BlockFailureNone                   BlockFailureReason = 0
+	BlockFailureDroppedDueToCongestion BlockFailureReason = 2
 )
-
-var blocksErrorsFailureReasonMap = map[error]BlockFailureReason{
-	iotago.ErrIssuerAccountNotFound:     BlockFailureIssuerAccountNotFound,
-	iotago.ErrBurnedInsufficientMana:    BlockFailureBurnedInsufficientMana,
-	iotago.ErrFailedToCalculateManaCost: BlockFailureManaCostCalculationFailed,
-	iotago.ErrAccountLocked:             BlockFailureAccountLocked,
-	iotago.ErrAccountExpired:            BlockFailureAccountExpired,
-	iotago.ErrInvalidSignature:          BlockFailureSignatureInvalid,
-}
 
 func (t BlockFailureReason) Bytes() ([]byte, error) {
 	return []byte{byte(t)}, nil
-}
-
-func BlockFailureReasonFromBytes(b []byte) (BlockFailureReason, int, error) {
-	if len(b) < BlockFailureReasonLength {
-		return 0, 0, ierrors.New("invalid block failure reason size")
-	}
-
-	return BlockFailureReason(b[0]), BlockFailureReasonLength, nil
-}
-
-func DetermineBlockFailureReason(err error) BlockFailureReason {
-	errorList := make([]error, 0)
-	errorList = unwrapErrors(err, errorList)
-
-	// Map the error to the block failure reason.
-	// The strategy is to map the first failure reason that exists in order of most-detailed to least-detailed error.
-	for _, err := range errorList {
-		if blockFailureReason, matches := blocksErrorsFailureReasonMap[err]; matches {
-			return blockFailureReason
-		}
-	}
-
-	// Use most general failure reason if no other error matches.
-	return BlockFailureInvalid
 }
 
 type TransactionState byte
@@ -637,8 +580,6 @@ type (
 		TransactionID iotago.TransactionID `serix:""`
 		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
 		TransactionState TransactionState `serix:""`
-		// EarliestAttachmentSlot is the slot of the earliest included valid block that contains an attachment of the transaction.
-		EarliestAttachmentSlot iotago.SlotIndex `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
 		// TransactionFailureDetails contains the detailed error message that occurred during the transaction processing

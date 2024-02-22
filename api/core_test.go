@@ -84,7 +84,7 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 			Source: &api.BlockMetadataResponse{
 				BlockID:             tpkg.RandBlockID(),
 				BlockState:          api.BlockStateFailed,
-				BlockFailureReason:  api.BlockFailureParentNotFound,
+				BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
 				BlockFailureDetails: "details",
 			},
 			Target:    &api.BlockMetadataResponse{},
@@ -98,7 +98,7 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 				Metadata: &api.BlockMetadataResponse{
 					BlockID:             tpkg.RandBlockID(),
 					BlockState:          api.BlockStateFailed,
-					BlockFailureReason:  api.BlockFailureParentNotFound,
+					BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
 					BlockFailureDetails: "details",
 				},
 			},
@@ -514,13 +514,13 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 			Source: &api.BlockMetadataResponse{
 				BlockID:             iotago.BlockID{0x9},
 				BlockState:          api.BlockStateFailed,
-				BlockFailureReason:  api.BlockFailureParentNotFound,
+				BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
 				BlockFailureDetails: "details",
 			},
 			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockState": "failed",
-	"blockFailureReason": 3,
+	"blockFailureReason": 2,
 	"blockFailureDetails": "details"
 }`,
 		},
@@ -540,14 +540,12 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 			Source: &api.TransactionMetadataResponse{
 				TransactionID:             iotago.TransactionID{0x1},
 				TransactionState:          api.TransactionStateFailed,
-				EarliestAttachmentSlot:    5,
 				TransactionFailureReason:  api.TxFailureDelegationRewardsClaimingInvalid,
 				TransactionFailureDetails: "details",
 			},
 			Target: `{
 	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
 	"transactionState": "failed",
-	"earliestAttachmentSlot": 5,
 	"transactionFailureReason": 57,
 	"transactionFailureDetails": "details"
 }`,
@@ -555,14 +553,12 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		{
 			Name: "ok - TransactionMetadataResponse - omitempty",
 			Source: &api.TransactionMetadataResponse{
-				TransactionID:          iotago.TransactionID{0x1},
-				TransactionState:       api.TransactionStateConfirmed,
-				EarliestAttachmentSlot: 10,
+				TransactionID:    iotago.TransactionID{0x1},
+				TransactionState: api.TransactionStateConfirmed,
 			},
 			Target: `{
 	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
-	"transactionState": "confirmed",
-	"earliestAttachmentSlot": 10
+	"transactionState": "confirmed"
 }`,
 		},
 		{
