@@ -21,11 +21,11 @@ const (
 	BlockStateConfirmed
 	// BlockStateFinalized indicates that the block is confirmed and the slot containing the block has been finalized by the node.
 	BlockStateFinalized
+	// BlockStateDropped indicates that the block has been dropped due to congestion control.
+	BlockStateDropped
 	// BlockStateOrphaned indicates that the block's slot has been committed by the node without the block being included.
 	// In this case, the block will never be finalized unless there is a chain switch.
 	BlockStateOrphaned
-	// BlockStateDropped indicates that the block has been dropped due to congestion control.
-	BlockStateDropped
 )
 
 func (b BlockState) String() string {
@@ -548,7 +548,7 @@ type (
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
 		BlockID iotago.BlockID `serix:""`
-		// BlockState might be unknown, pending, accepted, orphaned, failed, confirmed, finalized.
+		// BlockState might be unknown, pending, accepted, confirmed, finalized, dropped, orphaned.
 		BlockState BlockState `serix:""`
 	}
 
