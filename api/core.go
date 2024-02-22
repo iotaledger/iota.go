@@ -35,8 +35,8 @@ func (b BlockState) String() string {
 		"accepted",
 		"confirmed",
 		"finalized",
-		"orphaned",
 		"dropped",
+		"orphaned",
 	}[b]
 }
 
@@ -73,10 +73,10 @@ func (b *BlockState) DecodeJSON(state any) error {
 		*b = BlockStateConfirmed
 	case "finalized":
 		*b = BlockStateFinalized
-	case "orphaned":
-		*b = BlockStateOrphaned
 	case "dropped":
 		*b = BlockStateDropped
+	case "orphaned":
+		*b = BlockStateOrphaned
 	default:
 		return ierrors.Errorf("invalid block state: %s", blockState)
 	}

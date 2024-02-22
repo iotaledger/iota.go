@@ -513,8 +513,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 			},
 			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
-	"blockState": "dropped",
-	"blockFailureDetails": "details"
+	"blockState": "dropped"
 }`,
 		},
 		{
