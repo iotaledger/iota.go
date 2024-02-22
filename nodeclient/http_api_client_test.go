@@ -466,8 +466,9 @@ func TestClient_TransactionMetadataByTransactionID(t *testing.T) {
 	identifier := tpkg.RandTransactionID()
 
 	originRes := &api.TransactionMetadataResponse{
-		TransactionID:    identifier,
-		TransactionState: api.TransactionStateConfirmed,
+		TransactionID:          identifier,
+		TransactionState:       api.TransactionStateConfirmed,
+		EarliestAttachmentSlot: 5,
 	}
 
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteTransactionsMetadata, api.ParameterTransactionID, identifier.ToHex()), 200, originRes)

@@ -564,6 +564,8 @@ type (
 		TransactionID iotago.TransactionID `serix:""`
 		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
 		TransactionState TransactionState `serix:""`
+		// EarliestAttachmentSlot is the slot of the earliest included valid block that contains an attachment of the transaction.
+		EarliestAttachmentSlot iotago.SlotIndex `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
 		// TransactionFailureDetails contains the detailed error message that occurred during the transaction processing
