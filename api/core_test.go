@@ -82,10 +82,8 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 		{
 			Name: "ok - BlockMetadataResponse",
 			Source: &api.BlockMetadataResponse{
-				BlockID:             tpkg.RandBlockID(),
-				BlockState:          api.BlockStateFailed,
-				BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
-				BlockFailureDetails: "details",
+				BlockID:    tpkg.RandBlockID(),
+				BlockState: api.BlockStateDropped,
 			},
 			Target:    &api.BlockMetadataResponse{},
 			SeriErr:   nil,
@@ -96,10 +94,8 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 			Source: &api.BlockWithMetadataResponse{
 				Block: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 100),
 				Metadata: &api.BlockMetadataResponse{
-					BlockID:             tpkg.RandBlockID(),
-					BlockState:          api.BlockStateFailed,
-					BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
-					BlockFailureDetails: "details",
+					BlockID:    tpkg.RandBlockID(),
+					BlockState: api.BlockStateDropped,
 				},
 			},
 			Target:    &api.BlockWithMetadataResponse{},
@@ -512,15 +508,12 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		{
 			Name: "ok - BlockMetadataResponse",
 			Source: &api.BlockMetadataResponse{
-				BlockID:             iotago.BlockID{0x9},
-				BlockState:          api.BlockStateFailed,
-				BlockFailureReason:  api.BlockFailureDroppedDueToCongestion,
-				BlockFailureDetails: "details",
+				BlockID:    iotago.BlockID{0x9},
+				BlockState: api.BlockStateDropped,
 			},
 			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
-	"blockState": "failed",
-	"blockFailureReason": 2,
+	"blockState": "dropped",
 	"blockFailureDetails": "details"
 }`,
 		},

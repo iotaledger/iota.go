@@ -9,7 +9,6 @@ import (
 )
 
 type BlockState byte
-type BlockFailureReason byte
 
 const (
 	// BlockStateUnknown indicates that the state of the block is can not be determined by the node for some reason.
@@ -25,9 +24,8 @@ const (
 	// BlockStateOrphaned indicates that the block's slot has been committed by the node without the block being included.
 	// In this case, the block will never be finalized unless there is a chain switch.
 	BlockStateOrphaned
-	// BlockStateFailed indicates that the block has not been booked/forwarded by the node due to a failure during processing.
-	// Blocks with that were not booked are not retained by the node.
-	BlockStateFailed
+	// BlockStateDropped indicates that the block has been dropped due to congestion control.
+	BlockStateDropped
 )
 
 func (b BlockState) String() string {
@@ -38,7 +36,7 @@ func (b BlockState) String() string {
 		"confirmed",
 		"finalized",
 		"orphaned",
-		"failed",
+		"dropped",
 	}[b]
 }
 
@@ -47,7 +45,7 @@ func (b BlockState) Bytes() ([]byte, error) {
 }
 
 func (b BlockState) EncodeJSON() (any, error) {
-	if b > BlockStateFailed {
+	if b > BlockStateDropped {
 		return nil, ierrors.Errorf("invalid block state: %d", b)
 	}
 
@@ -77,22 +75,13 @@ func (b *BlockState) DecodeJSON(state any) error {
 		*b = BlockStateFinalized
 	case "orphaned":
 		*b = BlockStateOrphaned
-	case "failed":
-		*b = BlockStateFailed
+	case "dropped":
+		*b = BlockStateDropped
 	default:
 		return ierrors.Errorf("invalid block state: %s", blockState)
 	}
 
 	return nil
-}
-
-const (
-	BlockFailureNone                   BlockFailureReason = 0
-	BlockFailureDroppedDueToCongestion BlockFailureReason = 2
-)
-
-func (t BlockFailureReason) Bytes() ([]byte, error) {
-	return []byte{byte(t)}, nil
 }
 
 type TransactionState byte
@@ -561,11 +550,6 @@ type (
 		BlockID iotago.BlockID `serix:""`
 		// BlockState might be unknown, pending, accepted, orphaned, failed, confirmed, finalized.
 		BlockState BlockState `serix:""`
-		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
-		BlockFailureReason BlockFailureReason `serix:",omitempty"`
-		// BlockFailureDetails contains the detailed error message that occurred during the block processing
-		// if the debug mode was activated in the retainer.
-		BlockFailureDetails string `serix:",omitempty,lenPrefix=uint16"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
