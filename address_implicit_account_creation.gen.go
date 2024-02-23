@@ -39,7 +39,7 @@ func (addr *ImplicitAccountCreationAddress) ID() []byte {
 }
 
 func (addr *ImplicitAccountCreationAddress) Key() string {
-	return string(addr.ID())
+	return string(addr.ID()[serializer.SmallTypeDenotationByteSize:])
 }
 
 func (addr *ImplicitAccountCreationAddress) Unlock(msg []byte, sig Signature) error {

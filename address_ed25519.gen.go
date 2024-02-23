@@ -43,7 +43,7 @@ func (addr *Ed25519Address) ID() []byte {
 }
 
 func (addr *Ed25519Address) Key() string {
-	return string(addr.ID())
+	return string(addr.ID()[serializer.SmallTypeDenotationByteSize:])
 }
 
 func (addr *Ed25519Address) Unlock(msg []byte, sig Signature) error {

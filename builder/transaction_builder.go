@@ -681,27 +681,25 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 	for i, inputRef := range b.transaction.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
+		addrKey := addr.Key()
 
-		// produce signature
-		var signature iotago.Signature
-		signature, err = signer.Sign(addr, txEssenceData)
-		if err != nil {
-			return nil, ierrors.Wrapf(err, "failed to sign tx transaction: %s", txEssenceData)
-		}
-		ed25519Sig, is := signature.(*iotago.Ed25519Signature)
-		if !is {
-			return nil, ierrors.Errorf("signature is not an Ed25519Signature")
-		}
-		pubKeyString := string(ed25519Sig.PublicKey[:])
-		pos, unlocked := unlockPos[pubKeyString]
+		pos, unlocked := unlockPos[addrKey]
 		if !unlocked {
 			// the output's owning chain address must have been unlocked already
 			if _, is := addr.(iotago.ChainAddress); is {
 				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
 			}
+
+			// produce signature
+			var signature iotago.Signature
+			signature, err = signer.Sign(addr, txEssenceData)
+			if err != nil {
+				return nil, ierrors.Wrapf(err, "failed to sign tx transaction: %s", txEssenceData)
+			}
+
 			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
 			addChainAsUnlocked(inputs[i], i, unlockPos)
-			unlockPos[pubKeyString] = i
+			unlockPos[addrKey] = i
 
 			continue
 		}
