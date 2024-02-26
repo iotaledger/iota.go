@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// AddressUnlockCondition is an UnlockCondition defining an identity which has to be unlocked.
+// AddressUnlockCondition is an UnlockCondition defining an address which has to be unlocked.
 type AddressUnlockCondition struct {
 	Address Address `serix:""`
 }

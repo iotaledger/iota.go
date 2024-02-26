@@ -58,7 +58,7 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 	return edSk, edAddr, addrKeys
 }
 
-// RandEd25519IdentitiesSortedByAddress returns random Ed25519 identities and keys lexically sorted by the address.
+// RandEd25519IdentitiesSortedByAddress returns random Ed25519 addresses and keys lexically sorted by the address.
 func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago.AddressKeys) {
 	addresses := make([]iotago.Address, count)
 	addressKeys := make([]iotago.AddressKeys, count)

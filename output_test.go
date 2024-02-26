@@ -953,11 +953,11 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 	}
 }
 
-func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
+func TestOwnerTransitionIndependentOutput_UnlockableBy(t *testing.T) {
 	type test struct {
 		name                string
-		output              iotago.TransIndepIdentOutput
-		targetIdent         iotago.Address
+		output              iotago.OwnerTransitionIndependentOutput
+		targetAddr          iotago.Address
 		commitmentInputTime iotago.SlotIndex
 		minCommittableAge   iotago.SlotIndex
 		maxCommittableAge   iotago.SlotIndex
@@ -965,16 +965,16 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	}
 	tests := []*test{
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
 			return &test{
 				name: "can unlock - target is source (no unlock conditions)",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 					},
 				},
-				targetIdent:         receiverIdent,
+				targetAddr:          receiverAddr,
 				commitmentInputTime: iotago.SlotIndex(0),
 				minCommittableAge:   iotago.SlotIndex(0),
 				maxCommittableAge:   iotago.SlotIndex(0),
@@ -990,7 +990,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
 					},
 				},
-				targetIdent:         tpkg.RandEd25519Address(),
+				targetAddr:          tpkg.RandEd25519Address(),
 				commitmentInputTime: iotago.SlotIndex(0),
 				minCommittableAge:   iotago.SlotIndex(0),
 				maxCommittableAge:   iotago.SlotIndex(0),
@@ -998,20 +998,20 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
 			return &test{
-				name: "expiration - receiver ident can unlock",
+				name: "expiration - receiver addr can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.ExpirationUnlockCondition{
 							ReturnAddress: tpkg.RandEd25519Address(),
 							Slot:          26,
 						},
 					},
 				},
-				targetIdent:         receiverIdent,
+				targetAddr:          receiverAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1019,21 +1019,21 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
-			returnIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
+			returnAddr := tpkg.RandEd25519Address()
 			return &test{
-				name: "expiration - receiver ident can not unlock",
+				name: "expiration - receiver addr can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress: returnIdent,
+							ReturnAddress: returnAddr,
 							Slot:          25,
 						},
 					},
 				},
-				targetIdent:         receiverIdent,
+				targetAddr:          receiverAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1041,21 +1041,21 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
-			returnIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
+			returnAddr := tpkg.RandEd25519Address()
 			return &test{
-				name: "expiration - return ident can unlock",
+				name: "expiration - return addr can unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress: returnIdent,
+							ReturnAddress: returnAddr,
 							Slot:          15,
 						},
 					},
 				},
-				targetIdent:         returnIdent,
+				targetAddr:          returnAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1063,21 +1063,21 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
-			returnIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
+			returnAddr := tpkg.RandEd25519Address()
 			return &test{
-				name: "expiration - return ident can not unlock",
+				name: "expiration - return addr can not unlock",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.ExpirationUnlockCondition{
-							ReturnAddress: returnIdent,
+							ReturnAddress: returnAddr,
 							Slot:          16,
 						},
 					},
 				},
-				targetIdent:         returnIdent,
+				targetAddr:          returnAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1085,17 +1085,17 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
 			return &test{
 				name: "timelock - expired timelock is unlockable",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.TimelockUnlockCondition{Slot: 15},
 					},
 				},
-				targetIdent:         receiverIdent,
+				targetAddr:          receiverAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1103,17 +1103,17 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			receiverIdent := tpkg.RandEd25519Address()
+			receiverAddr := tpkg.RandEd25519Address()
 			return &test{
 				name: "timelock - non-expired timelock is not unlockable",
 				output: &iotago.BasicOutput{
 					Amount: OneIOTA,
 					UnlockConditions: iotago.BasicOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: receiverIdent},
+						&iotago.AddressUnlockCondition{Address: receiverAddr},
 						&iotago.TimelockUnlockCondition{Slot: 16},
 					},
 				},
-				targetIdent:         receiverIdent,
+				targetAddr:          receiverAddr,
 				commitmentInputTime: iotago.SlotIndex(5),
 				minCommittableAge:   iotago.SlotIndex(10),
 				maxCommittableAge:   iotago.SlotIndex(20),
@@ -1125,7 +1125,7 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetIdent, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge))
+				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetAddr, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge))
 			})
 		})
 	}
@@ -1133,16 +1133,16 @@ func TestTransIndepIdentOutput_UnlockableBy(t *testing.T) {
 
 func TestAnchorOutput_UnlockableBy(t *testing.T) {
 	type test struct {
-		name                  string
-		current               iotago.TransDepIdentOutput
-		next                  iotago.TransDepIdentOutput
-		targetIdent           iotago.Address
-		identCanUnlockInstead iotago.Address
-		commitmentInputTime   iotago.SlotIndex
-		minCommittableAge     iotago.SlotIndex
-		maxCommittableAge     iotago.SlotIndex
-		wantErr               error
-		canUnlock             bool
+		name                 string
+		current              iotago.OwnerTransitionDependentOutput
+		next                 iotago.OwnerTransitionDependentOutput
+		targetAddr           iotago.Address
+		addrCanUnlockInstead iotago.Address
+		commitmentInputTime  iotago.SlotIndex
+		minCommittableAge    iotago.SlotIndex
+		maxCommittableAge    iotago.SlotIndex
+		wantErr              error
+		canUnlock            bool
 	}
 	tests := []*test{
 		func() *test {
@@ -1167,7 +1167,7 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				targetIdent:         stateCtrl,
+				targetAddr:          stateCtrl,
 				commitmentInputTime: iotago.SlotIndex(0),
 				minCommittableAge:   iotago.SlotIndex(0),
 				maxCommittableAge:   iotago.SlotIndex(0),
@@ -1196,12 +1196,12 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				targetIdent:           stateCtrl,
-				identCanUnlockInstead: govCtrl,
-				commitmentInputTime:   iotago.SlotIndex(0),
-				minCommittableAge:     iotago.SlotIndex(0),
-				maxCommittableAge:     iotago.SlotIndex(0),
-				canUnlock:             false,
+				targetAddr:           stateCtrl,
+				addrCanUnlockInstead: govCtrl,
+				commitmentInputTime:  iotago.SlotIndex(0),
+				minCommittableAge:    iotago.SlotIndex(0),
+				maxCommittableAge:    iotago.SlotIndex(0),
+				canUnlock:            false,
 			}
 		}(),
 		func() *test {
@@ -1218,13 +1218,13 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 						&iotago.GovernorAddressUnlockCondition{Address: govCtrl},
 					},
 				},
-				next:                  nil,
-				targetIdent:           stateCtrl,
-				identCanUnlockInstead: govCtrl,
-				commitmentInputTime:   iotago.SlotIndex(0),
-				minCommittableAge:     iotago.SlotIndex(0),
-				maxCommittableAge:     iotago.SlotIndex(0),
-				canUnlock:             false,
+				next:                 nil,
+				targetAddr:           stateCtrl,
+				addrCanUnlockInstead: govCtrl,
+				commitmentInputTime:  iotago.SlotIndex(0),
+				minCommittableAge:    iotago.SlotIndex(0),
+				maxCommittableAge:    iotago.SlotIndex(0),
+				canUnlock:            false,
 			}
 		}(),
 	}
@@ -1232,17 +1232,17 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
-				canUnlock, err := tt.current.UnlockableBy(tt.targetIdent, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
+				canUnlock, err := tt.current.UnlockableBy(tt.targetAddr, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
 
 					return
 				}
 				require.Equal(t, tt.canUnlock, canUnlock)
-				if tt.identCanUnlockInstead == nil {
+				if tt.addrCanUnlockInstead == nil {
 					return
 				}
-				canUnlockInstead, err := tt.current.UnlockableBy(tt.identCanUnlockInstead, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
+				canUnlockInstead, err := tt.current.UnlockableBy(tt.addrCanUnlockInstead, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
 				require.NoError(t, err)
 				require.True(t, canUnlockInstead)
 			})

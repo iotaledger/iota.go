@@ -14,10 +14,10 @@ import (
 )
 
 func TestTransactionBuilder(t *testing.T) {
-	identityOne := tpkg.RandEd25519PrivateKey()
+	prvKey := tpkg.RandEd25519PrivateKey()
 	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
-	inputAddr := iotago.Ed25519AddressFromPubKey(identityOne.Public().(ed25519.PublicKey))
-	addrKeys := iotago.AddressKeys{Address: inputAddr, Keys: identityOne}
+	inputAddr := iotago.Ed25519AddressFromPubKey(prvKey.Public().(ed25519.PublicKey))
+	addrKeys := iotago.AddressKeys{Address: inputAddr, Keys: prvKey}
 
 	type test struct {
 		name       string
@@ -138,10 +138,10 @@ func TestTransactionBuilder(t *testing.T) {
 				})
 
 			// wrong address/keys
-			wrongIdentity := tpkg.RandEd25519PrivateKey()
+			wrongAddress := tpkg.RandEd25519PrivateKey()
 			//nolint:forcetypeassert // we can safely assume that this is a ed25519.PublicKey
-			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongIdentity.Public().(ed25519.PublicKey))
-			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongIdentity}
+			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongAddress.Public().(ed25519.PublicKey))
+			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongAddress}
 
 			return &test{
 				name:       "err - missing address keys (wrong address)",

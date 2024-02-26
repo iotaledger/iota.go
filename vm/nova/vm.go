@@ -33,7 +33,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 	utxoInputsSet := constructInputSet(resolvedInputs.InputSet)
 	workingSet := &vm.WorkingSet{}
 	workingSet.Tx = t
-	workingSet.UnlockedIdents = make(vm.UnlockedIdentities)
+	workingSet.UnlockedAddrs = make(vm.UnlockedAddresses)
 	workingSet.UTXOInputsSet = utxoInputsSet
 	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
 	for inputIndex, inputRef := range workingSet.Tx.TransactionEssence.Inputs {
@@ -104,11 +104,11 @@ func constructInputSet(inputSet vm.InputSet) vm.InputSet {
 	return utxoInputsSet
 }
 
-func (novaVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs vm.ResolvedInputs) (unlockedIdentities vm.UnlockedIdentities, err error) {
+func (novaVM *virtualMachine) ValidateUnlocks(signedTransaction *iotago.SignedTransaction, inputs vm.ResolvedInputs) (unlockedAddrs vm.UnlockedAddresses, err error) {
 	return vm.ValidateUnlocks(signedTransaction, inputs)
 }
 
-func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, resolvedInputs vm.ResolvedInputs, unlockedIdentities vm.UnlockedIdentities, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
+func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, resolvedInputs vm.ResolvedInputs, unlockedAddrs vm.UnlockedAddresses, execFunctions ...vm.ExecFunc) (outputs []iotago.Output, err error) {
 	vmParams := &vm.Params{
 		API: transaction.API,
 	}
@@ -116,7 +116,7 @@ func (novaVM *virtualMachine) Execute(transaction *iotago.Transaction, resolvedI
 	if vmParams.WorkingSet, err = NewVMParamsWorkingSet(vmParams.API, transaction, resolvedInputs); err != nil {
 		return nil, ierrors.Wrap(err, "failed to create working set")
 	}
-	vmParams.WorkingSet.UnlockedIdents = unlockedIdentities
+	vmParams.WorkingSet.UnlockedAddrs = unlockedAddrs
 
 	if len(execFunctions) == 0 {
 		execFunctions = novaVM.execList
@@ -310,7 +310,7 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 		}
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(next, vmParams.WorkingSet.UnlockedAddrs)
 }
 
 func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, next *iotago.AccountOutput, isRemovingStakingFeature *bool) error {
@@ -591,7 +591,7 @@ func accountFoundryCounterSTVF(vmParams *vm.Params, current *iotago.AccountOutpu
 		}
 
 		//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-		foundryAccountID := foundryOutput.Ident().(*iotago.AccountAddress).ChainID()
+		foundryAccountID := foundryOutput.Owner().(*iotago.AccountAddress).ChainID()
 		if !foundryAccountID.Matches(next.AccountID) {
 			continue
 		}
@@ -716,7 +716,7 @@ func anchorGenesisValid(vmParams *vm.Params, current *iotago.AnchorOutput, ancho
 		return ierrors.Join(iotago.ErrAnchorInvalidStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedAddrs)
 }
 
 func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
@@ -825,7 +825,7 @@ func foundryGenesisValid(vmParams *vm.Params, current *iotago.FoundryOutput, thi
 
 	// grab foundry counter from transitioning AccountOutput
 	//nolint:forcetypeassert // we can safely assume that this is an AccountAddress
-	accountID := current.Ident().(*iotago.AccountAddress).AccountID()
+	accountID := current.Owner().(*iotago.AccountAddress).AccountID()
 	inAccount, ok := vmParams.WorkingSet.InChains[accountID]
 	if !ok {
 		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
@@ -866,7 +866,7 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 			continue
 		}
 
-		if !otherFoundryOutput.Ident().Equal(current.Ident()) {
+		if !otherFoundryOutput.Owner().Equal(current.Owner()) {
 			continue
 		}
 
@@ -958,7 +958,7 @@ func nftGenesisValid(vmParams *vm.Params, current *iotago.NFTOutput) error {
 		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
 	}
 
-	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedIdents)
+	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedAddrs)
 }
 
 func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) error {

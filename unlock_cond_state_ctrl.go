@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller identity for an AccountOutput.
+// StateControllerAddressUnlockCondition is an UnlockCondition defining the state controller address for an AccountOutput.
 type StateControllerAddressUnlockCondition struct {
 	Address Address `serix:""`
 }
