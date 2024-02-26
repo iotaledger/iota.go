@@ -95,8 +95,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -133,8 +133,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 900,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -173,8 +173,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 10001,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -213,8 +213,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 991,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -253,8 +253,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -294,8 +294,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -335,8 +335,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -375,8 +375,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -435,8 +435,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -488,8 +488,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -539,8 +539,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -585,8 +585,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -641,8 +641,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -701,8 +701,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -761,8 +761,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -823,8 +823,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -877,8 +877,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -937,8 +937,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -997,8 +997,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -1060,8 +1060,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -1111,8 +1111,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: currentSlot,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -1144,7 +1144,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -1182,7 +1182,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 1001,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -1224,7 +1224,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 1001,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -1262,7 +1262,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 1000,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -1301,7 +1301,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 1001,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
@@ -1351,7 +1351,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 999,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
@@ -1401,7 +1401,7 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 1001,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 0,
 					},
@@ -1451,8 +1451,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Commitment: &iotago.Commitment{
 						Slot: 990,
@@ -1535,8 +1535,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 990,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
@@ -1588,8 +1588,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -1640,8 +1640,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 990,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
@@ -1698,8 +1698,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 990,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
@@ -1757,8 +1757,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 900,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: -1,
@@ -1815,8 +1815,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 900,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 
 					Tx: &iotago.Transaction{
@@ -1871,8 +1871,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 900,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: map[iotago.AccountID]iotago.BlockIssuanceCredits{
 						exampleAccountID: 10,
@@ -1930,8 +1930,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 					Commitment: &iotago.Commitment{
 						Slot: 0,
 					},
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleAddress.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleAddress.Key(): {UnlockedAtInputIndex: 0},
 					},
 					InChains: map[iotago.ChainID]*vm.ChainOutputWithIDs{
 						// serial number 5
@@ -2000,8 +2000,8 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
-					InChains:       vm.ChainInputSet{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
+					InChains:      vm.ChainInputSet{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2084,8 +2084,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2114,7 +2114,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2162,8 +2162,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleGovCtrl.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleGovCtrl.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Commitment: &iotago.Commitment{
 						Slot: 990,
@@ -2215,8 +2215,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleStateCtrl.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleStateCtrl.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
@@ -2262,8 +2262,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleStateCtrl.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleStateCtrl.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2307,8 +2307,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleStateCtrl.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleStateCtrl.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2358,7 +2358,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
 							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
@@ -2420,8 +2420,8 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
-					InChains:       vm.ChainInputSet{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
+					InChains:      vm.ChainInputSet{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2469,7 +2469,7 @@ func TestAnchorOutput_ValidateStateTransition(t *testing.T) {
 }
 
 func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
-	exampleAccountIdent := tpkg.RandAccountAddress()
+	exampleAccountAddr := tpkg.RandAccountAddress()
 
 	startingSupply := new(big.Int).SetUint64(100)
 	exampleFoundry := &iotago.FoundryOutput{
@@ -2481,7 +2481,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
 		UnlockConditions: iotago.FoundryOutputUnlockConditions{
-			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
+			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountAddr},
 		},
 	}
 
@@ -2494,7 +2494,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			MaximumSupply: new(big.Int).SetUint64(1000),
 		},
 		UnlockConditions: iotago.FoundryOutputUnlockConditions{
-			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
+			&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountAddr},
 		},
 	}
 
@@ -2516,7 +2516,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2525,14 +2525,14 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 					},
 					InChains: vm.ChainInputSet{
-						exampleAccountIdent.AccountID(): &vm.ChainOutputWithIDs{
-							ChainID:  exampleAccountIdent.AccountID(),
+						exampleAccountAddr.AccountID(): &vm.ChainOutputWithIDs{
+							ChainID:  exampleAccountAddr.AccountID(),
 							OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 							Output:   &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
 					OutChains: map[iotago.ChainID]iotago.ChainOutput{
-						exampleAccountIdent.AccountID(): &iotago.AccountOutput{FoundryCounter: 6},
+						exampleAccountAddr.AccountID(): &iotago.AccountOutput{FoundryCounter: 6},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -2548,7 +2548,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2557,14 +2557,14 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 					},
 					InChains: vm.ChainInputSet{
-						exampleAccountIdent.AccountID(): &vm.ChainOutputWithIDs{
-							ChainID:  exampleAccountIdent.AccountID(),
+						exampleAccountAddr.AccountID(): &vm.ChainOutputWithIDs{
+							ChainID:  exampleAccountAddr.AccountID(),
 							OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 							Output:   &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
 					OutChains: map[iotago.ChainID]iotago.ChainOutput{
-						exampleAccountIdent.AccountID(): &iotago.AccountOutput{FoundryCounter: 6},
+						exampleAccountAddr.AccountID(): &iotago.AccountOutput{FoundryCounter: 6},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						// absent but should be there
@@ -2580,7 +2580,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2589,14 +2589,14 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 						Outputs: iotago.TxEssenceOutputs{exampleFoundry},
 					},
 					InChains: vm.ChainInputSet{
-						exampleAccountIdent.AccountID(): &vm.ChainOutputWithIDs{
-							ChainID:  exampleAccountIdent.AccountID(),
+						exampleAccountAddr.AccountID(): &vm.ChainOutputWithIDs{
+							ChainID:  exampleAccountAddr.AccountID(),
 							OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 							Output:   &iotago.AccountOutput{FoundryCounter: 6},
 						},
 					},
 					OutChains: map[iotago.ChainID]iotago.ChainOutput{
-						exampleAccountIdent.AccountID(): &iotago.AccountOutput{FoundryCounter: 7},
+						exampleAccountAddr.AccountID(): &iotago.AccountOutput{FoundryCounter: 7},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -2612,7 +2612,7 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 			transType: iotago.ChainTransitionTypeGenesis,
 			svCtx: &vm.Params{
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						API: tpkg.ZeroCostTestAPI,
 						TransactionEssence: &iotago.TransactionEssence{
@@ -2629,21 +2629,21 @@ func TestFoundryOutput_ValidateStateTransition(t *testing.T) {
 									MaximumSupply: new(big.Int).SetUint64(1000),
 								},
 								UnlockConditions: iotago.FoundryOutputUnlockConditions{
-									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountIdent},
+									&iotago.ImmutableAccountUnlockCondition{Address: exampleAccountAddr},
 								},
 							},
 							exampleFoundry,
 						},
 					},
 					InChains: vm.ChainInputSet{
-						exampleAccountIdent.AccountID(): &vm.ChainOutputWithIDs{
-							ChainID:  exampleAccountIdent.AccountID(),
+						exampleAccountAddr.AccountID(): &vm.ChainOutputWithIDs{
+							ChainID:  exampleAccountAddr.AccountID(),
 							OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
 							Output:   &iotago.AccountOutput{FoundryCounter: 5},
 						},
 					},
 					OutChains: map[iotago.ChainID]iotago.ChainOutput{
-						exampleAccountIdent.AccountID(): &iotago.AccountOutput{FoundryCounter: 7},
+						exampleAccountAddr.AccountID(): &iotago.AccountOutput{FoundryCounter: 7},
 					},
 					OutNativeTokens: map[iotago.NativeTokenID]*big.Int{
 						exampleFoundry.MustNativeTokenID(): startingSupply,
@@ -3033,8 +3033,8 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
@@ -3056,7 +3056,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
 							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
@@ -3086,7 +3086,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
 							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
@@ -3118,7 +3118,7 @@ func TestNFTOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Tx: &iotago.Transaction{
 						TransactionEssence: &iotago.TransactionEssence{
 							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
@@ -3206,7 +3206,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3237,7 +3237,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3268,7 +3268,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3299,7 +3299,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3329,7 +3329,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3363,7 +3363,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3415,7 +3415,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3459,7 +3459,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3503,7 +3503,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochEndCommitmentIndex,
 					},
@@ -3538,7 +3538,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3576,7 +3576,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3614,7 +3614,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Commitment: &iotago.Commitment{
 						Slot: epochStartCommitmentIndex,
 					},
@@ -3644,7 +3644,7 @@ func TestDelegationOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{},
+					UnlockedAddrs: vm.UnlockedAddresses{},
 					Rewards: map[iotago.ChainID]iotago.Mana{
 						exampleDelegationID: 0,
 					},
@@ -3750,8 +3750,8 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: exampleBIC,
 					Commitment: &iotago.Commitment{
@@ -3795,8 +3795,8 @@ func TestImplicitAccountOutput_ValidateStateTransition(t *testing.T) {
 			svCtx: &vm.Params{
 				API: tpkg.ZeroCostTestAPI,
 				WorkingSet: &vm.WorkingSet{
-					UnlockedIdents: vm.UnlockedIdentities{
-						exampleIssuer.Key(): {UnlockedAt: 0},
+					UnlockedAddrs: vm.UnlockedAddresses{
+						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
 					},
 					BIC: exampleBIC,
 					Commitment: &iotago.Commitment{

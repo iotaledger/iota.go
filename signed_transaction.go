@@ -20,9 +20,9 @@ var (
 	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
-	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an ident which is not unlocked.
+	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an address which is not unlocked.
 	ErrSenderFeatureNotUnlocked = ierrors.New("sender feature is not unlocked")
-	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an ident which is not unlocked.
+	// ErrIssuerFeatureNotUnlocked gets returned when an output contains a IssuerFeature with an address which is not unlocked.
 	ErrIssuerFeatureNotUnlocked = ierrors.New("issuer feature is not unlocked")
 	// ErrReturnAmountNotFulFilled gets returned when a return amount in a transaction is not fulfilled by the output side.
 	ErrReturnAmountNotFulFilled = ierrors.New("return amount not fulfilled")
@@ -106,7 +106,7 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(t.API),
+		SignatureUniqueAndReferenceUnlocksValidator(t.API),
 	); err != nil {
 		return ierrors.Errorf("invalid unlocks: %w", err)
 	}

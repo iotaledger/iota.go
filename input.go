@@ -80,17 +80,17 @@ type Input interface {
 	Type() InputType
 }
 
-// InputsSyntacticalUnique returns an ElementValidationFunc which checks that every input has a unique UTXO ref.
+// InputsSyntacticalUnique returns an ElementValidationFunc which checks that every input has a unique reference UTXO index.
 func InputsSyntacticalUnique() ElementValidationFunc[Input] {
 	utxoSet := map[string]int{}
 
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
 		case *UTXOInput:
-			utxoRef := castInput.OutputID()
-			k := string(utxoRef[:])
+			referencedOutputID := castInput.OutputID()
+			k := string(referencedOutputID[:])
 			if j, has := utxoSet[k]; has {
-				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same UTXO ref", j, index)
+				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same referenced UTXO index", j, index)
 			}
 			utxoSet[k] = index
 		default:
@@ -106,6 +106,7 @@ func InputsSyntacticalIndicesWithinBounds() ElementValidationFunc[Input] {
 	return func(index int, input Input) error {
 		switch castInput := input.(type) {
 		case *UTXOInput:
+			// TODO: do we really want to check the max value on the input side?
 			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
 				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
 			}

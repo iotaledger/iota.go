@@ -4,9 +4,9 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// AccountUnlock is an Unlock which references a previous unlock.
+// AccountUnlock is an Unlock which references a previous input/unlock.
 type AccountUnlock struct {
-	// The other unlock this AccountUnlock references to.
+	// The other input/unlock this AccountUnlock references to.
 	Reference uint16 `serix:""`
 }
 
@@ -26,7 +26,7 @@ func (r *AccountUnlock) Chainable() bool {
 	return true
 }
 
-func (r *AccountUnlock) Ref() uint16 {
+func (r *AccountUnlock) ReferencedInputIndex() uint16 {
 	return r.Reference
 }
 

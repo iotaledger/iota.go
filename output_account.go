@@ -94,8 +94,8 @@ func (a *AccountOutput) Equal(other Output) bool {
 	return true
 }
 
-func (a *AccountOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(a, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (a *AccountOutput) UnlockableBy(addr Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
+	ok, _ := outputUnlockableBy(a, nil, addr, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok
 }
 
@@ -126,7 +126,7 @@ func (a *AccountOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Wor
 	return workScoreParameters.Output.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (a *AccountOutput) Ident() Address {
+func (a *AccountOutput) Owner() Address {
 	return a.UnlockConditions.MustSet().Address().Address
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 // SenderFeature is a feature which associates an output
-// with a sender identity. The sender identity needs to be unlocked in the transaction
+// with a sender address. The sender address needs to be unlocked in the transaction
 // for the SenderFeature to be valid.
 type SenderFeature struct {
 	Address Address `serix:""`

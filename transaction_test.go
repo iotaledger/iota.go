@@ -30,7 +30,7 @@ func TestTransactionEssence_DeSerialize(t *testing.T) {
 }
 
 func TestChainConstrainedOutputUniqueness(t *testing.T) {
-	ident1 := tpkg.RandEd25519Address()
+	addr1 := tpkg.RandEd25519Address()
 
 	inputIDs := tpkg.RandOutputIDs(1)
 
@@ -62,7 +62,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount:    OneIOTA,
 							AccountID: accountID,
 							UnlockConditions: iotago.AccountOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -70,7 +70,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount:    OneIOTA,
 							AccountID: accountID,
 							UnlockConditions: iotago.AccountOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -98,8 +98,8 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
 							UnlockConditions: iotago.AnchorOutputUnlockConditions{
-								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+								&iotago.StateControllerAddressUnlockCondition{Address: addr1},
+								&iotago.GovernorAddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -107,8 +107,8 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount:   OneIOTA,
 							AnchorID: anchorID,
 							UnlockConditions: iotago.AnchorOutputUnlockConditions{
-								&iotago.StateControllerAddressUnlockCondition{Address: ident1},
-								&iotago.GovernorAddressUnlockCondition{Address: ident1},
+								&iotago.StateControllerAddressUnlockCondition{Address: addr1},
+								&iotago.GovernorAddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -134,7 +134,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount: OneIOTA,
 							NFTID:  nftID,
 							UnlockConditions: iotago.NFTOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -142,7 +142,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount: OneIOTA,
 							NFTID:  nftID,
 							UnlockConditions: iotago.NFTOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -168,7 +168,7 @@ func TestChainConstrainedOutputUniqueness(t *testing.T) {
 							Amount:    OneIOTA,
 							AccountID: accountID,
 							UnlockConditions: iotago.AccountOutputUnlockConditions{
-								&iotago.AddressUnlockCondition{Address: ident1},
+								&iotago.AddressUnlockCondition{Address: addr1},
 							},
 							Features: nil,
 						},
@@ -662,9 +662,9 @@ func (test *transactionSerializeTest) ToDeserializeTest() *frameworks.DeSerializ
 	txBuilder.WithTransactionCapabilities(
 		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 	)
-	_, ident, addrKeys := tpkg.RandEd25519Identity()
+	_, addr, addrKeys := tpkg.RandEd25519Identity()
 	txBuilder.AddInput(&builder.TxInput{
-		UnlockTarget: ident,
+		UnlockTarget: addr,
 		InputID:      tpkg.RandUTXOInput().OutputID(),
 		Input:        tpkg.RandBasicOutput(),
 	})

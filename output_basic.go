@@ -65,8 +65,8 @@ func (e *BasicOutput) Equal(other Output) bool {
 	return true
 }
 
-func (e *BasicOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(e, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (e *BasicOutput) UnlockableBy(addr Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
+	ok, _ := outputUnlockableBy(e, nil, addr, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok
 }
 
@@ -107,7 +107,7 @@ func (e *BasicOutput) StoredMana() Mana {
 	return e.Mana
 }
 
-func (e *BasicOutput) Ident() Address {
+func (e *BasicOutput) Owner() Address {
 	return e.UnlockConditions.MustSet().Address().Address
 }
 

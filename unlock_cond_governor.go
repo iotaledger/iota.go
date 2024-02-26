@@ -7,7 +7,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// GovernorAddressUnlockCondition is an UnlockCondition defining the governor identity for an AccountOutput.
+// GovernorAddressUnlockCondition is an UnlockCondition defining the governor address for an AccountOutput.
 type GovernorAddressUnlockCondition struct {
 	Address Address `serix:""`
 }

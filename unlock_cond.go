@@ -24,7 +24,7 @@ var (
 	// ErrExpirationCommitmentInputMissing gets returned when a TX containing an ExpirationUnlockCondition
 	// does not have a commitment input.
 	ErrExpirationCommitmentInputMissing = ierrors.New("transaction's containing an expiration condition require a commitment input")
-	// ErrExpirationNotUnlockable gets returned when a ExpirationUnlockCondition cannot be unlocked by return ident or the owner.
+	// ErrExpirationNotUnlockable gets returned when a ExpirationUnlockCondition cannot be unlocked by return address or the owner.
 	ErrExpirationNotUnlockable = ierrors.New("expiration unlock condition cannot be unlocked")
 )
 
@@ -212,17 +212,17 @@ func (f UnlockConditionSet) HasExpirationCondition() bool {
 	return f.Expiration() != nil
 }
 
-// CheckExpirationCondition returns the expiration return ident in case an expiration condition was set and
+// CheckExpirationCondition returns the expiration return address in case an expiration condition was set and
 // the future bound slot is greater than the expiration slot.
 // In case the past bound slot is smaller than the expiration slot, "nil" is returned to indicate that the original owner can unlock the output.
 // The range in between is not unlockable by anyone and an "ErrExpirationConditionUnlockFailed" error will be returned.
 func (f UnlockConditionSet) CheckExpirationCondition(futureBoundedSlotIndex, pastBoundedSlotIndex SlotIndex) (Address, error) {
 	if f.HasExpirationCondition() {
-		if ok, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlotIndex); ok {
-			return returnIdent, nil
+		if ok, returnAddr := f.ReturnAddressCanUnlock(futureBoundedSlotIndex); ok {
+			return returnAddr, nil
 		}
 
-		if !f.OwnerIdentCanUnlock(pastBoundedSlotIndex) {
+		if !f.OwnerAddressCanUnlock(pastBoundedSlotIndex) {
 			return nil, ErrExpirationNotUnlockable
 		}
 	}
@@ -263,30 +263,30 @@ func (f UnlockConditionSet) HasTimelockUntil(slot SlotIndex) bool {
 	return timelock != nil && slot < timelock.Slot
 }
 
-// tells whether the given ident can unlock an output containing this set of UnlockCondition(s)
-// returns booleans indicating whether the given ident can unlock and whether the return identity can unlock.
-func (f UnlockConditionSet) unlockableBy(ident Address, owner Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
+// tells whether the given address can unlock an output containing this set of UnlockCondition(s)
+// returns booleans indicating whether the given address can unlock and whether the return address can unlock.
+func (f UnlockConditionSet) unlockableBy(addr Address, owner Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
 	if err := f.TimelocksExpired(futureBoundedSlot); err != nil {
 		return false
 	}
 
-	// if the return ident can unlock, then ident must be the return ident
-	if returnIdentCanUnlock, returnIdent := f.ReturnIdentCanUnlock(futureBoundedSlot); returnIdentCanUnlock {
-		return ident.Equal(returnIdent)
+	// if the return addr can unlock, then addr must be the return address
+	if returnAddrCanUnlock, returnAddr := f.ReturnAddressCanUnlock(futureBoundedSlot); returnAddrCanUnlock {
+		return addr.Equal(returnAddr)
 	}
 
 	// if the past bounded index is less than the expiration slot index, then owner can unlock
-	if f.OwnerIdentCanUnlock(pastBoundedSlot) {
-		return ident.Equal(owner)
+	if f.OwnerAddressCanUnlock(pastBoundedSlot) {
+		return addr.Equal(owner)
 	}
 
 	return false
 }
 
-// OwnerIdentCanUnlock tells whether the target address defined in an expiration unlock condition within this set is
+// OwnerAddressCanUnlock tells whether the target address defined in an expiration unlock condition within this set is
 // allowed to unlock an Output containing this UnlockConditionSet given the past bounded slot index of the tx defined as
 // the slot index of the commitment input plus the max committable age.
-func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlot SlotIndex) bool {
+func (f UnlockConditionSet) OwnerAddressCanUnlock(pastBoundedSlot SlotIndex) bool {
 	expUnlockCond := f.Expiration()
 
 	// if there is not expiration unlock, then the owner can unlock.
@@ -301,10 +301,10 @@ func (f UnlockConditionSet) OwnerIdentCanUnlock(pastBoundedSlot SlotIndex) bool 
 	return false
 }
 
-// ReturnIdentCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
-// identity which could unlock an Output containing this UnlockConditionSet given the future bounded slot index of the tx
+// ReturnAddressCanUnlock tells whether a sender defined in an expiration unlock condition within this set is the actual
+// address which could unlock an Output containing this UnlockConditionSet given the future bounded slot index of the tx
 // defined as the slot index of the commitment input plus the min committable age.
-func (f UnlockConditionSet) ReturnIdentCanUnlock(futureBoundedSlotIndex SlotIndex) (bool, Address) {
+func (f UnlockConditionSet) ReturnAddressCanUnlock(futureBoundedSlotIndex SlotIndex) (bool, Address) {
 	expUnlockCond := f.Expiration()
 
 	if expUnlockCond == nil {

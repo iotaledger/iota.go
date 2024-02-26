@@ -17,7 +17,7 @@ type outputIDProofTest struct {
 }
 
 func TestOutputIDProof(t *testing.T) {
-	ident1 := tpkg.RandEd25519Address()
+	addr1 := tpkg.RandEd25519Address()
 
 	inputIDs := tpkg.RandOutputIDs(1)
 
@@ -36,7 +36,7 @@ func TestOutputIDProof(t *testing.T) {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
 						UnlockConditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+							&iotago.AddressUnlockCondition{Address: addr1},
 						},
 					}
 				}),
@@ -56,7 +56,7 @@ func TestOutputIDProof(t *testing.T) {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
 						UnlockConditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+							&iotago.AddressUnlockCondition{Address: addr1},
 						},
 					}
 				}),
@@ -76,7 +76,7 @@ func TestOutputIDProof(t *testing.T) {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
 						UnlockConditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+							&iotago.AddressUnlockCondition{Address: addr1},
 						},
 					}
 				}),
@@ -96,7 +96,7 @@ func TestOutputIDProof(t *testing.T) {
 					return &iotago.BasicOutput{
 						Amount: OneIOTA,
 						UnlockConditions: iotago.BasicOutputUnlockConditions{
-							&iotago.AddressUnlockCondition{Address: ident1},
+							&iotago.AddressUnlockCondition{Address: addr1},
 						},
 					}
 				}),
