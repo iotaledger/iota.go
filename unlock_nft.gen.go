@@ -4,9 +4,9 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// NFTUnlock is an Unlock which references a previous unlock.
+// NFTUnlock is an Unlock which references a previous input/unlock.
 type NFTUnlock struct {
-	// The other unlock this NFTUnlock references to.
+	// The other input/unlock this NFTUnlock references to.
 	Reference uint16 `serix:""`
 }
 
@@ -26,7 +26,7 @@ func (r *NFTUnlock) Chainable() bool {
 	return true
 }
 
-func (r *NFTUnlock) Ref() uint16 {
+func (r *NFTUnlock) ReferencedInputIndex() uint16 {
 	return r.Reference
 }
 

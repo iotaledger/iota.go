@@ -35,12 +35,12 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 	workingSet.Tx = t
 	workingSet.UnlockedAddrs = make(vm.UnlockedAddresses)
 	workingSet.UTXOInputsSet = utxoInputsSet
-	workingSet.InputIDToIndex = make(map[iotago.OutputID]uint16)
-	for inputIndex, inputRef := range workingSet.Tx.TransactionEssence.Inputs {
+	workingSet.InputIDToInputIndex = make(map[iotago.OutputID]uint16)
+	for inputIndex, txInput := range workingSet.Tx.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		ref := inputRef.(*iotago.UTXOInput).OutputID()
-		workingSet.InputIDToIndex[ref] = uint16(inputIndex)
-		input, ok := workingSet.UTXOInputsSet[ref]
+		txInputID := txInput.(*iotago.UTXOInput).OutputID()
+		workingSet.InputIDToInputIndex[txInputID] = uint16(inputIndex)
+		input, ok := workingSet.UTXOInputsSet[txInputID]
 		if !ok {
 			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
 		}

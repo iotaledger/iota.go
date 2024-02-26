@@ -106,7 +106,7 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
-		UnlocksSigUniqueAndRefValidator(t.API),
+		SignatureUniqueAndReferenceUnlocksValidator(t.API),
 	); err != nil {
 		return ierrors.Errorf("invalid unlocks: %w", err)
 	}

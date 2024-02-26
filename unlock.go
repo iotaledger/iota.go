@@ -50,8 +50,8 @@ var (
 )
 
 var (
-	// ErrSigUnlockNotUnique gets returned if sig unlocks making part of a transaction aren't unique.
-	ErrSigUnlockNotUnique = ierrors.New("signature unlock must be unique")
+	// ErrSignatureUnlockNotUnique gets returned if sig unlocks making part of a transaction aren't unique.
+	ErrSignatureUnlockNotUnique = ierrors.New("signature unlock must be unique")
 	// ErrUnlockSignatureInvalid gets returned when a signature in an unlock is invalid.
 	ErrUnlockSignatureInvalid = ierrors.New("signature in unlock is invalid")
 	// ErrMultiUnlockNotUnique gets returned if multi unlocks making part of a transaction aren't unique.
@@ -62,8 +62,8 @@ var (
 	ErrMultiAddressLengthUnlockLengthMismatch = ierrors.New("multi address length and multi unlock length do not match")
 	// ErrReferentialUnlockInvalid gets returned when a ReferentialUnlock is invalid.
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
-	// ErrSigUnlockHasNilSig gets returned if a signature unlock contains a nil signature.
-	ErrSigUnlockHasNilSig = ierrors.New("signature is nil")
+	// ErrSignatureUnlockHasNilSignature gets returned if a signature unlock contains a nil signature.
+	ErrSignatureUnlockHasNilSignature = ierrors.New("signature is nil")
 	// ErrUnknownUnlockType gets returned for unknown unlock.
 	ErrUnknownUnlockType = ierrors.New("unknown unlock type")
 	// ErrNestedMultiUnlock gets returned when a MultiUnlock is nested inside a MultiUnlock.
@@ -124,8 +124,8 @@ type Unlock interface {
 type ReferentialUnlock interface {
 	Unlock
 
-	// Ref returns the index of the Unlock this ReferentialUnlock references.
-	Ref() uint16
+	// ReferencedInputIndex returns the index of the Input/Unlock this ReferentialUnlock references.
+	ReferencedInputIndex() uint16
 	// Chainable indicates whether this ReferentialUnlock can reference another ReferentialUnlock.
 	Chainable() bool
 	// SourceAllowed tells whether the given Address is allowed to be the source of this ReferentialUnlock.
@@ -145,7 +145,7 @@ func publicKeyBytesFromSignatureBlock(signature Signature) ([]byte, error) {
 // UnlockValidatorFunc which given the index and the Unlock itself, runs validations and returns an error if any should fail.
 type UnlockValidatorFunc func(index int, unlock Unlock) error
 
-// UnlocksSigUniqueAndRefValidator returns a validator which checks that:
+// SignatureUniqueAndReferenceUnlocksValidator returns a validator which checks that:
 //  1. SignatureUnlock(s) are unique (compared by public key)
 //     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
 //     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
@@ -155,11 +155,11 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //  5. MultiUnlock(s) are not nested
 //  6. MultiUnlock(s) are unique
 //  7. ReferenceUnlock(s) to MultiUnlock(s) are not nested in MultiUnlock(s)
-func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
-	seenSigUnlocks := map[uint16]struct{}{}
+func SignatureUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
+	seenSignatureUnlocks := map[uint16]struct{}{}
 	seenSigBlockPubkeyBytes := map[string]int{}
 	seenSigBlockPubkeyBytesInMultiUnlocks := map[string]int{}
-	seenRefUnlocks := map[uint16]ReferentialUnlock{}
+	seenReferentialUnlocks := map[uint16]ReferentialUnlock{}
 	seenMultiUnlocks := map[uint16]struct{}{}
 	seenMultiUnlockBytes := map[string]int{}
 
@@ -167,7 +167,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 		switch unlock := u.(type) {
 		case *SignatureUnlock:
 			if unlock.Signature == nil {
-				return ierrors.Wrapf(ErrSigUnlockHasNilSig, "at index %d is nil", index)
+				return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d is nil", index)
 			}
 
 			sigBlockPubKeyBytes, err := publicKeyBytesFromSignatureBlock(unlock.Signature)
@@ -177,34 +177,34 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 
 			// we check for duplicated pubkeys in SignatureUnlock(s)
 			if existingIndex, exists := seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)]; exists {
-				return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
+				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
 			}
 
 			// we also need to check for duplicated pubkeys in MultiUnlock(s)
 			if existingIndex, exists := seenSigBlockPubkeyBytesInMultiUnlocks[string(sigBlockPubKeyBytes)]; exists {
-				return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
+				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
 			}
 
-			seenSigUnlocks[uint16(index)] = struct{}{}
+			seenSignatureUnlocks[uint16(index)] = struct{}{}
 			seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)] = index
 
 		case ReferentialUnlock:
-			if prevRef := seenRefUnlocks[unlock.Ref()]; prevRef != nil {
+			if prevReferentialUnlock := seenReferentialUnlocks[unlock.ReferencedInputIndex()]; prevReferentialUnlock != nil {
 				if !unlock.Chainable() {
-					return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references existing referential unlock %d but it does not support chaining", index, unlock.Ref())
+					return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references existing referential unlock %d but it does not support chaining", index, unlock.ReferencedInputIndex())
 				}
-				seenRefUnlocks[uint16(index)] = unlock
+				seenReferentialUnlocks[uint16(index)] = unlock
 
 				break
 			}
 
 			// must reference a sig or multi unlock here
-			_, hasSigUnlock := seenSigUnlocks[unlock.Ref()]
-			_, hasMultiUnlock := seenMultiUnlocks[unlock.Ref()]
-			if !hasSigUnlock && !hasMultiUnlock {
-				return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references non existent unlock %d", index, unlock.Ref())
+			_, hasSignatureUnlock := seenSignatureUnlocks[unlock.ReferencedInputIndex()]
+			_, hasMultiUnlock := seenMultiUnlocks[unlock.ReferencedInputIndex()]
+			if !hasSignatureUnlock && !hasMultiUnlock {
+				return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references non existent unlock %d", index, unlock.ReferencedInputIndex())
 			}
-			seenRefUnlocks[uint16(index)] = unlock
+			seenReferentialUnlocks[uint16(index)] = unlock
 
 		case *MultiUnlock:
 			multiUnlockBytes, err := api.Encode(unlock)
@@ -220,7 +220,7 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 				switch subUnlock := subU.(type) {
 				case *SignatureUnlock:
 					if subUnlock.Signature == nil {
-						return ierrors.Wrapf(ErrSigUnlockHasNilSig, "at index %d.%d is nil", index, subIndex)
+						return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d.%d is nil", index, subIndex)
 					}
 
 					sigBlockPubKeyBytes, err := publicKeyBytesFromSignatureBlock(subUnlock.Signature)
@@ -230,29 +230,29 @@ func UnlocksSigUniqueAndRefValidator(api API) UnlockValidatorFunc {
 
 					// we check for duplicated pubkeys in SignatureUnlock(s)
 					if existingIndex, exists := seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)]; exists {
-						return ierrors.Wrapf(ErrSigUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
+						return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
 					}
 
-					// we don't set the index here in "seenSigUnlocks" because there is no concept of reference unlocks inside of multi unlocks
+					// we don't set the index here in "seenSignatureUnlocks" because there is no concept of reference unlocks inside of multi unlocks
 
 					// add the pubkey to "seenSigBlockPubkeyBytesInMultiUnlocks", so we can check that pubkeys from a multi unlock are not reused in a normal SignatureUnlock
 					seenSigBlockPubkeyBytesInMultiUnlocks[string(sigBlockPubKeyBytes)] = index
 
 				case ReferentialUnlock:
-					if prevRef := seenRefUnlocks[subUnlock.Ref()]; prevRef != nil {
+					if prevRef := seenReferentialUnlocks[subUnlock.ReferencedInputIndex()]; prevRef != nil {
 						if !subUnlock.Chainable() {
-							return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references existing referential unlock %d but it does not support chaining", index, subIndex, subUnlock.Ref())
+							return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references existing referential unlock %d but it does not support chaining", index, subIndex, subUnlock.ReferencedInputIndex())
 						}
-						// we don't set the index here in "seenRefUnlocks" because it's not allowed to reference an unlock within a multi unlock
+						// we don't set the index here in "seenReferentialUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
 						continue
 					}
 					// must reference a sig unlock here
 					// we don't check for "seenMultiUnlocks" here because we don't want to nest "reference unlocks to multi unlocks" in multi unlocks
-					if _, has := seenSigUnlocks[subUnlock.Ref()]; !has {
-						return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references non existent unlock %d", index, subIndex, subUnlock.Ref())
+					if _, has := seenSignatureUnlocks[subUnlock.ReferencedInputIndex()]; !has {
+						return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references non existent unlock %d", index, subIndex, subUnlock.ReferencedInputIndex())
 					}
-					// we don't set the index here in "seenRefUnlocks" because it's not allowed to reference an unlock within a multi unlock
+					// we don't set the index here in "seenReferentialUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
 				case *MultiUnlock:
 					return ierrors.Wrapf(ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", index, subIndex)
