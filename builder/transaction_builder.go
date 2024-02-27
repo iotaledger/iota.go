@@ -731,11 +731,6 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 
 		unlockedAtIndex, alreadyUnlocked := unlockedSet.signerUIDs[signerUID]
 		if !alreadyUnlocked {
-			// the output's owning chain address must have been unlocked already
-			if _, is := owner.(iotago.ChainAddress); is {
-				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", inputIndex, owner.Bech32(b.api.ProtocolParameters().Bech32HRP()), owner.Type())
-			}
-
 			var err error
 			var signature iotago.Signature
 			if signEssence {
