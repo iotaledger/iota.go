@@ -711,7 +711,8 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 			// add a referential unlock to the former unlock position
 			unlockedSet.addReferentialUnlock(owner, unlockedAtIndex)
 
-			// always mark the chain as unlocked in case the output is a chain output
+			// always mark the chain as unlocked in case the output is a chain output.
+			// e.g. "an NFT owns an NFT".
 			unlockedSet.addChainAsUnlocked(inputs[inputIndex], inputIndex)
 
 			// skip the rest of the input processing because we don't need to sign chain inputs
@@ -756,6 +757,7 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 		}
 
 		// always mark the chain as unlocked in case the output is a chain output
+		// e.g. "an NFT owned by an ed25519 address".
 		unlockedSet.addChainAsUnlocked(inputs[inputIndex], inputIndex)
 	}
 
@@ -803,6 +805,8 @@ func (u *txBuilderUnlockedSet) addSignerUID(signerUID iotago.Identifier, unlocke
 }
 
 // addChainAsUnlocked marks the underlying chain address as unlocked at "unlockedAtIndex".
+// This is only done if the output is a chain output and the chain ID is addressable,
+// which is only valid for AccountOutput, AnchorOutput and NFTOutput.
 func (u *txBuilderUnlockedSet) addChainAsUnlocked(input iotago.Output, unlockedAtIndex int) {
 	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.ChainID().Addressable() {
 		u.unlockedChains[chainInput.ChainID().ToAddress().Key()] = unlockedAtIndex
