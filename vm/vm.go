@@ -185,7 +185,7 @@ func (s *unlockedAddressesSet) SignatureUnlock(addr iotago.DirectUnlockableAddre
 		ReferencedByInputIndex: map[uint16]struct{}{},
 	}
 
-	// we "unlock" the signature and the address itself by adding it to both maps
+	// we "unlock" the signature here, so it can be used for for "ReferentialUnlockDirect" referential unlocks
 	s.SignatureUnlockedAddrsByIndex[inputIndex] = &unlockedAddressWithSignature{
 		unlockedAddress: unlockedAddr,
 		Signature:       sig,
@@ -221,7 +221,7 @@ func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iota
 }
 
 // ReferentialUnlockDirectlyUnlockable expects a directly unlockable address and performs a check whether the given address
-// is unlocked at referenceInputIndex and if the signature of the referenced unlock matches the given address
+// is unlocked at referenceInputIndex and if the signature of the referenced unlock matches the given address.
 // If all checks are successful, it adds the input index to the set of unlocked inputs by this address.
 // In case the given address is not yet unlocked, it is added to the set of unlocked addresses.
 // This is necessary if for example the signature was used before to unlock another address (e.g. derived from the same public key).
@@ -602,7 +602,7 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 
 	case *iotago.MultiAddress:
 		switch uBlock := unlock.(type) {
-		// The MultiAddress can be unlocked by a MultiUnlock or a ReferenceUnlock (do not confuse with ReferentialUnlock).
+		// The MultiAddress can be unlocked by a MultiUnlock or a ReferentialUnlock.
 		case iotago.ReferentialUnlock:
 			// ReferentialUnlock for MultiAddress are only allowed if the unlock is not chainable, and the owner address is not a ChainAddress.
 			// This basically means that the ReferentialUnlock must be a ReferenceUnlock and the "ownerAddr" is a MultiAddress.
