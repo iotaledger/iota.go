@@ -72,7 +72,7 @@ func (e *Ed25519Signature) MatchesAddress(addr Address) bool {
 	}
 }
 
-// SignerUID returns the signer unique identifier for the signature.
+// SignerUID returns the unique identifier of the signature's signer.
 // This can be used to identify the uniqueness of the signer in the unlocks (e.g. unique public key).
 func (e *Ed25519Signature) SignerUID() Identifier {
 	return IdentifierFromData(e.PublicKey[:])

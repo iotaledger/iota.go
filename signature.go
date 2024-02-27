@@ -18,7 +18,7 @@ type Signature interface {
 	// MatchesAddress returns true if the Signature matches the given Address.
 	MatchesAddress(Address) bool
 
-	// SignerUID returns the signer unique identifier for the signature.
+	// SignerUID returns the unique identifier of the signature's signer.
 	// This can be used to identify the uniqueness of the signer in the unlocks (e.g. unique public key).
 	SignerUID() Identifier
 

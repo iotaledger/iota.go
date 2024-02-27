@@ -135,7 +135,7 @@ type ReferentialUnlock interface {
 // UnlockValidatorFunc which given the index and the Unlock itself, runs validations and returns an error if any should fail.
 type UnlockValidatorFunc func(index int, unlock Unlock) error
 
-// SignatureUniqueAndReferenceUnlocksValidator returns a validator which checks that:
+// SignaturesUniqueAndReferenceUnlocksValidator returns a validator which checks that:
 //  1. SignatureUnlock(s) are unique (compared by signer UID)
 //     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
 //     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
@@ -145,7 +145,7 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //  5. MultiUnlock(s) are not nested
 //  6. MultiUnlock(s) are unique
 //  7. ReferenceUnlock(s) to MultiUnlock(s) are not nested in MultiUnlock(s)
-func SignatureUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
+func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 	// seen signature unlocks and their unlock index
 	seenSignatureUnlocks := map[uint16]struct{}{}
 	// seen reference unlocks and their unlock index

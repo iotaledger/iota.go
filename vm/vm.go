@@ -196,19 +196,19 @@ func (s *unlockedAddressesSet) SignatureUnlock(addr iotago.DirectUnlockableAddre
 }
 
 // ReferentialUnlockNonDirectlyUnlockable expects a non-directly unlockable address and performs a check whether the given address
-// is unlocked at referenceInputIndex and if so, it adds the input index to the set of unlocked inputs by this address.
-func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iotago.Address, inputIndex uint16, referenceInputIndex uint16, checkUnlockOnly bool) error {
+// is unlocked at referencedInputIndex and if so, it adds the input index to the set of unlocked inputs by this address.
+func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iotago.Address, inputIndex uint16, referencedInputIndex uint16, checkUnlockOnly bool) error {
 	if _, isDirectUnlockable := owner.(iotago.DirectUnlockableAddress); isDirectUnlockable {
 		return ierrors.Errorf("input %d's address is a directly unlockable address, but a non-directly unlockable address was expected", inputIndex)
 	}
 
 	referencedAddr, referenceExists := s.UnlockedAddrsByAddrKey[owner.Key()]
 	if !referenceExists {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
 	}
 
-	if referencedAddr.UnlockedAtInputIndex != referenceInputIndex {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	if referencedAddr.UnlockedAtInputIndex != referencedInputIndex {
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
 	}
 
 	if checkUnlockOnly {
@@ -221,24 +221,24 @@ func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iota
 }
 
 // ReferentialUnlockDirectlyUnlockable expects a directly unlockable address and performs a check whether the given address
-// is unlocked at referenceInputIndex and if the signature of the referenced unlock matches the given address.
+// is unlocked at referencedInputIndex and if the signature of the referenced unlock matches the given address.
 // If all checks are successful, it adds the input index to the set of unlocked inputs by this address.
 // In case the given address is not yet unlocked, it is added to the set of unlocked addresses.
 // This is necessary if for example the signature was used before to unlock another address (e.g. derived from the same public key).
-func (s *unlockedAddressesSet) ReferentialUnlockDirectlyUnlockable(owner iotago.DirectUnlockableAddress, inputIndex uint16, referenceInputIndex uint16, checkUnlockOnly bool) error {
-	referencedAddrWithSignature, referenceExists := s.SignatureUnlockedAddrsByIndex[referenceInputIndex]
+func (s *unlockedAddressesSet) ReferentialUnlockDirectlyUnlockable(owner iotago.DirectUnlockableAddress, inputIndex uint16, referencedInputIndex uint16, checkUnlockOnly bool) error {
+	referencedAddrWithSignature, referenceExists := s.SignatureUnlockedAddrsByIndex[referencedInputIndex]
 	if !referenceExists {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
 	}
 
-	if referencedAddrWithSignature.UnlockedAtInputIndex != referenceInputIndex {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	if referencedAddrWithSignature.UnlockedAtInputIndex != referencedInputIndex {
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
 	}
 
 	// the signature was already verified in another unlock, so we don't need to check it again,
 	// but we need to make sure that the signature fits the address.
 	if !referencedAddrWithSignature.Signature.MatchesAddress(owner) {
-		return ierrors.Errorf("input %d's address is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+		return ierrors.Errorf("input %d's address is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
 	}
 
 	if checkUnlockOnly {
