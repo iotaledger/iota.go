@@ -89,10 +89,6 @@ func (fID FoundryID) Empty() bool {
 	return fID == emptyFoundryID
 }
 
-func (fID FoundryID) Key() interface{} {
-	return fID.String()
-}
-
 func (fID FoundryID) String() string {
 	return hexutil.EncodeHex(fID[:])
 }

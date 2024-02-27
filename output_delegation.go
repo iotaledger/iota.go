@@ -56,10 +56,6 @@ func (delegationID DelegationID) Addressable() bool {
 	return false
 }
 
-func (delegationID DelegationID) Key() interface{} {
-	return delegationID.String()
-}
-
 func (delegationID DelegationID) Empty() bool {
 	return delegationID == emptyDelegationID
 }

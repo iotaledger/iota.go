@@ -164,11 +164,6 @@ func (a AnchorID) ToAddress() ChainAddress {
 	return &addr
 }
 
-// Key returns a key to use to index this ChainID.
-func (a AnchorID) Key() interface{} {
-	return a.String()
-}
-
 // FromOutputID returns the ChainID computed from a given OutputID.
 func (a AnchorID) FromOutputID(in OutputID) ChainID {
 	return AnchorIDFromOutputID(in)
