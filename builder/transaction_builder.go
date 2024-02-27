@@ -718,6 +718,11 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 			continue
 		}
 
+		if _, isDirectUnlockable := owner.(iotago.DirectUnlockableAddress); !isDirectUnlockable {
+			// we only support directly unlockable addresses in the transaction builder for now
+			return nil, ierrors.Errorf("input %d's owning address is not directly unlockable, address %s, type %s", inputIndex, owner.Bech32(b.api.ProtocolParameters().Bech32HRP()), owner.Type())
+		}
+
 		// get the signer UID for the directly unlockable address
 		signerUID, err := b.signer.SignerUIDForAddress(owner)
 		if err != nil {
