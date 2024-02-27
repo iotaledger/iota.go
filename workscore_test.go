@@ -56,7 +56,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		),
 	)
 
-	tx, err := builder.NewTransactionBuilder(api).
+	tx, err := builder.NewTransactionBuilder(api, iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -74,7 +74,7 @@ func TestTransactionEssenceWorkScore(t *testing.T) {
 		AddRewardInput(&iotago.RewardInput{Index: 0}, 0).
 		IncreaseAllotment(tpkg.RandAccountID(), tpkg.RandMana(10000)+1).
 		IncreaseAllotment(tpkg.RandAccountID(), tpkg.RandMana(10000)+1).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 	require.NoError(t, err)
 
 	block, err := builder.NewBasicBlockBuilder(api).Payload(tx).Build()

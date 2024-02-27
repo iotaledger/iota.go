@@ -20,10 +20,9 @@ func TestTransactionBuilder(t *testing.T) {
 	addrKeys := iotago.AddressKeys{Address: inputAddr, Keys: prvKey}
 
 	type test struct {
-		name       string
-		addrSigner iotago.AddressSigner
-		builder    *builder.TransactionBuilder
-		buildErr   error
+		name     string
+		builder  *builder.TransactionBuilder
+		buildErr error
 	}
 
 	tests := []*test{
@@ -31,7 +30,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 			input := tpkg.RandBasicOutput(iotago.AddressEd25519)
-			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner(addrKeys)).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: input}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -41,9 +40,8 @@ func TestTransactionBuilder(t *testing.T) {
 				})
 
 			return &test{
-				name:       "ok - 1 input/output",
-				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    bdl,
+				name:    "ok - 1 input/output",
+				builder: bdl,
 			}
 		}(),
 
@@ -84,7 +82,7 @@ func TestTransactionBuilder(t *testing.T) {
 				}
 			)
 
-			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner(addrKeys)).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID1.OutputID(), Input: basicOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputID2.OutputID(), Input: nftOutput}).
 				AddInput(&builder.TxInput{UnlockTarget: nftOutput.ChainID().ToAddress(), InputID: inputID3.OutputID(), Input: accountOwnedByNFT}).
@@ -97,9 +95,8 @@ func TestTransactionBuilder(t *testing.T) {
 				})
 
 			return &test{
-				name:       "ok - mix basic+chain outputs",
-				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    bdl,
+				name:    "ok - mix basic+chain outputs",
+				builder: bdl,
 			}
 		}(),
 
@@ -107,7 +104,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner(addrKeys)).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -118,9 +115,8 @@ func TestTransactionBuilder(t *testing.T) {
 				AddTaggedDataPayload(&iotago.TaggedData{Tag: []byte("index"), Data: nil})
 
 			return &test{
-				name:       "ok - with tagged data payload",
-				addrSigner: iotago.NewInMemoryAddressSigner(addrKeys),
-				builder:    bdl,
+				name:    "ok - with tagged data payload",
+				builder: bdl,
 			}
 		}(),
 
@@ -128,7 +124,13 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
+			// wrong address/keys
+			wrongAddress := tpkg.RandEd25519PrivateKey()
+			//nolint:forcetypeassert // we can safely assume that this is a ed25519.PublicKey
+			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongAddress.Public().(ed25519.PublicKey))
+			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongAddress}
+
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner(wrongAddrKeys)).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -137,17 +139,10 @@ func TestTransactionBuilder(t *testing.T) {
 					},
 				})
 
-			// wrong address/keys
-			wrongAddress := tpkg.RandEd25519PrivateKey()
-			//nolint:forcetypeassert // we can safely assume that this is a ed25519.PublicKey
-			wrongAddr := iotago.Ed25519AddressFromPubKey(wrongAddress.Public().(ed25519.PublicKey))
-			wrongAddrKeys := iotago.AddressKeys{Address: wrongAddr, Keys: wrongAddress}
-
 			return &test{
-				name:       "err - missing address keys (wrong address)",
-				addrSigner: iotago.NewInMemoryAddressSigner(wrongAddrKeys),
-				builder:    bdl,
-				buildErr:   iotago.ErrAddressKeysNotMapped,
+				name:     "err - missing address keys (wrong address)",
+				builder:  bdl,
+				buildErr: iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
 
@@ -155,7 +150,7 @@ func TestTransactionBuilder(t *testing.T) {
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
 
-			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI).
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner()).
 				AddInput(&builder.TxInput{UnlockTarget: inputAddr, InputID: inputUTXO1.OutputID(), Input: tpkg.RandBasicOutput(iotago.AddressEd25519)}).
 				AddOutput(&iotago.BasicOutput{
 					Amount: 50,
@@ -165,17 +160,16 @@ func TestTransactionBuilder(t *testing.T) {
 				})
 
 			return &test{
-				name:       "err - missing address keys (no keys given at all)",
-				addrSigner: iotago.NewInMemoryAddressSigner(),
-				builder:    bdl,
-				buildErr:   iotago.ErrAddressKeysNotMapped,
+				name:     "err - missing address keys (no keys given at all)",
+				builder:  bdl,
+				buildErr: iotago.ErrAddressKeysNotMapped,
 			}
 		}(),
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := test.builder.Build(test.addrSigner)
+			_, err := test.builder.Build()
 			if test.buildErr != nil {
 				assert.True(t, ierrors.Is(err, test.buildErr), "wrong error : %s != %s", err, test.buildErr)
 

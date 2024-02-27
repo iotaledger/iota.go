@@ -155,14 +155,23 @@ func RunVMFuncs(vm VirtualMachine, vmParams *Params, execFuncs ...ExecFunc) erro
 	return nil
 }
 
+// unlockedAddressesSet holds a set of unlocked addresses.
+type unlockedAddressesSet struct {
+	// SignatureUnlockedAddrsByIndex contains direct unlockable addresses only which are unlocked by a signature,
+	// indexed by the index of the input/unlock index.
+	SignatureUnlockedAddrsByIndex map[uint16]*unlockedAddressWithSignature
+	// UnlockedAddrsByAddr contains all unlocked addresses.
+	UnlockedAddrsByAddr UnlockedAddresses
+}
+
 // UnlockedAddresses defines a set of addresses which are unlocked from the input side of a SignedTransaction.
 // The value represent the index of the unlock which unlocked the address.
 type UnlockedAddresses map[string]*unlockedAddress
 
 // SignatureUnlock performs a signature unlock check and adds the given address to the set of unlocked addresses if
 // the signature is valid, otherwise returns an error.
-func (unlockedAddrs UnlockedAddresses) SignatureUnlock(addr iotago.DirectUnlockableAddress, essence []byte, sig iotago.Signature, inputIndex uint16, checkUnlockOnly bool) error {
-	if err := addr.Unlock(essence, sig); err != nil {
+func (s *unlockedAddressesSet) SignatureUnlock(addr iotago.DirectUnlockableAddress, essenceMsg []byte, sig iotago.Signature, inputIndex uint16, checkUnlockOnly bool) error {
+	if err := addr.Unlock(essenceMsg, sig); err != nil {
 		return ierrors.Wrapf(err, "input %d's address is not unlocked through its signature unlock", inputIndex)
 	}
 
@@ -170,20 +179,35 @@ func (unlockedAddrs UnlockedAddresses) SignatureUnlock(addr iotago.DirectUnlocka
 		return nil
 	}
 
-	unlockedAddrs[addr.Key()] = &unlockedAddress{
+	unlockedAddr := &unlockedAddress{
 		Address:                addr,
 		UnlockedAtInputIndex:   inputIndex,
 		ReferencedByInputIndex: map[uint16]struct{}{},
 	}
 
+	// we "unlock" the signature and the address itself by adding it to both maps
+	s.SignatureUnlockedAddrsByIndex[inputIndex] = &unlockedAddressWithSignature{
+		unlockedAddress: unlockedAddr,
+		Signature:       sig,
+	}
+	s.UnlockedAddrsByAddr[addr.Key()] = unlockedAddr
+
 	return nil
 }
 
-// ReferentialUnlock performs a check whether the given address is unlocked at referenceInputIndex and if so,
-// adds the index of the input to the set of unlocked inputs by this address.
-func (unlockedAddrs UnlockedAddresses) ReferentialUnlock(addrKey string, referenceInputIndex uint16, inputIndex uint16, checkUnlockOnly bool) error {
-	addr, has := unlockedAddrs[addrKey]
-	if !has || addr.UnlockedAtInputIndex != referenceInputIndex {
+// ReferentialUnlockNonDirectlyUnlockable expects a non-directly unlockable address and performs a check whether the given address
+// is unlocked at referenceInputIndex and if so, it adds the input index to the set of unlocked inputs by this address.
+func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iotago.Address, inputIndex uint16, referenceInputIndex uint16, checkUnlockOnly bool) error {
+	if _, isDirectUnlockable := owner.(iotago.DirectUnlockableAddress); isDirectUnlockable {
+		return ierrors.Errorf("input %d's address is a directly unlockable address, but a non-directly unlockable address was expected", inputIndex)
+	}
+
+	referencedAddr, referenceExists := s.UnlockedAddrsByAddr[owner.Key()]
+	if !referenceExists {
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	}
+
+	if referencedAddr.UnlockedAtInputIndex != referenceInputIndex {
 		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
 	}
 
@@ -191,14 +215,61 @@ func (unlockedAddrs UnlockedAddresses) ReferentialUnlock(addrKey string, referen
 		return nil
 	}
 
-	addr.ReferencedByInputIndex[inputIndex] = struct{}{}
+	referencedAddr.ReferencedByInputIndex[inputIndex] = struct{}{}
+
+	return nil
+}
+
+// ReferentialUnlockDirectlyUnlockable expects a directly unlockable address and performs a check whether the given address
+// is unlocked at referenceInputIndex and if the signature of the referenced unlock matches the given address
+// If all checks are successful, it adds the input index to the set of unlocked inputs by this address.
+// In case the given address is not yet unlocked, it is added to the set of unlocked addresses.
+// This is necessary if for example the signature was used before to unlock another address (e.g. derived from the same public key).
+func (s *unlockedAddressesSet) ReferentialUnlockDirectlyUnlockable(owner iotago.DirectUnlockableAddress, inputIndex uint16, referenceInputIndex uint16, checkUnlockOnly bool) error {
+	referencedAddrWithSignature, referenceExists := s.SignatureUnlockedAddrsByIndex[referenceInputIndex]
+	if !referenceExists {
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	}
+
+	if referencedAddrWithSignature.UnlockedAtInputIndex != referenceInputIndex {
+		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	}
+
+	// the signature was already verified in another unlock, so we don't need to check it again,
+	// but we need to make sure that the signature fits the address.
+	if !referencedAddrWithSignature.Signature.MatchesAddress(owner) {
+		return ierrors.Errorf("input %d's address is not unlocked through input %d's unlock", inputIndex, referenceInputIndex)
+	}
+
+	if checkUnlockOnly {
+		return nil
+	}
+
+	referencedAddrWithSignature.ReferencedByInputIndex[inputIndex] = struct{}{}
+
+	// we need to add the address to the unlocked addresses map, in case it didn't exist yet.
+	// this is necessary if for example the same signature was used before to unlock another address
+	// (e.g. derived from the same public key) and is now used in the referential unlock.
+	//
+	// Attention: for referential unlocks of DirectUnlockableAddress, we don't "unlock" the signature,
+	// only the referential unlock address itself. This way the newly unlocked address can't be used
+	// for further "ReferentialUnlockDirect" referential unlocks which is correct
+	// because the original one should be used instead.
+	ownerKey := owner.Key()
+	if _, contains := s.UnlockedAddrsByAddr[ownerKey]; !contains {
+		s.UnlockedAddrsByAddr[ownerKey] = &unlockedAddress{
+			Address:                owner,
+			UnlockedAtInputIndex:   inputIndex,
+			ReferencedByInputIndex: map[uint16]struct{}{},
+		}
+	}
 
 	return nil
 }
 
 // MultiUnlock performs a check whether all given unlocks are valid and if so,
 // adds the index of the input to the set of unlocked inputs by this address.
-func (unlockedAddrs UnlockedAddresses) MultiUnlock(addr *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, inputIndex uint16, essenceMsgToSign []byte) error {
+func (s *unlockedAddressesSet) MultiUnlock(addr *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, essenceMsg []byte, inputIndex uint16) error {
 	if len(addr.Addresses) != len(multiUnlock.Unlocks) {
 		return ierrors.Wrapf(iotago.ErrMultiAddressLengthUnlockLengthMismatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, addr, len(addr.Addresses), len(multiUnlock.Unlocks))
 	}
@@ -216,7 +287,7 @@ func (unlockedAddrs UnlockedAddresses) MultiUnlock(addr *iotago.MultiAddress, mu
 
 		default:
 			// ATTENTION: we perform the checks only, but we do not unlock the input yet.
-			if err := unlockAddress(addr.Addresses[subIndex].Address, unlock, inputIndex, unlockedAddrs, essenceMsgToSign, true); err != nil {
+			if err := unlockAddress(addr.Addresses[subIndex].Address, unlock, inputIndex, s, essenceMsg, true); err != nil {
 				return err
 			}
 			// the unlock was successful, add the weight of the address
@@ -229,7 +300,12 @@ func (unlockedAddrs UnlockedAddresses) MultiUnlock(addr *iotago.MultiAddress, mu
 		return ierrors.Wrapf(iotago.ErrMultiAddressUnlockThresholdNotReached, "input %d has a multi address (%T) but the threshold of valid unlocks was not reached %d < %d", inputIndex, addr, cumulativeUnlockedWeight, addr.Threshold)
 	}
 
-	unlockedAddrs[addr.Key()] = &unlockedAddress{
+	// for multi addresses we don't "unlock" the signatures, only the multi address itself so it can be used for a referential unlock.
+	//
+	// Attention: the single signatures in the multi unlock must not be able to be referenced by other inputs/unlocks.
+	// In case a signature in a multi unlock also exists in a non-multi unlock, the unlock in the multi unlock
+	// should be a reference unlock to the non-multi unlock signature.
+	s.UnlockedAddrsByAddr[addr.Key()] = &unlockedAddress{
 		Address:                addr,
 		UnlockedAtInputIndex:   inputIndex,
 		ReferencedByInputIndex: map[uint16]struct{}{},
@@ -238,9 +314,9 @@ func (unlockedAddrs UnlockedAddresses) MultiUnlock(addr *iotago.MultiAddress, mu
 	return nil
 }
 
-// AddUnlockedChain allocates an unlockedAddress for the given chain.
-func (unlockedAddrs UnlockedAddresses) AddUnlockedChain(chainAddr iotago.ChainAddress, inputIndex uint16) {
-	unlockedAddrs[chainAddr.Key()] = &unlockedAddress{
+// AddUnlockedChain unlocks the given chain.
+func (s *unlockedAddressesSet) AddUnlockedChain(chainAddr iotago.ChainAddress, inputIndex uint16) {
+	s.UnlockedAddrsByAddr[chainAddr.Key()] = &unlockedAddress{
 		Address:                chainAddr,
 		UnlockedAtInputIndex:   inputIndex,
 		ReferencedByInputIndex: map[uint16]struct{}{},
@@ -298,6 +374,13 @@ type unlockedAddress struct {
 	UnlockedAtInputIndex uint16
 	// A set of input/unlock indexes which referenced this address.
 	ReferencedByInputIndex map[uint16]struct{}
+}
+
+type unlockedAddressWithSignature struct {
+	*unlockedAddress
+
+	// Signature is the signature which unlocked the address.
+	Signature iotago.Signature
 }
 
 func (unlockedAddr *unlockedAddress) String() string {
@@ -362,10 +445,14 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 		return nil, ierrors.Wrapf(err, "failed to compute signing message")
 	}
 
-	unlockedAddrs = make(UnlockedAddresses)
+	unlockedAddrsSet := &unlockedAddressesSet{
+		SignatureUnlockedAddrsByIndex: make(map[uint16]*unlockedAddressWithSignature),
+		UnlockedAddrsByAddr:           make(UnlockedAddresses),
+	}
+
 	outChains := signedTransaction.Transaction.Outputs.ChainOutputSet(txID)
 	for inputIndex, input := range inputs {
-		if err = unlockOutput(signedTransaction.Transaction, resolvedInputs.CommitmentInput, input, signedTransaction.Unlocks[inputIndex], uint16(inputIndex), unlockedAddrs, outChains, essenceMsgToSign); err != nil {
+		if err = unlockOutput(signedTransaction.Transaction, resolvedInputs.CommitmentInput, input, signedTransaction.Unlocks[inputIndex], uint16(inputIndex), unlockedAddrsSet, outChains, essenceMsgToSign); err != nil {
 			return nil, err
 		}
 
@@ -392,11 +479,11 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 				}
 			}
 
-			unlockedAddrs.AddUnlockedChain(chainID.ToAddress(), uint16(inputIndex))
+			unlockedAddrsSet.AddUnlockedChain(chainID.ToAddress(), uint16(inputIndex))
 		}
 	}
 
-	return unlockedAddrs, err
+	return unlockedAddrsSet.UnlockedAddrsByAddr, err
 }
 
 func addressToUnlock(transaction *iotago.Transaction, input iotago.Output, inputIndex uint16, outChains iotago.ChainOutputSet) (iotago.Address, error) {
@@ -448,9 +535,19 @@ func checkExpiration(output iotago.Output, commitmentInput VMCommitmentInput, pr
 	return nil, nil
 }
 
-func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex uint16, unlockedAddrs UnlockedAddresses, essenceMsgToSign []byte, checkUnlockOnly bool) error {
+func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex uint16, unlockedAddrsSet *unlockedAddressesSet, essenceMsgToSign []byte, checkUnlockOnly bool) error {
 	switch owner := ownerAddr.(type) {
 	case iotago.ChainAddress:
+		// ChainAddress can either be AccountAddress, AnchorAddress or an NFTAddress.
+		// The ChainAddress itself must have been unlocked before (e.g. by a signature unlock of a DirectUnlockableAddress),
+		// that's why we only expect a ReferentialUnlock here.
+		//
+		// Why are other types of "ownerAddr" impossible here:
+		// 	Ed25519Address or ImplicitAccountCreationAddress are impossible because the switch statement over the "ownerAddr" type prevents it and the SourceAllowed check would have failed.
+		// 	RestrictedAddress is impossible because it is resolved to the underlying "ownerAddr" before this function is called.
+		// 	MultiAddress is impossible because the switch statement over the "ownerAddr" type prevents it and the SourceAllowed check would have failed.
+		//
+		// Therefore the "ReferentialUnlock" must be an "AccountUnlock", "AnchorUnlock" or "NFTUnlock".
 		referentialUnlock, isReferentialUnlock := unlock.(iotago.ReferentialUnlock)
 		if !isReferentialUnlock || !referentialUnlock.Chainable() || !referentialUnlock.SourceAllowed(ownerAddr) {
 			return ierrors.WithMessagef(
@@ -459,14 +556,22 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 			)
 		}
 
-		if err := unlockedAddrs.ReferentialUnlock(owner.Key(), referentialUnlock.ReferencedInputIndex(), inputIndex, checkUnlockOnly); err != nil {
+		if err := unlockedAddrsSet.ReferentialUnlockNonDirectlyUnlockable(owner, inputIndex, referentialUnlock.ReferencedInputIndex(), checkUnlockOnly); err != nil {
 			return ierrors.Errorf("%w %s (%s): %w", iotago.ErrChainAddressUnlockInvalid, owner, owner.Type(), err)
 		}
 
 	case iotago.DirectUnlockableAddress:
+		// DirectUnlockableAddress can either be an Ed25519Address or an ImplicitAccountCreationAddress.
+		// The DirectUnlockableAddress can be unlocked by a SignatureUnlock or a ReferentialUnlock.
 		switch uBlock := unlock.(type) {
 		case iotago.ReferentialUnlock:
 			// ReferentialUnlock for DirectUnlockableAddress are only allowed if the unlock is not chainable, and the owner address is not a ChainAddress.
+			// This basically means that the ReferentialUnlock must be a ReferenceUnlock and the "ownerAddr" is an Ed25519Address or an ImplicitAccountCreationAddress.
+			//
+			// Why are other types of "ownerAddr" impossible here:
+			// 	AccountAddress, AnchorAddress or NFTAddress are impossible because the switch statement over the "ownerAddr" type prevents it and the SourceAllowed check would have failed.
+			// 	RestrictedAddress is impossible because it is resolved to the underlying "ownerAddr" before this function is called.
+			// 	MultiAddress is impossible because the switch statement over the "ownerAddr" type prevents it.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerAddr) {
 				return ierrors.WithMessagef(
 					iotago.ErrDirectUnlockableAddressUnlockInvalid,
@@ -474,20 +579,20 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 				)
 			}
 
-			if err := unlockedAddrs.ReferentialUnlock(owner.Key(), uBlock.ReferencedInputIndex(), inputIndex, checkUnlockOnly); err != nil {
+			if err := unlockedAddrsSet.ReferentialUnlockDirectlyUnlockable(owner, inputIndex, uBlock.ReferencedInputIndex(), checkUnlockOnly); err != nil {
 				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrDirectUnlockableAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.SignatureUnlock:
 			// owner must not be unlocked already
-			if unlockedAddr, wasAlreadyUnlocked := unlockedAddrs[owner.Key()]; wasAlreadyUnlocked {
+			if unlockedAddr, wasAlreadyUnlocked := unlockedAddrsSet.UnlockedAddrsByAddr[owner.Key()]; wasAlreadyUnlocked {
 				return ierrors.WithMessagef(
 					iotago.ErrDirectUnlockableAddressUnlockInvalid,
 					"input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock of type %s", inputIndex, unlockedAddr.UnlockedAtInputIndex, unlock.Type(),
 				)
 			}
 
-			if err := unlockedAddrs.SignatureUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
+			if err := unlockedAddrsSet.SignatureUnlock(owner, essenceMsgToSign, uBlock.Signature, inputIndex, checkUnlockOnly); err != nil {
 				return ierrors.Join(iotago.ErrDirectUnlockableAddressUnlockInvalid, iotago.ErrUnlockSignatureInvalid, err)
 			}
 
@@ -497,7 +602,12 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 
 	case *iotago.MultiAddress:
 		switch uBlock := unlock.(type) {
+		// The MultiAddress can be unlocked by a MultiUnlock or a ReferenceUnlock (do not confuse with ReferentialUnlock).
 		case iotago.ReferentialUnlock:
+			// ReferentialUnlock for MultiAddress are only allowed if the unlock is not chainable, and the owner address is not a ChainAddress.
+			// This basically means that the ReferentialUnlock must be a ReferenceUnlock and the "ownerAddr" is a MultiAddress.
+			//
+			// "ownerAddr" can only be a MultiAddress here, because the switch statement over the "ownerAddr" type prevents other types.
 			if uBlock.Chainable() || !uBlock.SourceAllowed(ownerAddr) {
 				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid,
 					"input %d has a non-chain address of %s but its corresponding unlock of type %s is chainable or not allowed",
@@ -505,17 +615,17 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 				)
 			}
 
-			if err := unlockedAddrs.ReferentialUnlock(owner.Key(), uBlock.ReferencedInputIndex(), inputIndex, checkUnlockOnly); err != nil {
+			if err := unlockedAddrsSet.ReferentialUnlockNonDirectlyUnlockable(owner, inputIndex, uBlock.ReferencedInputIndex(), checkUnlockOnly); err != nil {
 				return ierrors.Errorf("%w %s (%s): %w", iotago.ErrMultiAddressUnlockInvalid, owner, owner.Type(), err)
 			}
 
 		case *iotago.MultiUnlock:
 			// owner must not be unlocked already
-			if unlockedAddr, wasAlreadyUnlocked := unlockedAddrs[owner.Key()]; wasAlreadyUnlocked {
+			if unlockedAddr, wasAlreadyUnlocked := unlockedAddrsSet.UnlockedAddrsByAddr[owner.Key()]; wasAlreadyUnlocked {
 				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d's address is already unlocked through input %d's unlock but the input uses a non referential unlock", inputIndex, unlockedAddr.UnlockedAtInputIndex)
 			}
 
-			if err := unlockedAddrs.MultiUnlock(owner, uBlock, inputIndex, essenceMsgToSign); err != nil {
+			if err := unlockedAddrsSet.MultiUnlock(owner, uBlock, essenceMsgToSign, inputIndex); err != nil {
 				return ierrors.Join(iotago.ErrMultiAddressUnlockInvalid, err)
 			}
 
@@ -541,7 +651,7 @@ func resolveUnderlyingAddress(addr iotago.Address) iotago.Address {
 	}
 }
 
-func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentInput, input iotago.Output, unlock iotago.Unlock, inputIndex uint16, unlockedAddrs UnlockedAddresses, outChains iotago.ChainOutputSet, essenceMsgToSign []byte) error {
+func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentInput, input iotago.Output, unlock iotago.Unlock, inputIndex uint16, unlockedAddrsSet *unlockedAddressesSet, outChains iotago.ChainOutputSet, essenceMsgToSign []byte) error {
 	ownerAddr, err := addressToUnlock(transaction, input, inputIndex, outChains)
 	if err != nil {
 		return ierrors.Errorf("unable to retrieve address to unlock of input %d: %w", inputIndex, err)
@@ -553,7 +663,7 @@ func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentI
 		ownerAddr = actualAddrToUnlock
 	}
 
-	return unlockAddress(resolveUnderlyingAddress(ownerAddr), unlock, inputIndex, unlockedAddrs, essenceMsgToSign, false)
+	return unlockAddress(resolveUnderlyingAddress(ownerAddr), unlock, inputIndex, unlockedAddrsSet, essenceMsgToSign, false)
 }
 
 // ExecFuncSenderUnlocked validates that for SenderFeature occurring on the output side,

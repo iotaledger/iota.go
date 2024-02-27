@@ -15,6 +15,13 @@ type Signature interface {
 	ProcessableObject
 	constraints.Cloneable[Signature]
 
+	// MatchesAddress returns true if the Signature matches the given Address.
+	MatchesAddress(Address) bool
+
+	// SignerUID returns the signer unique identifier for the signature.
+	// This can be used to identify the uniqueness of the signer in the unlocks (e.g. unique public key).
+	SignerUID() Identifier
+
 	// Type returns the type of the Signature.
 	Type() SignatureType
 }
