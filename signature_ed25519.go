@@ -60,6 +60,24 @@ func (e *Ed25519Signature) String() string {
 	return fmt.Sprintf("public key: %s, signature: %s", hexutil.EncodeHex(e.PublicKey[:]), hexutil.EncodeHex(e.Signature[:]))
 }
 
+// MatchesAddress checks whether the given address matches the public key of the signature.
+func (e *Ed25519Signature) MatchesAddress(addr Address) bool {
+	switch targetAddress := addr.(type) {
+	case *Ed25519Address:
+		return targetAddress.Equal(Ed25519AddressFromPubKey(ed25519.PublicKey(e.PublicKey[:])))
+	case *ImplicitAccountCreationAddress:
+		return targetAddress.Equal(ImplicitAccountCreationAddressFromPubKey(ed25519.PublicKey(e.PublicKey[:])))
+	default:
+		return false
+	}
+}
+
+// SignerUID returns the unique identifier of the signature's signer.
+// This can be used to identify the uniqueness of the signer in the unlocks (e.g. unique public key).
+func (e *Ed25519Signature) SignerUID() Identifier {
+	return IdentifierFromData(e.PublicKey[:])
+}
+
 // Valid verifies whether given the message and Ed25519 address, the signature is valid.
 func (e *Ed25519Signature) Valid(msg []byte, addr *Ed25519Address) error {
 	// an address is the Blake2b 256 hash of the public key

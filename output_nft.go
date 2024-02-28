@@ -41,10 +41,6 @@ func (nftID NFTID) Addressable() bool {
 	return true
 }
 
-func (nftID NFTID) Key() interface{} {
-	return nftID.String()
-}
-
 func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
 

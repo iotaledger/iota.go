@@ -164,11 +164,6 @@ func (a AccountID) ToAddress() ChainAddress {
 	return &addr
 }
 
-// Key returns a key to use to index this ChainID.
-func (a AccountID) Key() interface{} {
-	return a.String()
-}
-
 // FromOutputID returns the ChainID computed from a given OutputID.
 func (a AccountID) FromOutputID(in OutputID) ChainID {
 	return AccountIDFromOutputID(in)

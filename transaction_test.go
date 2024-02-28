@@ -658,18 +658,22 @@ type transactionSerializeTest struct {
 }
 
 func (test *transactionSerializeTest) ToDeserializeTest() *frameworks.DeSerializeTest {
-	txBuilder := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI)
+	_, addr, addrKeys := tpkg.RandEd25519Identity()
+
+	txBuilder := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, iotago.NewInMemoryAddressSigner(addrKeys))
 	txBuilder.WithTransactionCapabilities(
 		iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 	)
-	_, addr, addrKeys := tpkg.RandEd25519Identity()
+
 	txBuilder.AddInput(&builder.TxInput{
 		UnlockTarget: addr,
 		InputID:      tpkg.RandUTXOInput().OutputID(),
 		Input:        tpkg.RandBasicOutput(),
 	})
+
 	txBuilder.AddOutput(test.output)
-	tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(addrKeys)))
+
+	tx := lo.PanicOnErr(txBuilder.Build())
 
 	return &frameworks.DeSerializeTest{
 		Name:      test.name,

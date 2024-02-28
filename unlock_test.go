@@ -50,7 +50,7 @@ func TestUnlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestSignatureUniqueAndReferenceUnlocksValidator(t *testing.T) {
+func TestSignaturesUniqueAndReferenceUnlocksValidator(t *testing.T) {
 	tests := []struct {
 		name    string
 		unlocks iotago.Unlocks
@@ -318,7 +318,7 @@ func TestSignatureUniqueAndReferenceUnlocksValidator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.SignatureUniqueAndReferenceUnlocksValidator(tpkg.ZeroCostTestAPI)
+			valFunc := iotago.SignaturesUniqueAndReferenceUnlocksValidator(tpkg.ZeroCostTestAPI)
 			var runErr error
 			for index, unlock := range tt.unlocks {
 				if err := valFunc(index, unlock); err != nil {

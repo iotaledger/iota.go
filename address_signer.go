@@ -1,6 +1,7 @@
 package iotago
 
 import (
+	"crypto"
 	"crypto/ed25519"
 
 	"github.com/iotaledger/hive.go/ierrors"
@@ -15,8 +16,14 @@ var (
 
 // AddressSigner produces signatures for messages which get verified against a given address.
 type AddressSigner interface {
+	// SignerUIDForAddress returns the signer unique identifier for a given address.
+	// This can be used to identify the uniqueness of the signer in the unlocks (e.g. unique public key).
+	SignerUIDForAddress(addr Address) (Identifier, error)
 	// Sign produces the signature for the given message.
 	Sign(addr Address, msg []byte) (signature Signature, err error)
+	// EmptySignatureForAddress returns an empty signature for the given address.
+	// This can be used to calculate the WorkScore of transactions without actually signing the transaction.
+	EmptySignatureForAddress(addr Address) (signature Signature, err error)
 }
 
 // AddressSignerFunc implements the AddressSigner interface.
@@ -91,9 +98,9 @@ type InMemoryAddressSigner struct {
 	addrKeys map[string]interface{}
 }
 
-func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
-
-	signatureForEd25519Address := func(edAddr DirectUnlockableAddress, msg []byte) (signature Signature, err error) {
+// privateKeyForAddress returns the private key for the given address.
+func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.PrivateKey, error) {
+	privateKeyForEd25519Address := func(edAddr DirectUnlockableAddress) (ed25519.PrivateKey, error) {
 		maybePrvKey, ok := s.addrKeys[edAddr.Key()]
 		if !ok {
 			return nil, ierrors.Errorf("can't sign message for Ed25519 address: %w", ErrAddressKeysNotMapped)
@@ -104,38 +111,69 @@ func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signat
 			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
 		}
 
-		ed25519Sig := &Ed25519Signature{}
-		copy(ed25519Sig.Signature[:], ed25519.Sign(prvKey, msg))
-		//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
-		copy(ed25519Sig.PublicKey[:], prvKey.Public().(ed25519.PublicKey))
-
-		return ed25519Sig, nil
+		return prvKey, nil
 	}
 
 	switch address := addr.(type) {
 	case *Ed25519Address:
-		return signatureForEd25519Address(address, msg)
+		return privateKeyForEd25519Address(address)
 
 	case *RestrictedAddress:
 		switch underlyingAddr := address.Address.(type) {
 		case *Ed25519Address:
-			return signatureForEd25519Address(underlyingAddr, msg)
+			return privateKeyForEd25519Address(underlyingAddr)
 		default:
 			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
 		}
+
 	case *ImplicitAccountCreationAddress:
-		return signatureForEd25519Address(address, msg)
+		return privateKeyForEd25519Address(address)
 
 	default:
 		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
 	}
 }
 
-// EmptyAddressSigner returns an empty signature for the given address.
-// This can be used to calculate the WorkScore of transactions without actually signing the transaction.
-type EmptyAddressSigner struct{}
+// SignerUIDForAddress returns the signer unique identifier for a given address.
+// This can be used to identify the uniqueness of the signer in the unlocks.
+func (s *InMemoryAddressSigner) SignerUIDForAddress(addr Address) (Identifier, error) {
+	prvKey, err := s.privateKeyForAddress(addr)
+	if err != nil {
+		return EmptyIdentifier, ierrors.Errorf("can't get private key for address: %w", err)
+	}
 
-func (s *EmptyAddressSigner) Sign(addr Address, _ []byte) (signature Signature, err error) {
+	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
+	if !ok {
+		return EmptyIdentifier, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+	}
+
+	// the UID is the blake2b 256 hash of the public key
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	return IdentifierFromData(ed25519PrvKey.Public().(ed25519.PublicKey)), nil
+}
+
+func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
+	prvKey, err := s.privateKeyForAddress(addr)
+	if err != nil {
+		return nil, ierrors.Errorf("can't sign message for address: %w", err)
+	}
+
+	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
+	if !ok {
+		return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+	}
+
+	ed25519Sig := &Ed25519Signature{}
+	copy(ed25519Sig.Signature[:], ed25519.Sign(ed25519PrvKey, msg))
+	//nolint:forcetypeassert // we can safely assume that this is an ed25519.PublicKey
+	copy(ed25519Sig.PublicKey[:], ed25519PrvKey.Public().(ed25519.PublicKey))
+
+	return ed25519Sig, nil
+}
+
+// EmptySignatureForAddress returns an empty signature for the given address.
+// This can be used to calculate the WorkScore of transactions without actually signing the transaction.
+func (s *InMemoryAddressSigner) EmptySignatureForAddress(addr Address) (signature Signature, err error) {
 	switch address := addr.(type) {
 	case *Ed25519Address:
 		return &Ed25519Signature{}, nil

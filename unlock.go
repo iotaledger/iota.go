@@ -132,21 +132,11 @@ type ReferentialUnlock interface {
 	SourceAllowed(address Address) bool
 }
 
-// publicKeyBytesFromSignatureBlock returns the bytes of the public key in a signature.
-func publicKeyBytesFromSignatureBlock(signature Signature) ([]byte, error) {
-	switch sig := signature.(type) {
-	case *Ed25519Signature:
-		return sig.PublicKey[:], nil
-	default:
-		return nil, ErrUnknownSignatureType
-	}
-}
-
 // UnlockValidatorFunc which given the index and the Unlock itself, runs validations and returns an error if any should fail.
 type UnlockValidatorFunc func(index int, unlock Unlock) error
 
-// SignatureUniqueAndReferenceUnlocksValidator returns a validator which checks that:
-//  1. SignatureUnlock(s) are unique (compared by public key)
+// SignaturesUniqueAndReferenceUnlocksValidator returns a validator which checks that:
+//  1. SignatureUnlock(s) are unique (compared by signer UID)
 //     - SignatureUnlock(s) inside different MultiUnlock(s) don't need to be unique,
 //     as long as there is no equal SignatureUnlock(s) outside of a MultiUnlock(s).
 //  2. ReferenceUnlock(s) reference a previous SignatureUnlock or MultiUnlock
@@ -155,12 +145,18 @@ type UnlockValidatorFunc func(index int, unlock Unlock) error
 //  5. MultiUnlock(s) are not nested
 //  6. MultiUnlock(s) are unique
 //  7. ReferenceUnlock(s) to MultiUnlock(s) are not nested in MultiUnlock(s)
-func SignatureUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
+func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
+	// seen signature unlocks and their unlock index
 	seenSignatureUnlocks := map[uint16]struct{}{}
-	seenSigBlockPubkeyBytes := map[string]int{}
-	seenSigBlockPubkeyBytesInMultiUnlocks := map[string]int{}
+	// seen reference unlocks and their unlock index
 	seenReferentialUnlocks := map[uint16]ReferentialUnlock{}
+	// seen signerUIDs in the signature unlocks
+	seenSignerUIDs := map[Identifier]int{}
+	// seen signerUIDs in the signature unlocks inside of multi unlocks
+	seenSignerUIDsInMultiUnlocks := map[Identifier]int{}
+	// seen multi unlocks and their unlock index
 	seenMultiUnlocks := map[uint16]struct{}{}
+	// seen multi unlock bytes and their unlock index
 	seenMultiUnlockBytes := map[string]int{}
 
 	return func(index int, u Unlock) error {
@@ -170,23 +166,20 @@ func SignatureUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 				return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d is nil", index)
 			}
 
-			sigBlockPubKeyBytes, err := publicKeyBytesFromSignatureBlock(unlock.Signature)
-			if err != nil {
-				return ierrors.Wrapf(err, "unable to parse pubkey bytes from signature unlock block at index %d for dup check", index)
-			}
+			signerUID := unlock.Signature.SignerUID()
 
-			// we check for duplicated pubkeys in SignatureUnlock(s)
-			if existingIndex, exists := seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)]; exists {
+			// we check for duplicated signer UIDs in SignatureUnlock(s)
+			if existingIndex, exists := seenSignerUIDs[signerUID]; exists {
 				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
 			}
 
-			// we also need to check for duplicated pubkeys in MultiUnlock(s)
-			if existingIndex, exists := seenSigBlockPubkeyBytesInMultiUnlocks[string(sigBlockPubKeyBytes)]; exists {
+			// we also need to check for duplicated signer UIDs in MultiUnlock(s)
+			if existingIndex, exists := seenSignerUIDsInMultiUnlocks[signerUID]; exists {
 				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
 			}
 
 			seenSignatureUnlocks[uint16(index)] = struct{}{}
-			seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)] = index
+			seenSignerUIDs[signerUID] = index
 
 		case ReferentialUnlock:
 			if prevReferentialUnlock := seenReferentialUnlocks[unlock.ReferencedInputIndex()]; prevReferentialUnlock != nil {
@@ -223,20 +216,17 @@ func SignatureUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 						return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d.%d is nil", index, subIndex)
 					}
 
-					sigBlockPubKeyBytes, err := publicKeyBytesFromSignatureBlock(subUnlock.Signature)
-					if err != nil {
-						return ierrors.Wrapf(err, "unable to parse pubkey bytes from signature unlock block at index %d.%d for dup check", index, subIndex)
-					}
+					signerUID := subUnlock.Signature.SignerUID()
 
-					// we check for duplicated pubkeys in SignatureUnlock(s)
-					if existingIndex, exists := seenSigBlockPubkeyBytes[string(sigBlockPubKeyBytes)]; exists {
+					// we check for duplicated signer UIDs in SignatureUnlock(s)
+					if existingIndex, exists := seenSignerUIDs[signerUID]; exists {
 						return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
 					}
 
 					// we don't set the index here in "seenSignatureUnlocks" because there is no concept of reference unlocks inside of multi unlocks
 
-					// add the pubkey to "seenSigBlockPubkeyBytesInMultiUnlocks", so we can check that pubkeys from a multi unlock are not reused in a normal SignatureUnlock
-					seenSigBlockPubkeyBytesInMultiUnlocks[string(sigBlockPubKeyBytes)] = index
+					// add the pubkey to "seenSignerUIDsInMultiUnlocks", so we can check that signer UIDs from a multi unlock are not reused in a normal SignatureUnlock
+					seenSignerUIDsInMultiUnlocks[signerUID] = index
 
 				case ReferentialUnlock:
 					if prevRef := seenReferentialUnlocks[subUnlock.ReferencedInputIndex()]; prevRef != nil {

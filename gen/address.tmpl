@@ -29,7 +29,7 @@ type {{.Name}} [{{.Name}}BytesLength]byte
 
 func ({{.Receiver}} *{{.Name}}) Clone() Address {
 	cpy := &{{.Name}}{}
-	copy(cpy[:], addr[:])
+	copy(cpy[:], {{.Receiver}}[:])
 
 	return cpy
 }
@@ -40,11 +40,11 @@ func ({{.Receiver}} *{{.Name}}) StorageScore(_ *StorageScoreStructure, _ Storage
 }{{end}}
 
 func ({{.Receiver}} *{{.Name}}) ID() []byte {
-	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), addr))
+	return lo.PanicOnErr(CommonSerixAPI().Encode(context.TODO(), {{.Receiver}}))
 }
 
 func ({{.Receiver}} *{{.Name}}) Key() string {
-	return string(addr.ID())
+	return string({{.Receiver}}.ID())
 }
 
 {{if index .Features "ed25519unlock"}}
@@ -54,16 +54,16 @@ func ({{.Receiver}} *{{.Name}}) Unlock(msg []byte, sig Signature) error {
 		return ierrors.Wrapf(ErrSignatureAndAddrIncompatible, "can not unlock {{.Name}} with signature of type %s", sig.Type())
 	}
 
-	return edSig.Valid(msg, (*Ed25519Address)(addr))
+	return edSig.Valid(msg, (*Ed25519Address)({{.Receiver}}))
 }{{end}}
 
 {{if index .Features "chainid"}}
 func ({{.Receiver}} *{{.Name}}) ChainID() ChainID {
-	return {{.IdentifierType}}(*addr)
+	return {{.IdentifierType}}(*{{.Receiver}})
 }
 
 func ({{.Receiver}} *{{.Name}}) {{.IdentifierType}}() {{.IdentifierType}} {
-	return {{.IdentifierType}}(*addr)
+	return {{.IdentifierType}}(*{{.Receiver}})
 }{{end}}
 
 func ({{.Receiver}} *{{.Name}}) Equal(other Address) bool {
@@ -72,7 +72,7 @@ func ({{.Receiver}} *{{.Name}}) Equal(other Address) bool {
 		return false
 	}
 
-	return *addr == *otherAddr
+	return *{{.Receiver}} == *otherAddr
 }
 
 func ({{.Receiver}} *{{.Name}}) Type() AddressType {
@@ -80,11 +80,11 @@ func ({{.Receiver}} *{{.Name}}) Type() AddressType {
 }
 
 func ({{.Receiver}} *{{.Name}}) Bech32(hrp NetworkPrefix) string {
-	return bech32StringBytes(hrp, addr.ID())
+	return bech32StringBytes(hrp, {{.Receiver}}.ID())
 }
 
 func ({{.Receiver}} *{{.Name}}) String() string {
-	return hexutil.EncodeHex(addr.ID())
+	return hexutil.EncodeHex({{.Receiver}}.ID())
 }
 
 func ({{.Receiver}} *{{.Name}}) Size() int {
@@ -114,14 +114,14 @@ func {{.Name}}FromReader(reader io.Reader) (*{{.Name}}, error) {
 		return nil, ierrors.Wrap(err, "unable to read address bytes")
 	}
 
-	addr, _, err := AddressFromBytes(addrBytes)
+	{{.Receiver}}, _, err := AddressFromBytes(addrBytes)
 	if err != nil {
 		return nil, ierrors.Wrap(err, "unable to parse address from bytes")
 	}
 
-	address, ok := addr.(*{{.Name}})
+	address, ok := {{.Receiver}}.(*{{.Name}})
 	if !ok {
-		return nil, ierrors.Errorf("invalid address type: %T", addr)
+		return nil, ierrors.Errorf("invalid address type: %T", {{.Receiver}})
 	}
 	
 	return address, nil

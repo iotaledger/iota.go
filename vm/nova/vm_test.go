@@ -8126,7 +8126,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			InputSet: vm.InputSet{},
 		}
 
-		txBuilder := builder.NewTransactionBuilder(testAPI)
+		txBuilder := builder.NewTransactionBuilder(testAPI, iotago.NewInMemoryAddressSigner(tt.keys...))
 		txBuilder.WithTransactionCapabilities(
 			iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 		)
@@ -8145,7 +8145,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		for _, output := range tests[idx].outputs {
 			txBuilder.AddOutput(output)
 		}
-		tx := lo.PanicOnErr(txBuilder.Build(iotago.NewInMemoryAddressSigner(tt.keys...)))
+		tx := lo.PanicOnErr(txBuilder.Build())
 
 		resolvedInputs.BlockIssuanceCreditInputSet = tests[idx].resolvedBICInputSet
 		resolvedInputs.CommitmentInput = &tests[idx].resolvedCommitmentInput

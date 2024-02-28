@@ -166,8 +166,6 @@ type ChainID interface {
 	ToAddress() ChainAddress
 	// Empty tells whether the ChainID is empty.
 	Empty() bool
-	// Key returns a key to use to index this ChainID.
-	Key() interface{}
 	// ToHex returns the hex representation of the ChainID.
 	ToHex() string
 }
