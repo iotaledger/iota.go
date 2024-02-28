@@ -177,11 +177,17 @@ func (b *TransactionBuilder) AllotRemainingAccountBoundMana(targetSlot iotago.Sl
 
 	// allot all remaining account bound mana to the accounts, except the ignored accounts
 	for accountID, mana := range remainingMana.AccountBoundMana {
+		ignoreAccount := false
 		for _, ignoreAccountID := range ignoreAccountIDs {
 			if accountID == ignoreAccountID {
-				// skip the ignored account
-				continue
+				ignoreAccount = true
+				break
 			}
+		}
+
+		if ignoreAccount {
+			// skip the ignored account
+			continue
 		}
 
 		// allot the mana to the account
