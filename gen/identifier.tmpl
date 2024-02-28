@@ -165,11 +165,6 @@ func ({{.Receiver}} {{.Name}}) ToAddress() ChainAddress {
 	return &addr
 }
 
-// Key returns a key to use to index this ChainID.
-func ({{.Receiver}} {{.Name}}) Key() interface{} {
-	return a.String()
-}
-
 // FromOutputID returns the ChainID computed from a given OutputID.
 func ({{.Receiver}} {{.Name}}) FromOutputID(in OutputID) ChainID {
 	return {{.Name}}FromOutputID(in)

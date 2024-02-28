@@ -119,7 +119,7 @@ func (w WorkScoreParameters) MaxBlockWork() (WorkScore, error) {
 	// allotments factor for max number of allotments
 	addWorkScore(w.Allotment, MaxAllotmentCount)
 
-	// signature check for max number of inputs each unlocked by a maximum sized mutli unlock
+	// signature check for max number of inputs each unlocked by a maximum sized multi unlock
 	addWorkScore(w.SignatureEd25519, MaxInputsCount*10)
 
 	if innerErr != nil {

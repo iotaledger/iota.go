@@ -41,10 +41,6 @@ func (nftID NFTID) Addressable() bool {
 	return true
 }
 
-func (nftID NFTID) Key() interface{} {
-	return nftID.String()
-}
-
 func (nftID NFTID) FromOutputID(id OutputID) ChainID {
 	addr := NFTAddressFromOutputID(id)
 
@@ -152,12 +148,12 @@ func (n *NFTOutput) Equal(other Output) bool {
 	return true
 }
 
-func (n *NFTOutput) Ident() Address {
+func (n *NFTOutput) Owner() Address {
 	return n.UnlockConditions.MustSet().Address().Address
 }
 
-func (n *NFTOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(n, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (n *NFTOutput) UnlockableBy(addr Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
+	ok, _ := outputUnlockableBy(n, nil, addr, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok
 }
 

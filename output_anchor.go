@@ -98,8 +98,8 @@ func (a *AnchorOutput) Equal(other Output) bool {
 	return true
 }
 
-func (a *AnchorOutput) UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
-	return outputUnlockableBy(a, next, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (a *AnchorOutput) UnlockableBy(addr Address, next OwnerTransitionDependentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
+	return outputUnlockableBy(a, next, addr, pastBoundedSlotIndex, futureBoundedSlotIndex)
 }
 
 func (a *AnchorOutput) StorageScore(storageScoreStruct *StorageScoreStructure, _ StorageScoreFunc) StorageScore {
@@ -129,14 +129,14 @@ func (a *AnchorOutput) WorkScore(workScoreParameters *WorkScoreParameters) (Work
 	return workScoreParameters.Output.Add(workScoreConditions, workScoreFeatures, workScoreImmutableFeatures)
 }
 
-func (a *AnchorOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
+func (a *AnchorOutput) Owner(nextState OwnerTransitionDependentOutput) (Address, error) {
 	// if there isn't a next state, then only the governance address can destroy the anchor
 	if nextState == nil {
 		return a.GovernorAddress(), nil
 	}
 	otherAnchorOutput, isAnchorOutput := nextState.(*AnchorOutput)
 	if !isAnchorOutput {
-		return nil, ierrors.Wrapf(ErrTransDepIdentOutputNextInvalid, "expected AnchorOutput but got %s for ident computation", nextState.Type())
+		return nil, ierrors.Wrapf(ErrOwnerTransitionDependentOutputNextInvalid, "expected AnchorOutput but got %s for owner computation", nextState.Type())
 	}
 	switch {
 	case a.StateIndex == otherAnchorOutput.StateIndex:
@@ -144,7 +144,7 @@ func (a *AnchorOutput) Ident(nextState TransDepIdentOutput) (Address, error) {
 	case a.StateIndex+1 == otherAnchorOutput.StateIndex:
 		return a.StateController(), nil
 	default:
-		return nil, ierrors.Wrap(ErrTransDepIdentOutputNextInvalid, "can not compute right ident for anchor output as state index delta is invalid")
+		return nil, ierrors.Wrap(ErrOwnerTransitionDependentOutputNextInvalid, "can not compute right owner for anchor output as state index delta is invalid")
 	}
 }
 

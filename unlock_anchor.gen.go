@@ -4,9 +4,9 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
-// AnchorUnlock is an Unlock which references a previous unlock.
+// AnchorUnlock is an Unlock which references a previous input/unlock.
 type AnchorUnlock struct {
-	// The other unlock this AnchorUnlock references to.
+	// The other input/unlock this AnchorUnlock references to.
 	Reference uint16 `serix:""`
 }
 
@@ -26,7 +26,7 @@ func (r *AnchorUnlock) Chainable() bool {
 	return true
 }
 
-func (r *AnchorUnlock) Ref() uint16 {
+func (r *AnchorUnlock) ReferencedInputIndex() uint16 {
 	return r.Reference
 }
 

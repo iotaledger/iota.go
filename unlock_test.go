@@ -50,7 +50,7 @@ func TestUnlock_DeSerialize(t *testing.T) {
 	}
 }
 
-func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
+func TestSignaturesUniqueAndReferenceUnlocksValidator(t *testing.T) {
 	tests := []struct {
 		name    string
 		unlocks iotago.Unlocks
@@ -119,7 +119,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 					Signature: [64]byte{},
 				}},
 			},
-			wantErr: iotago.ErrSigUnlockNotUnique,
+			wantErr: iotago.ErrSignatureUnlockNotUnique,
 		},
 		{
 			name: "fail - signature reuse outside and inside the multi unlocks - 1",
@@ -137,7 +137,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 					},
 				},
 			},
-			wantErr: iotago.ErrSigUnlockNotUnique,
+			wantErr: iotago.ErrSignatureUnlockNotUnique,
 		},
 		{
 			name: "fail - signature reuse outside and inside the multi unlocks - 2",
@@ -159,7 +159,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 					Signature: [64]byte{},
 				}},
 			},
-			wantErr: iotago.ErrSigUnlockNotUnique,
+			wantErr: iotago.ErrSignatureUnlockNotUnique,
 		},
 		{
 			name: "ok - duplicate ed25519 sig block in different multi unlocks",
@@ -210,7 +210,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrMultiUnlockNotUnique,
 		},
 		{
-			name: "fail - reference unlock invalid ref",
+			name: "fail - reference unlock invalid reference",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
 				tpkg.RandEd25519SignatureUnlock(),
@@ -219,7 +219,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrReferentialUnlockInvalid,
 		},
 		{
-			name: "fail - reference unlock invalid ref in multi unlock",
+			name: "fail - reference unlock invalid reference in multi unlock",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
 				tpkg.RandEd25519SignatureUnlock(),
@@ -232,7 +232,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrReferentialUnlockInvalid,
 		},
 		{
-			name: "fail - reference unlock refs non sig unlock",
+			name: "fail - reference unlock references non sig unlock",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
 				&iotago.ReferenceUnlock{Reference: 0},
@@ -241,7 +241,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 			wantErr: iotago.ErrReferentialUnlockInvalid,
 		},
 		{
-			name: "fail - reference unlock refs non sig unlock in multi unlock",
+			name: "fail - reference unlock references non sig unlock in multi unlock",
 			unlocks: iotago.Unlocks{
 				tpkg.RandEd25519SignatureUnlock(),
 				&iotago.ReferenceUnlock{Reference: 0},
@@ -318,7 +318,7 @@ func TestUnlocksSigUniqueAndRefValidator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valFunc := iotago.UnlocksSigUniqueAndRefValidator(tpkg.ZeroCostTestAPI)
+			valFunc := iotago.SignaturesUniqueAndReferenceUnlocksValidator(tpkg.ZeroCostTestAPI)
 			var runErr error
 			for index, unlock := range tt.unlocks {
 				if err := valFunc(index, unlock); err != nil {

@@ -304,7 +304,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 			iotago.WithLivenessOptions(15, 30, 7, 21, 60),
 		), 0)
 
-	creationSlotTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	creationSlotTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -313,13 +313,13 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 		AddOutput(output).
 		SetCreationSlot(101).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, creationSlotTooRecent, apiProvider), iotago.ErrTransactionCreationSlotTooRecent)
 
-	creationSlotCorrectEqual, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	creationSlotCorrectEqual, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -327,13 +327,13 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 		}).
 		AddOutput(output).
 		SetCreationSlot(100).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectEqual, apiProvider))
 
-	creationSlotCorrectSmallerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	creationSlotCorrectSmallerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -341,13 +341,13 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 		}).
 		AddOutput(output).
 		SetCreationSlot(1).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, creationSlotCorrectSmallerThanCommitment, apiProvider))
 
-	creationSlotCorrectLargerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	creationSlotCorrectLargerThanCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -355,7 +355,7 @@ func TestBlock_TransactionCreationTime(t *testing.T) {
 		}).
 		AddOutput(output).
 		SetCreationSlot(99).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
@@ -430,7 +430,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 			iotago.WithLivenessOptions(15, 30, 11, 21, 60),
 		), 0)
 
-	commitmentInputTooOld, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentInputTooOld, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -438,13 +438,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(78, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentInputTooOld, apiProvider), iotago.ErrCommitmentInputTooOld)
 
-	commitmentInputTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentInputTooRecent, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -452,13 +452,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(90, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentInputTooRecent, apiProvider), iotago.ErrCommitmentInputTooRecent)
 
-	commitmentInputNewerThanBlockCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentInputNewerThanBlockCommitment, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -466,13 +466,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.ErrorIs(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentInputNewerThanBlockCommitment, apiProvider), iotago.ErrCommitmentInputNewerThanCommitment)
 
-	commitmentCorrect, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentCorrect, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -480,13 +480,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentCorrect, apiProvider))
 
-	commitmentCorrectOldest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentCorrectOldest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -494,13 +494,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(79, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 79, commitmentCorrectOldest, apiProvider))
 
-	commitmentCorrectNewest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentCorrectNewest, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -508,13 +508,13 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(89, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 
 	require.NoError(t, createBlockAtSlotWithPayload(t, 100, 89, commitmentCorrectNewest, apiProvider))
 
-	commitmentCorrectMiddle, err := builder.NewTransactionBuilder(apiProvider.LatestAPI()).
+	commitmentCorrectMiddle, err := builder.NewTransactionBuilder(apiProvider.LatestAPI(), iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])})).
 		AddInput(&builder.TxInput{
 			UnlockTarget: addr,
 			InputID:      tpkg.RandOutputID(0),
@@ -522,7 +522,7 @@ func TestBlock_TransactionCommitmentInput(t *testing.T) {
 		}).
 		AddOutput(output).
 		AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: iotago.NewCommitmentID(85, tpkg.Rand32ByteArray())}).
-		Build(iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: addr, Keys: ed25519.PrivateKey(keyPair.PrivateKey[:])}))
+		Build()
 
 	require.NoError(t, err)
 

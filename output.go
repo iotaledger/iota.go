@@ -95,10 +95,10 @@ var outputNames = [OutputDelegation + 1]string{
 }
 
 var (
-	// ErrTransDepIdentOutputNonUTXOChainID gets returned when a TransDepIdentOutput has a ChainID which is not a UTXOIDChainID.
-	ErrTransDepIdentOutputNonUTXOChainID = ierrors.New("transition dependable ident outputs must have UTXO chain IDs")
-	// ErrTransDepIdentOutputNextInvalid gets returned when a TransDepIdentOutput's next state is invalid.
-	ErrTransDepIdentOutputNextInvalid = ierrors.New("transition dependable ident output's next output is invalid")
+	// ErrOwnerTransitionDependentOutputNonUTXOChainID gets returned when a OwnerTransitionDependentOutput has a ChainID which is not a UTXOIDChainID.
+	ErrOwnerTransitionDependentOutputNonUTXOChainID = ierrors.New("owner transition dependent outputs must have UTXO chain IDs")
+	// ErrOwnerTransitionDependentOutputNextInvalid gets returned when a OwnerTransitionDependentOutput's next state is invalid.
+	ErrOwnerTransitionDependentOutputNextInvalid = ierrors.New("owner transition dependent output's next output is invalid")
 	// ErrArrayValidationOrderViolatesLexicalOrder gets returned if the array elements are not in lexical order.
 	ErrArrayValidationOrderViolatesLexicalOrder = ierrors.New("array elements must be in their lexical order")
 	// ErrArrayValidationViolatesUniqueness gets returned if the array elements are not unique.
@@ -277,24 +277,24 @@ func (outputs Outputs[T]) NativeTokenSum() (NativeTokenSum, error) {
 }
 
 // This is a helper function to check if an output is unlockable by a given target.
-func outputUnlockableBy(output Output, next TransDepIdentOutput, target Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
+func outputUnlockableBy(output Output, next OwnerTransitionDependentOutput, target Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error) {
 	unlockConds := output.UnlockConditionSet()
-	var ownerIdent Address
+	var owner Address
 	switch x := output.(type) {
-	case TransIndepIdentOutput:
-		ownerIdent = x.Ident()
-	case TransDepIdentOutput:
-		targetToUnlock, err := x.Ident(next)
+	case OwnerTransitionIndependentOutput:
+		owner = x.Owner()
+	case OwnerTransitionDependentOutput:
+		targetToUnlock, err := x.Owner(next)
 		if err != nil {
 			return false, err
 		}
-		ownerIdent = targetToUnlock
+		owner = targetToUnlock
 	default:
 		panic("invalid output type in outputUnlockableBy")
 	}
 
-	targetIdentCanUnlock := unlockConds.unlockableBy(target, ownerIdent, pastBoundedSlotIndex, futureBoundedSlotIndex)
-	if !targetIdentCanUnlock {
+	targetAddrCanUnlock := unlockConds.unlockableBy(target, owner, pastBoundedSlotIndex, futureBoundedSlotIndex)
+	if !targetAddrCanUnlock {
 		return false, nil
 	}
 
@@ -320,30 +320,30 @@ func PotentialMana(manaDecayProvider *ManaDecayProvider, storageScoreStructure *
 	return manaDecayProvider.GenerateManaAndDecayBySlots(excessBaseTokens, creationSlot, targetSlot)
 }
 
-// TransIndepIdentOutput is a type of Output where the identity to unlock is independent
+// OwnerTransitionIndependentOutput is a type of Output where the address to unlock is independent
 // of any transition the output does (without considering Feature(s)).
-type TransIndepIdentOutput interface {
+type OwnerTransitionIndependentOutput interface {
 	Output
-	// Ident returns the default identity to which this output is locked to.
-	Ident() Address
-	// UnlockableBy tells whether the given ident can unlock this Output
+	// Owner returns the default address to which this output is locked to.
+	Owner() Address
+	// UnlockableBy tells whether the given address can unlock this Output
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output (if any).
-	UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool
+	UnlockableBy(addr Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool
 }
 
-// TransDepIdentOutput is a type of Output where the identity to unlock is dependent
+// OwnerTransitionDependentOutput is a type of Output where the address to unlock is dependent
 // on the transition the output does (without considering UnlockConditions(s)).
-type TransDepIdentOutput interface {
+type OwnerTransitionDependentOutput interface {
 	ChainOutput
-	// Ident computes the identity to which this output is locked to by examining
-	// the transition to the next output state. If next is nil, then this TransDepIdentOutput
-	// treats the ident computation as being for ChainTransitionTypeDestroy.
-	Ident(next TransDepIdentOutput) (Address, error)
-	// UnlockableBy tells whether the given ident can unlock this Output
+	// Owner computes the address to which this output is locked to by examining
+	// the transition to the next output state. If next is nil, then this OwnerTransitionDependentOutput
+	// treats the owner computation as being for ChainTransitionTypeDestroy.
+	Owner(next OwnerTransitionDependentOutput) (Address, error)
+	// UnlockableBy tells whether the given address can unlock this Output
 	// while also taking into consideration constraints enforced by UnlockConditions(s) within this Output
-	// and the next state of this TransDepIdentOutput. To indicate that this TransDepIdentOutput
+	// and the next state of this OwnerTransitionDependentOutput. To indicate that this OwnerTransitionDependentOutput
 	// is to be destroyed, pass nil as next.
-	UnlockableBy(ident Address, next TransDepIdentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error)
+	UnlockableBy(addr Address, next OwnerTransitionDependentOutput, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) (bool, error)
 }
 
 // OutputsSyntacticalDepositAmount returns an ElementValidationFunc[Output] which checks that:
@@ -472,7 +472,7 @@ func OutputsSyntacticalAccount() ElementValidationFunc[Output] {
 			}
 		}
 
-		if addr, ok := accountOutput.Ident().(*AccountAddress); ok && AccountAddress(accountOutput.AccountID) == *addr {
+		if addr, ok := accountOutput.Owner().(*AccountAddress); ok && AccountAddress(accountOutput.AccountID) == *addr {
 			return ierrors.WithMessagef(ErrAccountOutputCyclicAddress, "output %d", index)
 		}
 
@@ -564,7 +564,7 @@ func OutputsSyntacticalNFT() ElementValidationFunc[Output] {
 			return nil
 		}
 
-		if addr, ok := nftOutput.Ident().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
+		if addr, ok := nftOutput.Owner().(*NFTAddress); ok && NFTAddress(nftOutput.NFTID) == *addr {
 			return ierrors.WithMessagef(ErrNFTOutputCyclicAddress, "output %d", index)
 		}
 

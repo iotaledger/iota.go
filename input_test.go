@@ -131,7 +131,7 @@ func TestInputsSyntacticalIndicesWithinBounds(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "fail - invalid UTXO ref index",
+			name: "fail - invalid reference UTXO index",
 			inputs: iotago.Inputs[iotago.Input]{
 				&iotago.UTXOInput{
 					TransactionID:          [36]byte{},

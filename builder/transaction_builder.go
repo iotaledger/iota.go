@@ -10,9 +10,10 @@ import (
 var ErrTransactionBuilder = ierrors.New("transaction builder error")
 
 // NewTransactionBuilder creates a new TransactionBuilder.
-func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
+func NewTransactionBuilder(api iotago.API, signer iotago.AddressSigner) *TransactionBuilder {
 	return &TransactionBuilder{
-		api: api,
+		api:    api,
+		signer: signer,
 		transaction: &iotago.Transaction{
 			API: api,
 			TransactionEssence: &iotago.TransactionEssence{
@@ -33,6 +34,7 @@ func NewTransactionBuilder(api iotago.API) *TransactionBuilder {
 // TransactionBuilder is used to easily build up a SignedTransaction.
 type TransactionBuilder struct {
 	api              iotago.API
+	signer           iotago.AddressSigner
 	occurredBuildErr error
 	transaction      *iotago.Transaction
 	inputs           iotago.OutputSet
@@ -58,10 +60,12 @@ func (b *TransactionBuilder) Clone() *TransactionBuilder {
 
 	return &TransactionBuilder{
 		api:              b.api,
+		signer:           b.signer,
 		occurredBuildErr: b.occurredBuildErr,
 		transaction:      b.transaction.Clone(),
 		inputs:           b.inputs.Clone(),
 		inputOwner:       cpyInputOwner,
+		rewards:          b.rewards,
 	}
 }
 
@@ -173,11 +177,17 @@ func (b *TransactionBuilder) AllotRemainingAccountBoundMana(targetSlot iotago.Sl
 
 	// allot all remaining account bound mana to the accounts, except the ignored accounts
 	for accountID, mana := range remainingMana.AccountBoundMana {
+		ignoreAccount := false
 		for _, ignoreAccountID := range ignoreAccountIDs {
 			if accountID == ignoreAccountID {
-				// skip the ignored account
-				continue
+				ignoreAccount = true
+				break
 			}
+		}
+
+		if ignoreAccount {
+			// skip the ignored account
+			continue
 		}
 
 		// allot the mana to the account
@@ -458,9 +468,9 @@ func (b *TransactionBuilder) hasManalockCondition(output iotago.Output) (iotago.
 
 // BuildAndSwapToBlockBuilder builds the transaction and then swaps to a BasicBlockBuilder with
 // the transaction set as its payload. txFunc can be nil.
-func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(signer iotago.AddressSigner, txFunc TransactionFunc) *BasicBlockBuilder {
+func (b *TransactionBuilder) BuildAndSwapToBlockBuilder(txFunc TransactionFunc) *BasicBlockBuilder {
 	blockBuilder := NewBasicBlockBuilder(b.api)
-	tx, err := b.Build(signer)
+	tx, err := b.Build()
 	if err != nil {
 		blockBuilder.err = err
 
@@ -636,26 +646,37 @@ func (b *TransactionBuilder) MinRequiredAllottedMana(rmc iotago.Mana, blockIssue
 	// add a dummy allotment to account for the later added allotment for the block issuer in case it does not exist yet
 	b.IncreaseAllotment(blockIssuerAccountID, 1074)
 
-	// create a dummy block builder with the transaction payload to get the correct workscore.
-	// the transaction is signed with an empty signer to get the correct workscore.
+	// the transaction is "signed" with empty signatures to get the correct workscore.
 	// later the transaction needs to be signed with the correct signer, after the allotted mana was set correctly.
-	dummyBlockBuilder := b.BuildAndSwapToBlockBuilder(&iotago.EmptyAddressSigner{}, nil)
+	tx, err := b.build(false)
+	if err != nil {
+		return 0, ierrors.Wrap(err, "failed to build the dummy tx payload for workscore calculation")
+	}
+
+	// create a dummy block builder with the transaction payload to get the correct workscore.
+	dummyBlockBuilder := NewBasicBlockBuilder(b.api).Payload(tx)
 
 	// normally the block should be build first to sort the parents, but we don't need the block itself, just the workscore
 	dummyBlock, err := dummyBlockBuilder.Build()
 	if err != nil {
-		return 0, ierrors.Wrap(err, "failed to build the dummy block")
+		return 0, ierrors.Wrap(err, "failed to build the dummy block for workscore calculation")
 	}
 
 	return dummyBlock.ManaCost(rmc)
 }
 
-// Build signs the inputs with the given signer and returns the built payload.
-func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedTransaction, error) {
+// Build signs the transaction essence and returns the built payload.
+func (b *TransactionBuilder) Build() (*iotago.SignedTransaction, error) {
+	return b.build(true)
+}
+
+// build adds a signature and returns the built payload.
+// Depending on the value of "signEssence" it either signs the essence or adds empty signatures.
+func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
-	case signer == nil:
+	case b.signer == nil:
 		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
 	}
 
@@ -676,62 +697,131 @@ func (b *TransactionBuilder) Build(signer iotago.AddressSigner) (*iotago.SignedT
 		return nil, ierrors.Wrap(err, "failed to calculate tx transaction for signing message")
 	}
 
-	unlockPos := map[string]int{}
-	unlocks := iotago.Unlocks{}
-	for i, inputRef := range b.transaction.TransactionEssence.Inputs {
-		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
-		addr := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
-		addrKey := addr.Key()
+	unlockedSet := &txBuilderUnlockedSet{
+		unlocks:        iotago.Unlocks{},
+		signerUIDs:     map[iotago.Identifier]int{},
+		unlockedChains: map[string]int{},
+	}
 
-		pos, unlocked := unlockPos[addrKey]
-		if !unlocked {
-			// the output's owning chain address must have been unlocked already
-			if _, is := addr.(iotago.ChainAddress); is {
-				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", i, addr, addr.Type())
+	for inputIndex, inputRef := range b.transaction.TransactionEssence.Inputs {
+		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
+		owner := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
+
+		chainAddr, isChainAddress := owner.(iotago.ChainAddress)
+		if isChainAddress {
+			// the inputs's owning chain address must have been unlocked already
+			unlockedAtIndex, isUnlocked := unlockedSet.isChainUnlocked(chainAddr)
+			if !isUnlocked {
+				return nil, ierrors.Errorf("input %d's owning chain is not unlocked, chainID %s, type %s", inputIndex, owner.Bech32(b.api.ProtocolParameters().Bech32HRP()), owner.Type())
 			}
 
-			// produce signature
+			// add a referential unlock to the former unlock position
+			unlockedSet.addReferentialUnlock(owner, unlockedAtIndex)
+
+			// always mark the chain as unlocked in case the output is a chain output.
+			// e.g. "an NFT owns an NFT".
+			unlockedSet.addChainAsUnlocked(inputs[inputIndex], inputIndex)
+
+			// skip the rest of the input processing because we don't need to sign chain inputs
+			continue
+		}
+
+		if _, isDirectUnlockable := owner.(iotago.DirectUnlockableAddress); !isDirectUnlockable {
+			// we only support directly unlockable addresses in the transaction builder for now
+			return nil, ierrors.Errorf("input %d's owning address is not directly unlockable, address %s, type %s", inputIndex, owner.Bech32(b.api.ProtocolParameters().Bech32HRP()), owner.Type())
+		}
+
+		// get the signer UID for the directly unlockable address
+		signerUID, err := b.signer.SignerUIDForAddress(owner)
+		if err != nil {
+			return nil, ierrors.Wrapf(err, "failed to get signer UID for address %s", owner.Bech32(b.api.ProtocolParameters().Bech32HRP()))
+		}
+
+		unlockedAtIndex, alreadyUnlocked := unlockedSet.signerUIDs[signerUID]
+		if !alreadyUnlocked {
+			var err error
 			var signature iotago.Signature
-			signature, err = signer.Sign(addr, txEssenceData)
+			if signEssence {
+				// sign the tx essence data
+				signature, err = b.signer.Sign(owner, txEssenceData)
+			} else {
+				// sign with empty signature.
+				// this is used for example to calculate the workscore of the transaction before the actual signing.
+				signature, err = b.signer.EmptySignatureForAddress(owner)
+			}
 			if err != nil {
 				return nil, ierrors.Wrapf(err, "failed to sign tx transaction: %s", txEssenceData)
 			}
 
-			unlocks = append(unlocks, &iotago.SignatureUnlock{Signature: signature})
-			addChainAsUnlocked(inputs[i], i, unlockPos)
-			unlockPos[addrKey] = i
+			// add the new signature to the unlocks
+			unlockedSet.addUnlock(&iotago.SignatureUnlock{Signature: signature})
 
-			continue
+			// remember the unlock index for the new signer UID
+			unlockedSet.addSignerUID(signerUID, inputIndex)
+		} else {
+			// add a referential unlock to the former unlock position
+			unlockedSet.addReferentialUnlock(owner, unlockedAtIndex)
 		}
 
-		unlocks = addReferentialUnlock(addr, unlocks, pos)
-		addChainAsUnlocked(inputs[i], i, unlockPos)
+		// always mark the chain as unlocked in case the output is a chain output
+		// e.g. "an NFT owned by an ed25519 address".
+		unlockedSet.addChainAsUnlocked(inputs[inputIndex], inputIndex)
 	}
 
 	sigTxPayload := &iotago.SignedTransaction{
 		API:         b.api,
 		Transaction: b.transaction,
-		Unlocks:     unlocks,
+		Unlocks:     unlockedSet.unlocks,
 	}
 
 	return sigTxPayload, nil
 }
 
-func addReferentialUnlock(addr iotago.Address, unlocks iotago.Unlocks, pos int) iotago.Unlocks {
+// txBuilderUnlockedSet is a helper struct to keep track of the unlocked inputs and their positions.
+type txBuilderUnlockedSet struct {
+	// unlocks holds the unlocks for the tx inputs.
+	unlocks iotago.Unlocks
+	// signerUIDs maps unique signer UIDs to the position of the unlock in the unlocks slice.
+	signerUIDs map[iotago.Identifier]int
+	// unlockedChains maps the chain address key to the position of the unlock in the unlocks slice.
+	unlockedChains map[string]int
+}
+
+// addUnlock adds the given unlock to the set.
+func (u *txBuilderUnlockedSet) addUnlock(unlock iotago.Unlock) {
+	u.unlocks = append(u.unlocks, unlock)
+}
+
+// addReferentialUnlock adds a referential unlock to the set.
+func (u *txBuilderUnlockedSet) addReferentialUnlock(addr iotago.Address, referencedInputIndex int) {
 	switch addr.(type) {
 	case *iotago.AccountAddress:
-		return append(unlocks, &iotago.AccountUnlock{Reference: uint16(pos)})
+		u.addUnlock(&iotago.AccountUnlock{Reference: uint16(referencedInputIndex)})
 	case *iotago.AnchorAddress:
-		return append(unlocks, &iotago.AnchorUnlock{Reference: uint16(pos)})
+		u.addUnlock(&iotago.AnchorUnlock{Reference: uint16(referencedInputIndex)})
 	case *iotago.NFTAddress:
-		return append(unlocks, &iotago.NFTUnlock{Reference: uint16(pos)})
+		u.addUnlock(&iotago.NFTUnlock{Reference: uint16(referencedInputIndex)})
 	default:
-		return append(unlocks, &iotago.ReferenceUnlock{Reference: uint16(pos)})
+		u.addUnlock(&iotago.ReferenceUnlock{Reference: uint16(referencedInputIndex)})
 	}
 }
 
-func addChainAsUnlocked(input iotago.Output, posUnlocked int, prevUnlocked map[string]int) {
+// addSignerUID marks the given signer UID as unlocked at "unlockedAtIndex".
+func (u *txBuilderUnlockedSet) addSignerUID(signerUID iotago.Identifier, unlockedAtIndex int) {
+	u.signerUIDs[signerUID] = unlockedAtIndex
+}
+
+// addChainAsUnlocked marks the underlying chain address as unlocked at "unlockedAtIndex".
+// This is only done if the output is a chain output and the chain ID is addressable,
+// which is only valid for AccountOutput, AnchorOutput and NFTOutput.
+func (u *txBuilderUnlockedSet) addChainAsUnlocked(input iotago.Output, unlockedAtIndex int) {
 	if chainInput, is := input.(iotago.ChainOutput); is && chainInput.ChainID().Addressable() {
-		prevUnlocked[chainInput.ChainID().ToAddress().Key()] = posUnlocked
+		u.unlockedChains[chainInput.ChainID().ToAddress().Key()] = unlockedAtIndex
 	}
+}
+
+// isChainUnlocked checks if the underlying chain address is unlocked and returns the unlock index.
+func (u *txBuilderUnlockedSet) isChainUnlocked(chainAddr iotago.ChainAddress) (int, bool) {
+	unlockedAtIndex, isUnlocked := u.unlockedChains[chainAddr.ChainID().ToAddress().Key()]
+	return unlockedAtIndex, isUnlocked
 }

@@ -89,10 +89,6 @@ func (fID FoundryID) Empty() bool {
 	return fID == emptyFoundryID
 }
 
-func (fID FoundryID) Key() interface{} {
-	return fID.String()
-}
-
 func (fID FoundryID) String() string {
 	return hexutil.EncodeHex(fID[:])
 }
@@ -172,12 +168,12 @@ func (f *FoundryOutput) Equal(other Output) bool {
 	return true
 }
 
-func (f *FoundryOutput) Ident() Address {
+func (f *FoundryOutput) Owner() Address {
 	return f.UnlockConditionSet().ImmutableAccount().Address
 }
 
-func (f *FoundryOutput) UnlockableBy(ident Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
-	ok, _ := outputUnlockableBy(f, nil, ident, pastBoundedSlotIndex, futureBoundedSlotIndex)
+func (f *FoundryOutput) UnlockableBy(addr Address, pastBoundedSlotIndex SlotIndex, futureBoundedSlotIndex SlotIndex) bool {
+	ok, _ := outputUnlockableBy(f, nil, addr, pastBoundedSlotIndex, futureBoundedSlotIndex)
 	return ok
 }
 
@@ -225,7 +221,7 @@ func (f *FoundryOutput) ChainID() ChainID {
 
 // FoundryID returns the FoundryID of this FoundryOutput.
 func (f *FoundryOutput) FoundryID() (FoundryID, error) {
-	return FoundryIDFromAddressAndSerialNumberAndTokenScheme(f.Ident(), f.SerialNumber, f.TokenScheme.Type())
+	return FoundryIDFromAddressAndSerialNumberAndTokenScheme(f.Owner(), f.SerialNumber, f.TokenScheme.Type())
 }
 
 // MustFoundryID works like FoundryID but panics if an error occurs.

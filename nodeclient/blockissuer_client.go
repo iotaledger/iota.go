@@ -21,7 +21,7 @@ type (
 		// SendPayload sends an ApplicationPayload to the block issuer.
 		SendPayload(ctx context.Context, payload iotago.ApplicationPayload, commitmentID iotago.CommitmentID, numPoWWorkers ...int) (*api.BlockCreatedResponse, error)
 		// SendPayloadWithTransactionBuilder automatically allots the needed mana and sends an ApplicationPayload to the block issuer.
-		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error)
+		SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error)
 	}
 
 	blockIssuerClient struct {
@@ -92,7 +92,7 @@ func (client *blockIssuerClient) SendPayload(ctx context.Context, payload iotago
 	return client.mineNonceAndSendPayload(ctx, payload, commitmentID, blockIssuerInfo.PowTargetTrailingZeros, numPoWWorkers...)
 }
 
-func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, signer iotago.AddressSigner, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error) {
+func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.Context, builder *builder.TransactionBuilder, storedManaOutputIndex int, numPoWWorkers ...int) (iotago.ApplicationPayload, *api.BlockCreatedResponse, error) {
 	// get the info from the block issuer
 	blockIssuerInfo, err := client.Info(ctx)
 	if err != nil {
@@ -128,7 +128,7 @@ func (client *blockIssuerClient) SendPayloadWithTransactionBuilder(ctx context.C
 	builder.AllotMinRequiredManaAndStoreRemainingManaInOutput(builder.CreationSlot(), blockIssuance.LatestCommitment.ReferenceManaCost, blockIssuerAccountAddress.AccountID(), storedManaOutputIndex)
 
 	// sign the transaction
-	payload, err := builder.Build(signer)
+	payload, err := builder.Build()
 	if err != nil {
 		return nil, nil, ierrors.Wrap(err, "failed to build the signed transaction payload")
 	}

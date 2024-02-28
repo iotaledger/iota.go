@@ -56,10 +56,6 @@ func (delegationID DelegationID) Addressable() bool {
 	return false
 }
 
-func (delegationID DelegationID) Key() interface{} {
-	return delegationID.String()
-}
-
 func (delegationID DelegationID) Empty() bool {
 	return delegationID == emptyDelegationID
 }
@@ -166,12 +162,12 @@ func (d *DelegationOutput) Equal(other Output) bool {
 	return true
 }
 
-func (d *DelegationOutput) Ident() Address {
+func (d *DelegationOutput) Owner() Address {
 	return d.UnlockConditions.MustSet().Address().Address
 }
 
-func (d *DelegationOutput) UnlockableBy(ident Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
-	ok, _ := outputUnlockableBy(d, nil, ident, pastBoundedSlot, futureBoundedSlot)
+func (d *DelegationOutput) UnlockableBy(addr Address, pastBoundedSlot SlotIndex, futureBoundedSlot SlotIndex) bool {
+	ok, _ := outputUnlockableBy(d, nil, addr, pastBoundedSlot, futureBoundedSlot)
 	return ok
 }
 

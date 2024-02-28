@@ -7,9 +7,9 @@ import (
 )
 
 // StorageDepositReturnUnlockCondition is an unlock condition which defines
-// the amount of tokens which must be sent back to the return identity, when the output in which it occurs in, is consumed.
+// the amount of tokens which must be sent back to the return address, when the output in which it occurs in, is consumed.
 // If a transaction consumes multiple outputs which have a StorageDepositReturnUnlockCondition, then on the output side at least
-// the sum of all occurring StorageDepositReturnUnlockCondition(s) on the input side must be deposited to the designated return identity.
+// the sum of all occurring StorageDepositReturnUnlockCondition(s) on the input side must be deposited to the designated return address.
 type StorageDepositReturnUnlockCondition struct {
 	ReturnAddress Address   `serix:""`
 	Amount        BaseToken `serix:""`
