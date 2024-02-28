@@ -659,12 +659,13 @@ func (b *TransactionBuilder) MinRequiredAllottedMana(rmc iotago.Mana, blockIssue
 	return dummyBlock.ManaCost(rmc)
 }
 
-// Build signs the inputs with the given signer and returns the built payload.
+// Build signs the transaction essence and returns the built payload.
 func (b *TransactionBuilder) Build() (*iotago.SignedTransaction, error) {
 	return b.build(true)
 }
 
-// Build signs the inputs with the given signer and returns the built payload.
+// build adds a signature and returns the built payload.
+// Depending on the value of "signEssence" it either signs the essence or adds empty signatures.
 func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction, error) {
 	switch {
 	case b.occurredBuildErr != nil:
