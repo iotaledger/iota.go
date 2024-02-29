@@ -58,6 +58,16 @@ func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
 }
 
+// MustID works like ID but panics if the SignedTransactionID can't be computed.
+func (t *SignedTransaction) MustID() SignedTransactionID {
+	id, err := t.ID()
+	if err != nil {
+		panic(err)
+	}
+
+	return id
+}
+
 func (t *SignedTransaction) Size() int {
 	// PayloadType
 	return serializer.SmallTypeDenotationByteSize +

@@ -83,6 +83,16 @@ func (t *Transaction) ID() (TransactionID, error) {
 	return TransactionIDFromTransactionCommitmentAndOutputCommitment(t.CreationSlot, transactionCommitment, outputCommitment), nil
 }
 
+// MustID works like ID but panics if the TransactionID can't be computed.
+func (t *Transaction) MustID() TransactionID {
+	id, err := t.ID()
+	if err != nil {
+		panic(err)
+	}
+
+	return id
+}
+
 func TransactionIDFromTransactionCommitmentAndOutputCommitment(slot SlotIndex, transactionCommitment Identifier, outputCommitment Identifier) TransactionID {
 	return TransactionIDRepresentingData(slot, byteutils.ConcatBytes(transactionCommitment[:], outputCommitment[:]))
 }
