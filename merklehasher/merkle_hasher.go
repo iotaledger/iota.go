@@ -49,7 +49,7 @@ func (t *Hasher[V]) HashValues(values []V) ([]byte, error) {
 	for i := range values {
 		value, err := values[i].Bytes()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		data[i] = value
 	}
