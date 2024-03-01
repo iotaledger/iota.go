@@ -185,7 +185,7 @@ func (s *unlockedAddressesSet) SignatureUnlock(addr iotago.DirectUnlockableAddre
 		ReferencedByInputIndex: map[uint16]struct{}{},
 	}
 
-	// we "unlock" the signature here, so it can be used for for "ReferentialUnlockDirect" referential unlocks
+	// we "unlock" the signature here, so it can be used for "ReferentialUnlockDirect" referential unlocks
 	s.SignatureUnlockedAddrsByIndex[inputIndex] = &unlockedAddressWithSignature{
 		UnlockedAddress: unlockedAddr,
 		Signature:       sig,
@@ -204,11 +204,11 @@ func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iota
 
 	referencedAddr, referenceExists := s.UnlockedAddrsByAddrKey[owner.Key()]
 	if !referenceExists {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
+		return ierrors.Errorf("input %d's address was not previously unlocked by unlock %d", inputIndex, referencedInputIndex)
 	}
 
 	if referencedAddr.UnlockedAtInputIndex != referencedInputIndex {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
+		return ierrors.Errorf("input %d references unlock %d but its address was unlocked by unlock %d instead", inputIndex, referencedInputIndex, referencedAddr.UnlockedAtInputIndex)
 	}
 
 	if checkUnlockOnly {
@@ -228,17 +228,17 @@ func (s *unlockedAddressesSet) ReferentialUnlockNonDirectlyUnlockable(owner iota
 func (s *unlockedAddressesSet) ReferentialUnlockDirectlyUnlockable(owner iotago.DirectUnlockableAddress, inputIndex uint16, referencedInputIndex uint16, checkUnlockOnly bool) error {
 	referencedAddrWithSignature, referenceExists := s.SignatureUnlockedAddrsByIndex[referencedInputIndex]
 	if !referenceExists {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
+		return ierrors.Errorf("input %d's address was not previously unlocked by unlock %d", inputIndex, referencedInputIndex)
 	}
 
 	if referencedAddrWithSignature.UnlockedAtInputIndex != referencedInputIndex {
-		return ierrors.Errorf("input %d is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
+		return ierrors.Errorf("input %d references unlock %d but its address was unlocked by unlock %d instead", inputIndex, referencedInputIndex, referencedAddrWithSignature.UnlockedAtInputIndex)
 	}
 
 	// the signature was already verified in another unlock, so we don't need to check it again,
 	// but we need to make sure that the signature fits the address.
 	if !referencedAddrWithSignature.Signature.MatchesAddress(owner) {
-		return ierrors.Errorf("input %d's address is not unlocked through input %d's unlock", inputIndex, referencedInputIndex)
+		return ierrors.Errorf("input %d's address is not unlocked through unlock %d", inputIndex, referencedInputIndex)
 	}
 
 	if checkUnlockOnly {
