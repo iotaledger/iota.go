@@ -160,7 +160,7 @@ func createBlockWithParents(t *testing.T, strongParents, weakParents, shallowLik
 		WeakParents(weakParents).
 		ShallowLikeParents(shallowLikeParent).
 		IssuingTime(time.Now()).
-		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().SlotFromTime(time.Now())-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
+		SlotCommitmentID(iotago.NewCommitment(apiForSlot.Version(), apiForSlot.TimeProvider().CurrentSlot()-apiForSlot.ProtocolParameters().MinCommittableAge(), iotago.CommitmentID{}, iotago.Identifier{}, 0, 0).MustID()).
 		Build()
 	require.NoError(t, err)
 
