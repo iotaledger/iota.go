@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
-	ErrMissingUTXO = ierrors.New("missing utxo")
 	// ErrInputOutputBaseTokenMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputBaseTokenMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount of base tokens")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.

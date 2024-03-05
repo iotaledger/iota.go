@@ -42,7 +42,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 		workingSet.InputIDToInputIndex[txInputID] = uint16(inputIndex)
 		input, ok := workingSet.UTXOInputsSet[txInputID]
 		if !ok {
-			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
+			panic(fmt.Sprintf("UTXO for input %d should be supplied %s", inputIndex, txInputID))
 		}
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
 	}
