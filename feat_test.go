@@ -428,6 +428,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 						bik3,
 					}),
 				}
+				t.TransactionEssence.ContextInputs = append(t.TransactionEssence.ContextInputs, tpkg.RandCommitmentInput())
 			},
 			),
 			Target: &iotago.SignedTransaction{},
@@ -442,6 +443,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 						bik3,
 					}),
 				}
+				t.TransactionEssence.ContextInputs = append(t.TransactionEssence.ContextInputs, tpkg.RandCommitmentInput())
 			}),
 			Target:    &iotago.SignedTransaction{},
 			SeriErr:   iotago.ErrArrayValidationOrderViolatesLexicalOrder,
@@ -458,6 +460,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 						bik2,
 					}),
 				}
+				t.TransactionEssence.ContextInputs = append(t.TransactionEssence.ContextInputs, tpkg.RandCommitmentInput())
 			}),
 			Target:    &iotago.SignedTransaction{},
 			SeriErr:   iotago.ErrArrayValidationViolatesUniqueness,
@@ -469,6 +472,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(iotago.BlockIssuerKeys{}),
 				}
+				t.TransactionEssence.ContextInputs = append(t.TransactionEssence.ContextInputs, tpkg.RandCommitmentInput())
 			}),
 			Target:    &iotago.SignedTransaction{},
 			SeriErr:   serializer.ErrArrayValidationMinElementsNotReached,
@@ -480,6 +484,7 @@ func TestBlockIssuerFeatureSyntacticValidation(t *testing.T) {
 				t.Outputs = iotago.TxEssenceOutputs{
 					accountWithKeys(tpkg.RandBlockIssuerKeys(iotago.MaxBlockIssuerKeysCount + 1)),
 				}
+				t.TransactionEssence.ContextInputs = append(t.TransactionEssence.ContextInputs, tpkg.RandCommitmentInput())
 			}),
 			Target:    &iotago.SignedTransaction{},
 			SeriErr:   serializer.ErrArrayValidationMaxElementsExceeded,
