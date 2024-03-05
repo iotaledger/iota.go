@@ -15,16 +15,18 @@ const (
 	BlockStateUnknown BlockState = iota
 	// BlockStatePending indicates that the block has been booked by the node but not yet accepted.
 	BlockStatePending
-	// BlockStateAccepted indicates that the block has been accepted by the node.
+	// BlockStateAccepted indicates that the block has been referenced by the super majority of the online committee.
 	BlockStateAccepted
-	// BlockStateConfirmed indicates that the block has been confirmed by the node.
+	// BlockStateConfirmed indicates that the block has been referenced by the super majority of the total committee.
 	BlockStateConfirmed
-	// BlockStateFinalized indicates that the block is confirmed and the slot containing the block has been finalized by the node.
+	// BlockStateFinalized indicates that the commitment containing the block has been finalized.
+	// This state is computed based on the accepted/confirmed block's slot being smaller or equal than the latest finalized slot.
 	BlockStateFinalized
 	// BlockStateDropped indicates that the block has been dropped due to congestion control.
 	BlockStateDropped
 	// BlockStateOrphaned indicates that the block's slot has been committed by the node without the block being included.
 	// In this case, the block will never be finalized unless there is a chain switch.
+	// This state is computed based on the pending block's slot being smaller or equal than the latest committed slot.
 	BlockStateOrphaned
 )
 
@@ -97,11 +99,16 @@ const (
 	TransactionStateUnknown TransactionState = iota
 	// TransactionStatePending indicates that the transaction has been booked by the node but not yet accepted.
 	TransactionStatePending
-	// TransactionStateAccepted indicates that the transaction has been accepted by the node.
+	// TransactionStateAccepted indicates that the transaction meets the following 4 conditions:
+	//	- Signatures of the transaction are valid.
+	//  - The transaction has been approved by the super majority of the online committee (potential conflicts are resolved by this time).
+	//	- The transactions that created the inputs were accepted (monotonicity).
+	//  - At least one valid attachment was accepted.
 	TransactionStateAccepted
-	// TransactionStateConfirmed indicates that the transaction has been confirmed by the node.
-	TransactionStateConfirmed
-	// TransactionStateFinalized indicates that the transaction is confirmed and the slot containing the transaction has been finalized by the node.
+	// TransactionStateCommitted indicates that the slot of the earliest accepted attachment of the transaction was committed.
+	TransactionStateCommitted
+	// TransactionStateFinalized indicates that the transaction is accepted and the slot containing the transaction has been finalized by the node.
+	// This state is computed based on the accepted transaction's earliest included attachment slot being smaller or equal than the latest finalized slot.
 	TransactionStateFinalized
 	// TransactionStateFailed indicates that the transaction has not been executed by the node due to a failure during processing.
 	TransactionStateFailed
@@ -112,7 +119,7 @@ func (t TransactionState) String() string {
 		"unknown",
 		"pending",
 		"accepted",
-		"confirmed",
+		"committed",
 		"finalized",
 		"failed",
 	}[t]
@@ -155,8 +162,8 @@ func (t *TransactionState) DecodeJSON(state any) error {
 		*t = TransactionStatePending
 	case "accepted":
 		*t = TransactionStateAccepted
-	case "confirmed":
-		*t = TransactionStateConfirmed
+	case "committed":
+		*t = TransactionStateCommitted
 	case "finalized":
 		*t = TransactionStateFinalized
 	case "failed":

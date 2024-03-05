@@ -467,7 +467,7 @@ func TestClient_TransactionMetadataByTransactionID(t *testing.T) {
 
 	originRes := &api.TransactionMetadataResponse{
 		TransactionID:          identifier,
-		TransactionState:       api.TransactionStateConfirmed,
+		TransactionState:       api.TransactionStateCommitted,
 		EarliestAttachmentSlot: 5,
 	}
 
