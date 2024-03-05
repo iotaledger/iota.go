@@ -255,6 +255,18 @@ func (client *Client) Info(ctx context.Context) (*api.InfoResponse, error) {
 	return res, nil
 }
 
+// NetworkMetrics gets the current network metrics.
+func (client *Client) NetworkMetrics(ctx context.Context) (*api.NetworkMetricsResponse, error) {
+	res := new(api.NetworkMetricsResponse)
+
+	//nolint:bodyclose
+	if _, err := do(ctx, iotago.CommonSerixAPI(), client.opts.httpClient, client.BaseURL, client.opts.userInfo, http.MethodGet, api.CoreRouteNetworkMetrics, client.opts.requestURLHook, nil, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // BlockIssuance gets the info to issue a block.
 func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHeaderResponse, error) {
 	res := new(api.IssuanceBlockHeaderResponse)

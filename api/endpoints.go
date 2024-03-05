@@ -124,6 +124,13 @@ const (
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointInfo = "/info"
 
+	// CoreEndpointNetworkMetrics is the endpoint for getting the network metrics.
+	// GET returns the network metrics.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	CoreEndpointNetworkMetrics = "/network/metrics"
+
 	// CoreEndpointBlocks is the endpoint for sending new blocks.
 	// POST sends a single new block and returns the new block ID.
 	// "Content-Type" header:
@@ -282,6 +289,7 @@ const (
 
 var (
 	CoreRouteInfo                              = route(CorePluginName, CoreEndpointInfo)
+	CoreRouteNetworkMetrics                    = route(CorePluginName, CoreEndpointNetworkMetrics)
 	CoreRouteBlocks                            = route(CorePluginName, CoreEndpointBlocks)
 	CoreRouteBlock                             = route(CorePluginName, CoreEndpointBlock)
 	CoreRouteBlockMetadata                     = route(CorePluginName, CoreEndpointBlockMetadata)

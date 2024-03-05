@@ -513,8 +513,6 @@ type (
 		Version string `serix:",lenPrefix=uint8"`
 		// The current status of this node.
 		Status *InfoResNodeStatus `serix:""`
-		// The metrics of this node.
-		Metrics *InfoResNodeMetrics `serix:""`
 		// The protocol parameters used by this node.
 		ProtocolParameters []*InfoResProtocolParameters `serix:",lenPrefix=uint8"`
 		// The base token of the network.
@@ -551,16 +549,6 @@ type (
 		PruningEpoch iotago.EpochIndex `serix:""`
 	}
 
-	// InfoResNodeMetrics defines the metrics of a node in the InfoResponse.
-	InfoResNodeMetrics struct {
-		// The current rate of new blocks per second, it's updated when a commitment is committed.
-		BlocksPerSecond float64 `serix:""`
-		// The current rate of confirmed blocks per second, it's updated when a commitment is committed.
-		ConfirmedBlocksPerSecond float64 `serix:""`
-		// The ratio of confirmed blocks in relation to new blocks up until the latest commitment is committed.
-		ConfirmationRate float64 `serix:""`
-	}
-
 	// InfoResBaseToken defines the base token of the node in the InfoResponse.
 	InfoResBaseToken struct {
 		// The base token name.
@@ -573,6 +561,16 @@ type (
 		Subunit string `serix:",lenPrefix=uint8,omitempty"`
 		// The base token amount of decimals.
 		Decimals uint32 `serix:""`
+	}
+
+	// NetworkMetricsResponse defines the network metrics response.
+	NetworkMetricsResponse struct {
+		// The current rate of new blocks per second, it's updated when a commitment is committed.
+		BlocksPerSecond float64 `serix:""`
+		// The current rate of confirmed blocks per second, it's updated when a commitment is committed.
+		ConfirmedBlocksPerSecond float64 `serix:""`
+		// The ratio of confirmed blocks in relation to new blocks up until the latest commitment is committed.
+		ConfirmationRate float64 `serix:""`
 	}
 
 	// IssuanceBlockHeaderResponse defines the response of a GET block issuance REST API call.
