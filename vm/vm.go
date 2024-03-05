@@ -41,8 +41,6 @@ type WorkingSet struct {
 	InputIDToInputIndex map[iotago.OutputID]uint16
 	// The transaction for which this semantic validation happens.
 	Tx *iotago.Transaction
-	// The message which signatures are signing.
-	EssenceMsgToSign []byte
 	// The ChainOutput(s) at the input side.
 	InChains ChainInputSet
 	// The sum of NativeTokens at the input side.

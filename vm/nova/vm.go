@@ -47,11 +47,6 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.SigningMessage()
-	if err != nil {
-		return nil, err
-	}
-
 	txID, err := workingSet.Tx.ID()
 	if err != nil {
 		return nil, err
