@@ -53,10 +53,19 @@ func MustIdentifierFromHexString(hex string) Identifier {
 	return i
 }
 
+// IsValidIdentifier returns an error if the passed bytes are not a valid Identifier, otherwise nil.
+func IsValidIdentifier(b []byte) error {
+	if len(b) != IdentifierLength {
+		return ierrors.Errorf("invalid Identifier length: expected %d bytes, got %d bytes", IdentifierLength, len(b))
+	}
+
+	return nil
+}
+
 func IdentifierFromBytes(bytes []byte) (Identifier, int, error) {
 	var i Identifier
-	if len(bytes) < IdentifierLength {
-		return i, 0, ierrors.Errorf("invalid Identifier length: expected %d bytes, got %d bytes", IdentifierLength, len(bytes))
+	if err := IsValidIdentifier(bytes); err != nil {
+		return i, 0, err
 	}
 	copy(i[:], bytes)
 

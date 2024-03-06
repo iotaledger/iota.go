@@ -183,7 +183,7 @@ func TestClient_Health(t *testing.T) {
 func TestClient_BlockIssuance(t *testing.T) {
 	defer gock.Off()
 
-	parentsHex := []string{"0x733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d0000000000000000", "0x5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe0000000000000000"}
+	parentsHex := []string{"0x733ed2810f2333e9d6cd702c7d5c8264cd9f1ae454b61e75cf702c451f68611d00000000", "0x5e4a89c549456dbec74ce3a21bde719e9cd84e655f3b1c5a09058d0fbf9417fe00000000"}
 	parents, err := iotago.BlockIDsFromHexString(parentsHex)
 	require.NoError(t, err)
 
@@ -195,7 +195,7 @@ func TestClient_BlockIssuance(t *testing.T) {
 		LatestFinalizedSlot:          iotago.SlotIndex(20),
 	}
 
-	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(40)))
+	prevID, err := iotago.CommitmentIDFromHexString(hexutil.EncodeHex(tpkg.RandBytes(36)))
 	require.NoError(t, err)
 	rootsID, err := iotago.IdentifierFromHexString(hexutil.EncodeHex(tpkg.RandBytes(32)))
 	require.NoError(t, err)

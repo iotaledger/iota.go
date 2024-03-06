@@ -52,10 +52,19 @@ func BlockIDFromHexString(hex string) (BlockID, error) {
 	return s, err
 }
 
+// IsValidBlockID returns an error if the passed bytes are not a valid BlockID, otherwise nil.
+func IsValidBlockID(b []byte) error {
+	if len(b) != BlockIDLength {
+		return ierrors.Errorf("invalid blockID length: expected %d bytes, got %d bytes", BlockIDLength, len(b))
+	}
+
+	return nil
+}
+
 // BlockIDFromBytes returns a new BlockID represented by the passed bytes.
 func BlockIDFromBytes(b []byte) (BlockID, int, error) {
-	if len(b) < BlockIDLength {
-		return EmptyBlockID, 0, ierrors.Errorf("invalid blockID length: expected %d bytes, got %d bytes", BlockIDLength, len(b))
+	if err := IsValidBlockID(b); err != nil {
+		return EmptyBlockID, 0, err
 	}
 
 	return BlockID(b), BlockIDLength, nil

@@ -52,10 +52,19 @@ func TransactionIDFromHexString(hex string) (TransactionID, error) {
 	return s, err
 }
 
+// IsValidTransactionID returns an error if the passed bytes are not a valid TransactionID, otherwise nil.
+func IsValidTransactionID(b []byte) error {
+	if len(b) != TransactionIDLength {
+		return ierrors.Errorf("invalid transactionID length: expected %d bytes, got %d bytes", TransactionIDLength, len(b))
+	}
+
+	return nil
+}
+
 // TransactionIDFromBytes returns a new TransactionID represented by the passed bytes.
 func TransactionIDFromBytes(b []byte) (TransactionID, int, error) {
-	if len(b) < TransactionIDLength {
-		return EmptyTransactionID, 0, ierrors.Errorf("invalid transactionID length: expected %d bytes, got %d bytes", TransactionIDLength, len(b))
+	if err := IsValidTransactionID(b); err != nil {
+		return EmptyTransactionID, 0, err
 	}
 
 	return TransactionID(b), TransactionIDLength, nil

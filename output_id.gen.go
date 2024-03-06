@@ -42,10 +42,19 @@ func OutputIDFromHexString(hex string) (OutputID, error) {
 	return s, err
 }
 
+// IsValidOutputID returns an error if the passed bytes are not a valid OutputID, otherwise nil.
+func IsValidOutputID(b []byte) error {
+	if len(b) != OutputIDLength {
+		return ierrors.Errorf("invalid outputID length: expected %d bytes, got %d bytes", OutputIDLength, len(b))
+	}
+
+	return nil
+}
+
 // OutputIDFromBytes returns a new OutputID represented by the passed bytes.
 func OutputIDFromBytes(b []byte) (OutputID, int, error) {
-	if len(b) < OutputIDLength {
-		return EmptyOutputID, 0, ierrors.Errorf("invalid outputID length: expected %d bytes, got %d bytes", OutputIDLength, len(b))
+	if err := IsValidOutputID(b); err != nil {
+		return EmptyOutputID, 0, err
 	}
 
 	return OutputID(b), OutputIDLength, nil

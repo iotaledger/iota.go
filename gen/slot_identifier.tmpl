@@ -68,10 +68,19 @@ func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
 	return s, err
 }
 
+// IsValid{{.Name}} returns an error if the passed bytes are not a valid {{.Name}}, otherwise nil.
+func IsValid{{.Name}}(b []byte) error {
+	if len(b) != {{.Name}}Length {
+		return ierrors.Errorf("invalid {{firstLower .Name}} length: expected %d bytes, got %d bytes", {{.Name}}Length, len(b))
+	}
+
+	return nil
+}
+
 // {{.Name}}FromBytes returns a new {{.Name}} represented by the passed bytes.
 func {{.Name}}FromBytes(b []byte) ({{.Name}}, int, error) {
-	if len(b) < {{.Name}}Length {
-		return Empty{{.Name}}, 0, ierrors.Errorf("invalid {{firstLower .Name}} length: expected %d bytes, got %d bytes", {{.Name}}Length, len(b))
+	if err := IsValid{{.Name}}(b); err != nil {
+		return Empty{{.Name}}, 0, err
 	}
 
 	return {{.Name}}(b), {{.Name}}Length, nil
