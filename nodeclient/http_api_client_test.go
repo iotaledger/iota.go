@@ -132,11 +132,6 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 			Subunit:      "testies",
 			Decimals:     6,
 		},
-		Metrics: &api.InfoResNodeMetrics{
-			BlocksPerSecond:          20.0,
-			ConfirmedBlocksPerSecond: 10.0,
-			ConfirmationRate:         50.0,
-		},
 	}
 
 	mockGetJSON(api.CoreRouteInfo, 200, originInfo)
@@ -145,6 +140,23 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 	require.NoError(t, err)
 
 	return client
+}
+
+func TestClient_NetworkMetrics(t *testing.T) {
+	defer gock.Off()
+
+	originMetrics := &api.NetworkMetricsResponse{
+		BlocksPerSecond:          20.0,
+		ConfirmedBlocksPerSecond: 10.0,
+		ConfirmationRate:         50.0,
+	}
+
+	mockGetJSON(api.CoreRouteNetworkMetrics, 200, originMetrics)
+
+	nodeAPI := nodeClient(t)
+	metrics, err := nodeAPI.NetworkMetrics(context.Background())
+	require.NoError(t, err)
+	require.EqualValues(t, originMetrics, metrics)
 }
 
 func TestClient_Health(t *testing.T) {

@@ -886,3 +886,27 @@ func OutputsSyntacticalMetadataFeatureMaxSize() ElementValidationFunc[Output] {
 		return nil
 	}
 }
+
+// Checks that a Commitment Input is present for
+//   - Accounts with a Staking Feature.
+//   - Accounts with a Block Issuer Feature.
+//   - Delegation Outputs.
+func OutputsSyntacticalCommitmentInput(hasCommitmentInput bool) ElementValidationFunc[Output] {
+	return func(index int, output Output) error {
+		hasStakingFeature := output.FeatureSet().Staking() != nil
+		if hasStakingFeature && !hasCommitmentInput {
+			return ierrors.Wrapf(ErrStakingCommitmentInputMissing, "output %d", index)
+		}
+
+		hasBlockIssuerFeature := output.FeatureSet().BlockIssuer() != nil
+		if hasBlockIssuerFeature && !hasCommitmentInput {
+			return ierrors.Wrapf(ErrBlockIssuerCommitmentInputMissing, "output %d", index)
+		}
+
+		if output.Type() == OutputDelegation && !hasCommitmentInput {
+			return ierrors.Wrapf(ErrDelegationCommitmentInputMissing, "output %d", index)
+		}
+
+		return nil
+	}
+}

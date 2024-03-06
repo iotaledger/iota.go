@@ -1260,3 +1260,99 @@ func TestTransactionIDsLexicalOrderAndUniqueness(t *testing.T) {
 		t.Run(tt.Name, tt.Run)
 	}
 }
+
+func TestCommitmentInputSyntacticalValidation(t *testing.T) {
+	accountWithFeatures := func(feats iotago.AccountOutputFeatures) *iotago.AccountOutput {
+		return &iotago.AccountOutput{
+			Amount: 100_000_000,
+			UnlockConditions: iotago.AccountOutputUnlockConditions{
+				&iotago.AddressUnlockCondition{
+					Address: tpkg.RandAccountAddress(),
+				},
+			},
+			ImmutableFeatures: iotago.AccountOutputImmFeatures{},
+			Features:          feats,
+		}
+	}
+
+	tests := []*frameworks.DeSerializeTest{
+		// fail - BlockIssuerFeature on output side without Commitment Input
+		{
+			Name: "fail - BlockIssuerFeature on output side without Commitment Input",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithFeatures(
+						iotago.AccountOutputFeatures{
+							&iotago.BlockIssuerFeature{
+								ExpirySlot:      100,
+								BlockIssuerKeys: tpkg.RandBlockIssuerKeys(3),
+							},
+						},
+					),
+				}
+				// Make sure there are no Context Inputs added by the rand function for this test.
+				t.TransactionEssence.ContextInputs = nil
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrBlockIssuerCommitmentInputMissing,
+			DeSeriErr: iotago.ErrBlockIssuerCommitmentInputMissing,
+		},
+		// fail - StakingFeature on output side without Commitment Input
+		{
+			Name: "fail - StakingFeature on output side without Commitment Input",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					accountWithFeatures(
+						iotago.AccountOutputFeatures{
+							&iotago.BlockIssuerFeature{
+								ExpirySlot:      100,
+								BlockIssuerKeys: tpkg.RandBlockIssuerKeys(3),
+							},
+							&iotago.StakingFeature{
+								StakedAmount: 1,
+								FixedCost:    1,
+								StartEpoch:   10,
+								EndEpoch:     12,
+							},
+						},
+					),
+				}
+				// Make sure there are no Context Inputs added by the rand function for this test.
+				t.TransactionEssence.ContextInputs = nil
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrStakingCommitmentInputMissing,
+			DeSeriErr: iotago.ErrStakingCommitmentInputMissing,
+		},
+		// fail - Delegation Output on output side without Commitment Input
+		{
+			Name: "fail - Delegation Output on output side without Commitment Input",
+			Source: tpkg.RandSignedTransaction(tpkg.ZeroCostTestAPI, func(t *iotago.Transaction) {
+				t.Outputs = iotago.TxEssenceOutputs{
+					&iotago.DelegationOutput{
+						Amount:           10,
+						DelegatedAmount:  10,
+						DelegationID:     tpkg.RandDelegationID(),
+						ValidatorAddress: tpkg.RandAccountAddress(),
+						StartEpoch:       10,
+						EndEpoch:         12,
+						UnlockConditions: iotago.DelegationOutputUnlockConditions{
+							&iotago.AddressUnlockCondition{
+								Address: tpkg.RandEd25519Address(),
+							},
+						},
+					},
+				}
+				// Make sure there are no Context Inputs added by the rand function for this test.
+				t.TransactionEssence.ContextInputs = nil
+			}),
+			Target:    &iotago.SignedTransaction{},
+			SeriErr:   iotago.ErrDelegationCommitmentInputMissing,
+			DeSeriErr: iotago.ErrDelegationCommitmentInputMissing,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, tt.Run)
+	}
+}

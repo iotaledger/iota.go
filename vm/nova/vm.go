@@ -293,7 +293,7 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 
 	if nextBlockIssuerFeat := next.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
+			panic("commitment input should be present for block issuer features on the output side which should be validated syntactically")
 		}
 
 		pastBoundedSlot := vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Slot)
@@ -485,10 +485,9 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 // or one which was effectively removed and added within the same transaction.
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
 func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
-	// It should already never be nil here, but for 100% safety, we'll check again.
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
-		return iotago.ErrStakingCommitmentInputMissing
+		panic("commitment input should be present for staking features on the output side which should be validated syntactically")
 	}
 
 	pastBoundedSlot := vmParams.PastBoundedSlotIndex(commitment.Slot)

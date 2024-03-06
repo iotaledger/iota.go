@@ -269,6 +269,7 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 	}
 
 	var maxManaValue Mana = (1 << protoParams.ManaParameters().BitsCount) - 1
+	hasCommitmentInput := t.CommitmentInput() != nil
 
 	return SyntacticallyValidateOutputs(t.Outputs,
 		OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness(),
@@ -286,6 +287,7 @@ func (t *Transaction) SyntacticallyValidate(api API) error {
 		OutputsSyntacticalDelegation(),
 		OutputsSyntacticalAddressRestrictions(),
 		OutputsSyntacticalImplicitAccountCreationAddress(),
+		OutputsSyntacticalCommitmentInput(hasCommitmentInput),
 	)
 }
 

@@ -33,11 +33,6 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 					LatestConfirmedBlockSlot:    tpkg.RandSlot(),
 					PruningEpoch:                tpkg.RandEpoch(),
 				},
-				Metrics: &api.InfoResNodeMetrics{
-					BlocksPerSecond:          1.1,
-					ConfirmedBlocksPerSecond: 2.2,
-					ConfirmationRate:         3.3,
-				},
 				ProtocolParameters: []*api.InfoResProtocolParameters{
 					{
 						StartEpoch: tpkg.RandEpoch(),
@@ -53,6 +48,17 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 				},
 			},
 			Target:    &api.InfoResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - NetworkMetricsResponse",
+			Source: &api.NetworkMetricsResponse{
+				BlocksPerSecond:          1.1,
+				ConfirmedBlocksPerSecond: 2.2,
+				ConfirmationRate:         3.3,
+			},
+			Target:    &api.NetworkMetricsResponse{},
 			SeriErr:   nil,
 			DeSeriErr: nil,
 		},
@@ -305,11 +311,6 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 					LatestConfirmedBlockSlot:    3,
 					PruningEpoch:                4,
 				},
-				Metrics: &api.InfoResNodeMetrics{
-					BlocksPerSecond:          1.1,
-					ConfirmedBlocksPerSecond: 2.2,
-					ConfirmationRate:         3.3,
-				},
 				ProtocolParameters: []*api.InfoResProtocolParameters{
 					{
 						StartEpoch: 0,
@@ -338,11 +339,6 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		"latestAcceptedBlockSlot": 2,
 		"latestConfirmedBlockSlot": 3,
 		"pruningEpoch": 4
-	},
-	"metrics": {
-		"blocksPerSecond": "1.1E+00",
-		"confirmedBlocksPerSecond": "2.2E+00",
-		"confirmationRate": "3.3E+00"
 	},
 	"protocolParameters": [
 		{
@@ -435,6 +431,19 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		"subunit": "glow",
 		"decimals": 6
 	}
+}`,
+		},
+		{
+			Name: "ok - NetworkMetricsResponse",
+			Source: &api.NetworkMetricsResponse{
+				BlocksPerSecond:          1.1,
+				ConfirmedBlocksPerSecond: 2.2,
+				ConfirmationRate:         3.3,
+			},
+			Target: `{
+	"blocksPerSecond": "1.1",
+	"confirmedBlocksPerSecond": "2.2",
+	"confirmationRate": "3.3"
 }`,
 		},
 		{
@@ -541,7 +550,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
 	"transactionState": "failed",
 	"earliestAttachmentSlot": 5,
-	"transactionFailureReason": 57,
+	"transactionFailureReason": 58,
 	"transactionFailureDetails": "details"
 }`,
 		},

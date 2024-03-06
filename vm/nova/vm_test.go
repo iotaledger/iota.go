@@ -7526,7 +7526,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		name                    string
 		inputs                  []TestInput
 		keys                    []iotago.AddressKeys
-		resolvedCommitmentInput iotago.Commitment
+		resolvedCommitmentInput *iotago.Commitment
 		resolvedBICInputSet     vm.BlockIssuanceCreditInputSet
 		outputs                 []iotago.Output
 		wantErr                 error
@@ -7686,7 +7686,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7735,7 +7735,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7792,7 +7792,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7829,7 +7829,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7862,7 +7862,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7909,7 +7909,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -7965,7 +7965,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -8022,7 +8022,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 				accountID1: iotago.BlockIssuanceCredits(0),
 				accountID2: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -8084,7 +8084,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			resolvedBICInputSet: vm.BlockIssuanceCreditInputSet{
 				accountID1: iotago.BlockIssuanceCredits(0),
 			},
-			resolvedCommitmentInput: iotago.Commitment{
+			resolvedCommitmentInput: &iotago.Commitment{
 				Slot: commitmentSlot,
 			},
 			outputs: []iotago.Output{
@@ -8131,6 +8131,19 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 			iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanBurnNativeTokens(true)),
 		)
 
+		// Add the BIC and Commitment Inputs to the TX builder since they are required syntactically.
+		// Note that this has no effect on the actual test.
+		for accountID := range tests[idx].resolvedBICInputSet {
+			txBuilder.AddBlockIssuanceCreditInput(&iotago.BlockIssuanceCreditInput{
+				AccountID: accountID,
+			})
+		}
+		if tests[idx].resolvedCommitmentInput != nil {
+			txBuilder.AddCommitmentInput(&iotago.CommitmentInput{
+				CommitmentID: tests[idx].resolvedCommitmentInput.MustID(),
+			})
+		}
+
 		for _, input := range tests[idx].inputs {
 			txBuilder.AddInput(&builder.TxInput{
 				UnlockTarget: input.unlockTarget,
@@ -8148,7 +8161,7 @@ func TestTxSemanticImplicitAccountCreationAndTransition(t *testing.T) {
 		tx := lo.PanicOnErr(txBuilder.Build())
 
 		resolvedInputs.BlockIssuanceCreditInputSet = tests[idx].resolvedBICInputSet
-		resolvedInputs.CommitmentInput = &tests[idx].resolvedCommitmentInput
+		resolvedInputs.CommitmentInput = tests[idx].resolvedCommitmentInput
 
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
