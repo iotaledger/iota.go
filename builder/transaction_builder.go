@@ -703,9 +703,21 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 		unlockedChains: map[string]int{},
 	}
 
+	// resolveUnderlyingAddress returns the underlying address in case of a restricted address.
+	// this way we handle restricted addresses like normal addresses in the unlock logic.
+	resolveUnderlyingAddress := func(addr iotago.Address) iotago.Address {
+		switch addr := addr.(type) {
+		case *iotago.RestrictedAddress:
+			return addr.Address
+		default:
+			return addr
+		}
+	}
+
 	for inputIndex, inputRef := range b.transaction.TransactionEssence.Inputs {
 		//nolint:forcetypeassert // we can safely assume that this is an UTXOInput
 		owner := b.inputOwner[inputRef.(*iotago.UTXOInput).OutputID()]
+		owner = resolveUnderlyingAddress(owner)
 
 		chainAddr, isChainAddress := owner.(iotago.ChainAddress)
 		if isChainAddress {
