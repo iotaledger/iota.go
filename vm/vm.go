@@ -76,7 +76,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		// stored Mana
 		manaStored, err := manaDecayProvider.DecayManaBySlots(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
-			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
+			return 0, ierrors.Wrapf(err, "stored mana calculation failed for input %s", outputID)
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaStored)
 		if err != nil {
@@ -435,12 +435,12 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 
 	txID, err := signedTransaction.Transaction.ID()
 	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to compute transaction ID")
+		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err))
 	}
 
 	essenceMsgToSign, err := signedTransaction.Transaction.SigningMessage()
 	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to compute signing message")
+		panic(fmt.Sprintf("signing message computation should have succeeded: %s", err))
 	}
 
 	unlockedAddrsSet := &unlockedAddressesSet{
