@@ -55,7 +55,7 @@ func RandOutputIDProof(api iotago.API) *iotago.OutputIDProof {
 // RandBasicOutput returns a random basic output (with no features).
 func RandBasicOutput(addressType ...iotago.AddressType) *iotago.BasicOutput {
 	dep := &iotago.BasicOutput{
-		Amount:           0,
+		Amount:           RandBaseToken(10000) + 1,
 		UnlockConditions: iotago.BasicOutputUnlockConditions{},
 		Features:         iotago.BasicOutputFeatures{},
 	}
@@ -72,8 +72,6 @@ func RandBasicOutput(addressType ...iotago.AddressType) *iotago.BasicOutput {
 	default:
 		panic(fmt.Sprintf("invalid addr type: %d", addrType))
 	}
-
-	dep.Amount = RandBaseToken(10000) + 1
 
 	return dep
 }
