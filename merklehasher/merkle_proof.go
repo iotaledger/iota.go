@@ -18,6 +18,11 @@ const (
 	MerkleHashableTypeValueHash MerkleHashableType = 2
 )
 
+var (
+	// ErrProofValueNotFound gets returned when the value for which to compute the proof was not found.
+	ErrProofValueNotFound = ierrors.New("the value for which to compute the inclusion proof was not found in the supplied list")
+)
+
 type MerkleHashable[V Value] interface {
 	hash(hasher *Hasher[V]) []byte
 }
@@ -65,7 +70,7 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 		}
 	}
 	if !found {
-		return nil, ierrors.Errorf("value %s is not contained in the given list", hexutil.EncodeHex(valueToProofBytes))
+		return nil, ierrors.WithMessagef(ErrProofValueNotFound, "value %s is not contained in the given values list", hexutil.EncodeHex(valueToProofBytes))
 	}
 
 	return t.ComputeProofForIndex(values, index)
@@ -74,10 +79,10 @@ func (t *Hasher[V]) ComputeProof(values []V, valueToProof V) (*Proof[V], error) 
 // ComputeProofForIndex computes the audit path given the values and the index of the value we want to create the inclusion proof for.
 func (t *Hasher[V]) ComputeProofForIndex(values []V, index int) (*Proof[V], error) {
 	if len(values) < 1 {
-		return nil, ierrors.New("you need at least 1 item to create an inclusion proof")
+		return nil, ierrors.New("at least one item is needed to create an inclusion proof")
 	}
 	if index >= len(values) {
-		return nil, ierrors.Errorf("index %d out of bounds len=%d", index, len(values))
+		return nil, ierrors.Errorf("index %d out of bounds for 'values' of len %d", index, len(values))
 	}
 
 	data := make([][]byte, len(values))
