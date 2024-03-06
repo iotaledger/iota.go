@@ -108,7 +108,7 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 	defer cancelFunc()
 	info, err := client.Info(ctx)
 	if err != nil {
-		return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %w", err)
+		return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %v", err)
 	}
 	for _, params := range info.ProtocolParameters {
 		client.apiProvider.AddProtocolParametersAtEpoch(params.Parameters, params.StartEpoch)
@@ -468,6 +468,31 @@ func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago
 	return res, nil
 }
 
+func (client *Client) BlockWithMetadataByID(ctx context.Context, blockID iotago.BlockID) (*api.BlockWithMetadataResponse, error) {
+	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlockWithMetadata, blockID)
+	res := new(RawDataEnvelope)
+
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
+		return nil, err
+	}
+
+	block, consumedBytes, err := iotago.BlockFromBytes(client)(res.Data)
+	if err != nil {
+		return nil, err
+	}
+	metadata := new(api.BlockMetadataResponse)
+	_, err = client.APIForSlot(blockID.Slot()).Decode(res.Data[consumedBytes:], metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.BlockWithMetadataResponse{
+		Block:    block,
+		Metadata: metadata,
+	}, nil
+}
+
 // BlockByBlockID get a block by its block ID from the node.
 func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID) (*iotago.Block, error) {
 	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlock, blockID)
@@ -662,7 +687,7 @@ func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, slot iot
 	return res, nil
 }
 
-// CommitmentUTXOChangesByIndex returns all UTXO changes (including outputs) of a commitment by its slot.
+// CommitmentUTXOChangesFullByIndex returns all UTXO changes (including outputs) of a commitment by its slot.
 func (client *Client) CommitmentUTXOChangesFullByIndex(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesFullResponse, error) {
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlotUTXOChangesFull, slot)
 

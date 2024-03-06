@@ -413,6 +413,49 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	require.EqualValues(t, originRes, meta)
 }
 
+func TestClient_BlockWithMetadataByID(t *testing.T) {
+	defer gock.Off()
+
+	blockID := tpkg.RandBlockID()
+
+	originBlock := &iotago.Block{
+		API: mockAPI,
+		Header: iotago.BlockHeader{
+			ProtocolVersion:  mockAPI.Version(),
+			NetworkID:        mockAPI.ProtocolParameters().NetworkID(),
+			IssuingTime:      tpkg.RandUTCTime(),
+			SlotCommitmentID: iotago.NewEmptyCommitment(mockAPI).MustID(),
+		},
+		Signature: tpkg.RandEd25519Signature(),
+		Body: &iotago.BasicBlockBody{
+			API:                mockAPI,
+			StrongParents:      tpkg.SortedRandBlockIDs(1 + rand.Intn(7)),
+			WeakParents:        iotago.BlockIDs{},
+			ShallowLikeParents: iotago.BlockIDs{},
+			Payload:            nil,
+		},
+	}
+
+	originRes := &api.BlockWithMetadataResponse{
+		Block: originBlock,
+		Metadata: &api.BlockMetadataResponse{
+			BlockID:    blockID,
+			BlockState: api.BlockStateConfirmed,
+			TransactionMetadata: &api.TransactionMetadataResponse{
+				TransactionState: api.TransactionStateConfirmed,
+			},
+		},
+	}
+
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteBlockWithMetadata, api.ParameterBlockID, blockID.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	resp, err := nodeAPI.BlockWithMetadataByID(context.Background(), blockID)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes.Block.MustID(), resp.Block.MustID())
+	require.EqualValues(t, originRes.Metadata, resp.Metadata)
+}
+
 func TestClient_BlockByBlockID(t *testing.T) {
 	defer gock.Off()
 
@@ -441,7 +484,7 @@ func TestClient_BlockByBlockID(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.BlockByBlockID(context.Background(), blockID)
 	require.NoError(t, err)
-	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
+	require.EqualValues(t, originBlock.MustID(), responseBlock.MustID())
 }
 
 func TestClient_TransactionIncludedBlock(t *testing.T) {
@@ -472,7 +515,7 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	nodeAPI := nodeClient(t)
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
-	require.EqualValues(t, lo.PanicOnErr(originBlock.ID()), lo.PanicOnErr(responseBlock.ID()))
+	require.EqualValues(t, originBlock.MustID(), responseBlock.MustID())
 }
 
 func TestClient_OutputByID(t *testing.T) {
