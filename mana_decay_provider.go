@@ -173,7 +173,7 @@ func (p *ManaDecayProvider) DecayManaBySlots(mana Mana, creationSlot SlotIndex, 
 // DecayManaByEpochs applies the decay between the creation and target epochs to the given mana.
 func (p *ManaDecayProvider) DecayManaByEpochs(mana Mana, creationEpoch EpochIndex, targetEpoch EpochIndex) (Mana, error) {
 	if creationEpoch > targetEpoch {
-		return 0, ierrors.Wrapf(ErrManaDecayCreationIndexExceedsTargetIndex, "the creation epoch was greater than the target epoch: %d > %d", creationEpoch, targetEpoch)
+		return 0, ierrors.WithMessagef(ErrManaDecayCreationIndexExceedsTargetIndex, "the creation epoch (%d) was greater than the target epoch (%d)", creationEpoch, targetEpoch)
 	}
 
 	return p.decay(mana, targetEpoch-creationEpoch)
@@ -182,7 +182,7 @@ func (p *ManaDecayProvider) DecayManaByEpochs(mana Mana, creationEpoch EpochInde
 // GenerateManaAndDecayBySlots generates mana from the given base token amount and returns the decayed result.
 func (p *ManaDecayProvider) GenerateManaAndDecayBySlots(amount BaseToken, creationSlot SlotIndex, targetSlot SlotIndex) (Mana, error) {
 	if creationSlot > targetSlot {
-		return 0, ierrors.Wrapf(ErrManaDecayCreationIndexExceedsTargetIndex, "the creation slot was greater than the target slot: %d > %d", creationSlot, targetSlot)
+		return 0, ierrors.WithMessagef(ErrManaDecayCreationIndexExceedsTargetIndex, "the creation slot (%d) was greater than the target slot (%d)", creationSlot, targetSlot)
 	}
 
 	creationEpoch := p.timeProvider.EpochFromSlot(creationSlot)
