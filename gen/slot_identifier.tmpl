@@ -21,18 +21,16 @@ import (
 
 const (
 {{if index .Features "output"}}
-    // OutputIndexLength defines the length of an OutputIndex.
+	// OutputIndexLength defines the length of an OutputIndex.
 	OutputIndexLength = serializer.UInt16ByteSize
 	// OutputIDLength defines the length of an OutputID.
 	OutputIDLength = TransactionIDLength + OutputIndexLength
 {{else}}
-    {{.Name}}Length = IdentifierLength + SlotIndexLength
+	{{.Name}}Length = IdentifierLength + SlotIndexLength
 {{end}}
 )
 
 var (
-    ErrInvalid{{.Name}}Length = ierrors.New("invalid {{firstLower .Name}} length")
-
 	Empty{{.Name}} = {{.Name}}{}
 )
 
@@ -73,7 +71,7 @@ func {{.Name}}FromHexString(hex string) ({{.Name}}, error) {
 // {{.Name}}FromBytes returns a new {{.Name}} represented by the passed bytes.
 func {{.Name}}FromBytes(b []byte) ({{.Name}}, int, error) {
 	if len(b) < {{.Name}}Length {
-		return Empty{{.Name}}, 0, ErrInvalid{{.Name}}Length
+		return Empty{{.Name}}, 0, ierrors.Errorf("invalid {{firstLower .Name}} length: expected %d bytes, got %d bytes", {{.Name}}Length, len(b))
 	}
 
 	return {{.Name}}(b), {{.Name}}Length, nil

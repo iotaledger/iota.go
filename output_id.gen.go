@@ -24,8 +24,6 @@ const (
 )
 
 var (
-	ErrInvalidOutputIDLength = ierrors.New("invalid outputID length")
-
 	EmptyOutputID = OutputID{}
 )
 
@@ -47,7 +45,7 @@ func OutputIDFromHexString(hex string) (OutputID, error) {
 // OutputIDFromBytes returns a new OutputID represented by the passed bytes.
 func OutputIDFromBytes(b []byte) (OutputID, int, error) {
 	if len(b) < OutputIDLength {
-		return EmptyOutputID, 0, ErrInvalidOutputIDLength
+		return EmptyOutputID, 0, ierrors.Errorf("invalid outputID length: expected %d bytes, got %d bytes", OutputIDLength, len(b))
 	}
 
 	return OutputID(b), OutputIDLength, nil

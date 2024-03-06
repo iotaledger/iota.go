@@ -21,8 +21,6 @@ const (
 )
 
 var (
-	ErrInvalidTransactionIDLength = ierrors.New("invalid transactionID length")
-
 	EmptyTransactionID = TransactionID{}
 )
 
@@ -57,7 +55,7 @@ func TransactionIDFromHexString(hex string) (TransactionID, error) {
 // TransactionIDFromBytes returns a new TransactionID represented by the passed bytes.
 func TransactionIDFromBytes(b []byte) (TransactionID, int, error) {
 	if len(b) < TransactionIDLength {
-		return EmptyTransactionID, 0, ErrInvalidTransactionIDLength
+		return EmptyTransactionID, 0, ierrors.Errorf("invalid transactionID length: expected %d bytes, got %d bytes", TransactionIDLength, len(b))
 	}
 
 	return TransactionID(b), TransactionIDLength, nil

@@ -21,8 +21,6 @@ const (
 )
 
 var (
-	ErrInvalidBlockIDLength = ierrors.New("invalid blockID length")
-
 	EmptyBlockID = BlockID{}
 )
 
@@ -57,7 +55,7 @@ func BlockIDFromHexString(hex string) (BlockID, error) {
 // BlockIDFromBytes returns a new BlockID represented by the passed bytes.
 func BlockIDFromBytes(b []byte) (BlockID, int, error) {
 	if len(b) < BlockIDLength {
-		return EmptyBlockID, 0, ErrInvalidBlockIDLength
+		return EmptyBlockID, 0, ierrors.Errorf("invalid blockID length: expected %d bytes, got %d bytes", BlockIDLength, len(b))
 	}
 
 	return BlockID(b), BlockIDLength, nil
