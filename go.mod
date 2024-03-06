@@ -4,16 +4,16 @@ go 1.22
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
-	github.com/ethereum/go-ethereum v1.13.12
+	github.com/ethereum/go-ethereum v1.13.14
 	github.com/holiman/uint256 v1.2.4
-	github.com/iotaledger/hive.go/constraints v0.0.0-20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/crypto v0.0.0-20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/ierrors v0.0.0-20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/lo v0.0.0-20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/runtime v0.0.0-20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240216135101-261e99d9d84a
-	github.com/iotaledger/hive.go/stringify v0.0.0-20240216135101-261e99d9d84a
+	github.com/iotaledger/hive.go/constraints v0.0.0-20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/core v1.0.0-rc.3.0.20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/crypto v0.0.0-20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/ierrors v0.0.0-20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/lo v0.0.0-20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/runtime v0.0.0-20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20240305162344-4b8be588e1cf
+	github.com/iotaledger/hive.go/stringify v0.0.0-20240305162344-4b8be588e1cf
 	github.com/iotaledger/iota-crypto-demo v0.0.0-20240216103559-27ca8dffd1e7
 	github.com/pasztorpisti/qs v0.0.0-20171216220353-8d6c33ee906c
 	github.com/samber/lo v1.39.0
@@ -30,7 +30,7 @@ require (
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
-	github.com/iotaledger/hive.go/ds v0.0.0-20240216135101-261e99d9d84a // indirect
+	github.com/iotaledger/hive.go/ds v0.0.0-20240305162344-4b8be588e1cf // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

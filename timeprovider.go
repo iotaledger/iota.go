@@ -99,6 +99,11 @@ func (t *TimeProvider) SlotFromTime(targetTime time.Time) SlotIndex {
 	return t.genesisSlot + SlotIndex(int64(elapsed/time.Second)/t.slotDurationSeconds) + 1
 }
 
+// CurrentSlot calculates the current slot based on the current time.
+func (t *TimeProvider) CurrentSlot() SlotIndex {
+	return t.SlotFromTime(time.Now())
+}
+
 // SlotStartTime calculates the start time of the given slot.
 func (t *TimeProvider) SlotStartTime(slot SlotIndex) time.Time {
 	if slot <= t.genesisSlot {
@@ -128,6 +133,11 @@ func (t *TimeProvider) EpochFromSlot(slot SlotIndex) EpochIndex {
 	}
 
 	return EpochIndex((slot - t.genesisSlot) >> t.slotsPerEpochExponent)
+}
+
+// CurrentEpoch calculates the current epoch based on the current time.
+func (t *TimeProvider) CurrentEpoch() EpochIndex {
+	return t.EpochFromSlot(t.CurrentSlot())
 }
 
 // EpochStart calculates the start slot of the given epoch.
