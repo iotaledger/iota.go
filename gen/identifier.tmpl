@@ -19,8 +19,6 @@ const (
 
 var (
 	Empty{{.Name}} = {{.Name}}{}
-
-	ErrInvalid{{.Name}}Length = ierrors.New("invalid {{.Name}} length")
 )
 
 // {{.Name}} is a 32 byte hash value.
@@ -58,7 +56,7 @@ func Must{{.Name}}FromHexString(hex string) {{.Name}} {
 func {{.Name}}FromBytes(bytes []byte) ({{.Name}}, int, error) {
 	var {{.Receiver}} {{.Name}}
 	if len(bytes) < {{.Name}}Length {
-		return {{.Receiver}}, 0, ErrInvalid{{.Name}}Length
+		return {{.Receiver}}, 0, ierrors.Errorf("invalid {{.Name}} length: expected %d bytes, got %d bytes", {{.Name}}Length, len(bytes))
 	}
 	copy({{.Receiver}}[:], bytes)
 

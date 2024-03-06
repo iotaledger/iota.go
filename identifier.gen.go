@@ -19,8 +19,6 @@ const (
 
 var (
 	EmptyIdentifier = Identifier{}
-
-	ErrInvalidIdentifierLength = ierrors.New("invalid Identifier length")
 )
 
 // Identifier is a 32 byte hash value.
@@ -58,7 +56,7 @@ func MustIdentifierFromHexString(hex string) Identifier {
 func IdentifierFromBytes(bytes []byte) (Identifier, int, error) {
 	var i Identifier
 	if len(bytes) < IdentifierLength {
-		return i, 0, ErrInvalidIdentifierLength
+		return i, 0, ierrors.Errorf("invalid Identifier length: expected %d bytes, got %d bytes", IdentifierLength, len(bytes))
 	}
 	copy(i[:], bytes)
 
