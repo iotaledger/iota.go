@@ -569,7 +569,7 @@ type (
 	TransactionMetadataResponse struct {
 		// TransactionID is the hex encoded transaction ID of the transaction.
 		TransactionID iotago.TransactionID `serix:""`
-		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
+		// TransactionState might be pending, accepted, committed, finalized, failed.
 		TransactionState TransactionState `serix:""`
 		// EarliestAttachmentSlot is the slot of the earliest included valid block that contains an attachment of the transaction.
 		EarliestAttachmentSlot iotago.SlotIndex `serix:""`
