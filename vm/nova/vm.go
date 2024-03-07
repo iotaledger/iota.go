@@ -305,7 +305,7 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 	}
 
 	if stakingFeat := next.FeatureSet().Staking(); stakingFeat != nil {
-		if err := accountStakingGenesisValidation(vmParams, next, stakingFeat); err != nil {
+		if err := accountStakingGenesisValidation(vmParams, stakingFeat); err != nil {
 			return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
 		}
 	}
@@ -466,16 +466,15 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 
 		if futureBoundedEpoch <= currentStakingFeat.EndEpoch {
 			earliestUnbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
-			nextHasBlockIssuerFeat := next.FeatureSet().BlockIssuer() != nil
 
 			return accountStakingNonExpiredValidation(
-				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch, nextHasBlockIssuerFeat,
+				currentStakingFeat, nextStakingFeat, earliestUnbondingEpoch,
 			)
 		}
 
-		return accountStakingExpiredValidation(vmParams, next, currentStakingFeat, nextStakingFeat, isRemovingStakingFeature)
+		return accountStakingExpiredValidation(vmParams, currentStakingFeat, nextStakingFeat, isRemovingStakingFeature)
 	} else if nextStakingFeat != nil {
-		return accountStakingGenesisValidation(vmParams, next, nextStakingFeat)
+		return accountStakingGenesisValidation(vmParams, nextStakingFeat)
 	}
 
 	return nil
@@ -484,7 +483,7 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 // Validates the rules for a newly added Staking Feature in an account,
 // or one which was effectively removed and added within the same transaction.
 // This is allowed as long as the epoch range of the old and new feature are disjoint.
-func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOutput, stakingFeat *iotago.StakingFeature) error {
+func accountStakingGenesisValidation(vmParams *vm.Params, stakingFeat *iotago.StakingFeature) error {
 	commitment := vmParams.WorkingSet.Commitment
 	if commitment == nil {
 		panic("commitment input should be present for staking features on the output side which should be validated syntactically")
@@ -503,10 +502,6 @@ func accountStakingGenesisValidation(vmParams *vm.Params, next *iotago.AccountOu
 		return ierrors.Wrapf(iotago.ErrStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
-	if next.FeatureSet().BlockIssuer() == nil {
-		return iotago.ErrStakingBlockIssuerFeatureMissing
-	}
-
 	return nil
 }
 
@@ -516,14 +511,9 @@ func accountStakingNonExpiredValidation(
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
 	earliestUnbondingEpoch iotago.EpochIndex,
-	nextHasBlockIssuerFeat bool,
 ) error {
 	if nextStakingFeat == nil {
 		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingFeatureRemovedBeforeUnbonding)
-	}
-
-	if !nextHasBlockIssuerFeat {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingBlockIssuerFeatureMissing)
 	}
 
 	if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
@@ -544,7 +534,6 @@ func accountStakingNonExpiredValidation(
 // i.e. the current epoch is equal or after the end epoch.
 func accountStakingExpiredValidation(
 	vmParams *vm.Params,
-	next *iotago.AccountOutput,
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
 	isRemovingStakingFeature *bool,
@@ -553,7 +542,7 @@ func accountStakingExpiredValidation(
 		*isRemovingStakingFeature = true
 	} else if !currentStakingFeat.Equal(nextStakingFeat) {
 		// If an expired feature is changed it must be transitioned as if newly added.
-		if err := accountStakingGenesisValidation(vmParams, next, nextStakingFeat); err != nil {
+		if err := accountStakingGenesisValidation(vmParams, nextStakingFeat); err != nil {
 			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
 		}
 		// If staking feature genesis validation succeeds, the start epoch has been reset which means the new epoch range

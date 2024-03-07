@@ -351,46 +351,6 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 			wantErr: iotago.ErrStakingEndEpochTooEarly,
 		},
 		{
-			name: "fail - staking feature without block issuer feature",
-			next: &iotago.AccountOutput{
-				Amount:    100,
-				AccountID: iotago.AccountID{},
-				UnlockConditions: iotago.AccountOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: tpkg.RandEd25519Address()},
-				},
-				Features: iotago.AccountOutputFeatures{
-					&iotago.StakingFeature{
-						StakedAmount: 50,
-						FixedCost:    5,
-						StartEpoch:   currentEpoch,
-						EndEpoch:     iotago.MaxEpochIndex,
-					},
-				},
-			},
-			input:     nil,
-			transType: iotago.ChainTransitionTypeGenesis,
-			svCtx: &vm.Params{
-				API: tpkg.ZeroCostTestAPI,
-				WorkingSet: &vm.WorkingSet{
-					Commitment: &iotago.Commitment{
-						Slot: currentSlot,
-					},
-					UnlockedAddrs: vm.UnlockedAddresses{
-						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
-					},
-					Tx: &iotago.Transaction{
-						API: tpkg.ZeroCostTestAPI,
-						TransactionEssence: &iotago.TransactionEssence{
-							CreationSlot: currentSlot,
-							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
-						},
-					},
-					BIC: exampleBIC,
-				},
-			},
-			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
-		},
-		{
 			name: "ok - valid staking transition",
 			input: &vm.ChainOutputWithIDs{
 				OutputID: tpkg.RandOutputIDWithCreationSlot(0, 0),
@@ -775,68 +735,6 @@ func TestAccountOutput_ValidateStateTransition(t *testing.T) {
 				},
 			},
 			wantErr: iotago.ErrStakingEndEpochTooEarly,
-		},
-		{
-			name: "fail - account removes block issuer feature while having a staking feature",
-			input: &vm.ChainOutputWithIDs{
-				OutputID: tpkg.RandOutputIDWithCreationSlot(1000, 0),
-				ChainID:  exampleAccountID,
-				Output: &iotago.AccountOutput{
-					Amount:    100,
-					AccountID: exampleAccountID,
-					UnlockConditions: iotago.AccountOutputUnlockConditions{
-						&iotago.AddressUnlockCondition{Address: exampleAddress},
-					},
-					Features: iotago.AccountOutputFeatures{
-						&iotago.StakingFeature{
-							StakedAmount: 50,
-							FixedCost:    5,
-							StartEpoch:   currentEpoch,
-							EndEpoch:     iotago.MaxEpochIndex,
-						},
-						&iotago.BlockIssuerFeature{
-							BlockIssuerKeys: tpkg.RandBlockIssuerKeys(1),
-							ExpirySlot:      990,
-						},
-					},
-				},
-			},
-			next: &iotago.AccountOutput{
-				Amount:    100,
-				AccountID: exampleAccountID,
-				UnlockConditions: iotago.AccountOutputUnlockConditions{
-					&iotago.AddressUnlockCondition{Address: exampleAddress},
-				},
-				Features: iotago.AccountOutputFeatures{
-					&iotago.StakingFeature{
-						StakedAmount: 50,
-						FixedCost:    5,
-						StartEpoch:   currentEpoch,
-						EndEpoch:     iotago.MaxEpochIndex,
-					},
-				},
-			},
-			transType: iotago.ChainTransitionTypeStateChange,
-			svCtx: &vm.Params{
-				API: tpkg.ZeroCostTestAPI,
-				WorkingSet: &vm.WorkingSet{
-					Commitment: &iotago.Commitment{
-						Slot: currentSlot,
-					},
-					UnlockedAddrs: vm.UnlockedAddresses{
-						exampleIssuer.Key(): {UnlockedAtInputIndex: 0},
-					},
-					Tx: &iotago.Transaction{
-						API: tpkg.ZeroCostTestAPI,
-						TransactionEssence: &iotago.TransactionEssence{
-							CreationSlot: currentSlot,
-							Capabilities: iotago.TransactionCapabilitiesBitMaskWithCapabilities(iotago.WithTransactionCanDoAnything()),
-						},
-					},
-					BIC: exampleBIC,
-				},
-			},
-			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
 		},
 		{
 			name: "fail - expired staking feature removed without specifying reward input",

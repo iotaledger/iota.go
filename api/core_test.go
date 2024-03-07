@@ -550,7 +550,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
 	"transactionState": "failed",
 	"earliestAttachmentSlot": 5,
-	"transactionFailureReason": 58,
+	"transactionFailureReason": 57,
 	"transactionFailureDetails": "details"
 }`,
 		},

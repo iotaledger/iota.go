@@ -491,6 +491,11 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 }
 
 func TestOutputsSyntacticalAccount(t *testing.T) {
+	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
+		ExpirySlot:      3,
+		BlockIssuerKeys: tpkg.RandBlockIssuerKeys(2),
+	}
+
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs[iotago.Output]
@@ -567,6 +572,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA},
 					},
 				},
@@ -584,6 +590,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA},
 					},
 				},
@@ -601,25 +608,59 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA + 1},
 					},
 				},
 			},
 			wantErr: iotago.ErrAccountOutputAmountLessThanStakedAmount,
 		},
+		{
+			name: "ok - staking feature present with block issuer feature",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - staking feature present without block issuer feature",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
+		},
 	}
 	valFunc := iotago.OutputsSyntacticalAccount()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
