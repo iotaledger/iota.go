@@ -207,7 +207,7 @@ func bech32StringBytes(hrp NetworkPrefix, bytes []byte) string {
 func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	hrp, addrData, err := bech32.Decode(s)
 	if err != nil {
-		return "", nil, ierrors.Errorf("invalid bech32 encoding: %w", err)
+		return "", nil, ierrors.Wrap(err, "invalid bech32 encoding")
 	}
 
 	if len(addrData) == 0 {
@@ -223,7 +223,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	case AddressMulti:
 		multiAddrRef, _, err := MultiAddressReferenceFromBytes(addrData)
 		if err != nil {
-			return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+			return "", nil, ierrors.Wrap(err, "invalid multi address")
 		}
 
 		return NetworkPrefix(hrp), multiAddrRef, nil
@@ -236,13 +236,13 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		if underlyingAddrType == AddressMulti {
 			multiAddrRef, consumed, err := MultiAddressReferenceFromBytes(addrData[1:])
 			if err != nil {
-				return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+				return "", nil, ierrors.Wrap(err, "invalid multi address")
 			}
 
 			// get the address capabilities from the remaining bytes
 			capabilities, _, err := AddressCapabilitiesBitMaskFromBytes(addrData[1+consumed:])
 			if err != nil {
-				return "", nil, ierrors.Errorf("invalid address capabilities: %w", err)
+				return "", nil, ierrors.Wrap(err, "invalid restricted address capabilities")
 			}
 
 			return NetworkPrefix(hrp), &RestrictedAddress{
