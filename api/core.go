@@ -9,21 +9,25 @@ import (
 )
 
 type BlockState byte
-type BlockFailureReason byte
 
 const (
-	BlockStateLength         = serializer.OneByte
-	BlockFailureReasonLength = serializer.OneByte
-)
-
-const (
+	// BlockStateUnknown indicates that the state of the block can not be determined by the node for some reason.
 	BlockStateUnknown BlockState = iota
+	// BlockStatePending indicates that the block has been booked by the node but not yet accepted.
 	BlockStatePending
+	// BlockStateAccepted indicates that the block has been referenced by the super majority of the online committee.
 	BlockStateAccepted
+	// BlockStateConfirmed indicates that the block has been referenced by the super majority of the total committee.
 	BlockStateConfirmed
+	// BlockStateFinalized indicates that the commitment containing the block has been finalized.
+	// This state is computed based on the accepted/confirmed block's slot being smaller or equal than the latest finalized slot.
 	BlockStateFinalized
-	BlockStateRejected
-	BlockStateFailed
+	// BlockStateDropped indicates that the block has been dropped due to congestion control.
+	BlockStateDropped
+	// BlockStateOrphaned indicates that the block's slot has been committed by the node without the block being included.
+	// In this case, the block will never be finalized unless there is a chain switch.
+	// This state is computed based on the pending block's slot being smaller or equal than the latest committed slot.
+	BlockStateOrphaned
 )
 
 func (b BlockState) String() string {
@@ -33,8 +37,8 @@ func (b BlockState) String() string {
 		"accepted",
 		"confirmed",
 		"finalized",
-		"rejected",
-		"failed",
+		"dropped",
+		"orphaned",
 	}[b]
 }
 
@@ -42,16 +46,8 @@ func (b BlockState) Bytes() ([]byte, error) {
 	return []byte{byte(b)}, nil
 }
 
-func BlockStateFromBytes(b []byte) (BlockState, int, error) {
-	if len(b) < BlockStateLength {
-		return 0, 0, ierrors.New("invalid block state size")
-	}
-
-	return BlockState(b[0]), BlockStateLength, nil
-}
-
 func (b BlockState) EncodeJSON() (any, error) {
-	if b > BlockStateFailed {
+	if b > BlockStateOrphaned {
 		return nil, ierrors.Errorf("invalid block state: %d", b)
 	}
 
@@ -79,68 +75,15 @@ func (b *BlockState) DecodeJSON(state any) error {
 		*b = BlockStateConfirmed
 	case "finalized":
 		*b = BlockStateFinalized
-	case "rejected":
-		*b = BlockStateRejected
-	case "failed":
-		*b = BlockStateFailed
+	case "dropped":
+		*b = BlockStateDropped
+	case "orphaned":
+		*b = BlockStateOrphaned
 	default:
 		return ierrors.Errorf("invalid block state: %s", blockState)
 	}
 
 	return nil
-}
-
-const (
-	BlockFailureNone                      BlockFailureReason = 0
-	BlockFailureIsTooOld                  BlockFailureReason = 1
-	BlockFailureParentIsTooOld            BlockFailureReason = 2
-	BlockFailureParentNotFound            BlockFailureReason = 3
-	BlockFailureIssuerAccountNotFound     BlockFailureReason = 4
-	BlockFailureManaCostCalculationFailed BlockFailureReason = 5
-	BlockFailureBurnedInsufficientMana    BlockFailureReason = 6
-	BlockFailureAccountLocked             BlockFailureReason = 7
-	BlockFailureAccountExpired            BlockFailureReason = 8
-	BlockFailureSignatureInvalid          BlockFailureReason = 9
-	BlockFailureDroppedDueToCongestion    BlockFailureReason = 10
-	BlockFailurePayloadInvalid            BlockFailureReason = 11
-	BlockFailureInvalid                   BlockFailureReason = 255
-)
-
-var blocksErrorsFailureReasonMap = map[error]BlockFailureReason{
-	iotago.ErrIssuerAccountNotFound:     BlockFailureIssuerAccountNotFound,
-	iotago.ErrBurnedInsufficientMana:    BlockFailureBurnedInsufficientMana,
-	iotago.ErrFailedToCalculateManaCost: BlockFailureManaCostCalculationFailed,
-	iotago.ErrAccountLocked:             BlockFailureAccountLocked,
-	iotago.ErrAccountExpired:            BlockFailureAccountExpired,
-	iotago.ErrInvalidSignature:          BlockFailureSignatureInvalid,
-}
-
-func (t BlockFailureReason) Bytes() ([]byte, error) {
-	return []byte{byte(t)}, nil
-}
-
-func BlockFailureReasonFromBytes(b []byte) (BlockFailureReason, int, error) {
-	if len(b) < BlockFailureReasonLength {
-		return 0, 0, ierrors.New("invalid block failure reason size")
-	}
-
-	return BlockFailureReason(b[0]), BlockFailureReasonLength, nil
-}
-
-func DetermineBlockFailureReason(err error) BlockFailureReason {
-	errorList := make([]error, 0)
-	errorList = unwrapErrors(err, errorList)
-
-	// Map the error to the block failure reason.
-	// The strategy is to map the first failure reason that exists in order of most-detailed to least-detailed error.
-	for _, err := range errorList {
-		if blockFailureReason, matches := blocksErrorsFailureReasonMap[err]; matches {
-			return blockFailureReason
-		}
-	}
-
-	// Use most general failure reason if no other error matches.
-	return BlockFailureInvalid
 }
 
 type TransactionState byte
@@ -152,20 +95,31 @@ const (
 )
 
 const (
-	TransactionStateNoTransaction TransactionState = iota
+	// TransactionStateUnknown indicates that the state of the transaction can not be determined by the node for some reason.
+	TransactionStateUnknown TransactionState = iota
+	// TransactionStatePending indicates that the transaction has been booked by the node but not yet accepted.
 	TransactionStatePending
+	// TransactionStateAccepted indicates that the transaction meets the following 4 conditions:
+	//	- Signatures of the transaction are valid.
+	//  - The transaction has been approved by the super majority of the online committee (potential conflicts are resolved by this time).
+	//	- The transactions that created the inputs were accepted (monotonicity).
+	//  - At least one valid attachment was accepted.
 	TransactionStateAccepted
-	TransactionStateConfirmed
+	// TransactionStateCommitted indicates that the slot of the earliest accepted attachment of the transaction was committed.
+	TransactionStateCommitted
+	// TransactionStateFinalized indicates that the transaction is accepted and the slot containing the transaction has been finalized by the node.
+	// This state is computed based on the accepted transaction's earliest included attachment slot being smaller or equal than the latest finalized slot.
 	TransactionStateFinalized
+	// TransactionStateFailed indicates that the transaction has not been executed by the node due to a failure during processing.
 	TransactionStateFailed
 )
 
 func (t TransactionState) String() string {
 	return []string{
-		"noTransaction",
+		"unknown",
 		"pending",
 		"accepted",
-		"confirmed",
+		"committed",
 		"finalized",
 		"failed",
 	}[t]
@@ -202,14 +156,14 @@ func (t *TransactionState) DecodeJSON(state any) error {
 	}
 
 	switch transactionState {
-	case "noTransaction":
-		*t = TransactionStateNoTransaction
+	case "unknown":
+		*t = TransactionStateUnknown
 	case "pending":
 		*t = TransactionStatePending
 	case "accepted":
 		*t = TransactionStateAccepted
-	case "confirmed":
-		*t = TransactionStateConfirmed
+	case "committed":
+		*t = TransactionStateCommitted
 	case "finalized":
 		*t = TransactionStateFinalized
 	case "failed":
@@ -225,97 +179,98 @@ const (
 	TxFailureNone TransactionFailureReason = 0
 
 	TxFailureConflictRejected TransactionFailureReason = 1
+	TxFailureOrphaned         TransactionFailureReason = 2
 
-	TxFailureInputAlreadySpent            TransactionFailureReason = 2
-	TxFailureInputCreationAfterTxCreation TransactionFailureReason = 3
-	TxFailureUnlockSignatureInvalid       TransactionFailureReason = 4
+	TxFailureInputAlreadySpent            TransactionFailureReason = 3
+	TxFailureInputCreationAfterTxCreation TransactionFailureReason = 4
+	TxFailureUnlockSignatureInvalid       TransactionFailureReason = 5
 
-	TxFailureChainAddressUnlockInvalid            TransactionFailureReason = 5
-	TxFailureDirectUnlockableAddressUnlockInvalid TransactionFailureReason = 6
-	TxFailureMultiAddressUnlockInvalid            TransactionFailureReason = 7
+	TxFailureChainAddressUnlockInvalid            TransactionFailureReason = 6
+	TxFailureDirectUnlockableAddressUnlockInvalid TransactionFailureReason = 7
+	TxFailureMultiAddressUnlockInvalid            TransactionFailureReason = 8
 
-	TxFailureCommitmentInputReferenceInvalid TransactionFailureReason = 8
-	TxFailureBICInputReferenceInvalid        TransactionFailureReason = 9
-	TxFailureRewardInputReferenceInvalid     TransactionFailureReason = 10
+	TxFailureCommitmentInputReferenceInvalid TransactionFailureReason = 9
+	TxFailureBICInputReferenceInvalid        TransactionFailureReason = 10
+	TxFailureRewardInputReferenceInvalid     TransactionFailureReason = 11
 
-	TxFailureStakingRewardCalculationFailure    TransactionFailureReason = 11
-	TxFailureDelegationRewardCalculationFailure TransactionFailureReason = 12
+	TxFailureStakingRewardCalculationFailure    TransactionFailureReason = 12
+	TxFailureDelegationRewardCalculationFailure TransactionFailureReason = 13
 
-	TxFailureInputOutputBaseTokenMismatch TransactionFailureReason = 13
+	TxFailureInputOutputBaseTokenMismatch TransactionFailureReason = 14
 
-	TxFailureManaOverflow                             TransactionFailureReason = 14
-	TxFailureInputOutputManaMismatch                  TransactionFailureReason = 15
-	TxFailureManaDecayCreationIndexExceedsTargetIndex TransactionFailureReason = 16
+	TxFailureManaOverflow                             TransactionFailureReason = 15
+	TxFailureInputOutputManaMismatch                  TransactionFailureReason = 16
+	TxFailureManaDecayCreationIndexExceedsTargetIndex TransactionFailureReason = 17
 
-	TxFailureNativeTokenSumUnbalanced TransactionFailureReason = 17
+	TxFailureNativeTokenSumUnbalanced TransactionFailureReason = 18
 
-	TxFailureSimpleTokenSchemeMintedMeltedTokenDecrease TransactionFailureReason = 18
-	TxFailureSimpleTokenSchemeMintingInvalid            TransactionFailureReason = 19
-	TxFailureSimpleTokenSchemeMeltingInvalid            TransactionFailureReason = 20
-	TxFailureSimpleTokenSchemeMaximumSupplyChanged      TransactionFailureReason = 21
-	TxFailureSimpleTokenSchemeGenesisInvalid            TransactionFailureReason = 22
+	TxFailureSimpleTokenSchemeMintedMeltedTokenDecrease TransactionFailureReason = 19
+	TxFailureSimpleTokenSchemeMintingInvalid            TransactionFailureReason = 20
+	TxFailureSimpleTokenSchemeMeltingInvalid            TransactionFailureReason = 21
+	TxFailureSimpleTokenSchemeMaximumSupplyChanged      TransactionFailureReason = 22
+	TxFailureSimpleTokenSchemeGenesisInvalid            TransactionFailureReason = 23
 
-	TxFailureMultiAddressLengthUnlockLengthMismatch TransactionFailureReason = 23
-	TxFailureMultiAddressUnlockThresholdNotReached  TransactionFailureReason = 24
+	TxFailureMultiAddressLengthUnlockLengthMismatch TransactionFailureReason = 24
+	TxFailureMultiAddressUnlockThresholdNotReached  TransactionFailureReason = 25
 
-	TxFailureSenderFeatureNotUnlocked TransactionFailureReason = 25
+	TxFailureSenderFeatureNotUnlocked TransactionFailureReason = 26
 
-	TxFailureIssuerFeatureNotUnlocked TransactionFailureReason = 26
+	TxFailureIssuerFeatureNotUnlocked TransactionFailureReason = 27
 
-	TxFailureStakingRewardInputMissing             TransactionFailureReason = 27
-	TxFailureStakingBlockIssuerFeatureMissing      TransactionFailureReason = 28
-	TxFailureStakingCommitmentInputMissing         TransactionFailureReason = 29
-	TxFailureStakingRewardClaimingInvalid          TransactionFailureReason = 30
-	TxFailureStakingFeatureRemovedBeforeUnbonding  TransactionFailureReason = 31
-	TxFailureStakingFeatureModifiedBeforeUnbonding TransactionFailureReason = 32
-	TxFailureStakingStartEpochInvalid              TransactionFailureReason = 33
-	TxFailureStakingEndEpochTooEarly               TransactionFailureReason = 34
+	TxFailureStakingRewardInputMissing             TransactionFailureReason = 28
+	TxFailureStakingBlockIssuerFeatureMissing      TransactionFailureReason = 29
+	TxFailureStakingCommitmentInputMissing         TransactionFailureReason = 30
+	TxFailureStakingRewardClaimingInvalid          TransactionFailureReason = 31
+	TxFailureStakingFeatureRemovedBeforeUnbonding  TransactionFailureReason = 32
+	TxFailureStakingFeatureModifiedBeforeUnbonding TransactionFailureReason = 33
+	TxFailureStakingStartEpochInvalid              TransactionFailureReason = 34
+	TxFailureStakingEndEpochTooEarly               TransactionFailureReason = 35
 
-	TxFailureBlockIssuerCommitmentInputMissing TransactionFailureReason = 35
-	TxFailureBlockIssuanceCreditInputMissing   TransactionFailureReason = 36
-	TxFailureBlockIssuerNotExpired             TransactionFailureReason = 37
-	TxFailureBlockIssuerExpiryTooEarly         TransactionFailureReason = 38
-	TxFailureManaMovedOffBlockIssuerAccount    TransactionFailureReason = 39
-	TxFailureAccountLocked                     TransactionFailureReason = 40
+	TxFailureBlockIssuerCommitmentInputMissing TransactionFailureReason = 36
+	TxFailureBlockIssuanceCreditInputMissing   TransactionFailureReason = 37
+	TxFailureBlockIssuerNotExpired             TransactionFailureReason = 38
+	TxFailureBlockIssuerExpiryTooEarly         TransactionFailureReason = 39
+	TxFailureManaMovedOffBlockIssuerAccount    TransactionFailureReason = 40
+	TxFailureAccountLocked                     TransactionFailureReason = 41
 
-	TxFailureTimelockCommitmentInputMissing TransactionFailureReason = 41
-	TxFailureTimelockNotExpired             TransactionFailureReason = 42
+	TxFailureTimelockCommitmentInputMissing TransactionFailureReason = 42
+	TxFailureTimelockNotExpired             TransactionFailureReason = 43
 
-	TxFailureExpirationCommitmentInputMissing TransactionFailureReason = 43
-	TxFailureExpirationNotUnlockable          TransactionFailureReason = 44
+	TxFailureExpirationCommitmentInputMissing TransactionFailureReason = 44
+	TxFailureExpirationNotUnlockable          TransactionFailureReason = 45
 
-	TxFailureReturnAmountNotFulFilled TransactionFailureReason = 45
+	TxFailureReturnAmountNotFulFilled TransactionFailureReason = 46
 
-	TxFailureNewChainOutputHasNonZeroedID        TransactionFailureReason = 46
-	TxFailureChainOutputImmutableFeaturesChanged TransactionFailureReason = 47
+	TxFailureNewChainOutputHasNonZeroedID        TransactionFailureReason = 47
+	TxFailureChainOutputImmutableFeaturesChanged TransactionFailureReason = 48
 
-	TxFailureImplicitAccountDestructionDisallowed     TransactionFailureReason = 48
-	TxFailureMultipleImplicitAccountCreationAddresses TransactionFailureReason = 49
+	TxFailureImplicitAccountDestructionDisallowed     TransactionFailureReason = 49
+	TxFailureMultipleImplicitAccountCreationAddresses TransactionFailureReason = 50
 
-	TxFailureAccountInvalidFoundryCounter TransactionFailureReason = 50
+	TxFailureAccountInvalidFoundryCounter TransactionFailureReason = 51
 
-	TxFailureAnchorInvalidStateTransition      TransactionFailureReason = 51
-	TxFailureAnchorInvalidGovernanceTransition TransactionFailureReason = 52
+	TxFailureAnchorInvalidStateTransition      TransactionFailureReason = 52
+	TxFailureAnchorInvalidGovernanceTransition TransactionFailureReason = 53
 
-	TxFailureFoundryTransitionWithoutAccount TransactionFailureReason = 53
-	TxFailureFoundrySerialInvalid            TransactionFailureReason = 54
+	TxFailureFoundryTransitionWithoutAccount TransactionFailureReason = 54
+	TxFailureFoundrySerialInvalid            TransactionFailureReason = 55
 
-	TxFailureDelegationCommitmentInputMissing  TransactionFailureReason = 55
-	TxFailureDelegationRewardInputMissing      TransactionFailureReason = 56
-	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 57
-	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 58
-	TxFailureDelegationModified                TransactionFailureReason = 59
-	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 60
-	TxFailureDelegationAmountMismatch          TransactionFailureReason = 61
-	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 62
-	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 63
+	TxFailureDelegationCommitmentInputMissing  TransactionFailureReason = 56
+	TxFailureDelegationRewardInputMissing      TransactionFailureReason = 57
+	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 58
+	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 59
+	TxFailureDelegationModified                TransactionFailureReason = 60
+	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 61
+	TxFailureDelegationAmountMismatch          TransactionFailureReason = 62
+	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 63
+	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 64
 
-	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 64
-	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 65
-	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 66
-	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 67
-	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 68
-	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 69
+	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 65
+	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 66
+	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 67
+	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 68
+	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 69
+	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 70
 
 	TxFailureSemanticValidationFailed TransactionFailureReason = 255
 )
@@ -327,6 +282,7 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 
 	// tx level errors
 	iotago.ErrTxConflictRejected: TxFailureConflictRejected,
+	iotago.ErrTxOrphaned:         TxFailureOrphaned,
 
 	// input
 	iotago.ErrInputAlreadySpent:            TxFailureInputAlreadySpent,
@@ -599,12 +555,8 @@ type (
 	BlockMetadataResponse struct {
 		// BlockID The hex encoded block ID of the block.
 		BlockID iotago.BlockID `serix:""`
-		// BlockState might be pending, rejected, failed, confirmed, finalized.
+		// BlockState might be unknown, pending, accepted, confirmed, finalized, dropped, orphaned.
 		BlockState BlockState `serix:""`
-		// BlockFailureReason if applicable indicates the error that occurred during the block processing.
-		BlockFailureReason BlockFailureReason `serix:",omitempty"`
-		// TransactionMetadata is the metadata of the transaction that is contained in the block.
-		TransactionMetadata *TransactionMetadataResponse `serix:",optional,omitempty"`
 	}
 
 	// BlockWithMetadataResponse defines the response of a GET full block REST API call.
@@ -617,10 +569,15 @@ type (
 	TransactionMetadataResponse struct {
 		// TransactionID is the hex encoded transaction ID of the transaction.
 		TransactionID iotago.TransactionID `serix:""`
-		// TransactionState might be pending, conflicting, confirmed, finalized, rejected.
+		// TransactionState might be pending, accepted, committed, finalized, failed.
 		TransactionState TransactionState `serix:""`
+		// EarliestAttachmentSlot is the slot of the earliest included valid block that contains an attachment of the transaction.
+		EarliestAttachmentSlot iotago.SlotIndex `serix:""`
 		// TransactionFailureReason if applicable indicates the error that occurred during the transaction processing.
 		TransactionFailureReason TransactionFailureReason `serix:",omitempty"`
+		// TransactionFailureDetails contains the detailed error message that occurred during the transaction processing
+		// if the debug mode was activated in the retainer.
+		TransactionFailureDetails string `serix:",omitempty,lenPrefix=uint16"`
 	}
 
 	// OutputResponse defines the response of a GET outputs REST API call.

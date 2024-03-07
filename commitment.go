@@ -45,10 +45,7 @@ func (c *Commitment) ID() (CommitmentID, error) {
 	return CommitmentIDRepresentingData(c.Slot, data), nil
 }
 
-func (c *Commitment) Type() ContextInputType {
-	return ContextInputCommitment
-}
-
+// MustID works like ID but panics if the CommitmentID can't be computed.
 func (c *Commitment) MustID() CommitmentID {
 	id, err := c.ID()
 	if err != nil {
@@ -56,6 +53,10 @@ func (c *Commitment) MustID() CommitmentID {
 	}
 
 	return id
+}
+
+func (c *Commitment) Type() ContextInputType {
+	return ContextInputCommitment
 }
 
 func (c *Commitment) Equals(other *Commitment) bool {

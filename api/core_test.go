@@ -88,14 +88,8 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 		{
 			Name: "ok - BlockMetadataResponse",
 			Source: &api.BlockMetadataResponse{
-				BlockID:            tpkg.RandBlockID(),
-				BlockState:         api.BlockStateFailed,
-				BlockFailureReason: api.BlockFailureParentNotFound,
-				TransactionMetadata: &api.TransactionMetadataResponse{
-					TransactionID:            tpkg.RandTransactionID(),
-					TransactionState:         api.TransactionStateFailed,
-					TransactionFailureReason: api.TxFailureDelegationRewardCalculationFailure,
-				},
+				BlockID:    tpkg.RandBlockID(),
+				BlockState: api.BlockStateDropped,
 			},
 			Target:    &api.BlockMetadataResponse{},
 			SeriErr:   nil,
@@ -106,17 +100,24 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 			Source: &api.BlockWithMetadataResponse{
 				Block: tpkg.RandBlock(tpkg.RandBasicBlockBody(tpkg.ZeroCostTestAPI, iotago.PayloadSignedTransaction), tpkg.ZeroCostTestAPI, 100),
 				Metadata: &api.BlockMetadataResponse{
-					BlockID:            tpkg.RandBlockID(),
-					BlockState:         api.BlockStateFailed,
-					BlockFailureReason: api.BlockFailureParentNotFound,
-					TransactionMetadata: &api.TransactionMetadataResponse{
-						TransactionID:            tpkg.RandTransactionID(),
-						TransactionState:         api.TransactionStateFailed,
-						TransactionFailureReason: api.TxFailureDelegationRewardsClaimingInvalid,
-					},
+					BlockID:    tpkg.RandBlockID(),
+					BlockState: api.BlockStateDropped,
 				},
 			},
 			Target:    &api.BlockWithMetadataResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
+			Name: "ok - TransactionMetadataResponse",
+			Source: &api.TransactionMetadataResponse{
+				TransactionID:             tpkg.RandTransactionID(),
+				TransactionState:          api.TransactionStateFailed,
+				EarliestAttachmentSlot:    5,
+				TransactionFailureReason:  api.TxFailureDelegationRewardsClaimingInvalid,
+				TransactionFailureDetails: "details",
+			},
+			Target:    &api.TransactionMetadataResponse{},
 			SeriErr:   nil,
 			DeSeriErr: nil,
 		},
@@ -517,24 +518,12 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		{
 			Name: "ok - BlockMetadataResponse",
 			Source: &api.BlockMetadataResponse{
-				BlockID:            iotago.BlockID{0x9},
-				BlockState:         api.BlockStateFailed,
-				BlockFailureReason: api.BlockFailureParentNotFound,
-				TransactionMetadata: &api.TransactionMetadataResponse{
-					TransactionID:            iotago.TransactionID{0x1},
-					TransactionState:         api.TransactionStateFailed,
-					TransactionFailureReason: api.TxFailureDelegationRewardsClaimingInvalid,
-				},
+				BlockID:    iotago.BlockID{0x9},
+				BlockState: api.BlockStateDropped,
 			},
 			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
-	"blockState": "failed",
-	"blockFailureReason": 3,
-	"transactionMetadata": {
-		"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
-		"transactionState": "failed",
-		"transactionFailureReason": 57
-	}
+	"blockState": "dropped"
 }`,
 		},
 		{
@@ -546,6 +535,36 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 			Target: `{
 	"blockId": "0x090000000000000000000000000000000000000000000000000000000000000000000000",
 	"blockState": "confirmed"
+}`,
+		},
+		{
+			Name: "ok - TransactionMetadataResponse",
+			Source: &api.TransactionMetadataResponse{
+				TransactionID:             iotago.TransactionID{0x1},
+				TransactionState:          api.TransactionStateFailed,
+				EarliestAttachmentSlot:    5,
+				TransactionFailureReason:  api.TxFailureDelegationRewardsClaimingInvalid,
+				TransactionFailureDetails: "details",
+			},
+			Target: `{
+	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
+	"transactionState": "failed",
+	"earliestAttachmentSlot": 5,
+	"transactionFailureReason": 58,
+	"transactionFailureDetails": "details"
+}`,
+		},
+		{
+			Name: "ok - TransactionMetadataResponse - omitempty",
+			Source: &api.TransactionMetadataResponse{
+				TransactionID:          iotago.TransactionID{0x1},
+				TransactionState:       api.TransactionStateCommitted,
+				EarliestAttachmentSlot: 10,
+			},
+			Target: `{
+	"transactionId": "0x010000000000000000000000000000000000000000000000000000000000000000000000",
+	"transactionState": "committed",
+	"earliestAttachmentSlot": 10
 }`,
 		},
 		{
