@@ -472,7 +472,7 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 			)
 		}
 
-		return accountStakingExpiredValidation(vmParams, next, currentStakingFeat, nextStakingFeat, isRemovingStakingFeature)
+		return accountStakingExpiredValidation(vmParams, currentStakingFeat, nextStakingFeat, isRemovingStakingFeature)
 	} else if nextStakingFeat != nil {
 		return accountStakingGenesisValidation(vmParams, nextStakingFeat)
 	}
@@ -534,7 +534,6 @@ func accountStakingNonExpiredValidation(
 // i.e. the current epoch is equal or after the end epoch.
 func accountStakingExpiredValidation(
 	vmParams *vm.Params,
-	next *iotago.AccountOutput,
 	currentStakingFeat *iotago.StakingFeature,
 	nextStakingFeat *iotago.StakingFeature,
 	isRemovingStakingFeature *bool,
