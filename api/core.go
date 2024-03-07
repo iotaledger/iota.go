@@ -47,7 +47,7 @@ func (b BlockState) Bytes() ([]byte, error) {
 }
 
 func (b BlockState) EncodeJSON() (any, error) {
-	if b > BlockStateDropped {
+	if b > BlockStateOrphaned {
 		return nil, ierrors.Errorf("invalid block state: %d", b)
 	}
 
