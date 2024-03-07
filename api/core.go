@@ -11,7 +11,7 @@ import (
 type BlockState byte
 
 const (
-	// BlockStateUnknown indicates that the state of the block is can not be determined by the node for some reason.
+	// BlockStateUnknown indicates that the state of the block can not be determined by the node for some reason.
 	BlockStateUnknown BlockState = iota
 	// BlockStatePending indicates that the block has been booked by the node but not yet accepted.
 	BlockStatePending
