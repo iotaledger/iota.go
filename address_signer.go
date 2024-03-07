@@ -3,6 +3,7 @@ package iotago
 import (
 	"crypto"
 	"crypto/ed25519"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 )
@@ -56,8 +57,10 @@ func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey e
 	switch addr.Address.(type) {
 	case *Ed25519Address:
 		return AddressKeys{Address: addr, Keys: prvKey}, nil
+	case *ImplicitAccountCreationAddress:
+		panic("ImplicitAccountCreationAddress is not allowed in restricted addresses")
 	default:
-		return AddressKeys{}, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }
 
@@ -123,14 +126,14 @@ func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.Priva
 		case *Ed25519Address:
 			return privateKeyForEd25519Address(underlyingAddr)
 		default:
-			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the the address signer since it only handles addresses backed by keypairs", addr))
 		}
 
 	case *ImplicitAccountCreationAddress:
 		return privateKeyForEd25519Address(address)
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }
 
@@ -183,12 +186,12 @@ func (s *InMemoryAddressSigner) EmptySignatureForAddress(addr Address) (signatur
 		case *Ed25519Address:
 			return &Ed25519Signature{}, nil
 		default:
-			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 		}
 	case *ImplicitAccountCreationAddress:
 		return &Ed25519Signature{}, nil
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }

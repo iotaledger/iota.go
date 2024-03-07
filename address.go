@@ -14,8 +14,6 @@ import (
 )
 
 var (
-	// ErrUnknownAddrType gets returned for unknown address types.
-	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrInvalidAddressType gets returned when an address type is invalid.
 	ErrInvalidAddressType = ierrors.New("invalid address type")
 	// ErrInvalidRestrictedAddress gets returned when a RestrictedAddress is invalid.
@@ -192,7 +190,7 @@ func newAddress(addressType AddressType) (address Address, err error) {
 	case AddressRestricted:
 		return &RestrictedAddress{}, nil
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
+		panic(fmt.Sprintf("unknown address type %d", addressType))
 	}
 }
 
@@ -312,6 +310,6 @@ func AddressFromReader(reader io.ReadSeeker) (Address, error) {
 		return RestrictedAddressFromReader(reader)
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
+		panic(fmt.Sprintf("unknown address type %d", addressType))
 	}
 }

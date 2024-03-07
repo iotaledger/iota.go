@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"crypto/ed25519"
+	"fmt"
 
 	"github.com/iotaledger/iota-crypto-demo/pkg/bip32path"
 	"github.com/iotaledger/iota-crypto-demo/pkg/bip39"
@@ -135,6 +136,6 @@ func (k *KeyManager) Address(addressType iotago.AddressType, index ...uint32) io
 	case iotago.AddressImplicitAccountCreation:
 		return iotago.ImplicitAccountCreationAddressFromPubKey(pubKey)
 	default:
-		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
+		panic(fmt.Sprintf("address type %s is not supported", addressType))
 	}
 }

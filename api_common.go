@@ -2,6 +2,7 @@ package iotago
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2/serix"
@@ -41,7 +42,11 @@ var (
 			case *RestrictedAddress:
 				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a restricted address inside a multi address", idx)
 			default:
-				return ierrors.Wrapf(ErrUnknownAddrType, "address with index %d has an unknown address type (%T) inside a multi address", idx, addr)
+				// We're switching on the Go address type here, so we can only run into the default case
+				// if we added a new address type and have not handled it above or a user passed a type
+				// implementing the address interface (only possible when iota.go is used as a library).
+				// In both cases we want to panic.
+				panic(fmt.Sprintf("address with index %d has an unknown address type (%T) inside a multi address", idx, addr))
 			}
 
 			// check for minimum address weight
@@ -80,7 +85,11 @@ var (
 		case *RestrictedAddress:
 			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is a restricted address inside a restricted address")
 		default:
-			return ierrors.Wrapf(ErrUnknownAddrType, "underlying address has an unknown address type (%T) inside a restricted address", addr)
+			// We're switching on the Go address type here, so we can only run into the default case
+			// if we added a new address type and have not handled it above or a user passed a type
+			// implementing the address interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic(fmt.Sprintf("underlying address of the restricted address is of unknown address type (%T)", addr))
 		}
 
 		return nil

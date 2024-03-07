@@ -2,9 +2,9 @@ package tpkg
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 
-	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -141,6 +141,6 @@ func RandAddress(addressType ...iotago.AddressType) iotago.Address {
 	case iotago.AddressAnchor:
 		return RandAnchorAddress()
 	default:
-		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addrType))
+		panic(fmt.Sprintf("unknown address type %d", addrType))
 	}
 }
