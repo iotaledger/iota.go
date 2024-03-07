@@ -36,11 +36,11 @@ var (
 			case *NFTAddress:
 			case *AnchorAddress:
 			case *ImplicitAccountCreationAddress:
-				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is an implicit account creation address inside a multi address", idx)
+				return ierrors.WithMessagef(ErrInvalidNestedAddressType, "address with index %d is an implicit account creation address inside a multi address", idx)
 			case *MultiAddress:
-				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a multi address inside a multi address", idx)
+				return ierrors.WithMessagef(ErrInvalidNestedAddressType, "address with index %d is a multi address inside a multi address", idx)
 			case *RestrictedAddress:
-				return ierrors.Wrapf(ErrInvalidNestedAddressType, "address with index %d is a restricted address inside a multi address", idx)
+				return ierrors.WithMessagef(ErrInvalidNestedAddressType, "address with index %d is a restricted address inside a multi address", idx)
 			default:
 				// We're switching on the Go address type here, so we can only run into the default case
 				// if we added a new address type and have not handled it above or a user passed a type
@@ -51,7 +51,7 @@ var (
 
 			// check for minimum address weight
 			if address.Weight == 0 {
-				return ierrors.Wrapf(ErrMultiAddressWeightInvalid, "address with index %d needs to have at least weight=1", idx)
+				return ierrors.WithMessagef(ErrMultiAddressWeightInvalid, "address with index %d needs to have at least weight=1", idx)
 			}
 
 			cumulativeWeight += uint16(address.Weight)
@@ -59,10 +59,10 @@ var (
 
 		// check for valid threshold
 		if addr.Threshold > cumulativeWeight {
-			return ierrors.Wrapf(ErrMultiAddressThresholdInvalid, "the threshold value exceeds the cumulative weight of all addresses (%d>%d)", addr.Threshold, cumulativeWeight)
+			return ierrors.WithMessagef(ErrMultiAddressThresholdInvalid, "the threshold value exceeds the cumulative weight of all addresses (%d>%d)", addr.Threshold, cumulativeWeight)
 		}
 		if addr.Threshold < 1 {
-			return ierrors.Wrap(ErrMultiAddressThresholdInvalid, "multi addresses need to have at least threshold=1")
+			return ierrors.WithMessage(ErrMultiAddressThresholdInvalid, "multi addresses need to have at least threshold=1")
 		}
 
 		return nil
@@ -74,16 +74,16 @@ var (
 	//  3. The bitmask does not contain trailing zero bytes.
 	restrictedAddressValidatorFunc = func(_ context.Context, addr RestrictedAddress) error {
 		if err := BitMaskNonTrailingZeroBytesValidatorFunc(addr.AllowedCapabilities); err != nil {
-			return ierrors.Wrapf(ErrInvalidRestrictedAddress, "invalid allowed capabilities bitmask: %w", err)
+			return ierrors.WithMessagef(ErrInvalidRestrictedAddress, "invalid allowed capabilities bitmask: %w", err)
 		}
 
 		switch addr.Address.(type) {
 		case *Ed25519Address, *AccountAddress, *NFTAddress, *AnchorAddress, *MultiAddress:
 			// allowed address types
 		case *ImplicitAccountCreationAddress:
-			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is an implicit account creation address inside a restricted address")
+			return ierrors.WithMessage(ErrInvalidNestedAddressType, "underlying address is an implicit account creation address inside a restricted address")
 		case *RestrictedAddress:
-			return ierrors.Wrap(ErrInvalidNestedAddressType, "underlying address is a restricted address inside a restricted address")
+			return ierrors.WithMessage(ErrInvalidNestedAddressType, "underlying address is a restricted address inside a restricted address")
 		default:
 			// We're switching on the Go address type here, so we can only run into the default case
 			// if we added a new address type and have not handled it above or a user passed a type
