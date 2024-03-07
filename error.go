@@ -48,6 +48,8 @@ var (
 	ErrDelegationRewardCalculationFailure = ierrors.New("delegation rewards could not be calculated due to storage issues or overflow")
 	// ErrTxConflictRejected gets returned when the transaction was conflicting and the transaction was rejected.
 	ErrTxConflictRejected = ierrors.New("transaction was conflicting and was rejected")
+	// ErrTxOrphaned gets returned when the transaction was orphaned.
+	ErrTxOrphaned = ierrors.New("transaction was orphaned")
 	// ErrInputAlreadySpent gets returned when the input is already spent.
 	ErrInputAlreadySpent = ierrors.New("input already spent")
 )

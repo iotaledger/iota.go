@@ -400,9 +400,6 @@ func TestClient_BlockMetadataByMessageID(t *testing.T) {
 	originRes := &api.BlockMetadataResponse{
 		BlockID:    identifier,
 		BlockState: api.BlockStateConfirmed,
-		TransactionMetadata: &api.TransactionMetadataResponse{
-			TransactionState: api.TransactionStateConfirmed,
-		},
 	}
 
 	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteBlockMetadata, api.ParameterBlockID, identifier.ToHex()), 200, originRes)
@@ -516,6 +513,25 @@ func TestClient_TransactionIncludedBlock(t *testing.T) {
 	responseBlock, err := nodeAPI.TransactionIncludedBlock(context.Background(), txID)
 	require.NoError(t, err)
 	require.EqualValues(t, originBlock.MustID(), responseBlock.MustID())
+}
+
+func TestClient_TransactionMetadataByTransactionID(t *testing.T) {
+	defer gock.Off()
+
+	identifier := tpkg.RandTransactionID()
+
+	originRes := &api.TransactionMetadataResponse{
+		TransactionID:          identifier,
+		TransactionState:       api.TransactionStateCommitted,
+		EarliestAttachmentSlot: 5,
+	}
+
+	mockGetJSON(api.EndpointWithNamedParameterValue(api.CoreRouteTransactionsMetadata, api.ParameterTransactionID, identifier.ToHex()), 200, originRes)
+
+	nodeAPI := nodeClient(t)
+	meta, err := nodeAPI.TransactionMetadata(context.Background(), identifier)
+	require.NoError(t, err)
+	require.EqualValues(t, originRes, meta)
 }
 
 func TestClient_OutputByID(t *testing.T) {

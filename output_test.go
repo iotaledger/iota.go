@@ -491,6 +491,11 @@ func TestOutputsSyntacticalNativeTokensCount(t *testing.T) {
 }
 
 func TestOutputsSyntacticalAccount(t *testing.T) {
+	exampleBlockIssuerFeature := &iotago.BlockIssuerFeature{
+		ExpirySlot:      3,
+		BlockIssuerKeys: tpkg.RandBlockIssuerKeys(2),
+	}
+
 	tests := []struct {
 		name    string
 		outputs iotago.Outputs[iotago.Output]
@@ -567,6 +572,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA},
 					},
 				},
@@ -584,6 +590,7 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA},
 					},
 				},
@@ -601,25 +608,59 @@ func TestOutputsSyntacticalAccount(t *testing.T) {
 						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
 					},
 					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
 						&iotago.StakingFeature{StakedAmount: OneIOTA + 1},
 					},
 				},
 			},
 			wantErr: iotago.ErrAccountOutputAmountLessThanStakedAmount,
 		},
+		{
+			name: "ok - staking feature present with block issuer feature",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						exampleBlockIssuerFeature,
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "fail - staking feature present without block issuer feature",
+			outputs: iotago.Outputs[iotago.Output]{
+				&iotago.AccountOutput{
+					Amount:         OneIOTA,
+					AccountID:      tpkg.Rand32ByteArray(),
+					FoundryCounter: 1337,
+					UnlockConditions: iotago.AccountOutputUnlockConditions{
+						&iotago.AddressUnlockCondition{Address: tpkg.RandAccountAddress()},
+					},
+					Features: iotago.AccountOutputFeatures{
+						&iotago.StakingFeature{StakedAmount: OneIOTA},
+					},
+				},
+			},
+			wantErr: iotago.ErrStakingBlockIssuerFeatureMissing,
+		},
 	}
 	valFunc := iotago.OutputsSyntacticalAccount()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
@@ -717,15 +758,13 @@ func TestOutputsSyntacticalAnchor(t *testing.T) {
 	valFunc := iotago.OutputsSyntacticalAnchor()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
@@ -835,15 +874,13 @@ func TestOutputsSyntacticalFoundry(t *testing.T) {
 	valFunc := iotago.OutputsSyntacticalFoundry()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
@@ -887,15 +924,13 @@ func TestOutputsSyntacticalNFT(t *testing.T) {
 	valFunc := iotago.OutputsSyntacticalNFT()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
@@ -940,15 +975,13 @@ func TestOutputsSyntacticaDelegation(t *testing.T) {
 	valFunc := iotago.OutputsSyntacticalDelegation()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				var runErr error
-				for index, output := range tt.outputs {
-					if err := valFunc(index, output); err != nil {
-						runErr = err
-					}
+			var runErr error
+			for index, output := range tt.outputs {
+				if err := valFunc(index, output); err != nil {
+					runErr = err
 				}
-				require.ErrorIs(t, runErr, tt.wantErr)
-			})
+			}
+			require.ErrorIs(t, runErr, tt.wantErr)
 		})
 	}
 }
@@ -1124,9 +1157,7 @@ func TestOwnerTransitionIndependentOutput_UnlockableBy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetAddr, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge))
-			})
+			require.Equal(t, tt.canUnlock, tt.output.UnlockableBy(tt.targetAddr, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge))
 		})
 	}
 }
@@ -1231,21 +1262,19 @@ func TestAnchorOutput_UnlockableBy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Run(tt.name, func(t *testing.T) {
-				canUnlock, err := tt.current.UnlockableBy(tt.targetAddr, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
-				if tt.wantErr != nil {
-					require.ErrorIs(t, err, tt.wantErr)
+			canUnlock, err := tt.current.UnlockableBy(tt.targetAddr, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
 
-					return
-				}
-				require.Equal(t, tt.canUnlock, canUnlock)
-				if tt.addrCanUnlockInstead == nil {
-					return
-				}
-				canUnlockInstead, err := tt.current.UnlockableBy(tt.addrCanUnlockInstead, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
-				require.NoError(t, err)
-				require.True(t, canUnlockInstead)
-			})
+				return
+			}
+			require.Equal(t, tt.canUnlock, canUnlock)
+			if tt.addrCanUnlockInstead == nil {
+				return
+			}
+			canUnlockInstead, err := tt.current.UnlockableBy(tt.addrCanUnlockInstead, tt.next, tt.commitmentInputTime+tt.maxCommittableAge, tt.commitmentInputTime+tt.minCommittableAge)
+			require.NoError(t, err)
+			require.True(t, canUnlockInstead)
 		})
 	}
 }
