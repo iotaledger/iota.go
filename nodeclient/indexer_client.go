@@ -143,7 +143,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 
 		routeWithParams := fmt.Sprintf("%s?%s", baseRoute, urlParams)
 		//nolint:bodyclose
-		_, reqErr := client.Do(ctx, http.MethodGet, routeWithParams, nil, res.Response)
+		_, reqErr := client.DoWithRequestHeaderHook(ctx, http.MethodGet, routeWithParams, RequestHeaderHookAcceptJSON, nil, res.Response)
 
 		return reqErr
 	}
@@ -155,7 +155,7 @@ func (client *indexerClient) Outputs(ctx context.Context, query IndexerQuery) (*
 func (client *indexerClient) singleOutputQuery(ctx context.Context, route string) (*iotago.OutputID, iotago.Output, iotago.SlotIndex, error) {
 	res := &api.IndexerResponse{}
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, route, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, route, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, nil, 0, err
 	}
 

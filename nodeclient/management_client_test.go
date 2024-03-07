@@ -13,6 +13,29 @@ import (
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 )
 
+var sampleGossipInfo = &api.GossipInfo{
+	Heartbeat: &api.GossipHeartbeat{
+		SolidSlot:      234,
+		PrunedSlot:     5872,
+		LatestSlot:     1294,
+		ConnectedPeers: 2392,
+		SyncedPeers:    1234,
+	},
+	Metrics: &api.PeerGossipMetrics{
+		NewBlocks:             40,
+		KnownBlocks:           60,
+		ReceivedBlocks:        100,
+		ReceivedBlockRequests: 345,
+		ReceivedSlotRequests:  194,
+		ReceivedHeartbeats:    5,
+		SentBlocks:            492,
+		SentBlockRequests:     2396,
+		SentSlotRequests:      9837,
+		SentHeartbeats:        3,
+		DroppedPackets:        10,
+	},
+}
+
 func TestManagementClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
