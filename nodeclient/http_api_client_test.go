@@ -438,9 +438,6 @@ func TestClient_BlockWithMetadataByID(t *testing.T) {
 		Metadata: &api.BlockMetadataResponse{
 			BlockID:    blockID,
 			BlockState: api.BlockStateConfirmed,
-			TransactionMetadata: &api.TransactionMetadataResponse{
-				TransactionState: api.TransactionStateConfirmed,
-			},
 		},
 	}
 
