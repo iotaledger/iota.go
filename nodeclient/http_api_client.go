@@ -108,7 +108,7 @@ func New(baseURL string, opts ...ClientOption) (*Client, error) {
 	defer cancelFunc()
 	info, err := client.Info(ctx)
 	if err != nil {
-		return nil, ierrors.Errorf("unable to call info endpoint for protocol parameter init: %v", err)
+		return nil, ierrors.Wrap(err, "unable to call info endpoint for protocol parameter init")
 	}
 	for _, params := range info.ProtocolParameters {
 		client.apiProvider.AddProtocolParametersAtEpoch(params.Parameters, params.StartEpoch)
@@ -234,7 +234,7 @@ func (client *Client) Routes(ctx context.Context) (*api.RoutesResponse, error) {
 	//nolint:bodyclose
 	res := new(api.RoutesResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, api.RouteRoutes, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, api.RouteRoutes, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -267,160 +267,6 @@ func (client *Client) NetworkMetrics(ctx context.Context) (*api.NetworkMetricsRe
 	return res, nil
 }
 
-// BlockIssuance gets the info to issue a block.
-func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHeaderResponse, error) {
-	res := new(api.IssuanceBlockHeaderResponse)
-
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, api.CoreRouteBlockIssuance, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, workScore iotago.WorkScore, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
-	//nolint:contextcheck
-	query := client.endpointReplaceAddressParameter(api.CoreRouteCongestion, accountAddress)
-	queryParams := url.Values{}
-
-	if workScore > 0 {
-		queryParams.Add(api.ParameterWorkScore, strconv.FormatUint(uint64(workScore), 10))
-	}
-	if len(optCommitmentID) > 0 {
-		queryParams.Add(api.ParameterCommitmentID, optCommitmentID[0].ToHex())
-	}
-
-	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
-	if err != nil {
-		return nil, err
-	}
-
-	res := new(api.CongestionResponse)
-
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*api.ManaRewardsResponse, error) {
-	query := client.endpointReplaceOutputIDParameter(api.CoreRouteRewards, outputID)
-
-	res := new(api.ManaRewardsResponse)
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ...string) (*api.ValidatorsResponse, error) {
-	res := new(api.ValidatorsResponse)
-	query := api.CoreRouteValidators
-	queryParams := url.Values{}
-
-	if pageSize > 0 {
-		queryParams.Add(api.ParameterPageSize, strconv.FormatUint(pageSize, 10))
-	}
-
-	if len(cursor) > 0 {
-		queryParams.Add(api.ParameterCursor, cursor[0])
-	}
-
-	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
-	if err != nil {
-		return nil, err
-	}
-
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) ValidatorsAll(ctx context.Context, maxPages ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
-	validatorsResponses := make([]*api.ValidatorResponse, 0)
-	resp, err := client.Validators(ctx, 0)
-	if err != nil {
-		return nil, false, err
-	}
-	validatorsResponses = append(validatorsResponses, resp.Validators...)
-
-	cursor := resp.Cursor
-	for count := 1; cursor != ""; count++ {
-		if len(maxPages) > 0 && count >= maxPages[0] {
-			return &api.ValidatorsResponse{Validators: validatorsResponses}, false, nil
-		}
-		resp, err = client.Validators(ctx, 0, cursor)
-		if err != nil {
-			return nil, false, err
-		}
-		validatorsResponses = append(validatorsResponses, resp.Validators...)
-
-		cursor = resp.Cursor
-	}
-
-	return &api.ValidatorsResponse{Validators: validatorsResponses}, true, nil
-}
-
-func (client *Client) StakingAccount(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {
-	res := new(api.ValidatorResponse)
-
-	//nolint:contextcheck
-	query := client.endpointReplaceAddressParameter(api.CoreRouteValidatorsAccount, accountAddress)
-
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*api.CommitteeResponse, error) {
-	query := api.CoreRouteCommittee
-	queryParams := url.Values{}
-
-	if len(optEpochIndex) > 0 {
-		queryParams.Add(api.ParameterEpoch, strconv.FormatUint(uint64(optEpochIndex[0]), 10))
-	}
-
-	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
-	if err != nil {
-		return nil, err
-	}
-
-	res := new(api.CommitteeResponse)
-
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, queryWithParams, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-// NodeSupportsRoute gets the routes of the node and checks if the given route is enabled.
-func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool, error) {
-	routes, err := client.Routes(ctx)
-	if err != nil {
-		return false, err
-	}
-	for _, p := range routes.Routes {
-		if string(p) == route {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 // SubmitBlock submits the given Block to the node.
 // The node will take care of filling missing information.
 // This function returns the blockID of the finalized block.
@@ -442,7 +288,7 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 
 	req := &RawDataEnvelope{Data: data}
 	//nolint:bodyclose
-	res, err := client.Do(ctx, http.MethodPost, api.CoreRouteBlocks, req, nil)
+	res, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, api.CoreRouteBlocks, RequestHeaderHookContentTypeIOTASerializerV2, req, nil)
 	if err != nil {
 		return iotago.EmptyBlockID, err
 	}
@@ -453,44 +299,6 @@ func (client *Client) SubmitBlock(ctx context.Context, m *iotago.Block) (iotago.
 	}
 
 	return blockID, nil
-}
-
-// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
-func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*api.BlockMetadataResponse, error) {
-	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlockMetadata, blockID)
-
-	res := new(api.BlockMetadataResponse)
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (client *Client) BlockWithMetadataByID(ctx context.Context, blockID iotago.BlockID) (*api.BlockWithMetadataResponse, error) {
-	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlockWithMetadata, blockID)
-	res := new(RawDataEnvelope)
-
-	//nolint:bodyclose
-	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
-		return nil, err
-	}
-
-	block, consumedBytes, err := iotago.BlockFromBytes(client)(res.Data)
-	if err != nil {
-		return nil, err
-	}
-	metadata := new(api.BlockMetadataResponse)
-	_, err = client.APIForSlot(blockID.Slot()).Decode(res.Data[consumedBytes:], metadata)
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.BlockWithMetadataResponse{
-		Block:    block,
-		Metadata: metadata,
-	}, nil
 }
 
 // BlockByBlockID get a block by its block ID from the node.
@@ -511,9 +319,22 @@ func (client *Client) BlockByBlockID(ctx context.Context, blockID iotago.BlockID
 	return block, nil
 }
 
-// TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
-func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
-	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsIncludedBlock, txID)
+// BlockMetadataByBlockID gets the metadata of a block by its ID from the node.
+func (client *Client) BlockMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*api.BlockMetadataResponse, error) {
+	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlockMetadata, blockID)
+
+	res := new(api.BlockMetadataResponse)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// BlockWithMetadataByBlockID gets a block by its ID, together with the metadata from the node.
+func (client *Client) BlockWithMetadataByBlockID(ctx context.Context, blockID iotago.BlockID) (*api.BlockWithMetadataResponse, error) {
+	query := client.endpointReplaceBlockIDParameter(api.CoreRouteBlockWithMetadata, blockID)
 
 	res := new(RawDataEnvelope)
 	//nolint:bodyclose
@@ -521,34 +342,29 @@ func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.
 		return nil, err
 	}
 
-	block, _, err := iotago.BlockFromBytes(client)(res.Data)
+	block, consumedBytes, err := iotago.BlockFromBytes(client)(res.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	return block, nil
-}
-
-// TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
-func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*api.BlockMetadataResponse, error) {
-	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsIncludedBlockMetadata, txID)
-
-	res := new(api.BlockMetadataResponse)
-	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	metadata := new(api.BlockMetadataResponse)
+	_, err = client.APIForSlot(blockID.Slot()).Decode(res.Data[consumedBytes:], metadata)
+	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	return &api.BlockWithMetadataResponse{
+		Block:    block,
+		Metadata: metadata,
+	}, nil
 }
 
-// TransactionMetadata gets the metadata of a transaction by its ID from the node.
-func (client *Client) TransactionMetadata(ctx context.Context, txID iotago.TransactionID) (*api.TransactionMetadataResponse, error) {
-	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsMetadata, txID)
+// BlockIssuance gets the info to issue a block.
+func (client *Client) BlockIssuance(ctx context.Context) (*api.IssuanceBlockHeaderResponse, error) {
+	res := new(api.IssuanceBlockHeaderResponse)
 
-	res := new(api.TransactionMetadataResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, api.CoreRouteBlockIssuance, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -582,6 +398,19 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	return outputResponse.Output, nil
 }
 
+// OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
+func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*api.OutputMetadata, error) {
+	query := client.endpointReplaceOutputIDParameter(api.CoreRouteOutputMetadata, outputID)
+
+	res := new(api.OutputMetadata)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // OutputWithMetadataByID gets an output by its ID, together with the metadata from the node.
 func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotago.OutputID) (iotago.Output, *api.OutputMetadata, error) {
 	query := client.endpointReplaceOutputIDParameter(api.CoreRouteOutputWithMetadata, outputID)
@@ -609,13 +438,44 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 	return outputResponse.Output, outputResponse.Metadata, nil
 }
 
-// OutputMetadataByID gets an output's metadata by its ID from the node without getting the output data again.
-func (client *Client) OutputMetadataByID(ctx context.Context, outputID iotago.OutputID) (*api.OutputMetadata, error) {
-	query := client.endpointReplaceOutputIDParameter(api.CoreRouteOutputMetadata, outputID)
+// TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
+func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
+	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsIncludedBlock, txID)
 
-	res := new(api.OutputMetadata)
+	res := new(RawDataEnvelope)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
+		return nil, err
+	}
+
+	block, _, err := iotago.BlockFromBytes(client)(res.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	return block, nil
+}
+
+// TransactionIncludedBlockMetadata gets the metadata of a block by its ID from the node.
+func (client *Client) TransactionIncludedBlockMetadata(ctx context.Context, txID iotago.TransactionID) (*api.BlockMetadataResponse, error) {
+	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsIncludedBlockMetadata, txID)
+
+	res := new(api.BlockMetadataResponse)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// TransactionMetadata gets the metadata of a transaction by its ID from the node.
+func (client *Client) TransactionMetadata(ctx context.Context, txID iotago.TransactionID) (*api.TransactionMetadataResponse, error) {
+	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsMetadata, txID)
+
+	res := new(api.TransactionMetadataResponse)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -628,7 +488,7 @@ func (client *Client) CommitmentByID(ctx context.Context, commitmentID iotago.Co
 
 	res := new(iotago.Commitment)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -641,7 +501,7 @@ func (client *Client) CommitmentUTXOChangesByID(ctx context.Context, commitmentI
 
 	res := new(api.UTXOChangesResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -654,50 +514,198 @@ func (client *Client) CommitmentUTXOChangesFullByID(ctx context.Context, commitm
 
 	res := new(api.UTXOChangesFullResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
 
-// CommitmentByIndex gets a commitment details by its slot.
-func (client *Client) CommitmentByIndex(ctx context.Context, slot iotago.SlotIndex) (*iotago.Commitment, error) {
+// CommitmentBySlot gets a commitment details by its slot.
+func (client *Client) CommitmentBySlot(ctx context.Context, slot iotago.SlotIndex) (*iotago.Commitment, error) {
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlot, slot)
 
 	res := new(iotago.Commitment)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
 
-// CommitmentUTXOChangesByIndex returns all UTXO changes of a commitment by its slot.
-func (client *Client) CommitmentUTXOChangesByIndex(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesResponse, error) {
+// CommitmentUTXOChangesBySlot returns all UTXO changes of a commitment by its slot.
+func (client *Client) CommitmentUTXOChangesBySlot(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesResponse, error) {
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlotUTXOChanges, slot)
 
 	res := new(api.UTXOChangesResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
 }
 
-// CommitmentUTXOChangesFullByIndex returns all UTXO changes (including outputs) of a commitment by its slot.
-func (client *Client) CommitmentUTXOChangesFullByIndex(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesFullResponse, error) {
+// CommitmentUTXOChangesFullBySlot returns all UTXO changes (including outputs) of a commitment by its slot.
+func (client *Client) CommitmentUTXOChangesFullBySlot(ctx context.Context, slot iotago.SlotIndex) (*api.UTXOChangesFullResponse, error) {
 	query := client.endpointReplaceSlotParameter(api.CoreRouteCommitmentBySlotUTXOChangesFull, slot)
 
 	res := new(api.UTXOChangesFullResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
 	return res, nil
+}
+
+// Congestion gets the congestion of the node.
+func (client *Client) Congestion(ctx context.Context, accountAddress *iotago.AccountAddress, workScore iotago.WorkScore, optCommitmentID ...iotago.CommitmentID) (*api.CongestionResponse, error) {
+	//nolint:contextcheck
+	query := client.endpointReplaceAddressParameter(api.CoreRouteCongestion, accountAddress)
+	queryParams := url.Values{}
+
+	if workScore > 0 {
+		queryParams.Add(api.ParameterWorkScore, strconv.FormatUint(uint64(workScore), 10))
+	}
+	if len(optCommitmentID) > 0 {
+		queryParams.Add(api.ParameterCommitmentID, optCommitmentID[0].ToHex())
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
+	}
+
+	res := new(api.CongestionResponse)
+
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, queryWithParams, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// Validators gets the validators from the node with the given page size and cursor.
+func (client *Client) Validators(ctx context.Context, pageSize uint64, cursor ...string) (*api.ValidatorsResponse, error) {
+	res := new(api.ValidatorsResponse)
+	query := api.CoreRouteValidators
+	queryParams := url.Values{}
+
+	if pageSize > 0 {
+		queryParams.Add(api.ParameterPageSize, strconv.FormatUint(pageSize, 10))
+	}
+
+	if len(cursor) > 0 {
+		queryParams.Add(api.ParameterCursor, cursor[0])
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
+	}
+
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, queryWithParams, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// ValidatorsAll gets all validators from the node.
+func (client *Client) ValidatorsAll(ctx context.Context, maxPages ...int) (validators *api.ValidatorsResponse, allRetrieved bool, err error) {
+	validatorsResponses := make([]*api.ValidatorResponse, 0)
+	resp, err := client.Validators(ctx, 0)
+	if err != nil {
+		return nil, false, err
+	}
+	validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+	cursor := resp.Cursor
+	for count := 1; cursor != ""; count++ {
+		if len(maxPages) > 0 && count >= maxPages[0] {
+			return &api.ValidatorsResponse{Validators: validatorsResponses}, false, nil
+		}
+		resp, err = client.Validators(ctx, 0, cursor)
+		if err != nil {
+			return nil, false, err
+		}
+		validatorsResponses = append(validatorsResponses, resp.Validators...)
+
+		cursor = resp.Cursor
+	}
+
+	return &api.ValidatorsResponse{Validators: validatorsResponses}, true, nil
+}
+
+// Validator gets the validator response of the given account address.
+func (client *Client) Validator(ctx context.Context, accountAddress *iotago.AccountAddress) (*api.ValidatorResponse, error) {
+	res := new(api.ValidatorResponse)
+
+	//nolint:contextcheck
+	query := client.endpointReplaceAddressParameter(api.CoreRouteValidatorsAccount, accountAddress)
+
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// Rewards gets the mana rewards of the given output.
+func (client *Client) Rewards(ctx context.Context, outputID iotago.OutputID) (*api.ManaRewardsResponse, error) {
+	query := client.endpointReplaceOutputIDParameter(api.CoreRouteRewards, outputID)
+
+	res := new(api.ManaRewardsResponse)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// Committee gets the committee of the given epoch index.
+func (client *Client) Committee(ctx context.Context, optEpochIndex ...iotago.EpochIndex) (*api.CommitteeResponse, error) {
+	query := api.CoreRouteCommittee
+	queryParams := url.Values{}
+
+	if len(optEpochIndex) > 0 {
+		queryParams.Add(api.ParameterEpoch, strconv.FormatUint(uint64(optEpochIndex[0]), 10))
+	}
+
+	queryWithParams, err := encodeURLWithQueryParams(query, queryParams)
+	if err != nil {
+		return nil, err
+	}
+
+	res := new(api.CommitteeResponse)
+
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, queryWithParams, RequestHeaderHookAcceptJSON, nil, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// NodeSupportsRoute gets the routes of the node and checks if the given route is enabled.
+func (client *Client) NodeSupportsRoute(ctx context.Context, route string) (bool, error) {
+	routes, err := client.Routes(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, p := range routes.Routes {
+		if string(p) == route {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (client *Client) endpointReplaceAddressParameter(endpoint string, address iotago.Address) string {
