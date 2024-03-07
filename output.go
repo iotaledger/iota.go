@@ -476,9 +476,14 @@ func OutputsSyntacticalAccount() ElementValidationFunc[Output] {
 			return ierrors.WithMessagef(ErrAccountOutputCyclicAddress, "output %d", index)
 		}
 
-		if stakingFeat := accountOutput.FeatureSet().Staking(); stakingFeat != nil {
+		accountFeatures := accountOutput.FeatureSet()
+		if stakingFeat := accountFeatures.Staking(); stakingFeat != nil {
 			if accountOutput.Amount < stakingFeat.StakedAmount {
 				return ierrors.WithMessagef(ErrAccountOutputAmountLessThanStakedAmount, "output %d", index)
+			}
+
+			if accountFeatures.BlockIssuer() == nil {
+				return ierrors.WithMessagef(ErrStakingBlockIssuerFeatureMissing, "output %d", index)
 			}
 		}
 

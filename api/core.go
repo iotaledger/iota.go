@@ -263,59 +263,58 @@ const (
 	TxFailureIssuerFeatureNotUnlocked TransactionFailureReason = 26
 
 	TxFailureStakingRewardInputMissing             TransactionFailureReason = 27
-	TxFailureStakingBlockIssuerFeatureMissing      TransactionFailureReason = 28
-	TxFailureStakingCommitmentInputMissing         TransactionFailureReason = 29
-	TxFailureStakingRewardClaimingInvalid          TransactionFailureReason = 30
-	TxFailureStakingFeatureRemovedBeforeUnbonding  TransactionFailureReason = 31
-	TxFailureStakingFeatureModifiedBeforeUnbonding TransactionFailureReason = 32
-	TxFailureStakingStartEpochInvalid              TransactionFailureReason = 33
-	TxFailureStakingEndEpochTooEarly               TransactionFailureReason = 34
+	TxFailureStakingCommitmentInputMissing         TransactionFailureReason = 28
+	TxFailureStakingRewardClaimingInvalid          TransactionFailureReason = 29
+	TxFailureStakingFeatureRemovedBeforeUnbonding  TransactionFailureReason = 30
+	TxFailureStakingFeatureModifiedBeforeUnbonding TransactionFailureReason = 31
+	TxFailureStakingStartEpochInvalid              TransactionFailureReason = 32
+	TxFailureStakingEndEpochTooEarly               TransactionFailureReason = 33
 
-	TxFailureBlockIssuerCommitmentInputMissing TransactionFailureReason = 35
-	TxFailureBlockIssuanceCreditInputMissing   TransactionFailureReason = 36
-	TxFailureBlockIssuerNotExpired             TransactionFailureReason = 37
-	TxFailureBlockIssuerExpiryTooEarly         TransactionFailureReason = 38
-	TxFailureManaMovedOffBlockIssuerAccount    TransactionFailureReason = 39
-	TxFailureAccountLocked                     TransactionFailureReason = 40
+	TxFailureBlockIssuerCommitmentInputMissing TransactionFailureReason = 34
+	TxFailureBlockIssuanceCreditInputMissing   TransactionFailureReason = 35
+	TxFailureBlockIssuerNotExpired             TransactionFailureReason = 36
+	TxFailureBlockIssuerExpiryTooEarly         TransactionFailureReason = 37
+	TxFailureManaMovedOffBlockIssuerAccount    TransactionFailureReason = 38
+	TxFailureAccountLocked                     TransactionFailureReason = 39
 
-	TxFailureTimelockCommitmentInputMissing TransactionFailureReason = 41
-	TxFailureTimelockNotExpired             TransactionFailureReason = 42
+	TxFailureTimelockCommitmentInputMissing TransactionFailureReason = 40
+	TxFailureTimelockNotExpired             TransactionFailureReason = 41
 
-	TxFailureExpirationCommitmentInputMissing TransactionFailureReason = 43
-	TxFailureExpirationNotUnlockable          TransactionFailureReason = 44
+	TxFailureExpirationCommitmentInputMissing TransactionFailureReason = 42
+	TxFailureExpirationNotUnlockable          TransactionFailureReason = 43
 
-	TxFailureReturnAmountNotFulFilled TransactionFailureReason = 45
+	TxFailureReturnAmountNotFulFilled TransactionFailureReason = 44
 
-	TxFailureNewChainOutputHasNonZeroedID        TransactionFailureReason = 46
-	TxFailureChainOutputImmutableFeaturesChanged TransactionFailureReason = 47
+	TxFailureNewChainOutputHasNonZeroedID        TransactionFailureReason = 45
+	TxFailureChainOutputImmutableFeaturesChanged TransactionFailureReason = 46
 
-	TxFailureImplicitAccountDestructionDisallowed     TransactionFailureReason = 48
-	TxFailureMultipleImplicitAccountCreationAddresses TransactionFailureReason = 49
+	TxFailureImplicitAccountDestructionDisallowed     TransactionFailureReason = 47
+	TxFailureMultipleImplicitAccountCreationAddresses TransactionFailureReason = 48
 
-	TxFailureAccountInvalidFoundryCounter TransactionFailureReason = 50
+	TxFailureAccountInvalidFoundryCounter TransactionFailureReason = 49
 
-	TxFailureAnchorInvalidStateTransition      TransactionFailureReason = 51
-	TxFailureAnchorInvalidGovernanceTransition TransactionFailureReason = 52
+	TxFailureAnchorInvalidStateTransition      TransactionFailureReason = 50
+	TxFailureAnchorInvalidGovernanceTransition TransactionFailureReason = 51
 
-	TxFailureFoundryTransitionWithoutAccount TransactionFailureReason = 53
-	TxFailureFoundrySerialInvalid            TransactionFailureReason = 54
+	TxFailureFoundryTransitionWithoutAccount TransactionFailureReason = 52
+	TxFailureFoundrySerialInvalid            TransactionFailureReason = 53
 
-	TxFailureDelegationCommitmentInputMissing  TransactionFailureReason = 55
-	TxFailureDelegationRewardInputMissing      TransactionFailureReason = 56
-	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 57
-	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 58
-	TxFailureDelegationModified                TransactionFailureReason = 59
-	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 60
-	TxFailureDelegationAmountMismatch          TransactionFailureReason = 61
-	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 62
-	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 63
+	TxFailureDelegationCommitmentInputMissing  TransactionFailureReason = 54
+	TxFailureDelegationRewardInputMissing      TransactionFailureReason = 55
+	TxFailureDelegationRewardsClaimingInvalid  TransactionFailureReason = 56
+	TxFailureDelegationOutputTransitionedTwice TransactionFailureReason = 57
+	TxFailureDelegationModified                TransactionFailureReason = 58
+	TxFailureDelegationStartEpochInvalid       TransactionFailureReason = 59
+	TxFailureDelegationAmountMismatch          TransactionFailureReason = 60
+	TxFailureDelegationEndEpochNotZero         TransactionFailureReason = 61
+	TxFailureDelegationEndEpochInvalid         TransactionFailureReason = 62
 
-	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 64
-	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 65
-	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 66
-	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 67
-	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 68
-	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 69
+	TxFailureCapabilitiesNativeTokenBurningNotAllowed TransactionFailureReason = 63
+	TxFailureCapabilitiesManaBurningNotAllowed        TransactionFailureReason = 64
+	TxFailureCapabilitiesAccountDestructionNotAllowed TransactionFailureReason = 65
+	TxFailureCapabilitiesAnchorDestructionNotAllowed  TransactionFailureReason = 66
+	TxFailureCapabilitiesFoundryDestructionNotAllowed TransactionFailureReason = 67
+	TxFailureCapabilitiesNFTDestructionNotAllowed     TransactionFailureReason = 68
 
 	TxFailureSemanticValidationFailed TransactionFailureReason = 255
 )
@@ -381,7 +380,6 @@ var txErrorsFailureReasonMap = map[error]TransactionFailureReason{
 
 	// staking feature
 	iotago.ErrStakingRewardInputMissing:             TxFailureStakingRewardInputMissing,
-	iotago.ErrStakingBlockIssuerFeatureMissing:      TxFailureStakingBlockIssuerFeatureMissing,
 	iotago.ErrStakingCommitmentInputMissing:         TxFailureStakingCommitmentInputMissing,
 	iotago.ErrStakingRewardClaimingInvalid:          TxFailureStakingRewardClaimingInvalid,
 	iotago.ErrStakingFeatureRemovedBeforeUnbonding:  TxFailureStakingFeatureRemovedBeforeUnbonding,
