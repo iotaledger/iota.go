@@ -43,7 +43,7 @@ func (client *managementClient) PeerByID(ctx context.Context, id string) (*api.P
 
 	res := new(api.PeerInfo)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, query, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +66,7 @@ func (client *managementClient) RemovePeerByID(ctx context.Context, id string) e
 func (client *managementClient) Peers(ctx context.Context) (*api.PeersResponse, error) {
 	res := new(api.PeersResponse)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodGet, api.ManagementRoutePeers, nil, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, api.ManagementRoutePeers, RequestHeaderHookAcceptJSON, nil, res); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (client *managementClient) AddPeer(ctx context.Context, multiAddress string
 
 	res := new(api.PeerInfo)
 	//nolint:bodyclose
-	if _, err := client.Do(ctx, http.MethodPost, api.ManagementRoutePeers, req, res); err != nil {
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodPost, api.ManagementRoutePeers, RequestHeaderHookAcceptJSON, req, res); err != nil {
 		return nil, err
 	}
 
