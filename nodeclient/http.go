@@ -47,7 +47,7 @@ const (
 func readBody(res *http.Response) ([]byte, error) {
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, ierrors.Errorf("unable to read response body: %w", err)
+		return nil, ierrors.Wrap(err, "unable to read response body")
 	}
 
 	return resBody, nil
@@ -84,7 +84,7 @@ func interpretBody(ctx context.Context, serixAPI *serix.API, res *http.Response,
 	errRes := &HTTPErrorResponseEnvelope{}
 	if len(resBody) > 0 {
 		if err := json.Unmarshal(resBody, errRes); err != nil {
-			return ierrors.Errorf("unable to read error from response body: %w", err)
+			return ierrors.Wrap(err, "unable to read error from response body")
 		}
 	}
 
@@ -93,7 +93,7 @@ func interpretBody(ctx context.Context, serixAPI *serix.API, res *http.Response,
 		err = ErrHTTPUnknownError
 	}
 
-	return ierrors.Wrapf(err, "url %s, error message: %s", res.Request.URL.String(), errRes.Error.Message)
+	return ierrors.WithMessagef(err, "url %s, error message: %s", res.Request.URL.String(), errRes.Error.Message)
 }
 
 func do(
@@ -119,7 +119,7 @@ func do(
 		if rawData, ok := reqObj.(*RawDataEnvelope); !ok {
 			data, err = serixAPI.JSONEncode(ctx, reqObj)
 			if err != nil {
-				return nil, ierrors.Errorf("unable to serialize request object to JSON: %w", err)
+				return nil, ierrors.Wrap(err, "unable to serialize request object to JSON")
 			}
 		} else {
 			data = rawData.Data
@@ -142,7 +142,7 @@ func do(
 		return bytes.NewReader(data)
 	}())
 	if err != nil {
-		return nil, ierrors.Errorf("unable to build http request: %w", err)
+		return nil, ierrors.Wrap(err, "unable to build http request")
 	}
 
 	if userInfo != nil {
@@ -180,7 +180,7 @@ func encodeURLWithQueryParams(endpoint string, queryParams url.Values) (string, 
 	if len(queryParams) > 0 {
 		base, err := url.Parse(endpoint)
 		if err != nil {
-			return "", ierrors.Errorf("failed to parse endpoint: %w", err)
+			return "", ierrors.Wrap(err, "failed to parse endpoint")
 		}
 
 		// encode the query params
