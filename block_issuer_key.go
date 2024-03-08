@@ -142,7 +142,7 @@ func BlockIssuerKeysFromReader(reader io.ReadSeeker) (BlockIssuerKeys, error) {
 	if err := stream.ReadCollection(reader, serializer.SeriLengthPrefixTypeAsByte, func(i int) error {
 		blockIssuerKey, err := BlockIssuerKeyFromReader(reader)
 		if err != nil {
-			return ierrors.Wrapf(err, "unable to read block issuer key %d", i)
+			return ierrors.Wrapf(err, "unable to read block issuer key at index %d", i)
 		}
 
 		b = append(b, blockIssuerKey)
