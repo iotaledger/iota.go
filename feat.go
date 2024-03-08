@@ -325,9 +325,9 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 
 	switch {
 	case outHas && !inHas:
-		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s in next state but not in previous", featType)
+		return ierrors.WithMessagef(ErrInvalidFeatureTransition, "%s in next state but not in previous", featType)
 	case !outHas && inHas:
-		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s in current state but not in next", featType)
+		return ierrors.WithMessagef(ErrInvalidFeatureTransition, "%s in current state but not in next", featType)
 	}
 
 	// not in both sets
@@ -336,7 +336,7 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 	}
 
 	if !in.Equal(out) {
-		return ierrors.Wrapf(ErrInvalidFeatureTransition, "%s changed, in %v / out %v", featType, in, out)
+		return ierrors.WithMessagef(ErrInvalidFeatureTransition, "%s changed, in %v / out %v", featType, in, out)
 	}
 
 	return nil

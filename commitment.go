@@ -39,7 +39,7 @@ func NewEmptyCommitment(api API) *Commitment {
 func (c *Commitment) ID() (CommitmentID, error) {
 	data, err := CommonSerixAPI().Encode(context.TODO(), c)
 	if err != nil {
-		return CommitmentID{}, ierrors.Errorf("failed to serialize commitment: %w", err)
+		return CommitmentID{}, ierrors.Wrap(err, "failed to serialize commitment")
 	}
 
 	return CommitmentIDRepresentingData(c.Slot, data), nil
