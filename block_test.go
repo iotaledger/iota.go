@@ -621,7 +621,7 @@ func TestValidationBlock_HighestSupportedVersion(t *testing.T) {
 
 		block2 := &iotago.Block{}
 		_, err = tpkg.ZeroCostTestAPI.Decode(blockBytes, block2, serix.WithValidation())
-		require.ErrorContains(t, err, "highest supported version")
+		require.ErrorIs(t, err, iotago.ErrHighestSupportedVersionTooSmall)
 	}
 
 	// Valid HighestSupportedVersion.
