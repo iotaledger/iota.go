@@ -21,11 +21,6 @@ const (
 	ContextInputReward
 )
 
-var (
-	// ErrUnknownContextInputType gets returned for unknown context input types.
-	ErrUnknownContextInputType = ierrors.New("unknown context input type")
-)
-
 func (inputType ContextInputType) String() string {
 	if int(inputType) >= len(contextInputNames) {
 		return fmt.Sprintf("unknown input type: %d", inputType)
@@ -102,11 +97,11 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[
 		case *RewardInput:
 			utxoIndex := castInput.Index
 			if utxoIndex >= inputsCount {
-				return ierrors.Wrapf(ErrInputRewardIndexExceedsMaxInputsCount, "reward input %d references index %d which is equal or greater than the inputs count %d",
+				return ierrors.WithMessagef(ErrInputRewardIndexExceedsMaxInputsCount, "reward input %d references index %d which is equal or greater than the inputs count %d",
 					index, utxoIndex, inputsCount)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
+			panic("all known context input types should be handled above")
 		}
 
 		return nil
@@ -126,14 +121,14 @@ func ContextInputsCommitmentInputRequirement() ElementValidationFunc[ContextInpu
 			seenCommitmentInput = true
 		case *BlockIssuanceCreditInput:
 			if !seenCommitmentInput {
-				return ierrors.Wrapf(ErrCommitmentInputMissing, "block issuance credit input at index %d requires a commitment input", index)
+				return ierrors.WithMessagef(ErrCommitmentInputMissing, "block issuance credit input at index %d requires a commitment input", index)
 			}
 		case *RewardInput:
 			if !seenCommitmentInput {
-				return ierrors.Wrapf(ErrCommitmentInputMissing, "reward input at index %d requires a commitment input", index)
+				return ierrors.WithMessagef(ErrCommitmentInputMissing, "reward input at index %d requires a commitment input", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnknownContextInputType, "context input %d, tx can only contain CommitmentInputs, BlockIssuanceCreditInputs or RewardInputs", index)
+			panic("all known context input types should be handled above")
 		}
 
 		return nil

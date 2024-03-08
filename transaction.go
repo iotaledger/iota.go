@@ -168,7 +168,7 @@ func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
 			references = append(references, castInput)
 		default:
-			return nil, ErrUnknownContextInputType
+			panic("all known context input types should be handled above")
 		}
 	}
 
@@ -184,7 +184,7 @@ func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
-			return nil, ErrUnknownContextInputType
+			panic("all known context input types should be handled above")
 		}
 	}
 
@@ -200,7 +200,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
-			return nil, ErrUnknownContextInputType
+			panic("all known context input types should be handled above")
 		}
 	}
 
@@ -216,7 +216,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 		case *CommitmentInput:
 			return castInput
 		default:
-			return nil
+			panic("all known context input types should be handled above")
 		}
 	}
 
