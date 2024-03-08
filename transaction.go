@@ -140,7 +140,7 @@ func (t *Transaction) Inputs() ([]*UTXOInput, error) {
 		case *UTXOInput:
 			references = append(references, castInput)
 		default:
-			return nil, ErrUnknownInputType
+			panic("all known input types should be handled above")
 		}
 	}
 

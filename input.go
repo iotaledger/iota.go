@@ -90,11 +90,11 @@ func InputsSyntacticalUnique() ElementValidationFunc[Input] {
 			referencedOutputID := castInput.OutputID()
 			k := string(referencedOutputID[:])
 			if j, has := utxoSet[k]; has {
-				return ierrors.Wrapf(ErrInputUTXORefsNotUnique, "input %d and %d share the same referenced UTXO index", j, index)
+				return ierrors.WithMessagef(ErrInputUTXORefsNotUnique, "input %d and %d share the same referenced UTXO index", j, index)
 			}
 			utxoSet[k] = index
 		default:
-			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain UTXO inputs", index)
+			panic("all known input types should be handled above")
 		}
 
 		return nil
@@ -108,10 +108,10 @@ func InputsSyntacticalIndicesWithinBounds() ElementValidationFunc[Input] {
 		case *UTXOInput:
 			// TODO: do we really want to check the max value on the input side?
 			if castInput.Index() < RefUTXOIndexMin || castInput.Index() > RefUTXOIndexMax {
-				return ierrors.Wrapf(ErrRefUTXOIndexInvalid, "input %d", index)
+				return ierrors.WithMessagef(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			return ierrors.Wrapf(ErrUnknownInputType, "input %d, tx can only contain UTXInput inputs", index)
+			panic("all known input types should be handled above")
 		}
 
 		return nil
