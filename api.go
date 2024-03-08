@@ -19,11 +19,11 @@ func (v Version) Bytes() ([]byte, error) {
 }
 
 func VersionFromBytes(b []byte) (Version, int, error) {
-	if len(b) < 1 {
+	if len(b) < VersionLength {
 		return 0, 0, ierrors.New("invalid version bytes length")
 	}
 
-	return Version(b[0]), 1, nil
+	return Version(b[0]), VersionLength, nil
 }
 
 // VersionSignalingParameters defines the parameters used by signaling protocol parameters upgrade.
