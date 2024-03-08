@@ -111,7 +111,7 @@ func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.Priva
 
 		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
 		if !ok {
-			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
+			return nil, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
 		}
 
 		return prvKey, nil
@@ -147,7 +147,7 @@ func (s *InMemoryAddressSigner) SignerUIDForAddress(addr Address) (Identifier, e
 
 	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
 	if !ok {
-		return EmptyIdentifier, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+		return EmptyIdentifier, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
 	}
 
 	// the UID is the blake2b 256 hash of the public key
@@ -158,12 +158,12 @@ func (s *InMemoryAddressSigner) SignerUIDForAddress(addr Address) (Identifier, e
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
 	prvKey, err := s.privateKeyForAddress(addr)
 	if err != nil {
-		return nil, ierrors.Errorf("can't sign message for address: %w", err)
+		return nil, ierrors.Wrap(err, "can't sign message for address")
 	}
 
 	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
 	if !ok {
-		return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+		return nil, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
 	}
 
 	ed25519Sig := &Ed25519Signature{}
