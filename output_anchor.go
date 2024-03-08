@@ -136,7 +136,7 @@ func (a *AnchorOutput) Owner(nextState OwnerTransitionDependentOutput) (Address,
 	}
 	otherAnchorOutput, isAnchorOutput := nextState.(*AnchorOutput)
 	if !isAnchorOutput {
-		return nil, ierrors.Wrapf(ErrOwnerTransitionDependentOutputNextInvalid, "expected AnchorOutput but got %s for owner computation", nextState.Type())
+		return nil, ierrors.WithMessagef(ErrOwnerTransitionDependentOutputNextInvalid, "expected AnchorOutput but got %s for owner computation", nextState.Type())
 	}
 	switch {
 	case a.StateIndex == otherAnchorOutput.StateIndex:
@@ -144,7 +144,7 @@ func (a *AnchorOutput) Owner(nextState OwnerTransitionDependentOutput) (Address,
 	case a.StateIndex+1 == otherAnchorOutput.StateIndex:
 		return a.StateController(), nil
 	default:
-		return nil, ierrors.Wrap(ErrOwnerTransitionDependentOutputNextInvalid, "can not compute right owner for anchor output as state index delta is invalid")
+		return nil, ierrors.WithMessage(ErrOwnerTransitionDependentOutputNextInvalid, "can not compute right owner for anchor output as state index delta is invalid")
 	}
 }
 

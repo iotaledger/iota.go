@@ -365,7 +365,7 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 		var err error
 		sum, err = safemath.SafeAdd(sum, amount)
 		if err != nil {
-			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "%w: output %d", err, index)
+			return ierrors.Join(ErrOutputsSumExceedsTotalSupply, ierrors.WithMessagef(err, "output %d", index))
 		}
 		if sum > protoParams.TokenSupply() {
 			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "output %d", index)
@@ -422,7 +422,7 @@ func OutputsSyntacticalStoredMana(maxManaValue Mana) ElementValidationFunc[Outpu
 		var err error
 		sum, err = safemath.SafeAdd(sum, storedMana)
 		if err != nil {
-			return ierrors.WithMessagef(ErrMaxManaExceeded, "%w: stored mana sum calculation failed at output %d", err, index)
+			return ierrors.Join(ierrors.Wrapf(ErrMaxManaExceeded, "stored mana sum calculation failed at output %d", index), err)
 		}
 
 		if sum > maxManaValue {
@@ -694,7 +694,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		default:
-			panic("unrecognized output type")
+			panic("all known output types should be handled above")
 		}
 
 		return nil
@@ -743,7 +743,7 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 				}
 			}
 		default:
-			panic("unrecognized output type")
+			panic("all known output types should be handled above")
 		}
 
 		return nil
@@ -812,7 +812,7 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 			// This output does not have features.
 			return nil
 		default:
-			panic("unrecognized output type")
+			panic("all known output types should be handled above")
 		}
 
 		return nil
@@ -900,16 +900,16 @@ func OutputsSyntacticalCommitmentInput(hasCommitmentInput bool) ElementValidatio
 	return func(index int, output Output) error {
 		hasStakingFeature := output.FeatureSet().Staking() != nil
 		if hasStakingFeature && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrStakingCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrStakingCommitmentInputMissing, "output %d", index)
 		}
 
 		hasBlockIssuerFeature := output.FeatureSet().BlockIssuer() != nil
 		if hasBlockIssuerFeature && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrBlockIssuerCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrBlockIssuerCommitmentInputMissing, "output %d", index)
 		}
 
 		if output.Type() == OutputDelegation && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrDelegationCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrDelegationCommitmentInputMissing, "output %d", index)
 		}
 
 		return nil
