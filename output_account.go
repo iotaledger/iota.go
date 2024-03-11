@@ -6,8 +6,6 @@ import (
 )
 
 var (
-	// ErrInvalidAccountStateTransition gets returned when an account is doing an invalid state transition.
-	ErrInvalidAccountStateTransition = ierrors.New("invalid account state transition")
 	// ErrImplicitAccountDestructionDisallowed gets returned if an implicit account is destroyed, which is not allowed.
 	ErrImplicitAccountDestructionDisallowed = ierrors.New("cannot destroy implicit account; must be transitioned to account")
 	// ErrMultipleImplicitAccountCreationAddresses gets return when there is more than one

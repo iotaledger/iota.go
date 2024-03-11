@@ -17,8 +17,6 @@ const (
 )
 
 var (
-	// ErrInvalidFoundryStateTransition gets returned when a foundry is doing an invalid state transition.
-	ErrInvalidFoundryStateTransition = ierrors.New("invalid foundry state transition")
 	// ErrFoundryTransitionWithoutAccount gets returned when a foundry output is transitioned
 	// without an accompanying account on the input or output side.
 	ErrFoundryTransitionWithoutAccount = ierrors.New("foundry output transitioned without accompanying account on input or output side")
