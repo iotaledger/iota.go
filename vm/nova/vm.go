@@ -156,7 +156,12 @@ func (novaVM *virtualMachine) ChainSTVF(vmParams *vm.Params, transType iotago.Ch
 			}
 		}
 
-		return implicitAccountSTVF(vmParams, castedInput, input.OutputID, nextAccount, transType)
+		err := implicitAccountSTVF(vmParams, castedInput, input.OutputID, nextAccount, transType)
+		if err != nil {
+			return ierrors.Wrapf(err, "transition failed for implicit account with output ID %s", input.OutputID.ToHex())
+		}
+
+		return nil
 
 	case *iotago.AnchorOutput:
 		var nextAnchor *iotago.AnchorOutput
@@ -250,21 +255,15 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := accountGenesisValid(vmParams, next, true); err != nil {
-			return ierrors.Wrapf(err, " account %s", next.AccountID)
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		if err := accountStateChangeValid(vmParams, input, next, isRemovingStakingFeature); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-			a := input.Output.(*iotago.AccountOutput)
-
-			return ierrors.Wrapf(err, "account %s", a.AccountID)
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		if err := accountDestructionValid(vmParams, input, isRemovingStakingFeature); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-			a := input.Output.(*iotago.AccountOutput)
-
-			return ierrors.Wrapf(err, "account %s", a.AccountID)
+			return err
 		}
 	default:
 		panic("unknown chain transition type in AccountOutput")
@@ -293,9 +292,7 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 
 		pastBoundedSlot := vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Slot)
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	}
 
@@ -351,7 +348,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if vmParams.WorkingSet.Commitment == nil {
-		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
+		return iotago.ErrBlockIssuerCommitmentInputMissing
 	}
 
 	commitmentInputSlot := vmParams.WorkingSet.Commitment.Slot
@@ -360,23 +357,17 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputSlot {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot)
 		}
 		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	} else if nextBlockIssuerFeat != nil {
 		// The block issuer feature was newly added,
 		// or the current feature has expired but it was not removed.
 		// In both cases the expiry slot must be set sufficiently far in the future.
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	}
 
@@ -434,9 +425,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if manaIn < manaOut {
-		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-			ierrors.WithMessagef(iotago.ErrManaMovedOffBlockIssuerAccount, "mana in %d, mana out %d", manaIn, manaOut),
-		)
+		return ierrors.WithMessagef(iotago.ErrManaMovedOffBlockIssuerAccount, "mana in %d, mana out %d", manaIn, manaOut)
 	}
 
 	return nil
@@ -606,14 +595,12 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	blockIssuerFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if blockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
+			return iotago.ErrBlockIssuerCommitmentInputMissing
 		}
 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Slot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d",
-					vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d",
+				vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot)
 		}
 
 		if err := accountBlockIssuanceCreditLocked(input, vmParams.WorkingSet.BIC); err != nil {
@@ -916,31 +903,17 @@ func nftSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := nftGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: next.Type(),
-				ChainID:   next.NFTID,
-			}
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 		current := input.Output.(*iotago.NFTOutput)
 		if err := nftStateChangeValid(current, next); err != nil {
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: current.Type(),
-				ChainID:   current.NFTID,
-			}
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
-		current := input.Output.(*iotago.NFTOutput)
 		if err := nftDestructionValid(vmParams); err != nil {
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: current.Type(),
-				ChainID:   current.NFTID,
-			}
+			return err
 		}
 	default:
 		panic("unknown chain transition type in NFTOutput")
@@ -980,11 +953,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := delegationGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: next.Type(),
-				ChainID:   next.DelegationID,
-			}
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
@@ -994,21 +963,12 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 		//nolint:forcetypeassert // we can safely assume that this is an DelegationOutput
 		current := input.Output.(*iotago.DelegationOutput)
 		if err := delegationStateChangeValid(vmParams, current, next); err != nil {
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: current.Type(),
-				ChainID:   current.DelegationID,
-			}
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			err := ierrors.WithMessage(iotago.ErrDelegationRewardInputMissing, "cannot destroy delegation output without a rewards input")
-			return &iotago.ChainTransitionError{
-				Inner:     err,
-				ChainType: input.Output.Type(),
-				ChainID:   input.ChainID,
-			}
+			return ierrors.WithMessage(iotago.ErrDelegationRewardInputMissing, "cannot destroy delegation output without a rewards input")
 		}
 
 		return nil

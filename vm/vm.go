@@ -757,6 +757,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		for addr, returnSum := range inputSumReturnAmountPerAddress {
 			outSum, has := outputSimpleTransfersPerAddr[addr]
 			if !has {
+				// TODO: Printed address is garbage.
 				return ierrors.Wrapf(iotago.ErrReturnAmountNotFulFilled, "return amount of %d not fulfilled as there is no output for %s", returnSum, addr)
 			}
 			if outSum < returnSum {
@@ -796,13 +797,13 @@ func ExecFuncChainTransitions() ExecFunc {
 			next := vmParams.WorkingSet.OutChains[chainID]
 			if next == nil {
 				if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeDestroy, inputChain, nil); err != nil {
-					return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "input chain %s (%T) destruction transition failed", chainID, inputChain))
+					return ierrors.Wrapf(err, "invalid destruction for %s %s", inputChain.Output.Type(), chainID)
 				}
 
 				continue
 			}
 			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeStateChange, inputChain, next); err != nil {
-				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "chain %s (%T) state transition failed", chainID, inputChain))
+				return ierrors.Wrapf(err, "invalid transition for %s %s", inputChain.Output.Type(), chainID)
 			}
 		}
 
@@ -812,7 +813,7 @@ func ExecFuncChainTransitions() ExecFunc {
 			}
 
 			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeGenesis, nil, outputChain); err != nil {
-				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "new chain %s (%T) state transition failed", chainID, outputChain))
+				return ierrors.Wrapf(err, "invalid creation of %s %s", outputChain.Type(), chainID)
 			}
 		}
 
