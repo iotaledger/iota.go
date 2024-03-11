@@ -142,18 +142,16 @@ var (
 
 // ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
 type ChainTransitionError struct {
-	Inner error
-	Msg   string
+	Inner     error
+	ChainType OutputType
+	ChainID   ChainID
 }
 
 func (i *ChainTransitionError) Error() string {
 	var s strings.Builder
-	s.WriteString("invalid chain transition")
+	s.WriteString(fmt.Sprintf("invalid chain transition for %s %s", i.ChainType, i.ChainID.ToHex()))
 	if i.Inner != nil {
-		s.WriteString(fmt.Sprintf("; inner err: %s", i.Inner))
-	}
-	if len(i.Msg) > 0 {
-		s.WriteString(fmt.Sprintf("; %s", i.Msg))
+		s.WriteString(fmt.Sprintf(": %s", i.Inner))
 	}
 
 	return s.String()

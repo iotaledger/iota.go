@@ -14,8 +14,6 @@ const (
 )
 
 var (
-	// ErrDelegationTransitionInvalid gets returned when a Delegation Output is doing an invalid state transition.
-	ErrDelegationTransitionInvalid = ierrors.New("invalid delegation output transition")
 	// ErrDelegationCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Delegation Output.
 	ErrDelegationCommitmentInputMissing = ierrors.New("delegation output validation requires a commitment input")
 	// ErrDelegationRewardInputMissing gets returned when no reward input was passed in a TX destroying a Delegation Output.

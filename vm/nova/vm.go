@@ -916,19 +916,31 @@ func nftSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := nftGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", next.NFTID)}
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: next.Type(),
+				ChainID:   next.NFTID,
+			}
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 		current := input.Output.(*iotago.NFTOutput)
 		if err := nftStateChangeValid(current, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: current.Type(),
+				ChainID:   current.NFTID,
+			}
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 		current := input.Output.(*iotago.NFTOutput)
 		if err := nftDestructionValid(vmParams); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: current.Type(),
+				ChainID:   current.NFTID,
+			}
 		}
 	default:
 		panic("unknown chain transition type in NFTOutput")
@@ -968,24 +980,35 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := delegationGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", next.DelegationID)}
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: next.Type(),
+				ChainID:   next.DelegationID,
+			}
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if isClaiming {
-			return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-				ierrors.WithMessage(iotago.ErrDelegationRewardsClaimingInvalid, "cannot claim rewards during delegation output transition"))
+			return ierrors.WithMessage(iotago.ErrDelegationRewardsClaimingInvalid, "cannot claim rewards during delegation output transition")
 		}
 		//nolint:forcetypeassert // we can safely assume that this is an DelegationOutput
 		current := input.Output.(*iotago.DelegationOutput)
 		if err := delegationStateChangeValid(vmParams, current, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", current.DelegationID)}
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: current.Type(),
+				ChainID:   current.DelegationID,
+			}
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-				ierrors.WithMessage(iotago.ErrDelegationRewardInputMissing, "cannot destroy delegation output without a rewards input"))
+			err := ierrors.WithMessage(iotago.ErrDelegationRewardInputMissing, "cannot destroy delegation output without a rewards input")
+			return &iotago.ChainTransitionError{
+				Inner:     err,
+				ChainType: input.Output.Type(),
+				ChainID:   input.ChainID,
+			}
 		}
 
 		return nil
@@ -998,7 +1021,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 
 func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutput) error {
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrNewChainOutputHasNonZeroedID)
+		return iotago.ErrNewChainOutputHasNonZeroedID
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
@@ -1018,16 +1041,15 @@ func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutpu
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-			ierrors.WithMessagef(iotago.ErrDelegationStartEpochInvalid, "is %d, expected %d", current.StartEpoch, expectedStartEpoch))
+		return ierrors.WithMessagef(iotago.ErrDelegationStartEpochInvalid, "is %d, expected %d", current.StartEpoch, expectedStartEpoch)
 	}
 
 	if current.DelegatedAmount != current.Amount {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrDelegationAmountMismatch)
+		return iotago.ErrDelegationAmountMismatch
 	}
 
 	if current.EndEpoch != 0 {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrDelegationEndEpochNotZero)
+		return iotago.ErrDelegationEndEpochNotZero
 	}
 
 	return nil
@@ -1037,16 +1059,15 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-			ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
-				"delegation output can only be transitioned if it has a zeroed ID",
-			))
+		return ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
+			"delegation output can only be transitioned if it has a zeroed ID",
+		)
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||
 		!current.ValidatorAddress.Equal(next.ValidatorAddress) ||
 		current.StartEpoch != next.StartEpoch {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrDelegationModified)
+		return iotago.ErrDelegationModified
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
@@ -1066,8 +1087,7 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	}
 
 	if next.EndEpoch != expectedEndEpoch {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-			ierrors.WithMessagef(iotago.ErrDelegationEndEpochInvalid, "is %d, expected %d", next.EndEpoch, expectedEndEpoch))
+		return ierrors.WithMessagef(iotago.ErrDelegationEndEpochInvalid, "is %d, expected %d", next.EndEpoch, expectedEndEpoch)
 	}
 
 	return nil
