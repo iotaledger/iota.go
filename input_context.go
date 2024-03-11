@@ -101,7 +101,7 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[
 					index, utxoIndex, inputsCount)
 			}
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 
 		return nil
@@ -128,7 +128,7 @@ func ContextInputsCommitmentInputRequirement() ElementValidationFunc[ContextInpu
 				return ierrors.WithMessagef(ErrCommitmentInputMissing, "reward input at index %d requires a commitment input", index)
 			}
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 
 		return nil

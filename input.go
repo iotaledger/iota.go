@@ -94,7 +94,7 @@ func InputsSyntacticalUnique() ElementValidationFunc[Input] {
 			}
 			utxoSet[k] = index
 		default:
-			panic("all known input types should be handled above")
+			panic("all supported input types should be handled above")
 		}
 
 		return nil
@@ -111,7 +111,7 @@ func InputsSyntacticalIndicesWithinBounds() ElementValidationFunc[Input] {
 				return ierrors.WithMessagef(ErrRefUTXOIndexInvalid, "input %d", index)
 			}
 		default:
-			panic("all known input types should be handled above")
+			panic("all supported input types should be handled above")
 		}
 
 		return nil

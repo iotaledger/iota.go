@@ -668,7 +668,7 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		default:
-			panic("all known output types should be handled above")
+			panic("all supported output types should be handled above")
 		}
 
 		return nil
@@ -717,7 +717,7 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 				}
 			}
 		default:
-			panic("all known output types should be handled above")
+			panic("all supported output types should be handled above")
 		}
 
 		return nil
@@ -786,7 +786,7 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 			// This output does not have features.
 			return nil
 		default:
-			panic("all known output types should be handled above")
+			panic("all supported output types should be handled above")
 		}
 
 		return nil

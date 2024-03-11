@@ -140,7 +140,7 @@ func (t *Transaction) Inputs() ([]*UTXOInput, error) {
 		case *UTXOInput:
 			references = append(references, castInput)
 		default:
-			panic("all known input types should be handled above")
+			panic("all supported input types should be handled above")
 		}
 	}
 
@@ -168,7 +168,7 @@ func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
 			references = append(references, castInput)
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 	}
 
@@ -184,7 +184,7 @@ func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 	}
 
@@ -200,7 +200,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 	}
 
@@ -216,7 +216,7 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 		case *CommitmentInput:
 			return castInput
 		default:
-			panic("all known context input types should be handled above")
+			panic("all supported context input types should be handled above")
 		}
 	}
 

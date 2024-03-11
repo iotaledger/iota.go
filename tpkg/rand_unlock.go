@@ -29,7 +29,7 @@ func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
 	case iotago.UnlockEmpty:
 		return &iotago.EmptyUnlock{}
 	default:
-		panic("all known unlock types should be handled above")
+		panic("all supported unlock types should be handled above")
 	}
 }
 

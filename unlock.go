@@ -250,7 +250,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 					continue
 
 				default:
-					panic("all known unlock types should be handled above")
+					panic("all supported unlock types should be handled above")
 				}
 			}
 			seenMultiUnlocks[uint16(index)] = struct{}{}
@@ -260,7 +260,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 			return ierrors.WithMessagef(ErrEmptyUnlockOutsideMultiUnlock, "unlock at index %d is invalid", index)
 
 		default:
-			panic("all known unlock types should be handled above")
+			panic("all supported unlock types should be handled above")
 		}
 
 		return nil
