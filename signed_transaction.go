@@ -14,8 +14,6 @@ var (
 	ErrInputOutputBaseTokenMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount of base tokens")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
-	// ErrUnknownSignatureType gets returned for unknown signature types.
-	ErrUnknownSignatureType = ierrors.New("unknown signature type")
 	// ErrInputUnlockCountMismatch gets returned when the unlock count and input count mismatch.
 	ErrInputUnlockCountMismatch = ierrors.New("unlock count and input count mismatch")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.

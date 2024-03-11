@@ -30,8 +30,6 @@ var (
 var (
 	// ErrUTXOInputInvalid gets returned when the UTXO input is invalid.
 	ErrUTXOInputInvalid = ierrors.New("UTXO input is invalid")
-	// ErrUnknownOutputType gets returned for unknown output types.
-	ErrUnknownOutputType = ierrors.New("unknown output type")
 	// ErrCommitmentInputMissing gets returned when the commitment has not been provided when needed.
 	ErrCommitmentInputMissing = ierrors.New("commitment input required with reward or BIC input")
 	// ErrCommitmentInputReferenceInvalid gets returned when the commitment input references an invalid commitment.

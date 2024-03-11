@@ -64,8 +64,6 @@ var (
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSignatureUnlockHasNilSignature gets returned if a signature unlock contains a nil signature.
 	ErrSignatureUnlockHasNilSignature = ierrors.New("signature is nil")
-	// ErrUnknownUnlockType gets returned for unknown unlock.
-	ErrUnknownUnlockType = ierrors.New("unknown unlock type")
 	// ErrNestedMultiUnlock gets returned when a MultiUnlock is nested inside a MultiUnlock.
 	ErrNestedMultiUnlock = ierrors.New("multi unlocks can't be nested")
 	// ErrEmptyUnlockOutsideMultiUnlock gets returned when an empty unlock was not nested inside of a multi unlock.
@@ -252,7 +250,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 					continue
 
 				default:
-					return ierrors.WithMessagef(ErrUnknownUnlockType, "unlock at index %d.%d is of unknown type %T", index, subIndex, subUnlock)
+					panic("all known unlock types should be handled above")
 				}
 			}
 			seenMultiUnlocks[uint16(index)] = struct{}{}
@@ -262,7 +260,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 			return ierrors.WithMessagef(ErrEmptyUnlockOutsideMultiUnlock, "unlock at index %d is invalid", index)
 
 		default:
-			return ierrors.WithMessagef(ErrUnknownUnlockType, "unlock at index %d is of unknown type %T", index, unlock)
+			panic("all known unlock types should be handled above")
 		}
 
 		return nil

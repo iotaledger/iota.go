@@ -252,7 +252,7 @@ func (b *TransactionBuilder) getStoredManaOutputAccountID(storedManaOutputIndex 
 		}
 
 	default:
-		return iotago.EmptyAccountID, ierrors.WithMessagef(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output)
+		return iotago.EmptyAccountID, ierrors.Errorf("output type %s does not support stored mana", output.Type())
 	}
 
 	return storedManaOutputAccountID, nil
