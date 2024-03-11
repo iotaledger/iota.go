@@ -356,7 +356,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputSlot {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
-			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "commitment slot: %d, expiry slot: %d", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot)
 		}
 		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
 			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
@@ -595,7 +595,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		}
 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Slot {
-			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "current slot: %d, expiry slot: %d",
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "commitment slot: %d, expiry slot: %d",
 				vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot)
 		}
 
