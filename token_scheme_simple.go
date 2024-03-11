@@ -79,18 +79,18 @@ func (s *SimpleTokenScheme) Type() TokenSchemeType {
 
 func (s *SimpleTokenScheme) SyntacticalValidation() error {
 	if r := s.MaximumSupply.Cmp(common.Big0); r != 1 {
-		return ierrors.Wrap(ErrSimpleTokenSchemeInvalidMaximumSupply, "less than equal zero")
+		return ierrors.WithMessage(ErrSimpleTokenSchemeInvalidMaximumSupply, "less than equal zero")
 	}
 
 	// minted - melted > 0: can never have melted more than minted
 	mintedMeltedDelta := big.NewInt(0).Sub(s.MintedTokens, s.MeltedTokens)
 	if r := mintedMeltedDelta.Cmp(common.Big0); r == -1 {
-		return ierrors.Wrapf(ErrSimpleTokenSchemeInvalidMintedMeltedTokens, "minted/melted delta less than zero: %s", mintedMeltedDelta)
+		return ierrors.WithMessagef(ErrSimpleTokenSchemeInvalidMintedMeltedTokens, "minted/melted delta less than zero: %s", mintedMeltedDelta)
 	}
 
 	// minted - melted <= max supply: can never have minted more than max supply
 	if r := mintedMeltedDelta.Cmp(s.MaximumSupply); r == 1 {
-		return ierrors.Wrapf(ErrSimpleTokenSchemeInvalidMintedMeltedTokens, "minted/melted delta more than maximum supply: %s (delta) vs. %s (max supply)", mintedMeltedDelta, s.MaximumSupply)
+		return ierrors.WithMessagef(ErrSimpleTokenSchemeInvalidMintedMeltedTokens, "minted/melted delta more than maximum supply: %s (delta) vs. %s (max supply)", mintedMeltedDelta, s.MaximumSupply)
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func (s *SimpleTokenScheme) genesisValid(outSum *big.Int) error {
 func (s *SimpleTokenScheme) destructionValid(out *big.Int, in *big.Int) error {
 	tokenDiff := big.NewInt(0).Sub(out, in)
 	if big.NewInt(0).Add(s.MintedTokens, tokenDiff).Cmp(s.MeltedTokens) != 0 {
-		return ierrors.Wrapf(ErrNativeTokenSumUnbalanced, "all minted tokens must have been melted up on destruction: minted (%s) + token diff (%d) != melted tokens (%s)", s.MintedTokens, tokenDiff, s.MeltedTokens)
+		return ierrors.WithMessagef(ErrNativeTokenSumUnbalanced, "all minted tokens must have been melted up on destruction: minted (%s) + token diff (%d) != melted tokens (%s)", s.MintedTokens, tokenDiff, s.MeltedTokens)
 	}
 
 	return nil
