@@ -64,8 +64,8 @@ func IsValidIdentifier(b []byte) error {
 
 func IdentifierFromBytes(bytes []byte) (Identifier, int, error) {
 	var i Identifier
-	if err := IsValidIdentifier(bytes); err != nil {
-		return i, 0, err
+	if len(bytes) < IdentifierLength {
+		return i, 0, ierrors.Errorf("invalid length for identifier, expected at least %d bytes, got %d bytes", IdentifierLength, len(bytes))
 	}
 	copy(i[:], bytes)
 

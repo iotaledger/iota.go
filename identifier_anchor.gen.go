@@ -64,8 +64,8 @@ func IsValidAnchorID(b []byte) error {
 
 func AnchorIDFromBytes(bytes []byte) (AnchorID, int, error) {
 	var a AnchorID
-	if err := IsValidAnchorID(bytes); err != nil {
-		return a, 0, err
+	if len(bytes) < AnchorIDLength {
+		return a, 0, ierrors.Errorf("invalid length for anchorID, expected at least %d bytes, got %d bytes", AnchorIDLength, len(bytes))
 	}
 	copy(a[:], bytes)
 

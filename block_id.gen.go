@@ -63,8 +63,8 @@ func IsValidBlockID(b []byte) error {
 
 // BlockIDFromBytes returns a new BlockID represented by the passed bytes.
 func BlockIDFromBytes(b []byte) (BlockID, int, error) {
-	if err := IsValidBlockID(b); err != nil {
-		return EmptyBlockID, 0, err
+	if len(b) < BlockIDLength {
+		return EmptyBlockID, 0, ierrors.Errorf("invalid length for blockID, expected at least %d bytes, got %d bytes", BlockIDLength, len(b))
 	}
 
 	return BlockID(b), BlockIDLength, nil

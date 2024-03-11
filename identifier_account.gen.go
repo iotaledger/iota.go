@@ -64,8 +64,8 @@ func IsValidAccountID(b []byte) error {
 
 func AccountIDFromBytes(bytes []byte) (AccountID, int, error) {
 	var a AccountID
-	if err := IsValidAccountID(bytes); err != nil {
-		return a, 0, err
+	if len(bytes) < AccountIDLength {
+		return a, 0, ierrors.Errorf("invalid length for accountID, expected at least %d bytes, got %d bytes", AccountIDLength, len(bytes))
 	}
 	copy(a[:], bytes)
 

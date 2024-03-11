@@ -20,7 +20,7 @@ type SlotIndex uint32
 
 func SlotIndexFromBytes(b []byte) (SlotIndex, int, error) {
 	if len(b) < SlotIndexLength {
-		return 0, 0, ierrors.New("invalid slot index size")
+		return 0, 0, ierrors.Errorf("invalid length for slot index, expected at least %d bytes, got %d bytes", SlotIndexLength, len(b))
 	}
 
 	return SlotIndex(binary.LittleEndian.Uint32(b)), SlotIndexLength, nil

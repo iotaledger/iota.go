@@ -63,8 +63,8 @@ func IsValidTransactionID(b []byte) error {
 
 // TransactionIDFromBytes returns a new TransactionID represented by the passed bytes.
 func TransactionIDFromBytes(b []byte) (TransactionID, int, error) {
-	if err := IsValidTransactionID(b); err != nil {
-		return EmptyTransactionID, 0, err
+	if len(b) < TransactionIDLength {
+		return EmptyTransactionID, 0, ierrors.Errorf("invalid length for transactionID, expected at least %d bytes, got %d bytes", TransactionIDLength, len(b))
 	}
 
 	return TransactionID(b), TransactionIDLength, nil

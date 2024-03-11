@@ -20,7 +20,7 @@ type {{.Name}}Index uint32
 
 func {{.Name}}IndexFromBytes(b []byte) ({{.Name}}Index, int, error) {
 	if len(b) < {{.Name}}IndexLength {
-		return 0, 0, ierrors.New("invalid {{firstLower .Name}} index size")
+		return 0, 0, ierrors.Errorf("invalid length for {{firstLower .Name}} index, expected at least %d bytes, got %d bytes", {{.Name}}IndexLength, len(b))
 	}
 
 	return {{.Name}}Index(binary.LittleEndian.Uint32(b)), {{.Name}}IndexLength, nil

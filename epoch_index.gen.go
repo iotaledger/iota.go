@@ -20,7 +20,7 @@ type EpochIndex uint32
 
 func EpochIndexFromBytes(b []byte) (EpochIndex, int, error) {
 	if len(b) < EpochIndexLength {
-		return 0, 0, ierrors.New("invalid epoch index size")
+		return 0, 0, ierrors.Errorf("invalid length for epoch index, expected at least %d bytes, got %d bytes", EpochIndexLength, len(b))
 	}
 
 	return EpochIndex(binary.LittleEndian.Uint32(b)), EpochIndexLength, nil

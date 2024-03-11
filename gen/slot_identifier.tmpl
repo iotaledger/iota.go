@@ -79,8 +79,8 @@ func IsValid{{.Name}}(b []byte) error {
 
 // {{.Name}}FromBytes returns a new {{.Name}} represented by the passed bytes.
 func {{.Name}}FromBytes(b []byte) ({{.Name}}, int, error) {
-	if err := IsValid{{.Name}}(b); err != nil {
-		return Empty{{.Name}}, 0, err
+	if len(b) < {{.Name}}Length {
+		return Empty{{.Name}}, 0, ierrors.Errorf("invalid length for {{firstLower .Name}}, expected at least %d bytes, got %d bytes", {{.Name}}Length, len(b))
 	}
 
 	return {{.Name}}(b), {{.Name}}Length, nil

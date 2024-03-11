@@ -63,8 +63,8 @@ func IsValidSignedTransactionID(b []byte) error {
 
 // SignedTransactionIDFromBytes returns a new SignedTransactionID represented by the passed bytes.
 func SignedTransactionIDFromBytes(b []byte) (SignedTransactionID, int, error) {
-	if err := IsValidSignedTransactionID(b); err != nil {
-		return EmptySignedTransactionID, 0, err
+	if len(b) < SignedTransactionIDLength {
+		return EmptySignedTransactionID, 0, ierrors.Errorf("invalid length for signedTransactionID, expected at least %d bytes, got %d bytes", SignedTransactionIDLength, len(b))
 	}
 
 	return SignedTransactionID(b), SignedTransactionIDLength, nil

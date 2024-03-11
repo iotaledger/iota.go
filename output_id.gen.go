@@ -53,8 +53,8 @@ func IsValidOutputID(b []byte) error {
 
 // OutputIDFromBytes returns a new OutputID represented by the passed bytes.
 func OutputIDFromBytes(b []byte) (OutputID, int, error) {
-	if err := IsValidOutputID(b); err != nil {
-		return EmptyOutputID, 0, err
+	if len(b) < OutputIDLength {
+		return EmptyOutputID, 0, ierrors.Errorf("invalid length for outputID, expected at least %d bytes, got %d bytes", OutputIDLength, len(b))
 	}
 
 	return OutputID(b), OutputIDLength, nil

@@ -63,8 +63,8 @@ func IsValidCommitmentID(b []byte) error {
 
 // CommitmentIDFromBytes returns a new CommitmentID represented by the passed bytes.
 func CommitmentIDFromBytes(b []byte) (CommitmentID, int, error) {
-	if err := IsValidCommitmentID(b); err != nil {
-		return EmptyCommitmentID, 0, err
+	if len(b) < CommitmentIDLength {
+		return EmptyCommitmentID, 0, ierrors.Errorf("invalid length for commitmentID, expected at least %d bytes, got %d bytes", CommitmentIDLength, len(b))
 	}
 
 	return CommitmentID(b), CommitmentIDLength, nil
