@@ -26,7 +26,7 @@ var (
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrTxEssenceCapabilitiesInvalid gets returned when the capabilities within a Transaction are invalid.
-	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
+	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid transaction capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputRewardIndexExceedsMaxInputsCount gets returned if a reward input references an index greater than max inputs count.
@@ -72,12 +72,12 @@ type Transaction struct {
 func (t *Transaction) ID() (TransactionID, error) {
 	transactionCommitment, err := t.TransactionCommitment()
 	if err != nil {
-		return EmptyTransactionID, ierrors.Errorf("can't compute transaction commitment: %w", err)
+		return EmptyTransactionID, ierrors.Wrap(err, "failed to compute transaction commitment")
 	}
 
 	outputCommitment, err := t.OutputCommitment()
 	if err != nil {
-		return TransactionID{}, ierrors.Errorf("can't compute output commitment: %w", err)
+		return TransactionID{}, ierrors.Wrap(err, "failed to compute output commitment")
 	}
 
 	return TransactionIDFromTransactionCommitmentAndOutputCommitment(t.CreationSlot, transactionCommitment, outputCommitment), nil
@@ -101,7 +101,7 @@ func TransactionIDFromTransactionCommitmentAndOutputCommitment(slot SlotIndex, t
 func (t *Transaction) TransactionCommitment() (Identifier, error) {
 	essenceBytes, err := t.API.Encode(t.TransactionEssence)
 	if err != nil {
-		return EmptyIdentifier, ierrors.Errorf("can't compute essence bytes: %w", err)
+		return EmptyIdentifier, ierrors.Wrap(err, "failed to serialize transaction essence")
 	}
 
 	return IdentifierFromData(essenceBytes), nil
