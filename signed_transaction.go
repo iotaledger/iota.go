@@ -16,6 +16,8 @@ var (
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
 	// ErrUnknownSignatureType gets returned for unknown signature types.
 	ErrUnknownSignatureType = ierrors.New("unknown signature type")
+	// ErrInputUnlockCountMismatch gets returned when the unlock count and input count mismatch.
+	ErrInputUnlockCountMismatch = ierrors.New("unlock count and input count mismatch")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an address which is not unlocked.
@@ -45,12 +47,12 @@ type SignedTransaction struct {
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	transactionBytes, err := t.API.Encode(t.Transaction)
 	if err != nil {
-		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Wrap(err, "can't compute unlock bytes")
 	}
 
 	unlocksBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
-		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Wrap(err, "can't compute unlock bytes")
 	}
 
 	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
@@ -106,17 +108,17 @@ func (t *SignedTransaction) syntacticallyValidate() error {
 	}
 
 	if len(t.Unlocks) != len(inputs) {
-		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(inputs))
+		return ierrors.WithMessagef(ErrInputUnlockCountMismatch, "unlock count %d does not match inputs count %d", len(t.Unlocks), len(inputs))
 	}
 
 	if err := t.Transaction.SyntacticallyValidate(t.API); err != nil {
-		return ierrors.Errorf("transaction is invalid: %w", err)
+		return ierrors.Wrap(err, "transaction is invalid")
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
 		SignaturesUniqueAndReferenceUnlocksValidator(t.API),
 	); err != nil {
-		return ierrors.Errorf("invalid unlocks: %w", err)
+		return ierrors.Wrap(err, "invalid unlocks")
 	}
 
 	return nil
