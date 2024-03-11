@@ -424,10 +424,7 @@ type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 // ValidateUnlocks produces the UnlockedAddresses which will be set into the given Params and verifies that inputs are
 // correctly unlocked and that the inputs commitment matches.
 func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs ResolvedInputs) (unlockedAddrs UnlockedAddresses, err error) {
-	utxoInputs, err := signedTransaction.Transaction.Inputs()
-	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to get inputs from transaction")
-	}
+	utxoInputs := signedTransaction.Transaction.Inputs()
 
 	var inputs iotago.Outputs[iotago.Output]
 	for _, input := range utxoInputs {

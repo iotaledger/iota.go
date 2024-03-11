@@ -173,22 +173,22 @@ type UTXOIDChainID interface {
 	FromOutputID(id OutputID) ChainID
 }
 
-func newAddress(addressType AddressType) (address Address, err error) {
+func newAddress(addressType AddressType) Address {
 	switch addressType {
 	case AddressEd25519:
-		return &Ed25519Address{}, nil
+		return &Ed25519Address{}
 	case AddressAccount:
-		return &AccountAddress{}, nil
+		return &AccountAddress{}
 	case AddressNFT:
-		return &NFTAddress{}, nil
+		return &NFTAddress{}
 	case AddressAnchor:
-		return &AnchorAddress{}, nil
+		return &AnchorAddress{}
 	case AddressImplicitAccountCreation:
-		return &ImplicitAccountCreationAddress{}, nil
+		return &ImplicitAccountCreationAddress{}
 	case AddressMulti:
-		return &MultiAddress{}, nil
+		return &MultiAddress{}
 	case AddressRestricted:
-		return &RestrictedAddress{}, nil
+		return &RestrictedAddress{}
 	default:
 		panic(fmt.Sprintf("unknown address type %d", addressType))
 	}
@@ -252,10 +252,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		}
 	}
 
-	addr, err := newAddress(addrType)
-	if err != nil {
-		return "", nil, err
-	}
+	addr := newAddress(addrType)
 
 	serixAPI := CommonSerixAPI()
 	n, err := serixAPI.Decode(context.TODO(), addrData, addr)

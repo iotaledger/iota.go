@@ -246,17 +246,14 @@ func TestTransaction_InputTypes(t *testing.T) {
 			}),
 		))
 
-	utxoInputs, err := signedTransaction.Transaction.Inputs()
-	require.NoError(t, err)
+	utxoInputs := signedTransaction.Transaction.Inputs()
 
 	commitmentInput := signedTransaction.Transaction.CommitmentInput()
 	require.NotNil(t, commitmentInput)
 
-	bicInputs, err := signedTransaction.Transaction.BICInputs()
-	require.NoError(t, err)
+	bicInputs := signedTransaction.Transaction.BICInputs()
 
-	rewardInputs, err := signedTransaction.Transaction.RewardInputs()
-	require.NoError(t, err)
+	rewardInputs := signedTransaction.Transaction.RewardInputs()
 
 	require.Equal(t, 2, len(utxoInputs))
 	require.Equal(t, 2, len(bicInputs))

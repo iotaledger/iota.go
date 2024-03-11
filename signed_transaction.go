@@ -100,10 +100,7 @@ func (t *SignedTransaction) String() string {
 // syntacticallyValidate syntactically validates the SignedTransaction.
 func (t *SignedTransaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
-	inputs, err := t.Transaction.Inputs()
-	if err != nil {
-		return err
-	}
+	inputs := t.Transaction.Inputs()
 
 	if len(t.Unlocks) != len(inputs) {
 		return ierrors.WithMessagef(ErrInputUnlockCountMismatch, "unlock count %d does not match inputs count %d", len(t.Unlocks), len(inputs))

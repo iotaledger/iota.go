@@ -133,7 +133,7 @@ func (t *Transaction) Clone() *Transaction {
 	}
 }
 
-func (t *Transaction) Inputs() ([]*UTXOInput, error) {
+func (t *Transaction) Inputs() []*UTXOInput {
 	references := make([]*UTXOInput, 0, len(t.TransactionEssence.Inputs))
 	for _, input := range t.TransactionEssence.Inputs {
 		switch castInput := input.(type) {
@@ -144,7 +144,7 @@ func (t *Transaction) Inputs() ([]*UTXOInput, error) {
 		}
 	}
 
-	return references, nil
+	return references
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
@@ -161,7 +161,7 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 	return set, nil
 }
 
-func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
+func (t *Transaction) ContextInputs() TransactionContextInputs {
 	references := make(TransactionContextInputs, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
@@ -172,10 +172,10 @@ func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
 		}
 	}
 
-	return references, nil
+	return references
 }
 
-func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+func (t *Transaction) BICInputs() []*BlockIssuanceCreditInput {
 	references := make([]*BlockIssuanceCreditInput, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
@@ -188,10 +188,10 @@ func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
 		}
 	}
 
-	return references, nil
+	return references
 }
 
-func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
+func (t *Transaction) RewardInputs() []*RewardInput {
 	references := make([]*RewardInput, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
@@ -204,7 +204,7 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		}
 	}
 
-	return references, nil
+	return references
 }
 
 // Returns the first commitment input in the transaction if it exists or nil.
