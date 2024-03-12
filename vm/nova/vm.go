@@ -658,7 +658,7 @@ func anchorSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iot
 			return ierrors.Wrapf(err, " anchor %s", next.AnchorID)
 		}
 	case iotago.ChainTransitionTypeStateChange:
-		if err := anchorStateChangeValid(input, next); err != nil {
+		if err := anchorStateChangeValid(input, next, vmParams); err != nil {
 			//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 			a := input.Output.(*iotago.AnchorOutput)
 
@@ -686,7 +686,7 @@ func anchorGenesisValid(vmParams *vm.Params, current *iotago.AnchorOutput, ancho
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedAddrs)
 }
 
-func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
+func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	current := input.Output.(*iotago.AnchorOutput)
 
@@ -708,7 +708,7 @@ func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOut
 		return anchorGovernanceSTVF(input, next)
 	}
 
-	return anchorStateSTVF(input, next)
+	return anchorStateSTVF(input, next, vmParams)
 }
 
 func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
@@ -729,14 +729,22 @@ func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutpu
 	return nil
 }
 
-func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
+func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	current := input.Output.(*iotago.AnchorOutput)
 	switch {
 	case !current.StateController().Equal(next.StateController()):
-		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition, "state controller changed, in %v / out %v", current.StateController(), next.StateController())
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition,
+			"state controller changed, in %s / out %s",
+			current.StateController().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+			next.StateController().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+		)
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition, "governance controller changed, in %v / out %v", current.GovernorAddress(), next.GovernorAddress())
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition,
+			"governance controller changed, in %s / out %s",
+			current.GovernorAddress().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+			next.GovernorAddress().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+		)
 	case current.StateIndex+1 != next.StateIndex:
 		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
 	}
