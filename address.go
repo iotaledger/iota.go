@@ -173,24 +173,24 @@ type UTXOIDChainID interface {
 	FromOutputID(id OutputID) ChainID
 }
 
-func newAddress(addressType AddressType) Address {
+func newAddress(addressType AddressType) (Address, error) {
 	switch addressType {
 	case AddressEd25519:
-		return &Ed25519Address{}
+		return &Ed25519Address{}, nil
 	case AddressAccount:
-		return &AccountAddress{}
+		return &AccountAddress{}, nil
 	case AddressNFT:
-		return &NFTAddress{}
+		return &NFTAddress{}, nil
 	case AddressAnchor:
-		return &AnchorAddress{}
+		return &AnchorAddress{}, nil
 	case AddressImplicitAccountCreation:
-		return &ImplicitAccountCreationAddress{}
+		return &ImplicitAccountCreationAddress{}, nil
 	case AddressMulti:
-		return &MultiAddress{}
+		return &MultiAddress{}, nil
 	case AddressRestricted:
-		return &RestrictedAddress{}
+		return &RestrictedAddress{}, nil
 	default:
-		panic(fmt.Sprintf("unknown address type %d", addressType))
+		return nil, ierrors.Errorf("unknown address type %d", addressType)
 	}
 }
 
@@ -252,7 +252,10 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		}
 	}
 
-	addr := newAddress(addrType)
+	addr, err := newAddress(addrType)
+	if err != nil {
+		return "", nil, err
+	}
 
 	serixAPI := CommonSerixAPI()
 	n, err := serixAPI.Decode(context.TODO(), addrData, addr)
@@ -307,6 +310,6 @@ func AddressFromReader(reader io.ReadSeeker) (Address, error) {
 		return RestrictedAddressFromReader(reader)
 
 	default:
-		panic(fmt.Sprintf("unknown address type %d", addressType))
+		return nil, ierrors.Errorf("unknown address type %d", addressType)
 	}
 }
