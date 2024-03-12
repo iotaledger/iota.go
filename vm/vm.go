@@ -769,7 +769,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 // ExecFuncTimelocks validates that the inputs' timelocks are expired.
 func ExecFuncTimelocks() ExecFunc {
 	return func(_ VirtualMachine, vmParams *Params) error {
-		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsSet {
+		for inputID, input := range vmParams.WorkingSet.UTXOInputsSet {
 			if input.UnlockConditionSet().HasTimelockCondition() {
 				commitment := vmParams.WorkingSet.Commitment
 
@@ -778,7 +778,7 @@ func ExecFuncTimelocks() ExecFunc {
 				}
 				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
-					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
+					return ierrors.Wrapf(err, "timelock of input %s is not expired", inputID.ToHex())
 				}
 			}
 		}
