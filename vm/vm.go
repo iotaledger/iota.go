@@ -433,12 +433,12 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 
 	txID, err := signedTransaction.Transaction.ID()
 	if err != nil {
-		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err))
+		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err.Error()))
 	}
 
 	essenceMsgToSign, err := signedTransaction.Transaction.SigningMessage()
 	if err != nil {
-		panic(fmt.Sprintf("signing message computation should have succeeded: %s", err))
+		panic(fmt.Sprintf("signing message computation should have succeeded: %s", err.Error()))
 	}
 
 	unlockedAddrsSet := &unlockedAddressesSet{

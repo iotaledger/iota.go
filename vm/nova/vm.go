@@ -49,7 +49,7 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 
 	txID, err := workingSet.Tx.ID()
 	if err != nil {
-		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err))
+		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err.Error()))
 	}
 
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
