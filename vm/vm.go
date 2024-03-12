@@ -675,7 +675,7 @@ func ExecFuncSenderUnlocked() ExecFunc {
 			// check unlocked
 			sender := resolveUnderlyingAddress(senderFeat.Address)
 			if _, isUnlocked := vmParams.WorkingSet.UnlockedAddrs[sender.Key()]; !isUnlocked {
-				return ierrors.WithMessagef(iotago.ErrSenderFeatureNotUnlocked, "output %d", outputIndex)
+				return ierrors.Wrapf(iotago.ErrSenderFeatureNotUnlocked, "output %d", outputIndex)
 			}
 		}
 
