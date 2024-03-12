@@ -798,14 +798,14 @@ func foundryGenesisValid(vmParams *vm.Params, current *iotago.FoundryOutput, thi
 	inAccount, ok := vmParams.WorkingSet.InChains[accountID]
 	if !ok {
 		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-			"missing input transitioning account output %s for new foundry output %s", accountID, thisFoundryID,
+			"missing input transitioning account output %s for new foundry output %s", accountID.ToHex(), thisFoundryID.ToHex(),
 		)
 	}
 
 	outAccount, ok := vmParams.WorkingSet.OutChains[accountID]
 	if !ok {
 		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-			"missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID,
+			"missing output transitioning account output %s for new foundry output %s", accountID.ToHex(), thisFoundryID.ToHex(),
 		)
 	}
 
@@ -820,7 +820,7 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 	if startSerial >= current.SerialNumber || current.SerialNumber > endIncSerial {
 		return ierrors.WithMessagef(
 			iotago.ErrFoundrySerialInvalid,
-			"new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID, current.SerialNumber, startSerial, endIncSerial,
+			"new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID.ToHex(), current.SerialNumber, startSerial, endIncSerial,
 		)
 	}
 
@@ -853,7 +853,7 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 		if otherFoundryOutput.SerialNumber >= current.SerialNumber {
 			return ierrors.WithMessagef(
 				iotago.ErrFoundrySerialInvalid,
-				"new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID, outputIndex, thisFoundryID,
+				"new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID.ToHex(), outputIndex, thisFoundryID.ToHex(),
 			)
 		}
 	}
@@ -874,7 +874,7 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	// no matching foundry to be found to validate the state transition against
 	if current.MustFoundryID() != next.MustFoundryID() {
 		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %s got %s", current.MustFoundryID(), next.MustFoundryID()))
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %s got %s", current.MustFoundryID().ToHex(), next.MustFoundryID().ToHex()))
 	}
 
 	nativeTokenID := current.MustNativeTokenID()
