@@ -140,6 +140,10 @@ func (t *Transaction) Inputs() []*UTXOInput {
 		case *UTXOInput:
 			references = append(references, castInput)
 		default:
+			// We're switching on the Go input type here, so we can only run into the default case
+			// if we added a new input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported input types should be handled above")
 		}
 	}
@@ -168,6 +172,10 @@ func (t *Transaction) ContextInputs() TransactionContextInputs {
 		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
 			references = append(references, castInput)
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 	}
@@ -184,6 +192,10 @@ func (t *Transaction) BICInputs() []*BlockIssuanceCreditInput {
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 	}
@@ -200,6 +212,10 @@ func (t *Transaction) RewardInputs() []*RewardInput {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 	}
@@ -216,6 +232,10 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 		case *CommitmentInput:
 			return castInput
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 	}

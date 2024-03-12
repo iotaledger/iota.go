@@ -250,6 +250,10 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 					continue
 
 				default:
+					// We're switching on the Go unlock type here, so we can only run into the default case
+					// if we added a new unlock type and have not handled it above or a user constructed a type
+					// implementing the interface (only possible when iota.go is used as a library).
+					// In both cases we want to panic.
 					panic("all supported unlock types should be handled above")
 				}
 			}
@@ -260,6 +264,10 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 			return ierrors.WithMessagef(ErrEmptyUnlockOutsideMultiUnlock, "unlock at index %d is invalid", index)
 
 		default:
+			// We're switching on the Go unlock type here, so we can only run into the default case
+			// if we added a new unlock type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported unlock types should be handled above")
 		}
 

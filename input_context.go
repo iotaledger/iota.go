@@ -101,6 +101,10 @@ func ContextInputsRewardInputMaxIndex(inputsCount uint16) ElementValidationFunc[
 					index, utxoIndex, inputsCount)
 			}
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 
@@ -128,6 +132,10 @@ func ContextInputsCommitmentInputRequirement() ElementValidationFunc[ContextInpu
 				return ierrors.WithMessagef(ErrCommitmentInputMissing, "reward input at index %d requires a commitment input", index)
 			}
 		default:
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported context input types should be handled above")
 		}
 

@@ -668,6 +668,10 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		default:
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported output types should be handled above")
 		}
 
@@ -717,6 +721,10 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 				}
 			}
 		default:
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported output types should be handled above")
 		}
 
@@ -786,6 +794,10 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 			// This output does not have features.
 			return nil
 		default:
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
 			panic("all supported output types should be handled above")
 		}
 
