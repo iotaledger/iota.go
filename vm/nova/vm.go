@@ -655,21 +655,15 @@ func anchorSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iot
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := anchorGenesisValid(vmParams, next, true); err != nil {
-			return ierrors.Wrapf(err, " anchor %s", next.AnchorID)
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		if err := anchorStateChangeValid(input, next, vmParams); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
-			a := input.Output.(*iotago.AnchorOutput)
-
-			return ierrors.Wrapf(err, "anchor %s", a.AnchorID)
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		if err := anchorDestructionValid(vmParams); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
-			a := input.Output.(*iotago.AnchorOutput)
-
-			return ierrors.Wrapf(err, "anchor %s", a.AnchorID)
+			return err
 		}
 	default:
 		panic("unknown chain transition type in AnchorOutput")
@@ -771,19 +765,19 @@ func foundrySTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := foundryGenesisValid(vmParams, next, next.MustFoundryID(), outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustFoundryID(), next.MustNativeTokenID())
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryStateChangeValid(current, next, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryDestructionValid(vmParams, current, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
+			return err
 		}
 	default:
 		panic("unknown chain transition type in FoundryOutput")
