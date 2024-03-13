@@ -798,14 +798,14 @@ func foundryGenesisValid(vmParams *vm.Params, current *iotago.FoundryOutput, thi
 	inAccount, ok := vmParams.WorkingSet.InChains[accountID]
 	if !ok {
 		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-			"missing input transitioning account output %s for new foundry output %s", accountID.ToHex(), thisFoundryID.ToHex(),
+			"missing input transitioning account output %s for new foundry output %s", accountID, thisFoundryID.ToHex(),
 		)
 	}
 
 	outAccount, ok := vmParams.WorkingSet.OutChains[accountID]
 	if !ok {
 		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-			"missing output transitioning account output %s for new foundry output %s", accountID.ToHex(), thisFoundryID.ToHex(),
+			"missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID.ToHex(),
 		)
 	}
 
