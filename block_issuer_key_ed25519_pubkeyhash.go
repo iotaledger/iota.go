@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	hiveEd25519 "github.com/iotaledger/hive.go/crypto/ed25519"
+	"github.com/iotaledger/hive.go/ierrors"
 	"github.com/iotaledger/hive.go/serializer/v2"
 )
 
@@ -49,7 +50,7 @@ func Ed25519PublicKeyHashBlockIssuerKeyFromBytes(bytes []byte) (*Ed25519PublicKe
 	blockIssuerKey := &Ed25519PublicKeyHashBlockIssuerKey{}
 	n, err := CommonSerixAPI().Decode(context.TODO(), bytes, blockIssuerKey)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, ierrors.Wrap(err, "failed to deserialize Ed25519PublicKeyHashBlockIssuerKey")
 	}
 
 	return blockIssuerKey, n, nil

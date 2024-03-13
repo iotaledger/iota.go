@@ -63,9 +63,9 @@ func Encode(dst []uint8, src []byte) int {
 
 var (
 	// ErrInvalidLength reports an attempt to decode an input of invalid length.
-	ErrInvalidLength = ierrors.New("invalid length")
+	ErrInvalidLength = ierrors.New("invalid base32 length")
 	// ErrNonZeroPadding reports an attempt to decode an input without zero padding.
-	ErrNonZeroPadding = ierrors.New("non-zero padding")
+	ErrNonZeroPadding = ierrors.New("non-zero padding in base32")
 )
 
 // A CorruptInputError is a description of a base32 syntax error.

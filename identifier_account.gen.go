@@ -19,8 +19,6 @@ const (
 
 var (
 	EmptyAccountID = AccountID{}
-
-	ErrInvalidAccountIDLength = ierrors.New("invalid AccountID length")
 )
 
 // AccountID is a 32 byte hash value.
@@ -55,10 +53,19 @@ func MustAccountIDFromHexString(hex string) AccountID {
 	return a
 }
 
+// IsValidAccountID returns an error if the passed bytes are not a valid AccountID, otherwise nil.
+func IsValidAccountID(b []byte) error {
+	if len(b) != AccountIDLength {
+		return ierrors.Errorf("invalid AccountID length: expected %d bytes, got %d bytes", AccountIDLength, len(b))
+	}
+
+	return nil
+}
+
 func AccountIDFromBytes(bytes []byte) (AccountID, int, error) {
 	var a AccountID
 	if len(bytes) < AccountIDLength {
-		return a, 0, ErrInvalidAccountIDLength
+		return a, 0, ierrors.Errorf("invalid length for accountID, expected at least %d bytes, got %d bytes", AccountIDLength, len(bytes))
 	}
 	copy(a[:], bytes)
 

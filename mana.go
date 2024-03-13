@@ -74,7 +74,7 @@ func (r RewardsParameters) TargetReward(epoch EpochIndex, api API) (Mana, error)
 	// Rewards start at epoch 0.
 	decayedInitialReward, err := api.ManaDecayProvider().DecayManaByEpochs(api.ProtocolParameters().RewardsParameters().InitialTargetRewardsRate, 0, epoch)
 	if err != nil {
-		return 0, ierrors.Errorf("failed to calculate decayed initial reward: %w", err)
+		return 0, ierrors.Wrap(err, "failed to calculate decayed initial reward")
 	}
 
 	return decayedInitialReward, nil

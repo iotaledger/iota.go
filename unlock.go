@@ -64,8 +64,6 @@ var (
 	ErrReferentialUnlockInvalid = ierrors.New("invalid referential unlock")
 	// ErrSignatureUnlockHasNilSignature gets returned if a signature unlock contains a nil signature.
 	ErrSignatureUnlockHasNilSignature = ierrors.New("signature is nil")
-	// ErrUnknownUnlockType gets returned for unknown unlock.
-	ErrUnknownUnlockType = ierrors.New("unknown unlock type")
 	// ErrNestedMultiUnlock gets returned when a MultiUnlock is nested inside a MultiUnlock.
 	ErrNestedMultiUnlock = ierrors.New("multi unlocks can't be nested")
 	// ErrEmptyUnlockOutsideMultiUnlock gets returned when an empty unlock was not nested inside of a multi unlock.
@@ -163,19 +161,19 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 		switch unlock := u.(type) {
 		case *SignatureUnlock:
 			if unlock.Signature == nil {
-				return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d is nil", index)
+				return ierrors.WithMessagef(ErrSignatureUnlockHasNilSignature, "signature at unlock index %d is nil", index)
 			}
 
 			signerUID := unlock.Signature.SignerUID()
 
 			// we check for duplicated signer UIDs in SignatureUnlock(s)
 			if existingIndex, exists := seenSignerUIDs[signerUID]; exists {
-				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
+				return ierrors.WithMessagef(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as %d", index, existingIndex)
 			}
 
 			// we also need to check for duplicated signer UIDs in MultiUnlock(s)
 			if existingIndex, exists := seenSignerUIDsInMultiUnlocks[signerUID]; exists {
-				return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
+				return ierrors.WithMessagef(ErrSignatureUnlockNotUnique, "signature unlock block at index %d is the same as in multi unlock at index %d", index, existingIndex)
 			}
 
 			seenSignatureUnlocks[uint16(index)] = struct{}{}
@@ -184,7 +182,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 		case ReferentialUnlock:
 			if prevReferentialUnlock := seenReferentialUnlocks[unlock.ReferencedInputIndex()]; prevReferentialUnlock != nil {
 				if !unlock.Chainable() {
-					return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references existing referential unlock %d but it does not support chaining", index, unlock.ReferencedInputIndex())
+					return ierrors.WithMessagef(ErrReferentialUnlockInvalid, "unlock at index %d references existing referential unlock %d but it does not support chaining", index, unlock.ReferencedInputIndex())
 				}
 				seenReferentialUnlocks[uint16(index)] = unlock
 
@@ -195,32 +193,32 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 			_, hasSignatureUnlock := seenSignatureUnlocks[unlock.ReferencedInputIndex()]
 			_, hasMultiUnlock := seenMultiUnlocks[unlock.ReferencedInputIndex()]
 			if !hasSignatureUnlock && !hasMultiUnlock {
-				return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d references non existent unlock %d", index, unlock.ReferencedInputIndex())
+				return ierrors.WithMessagef(ErrReferentialUnlockInvalid, "unlock at index %d references non existent unlock %d", index, unlock.ReferencedInputIndex())
 			}
 			seenReferentialUnlocks[uint16(index)] = unlock
 
 		case *MultiUnlock:
 			multiUnlockBytes, err := api.Encode(unlock)
 			if err != nil {
-				return ierrors.Errorf("unable to serialize multi unlock block at index %d for dup check: %w", index, err)
+				return ierrors.Wrapf(err, "unable to serialize multi unlock block at index %d for dup check", index)
 			}
 
 			if existingIndex, exists := seenMultiUnlockBytes[string(multiUnlockBytes)]; exists {
-				return ierrors.Wrapf(ErrMultiUnlockNotUnique, "multi unlock block at index %d is the same as %d", index, existingIndex)
+				return ierrors.WithMessagef(ErrMultiUnlockNotUnique, "multi unlock block at index %d is the same as %d", index, existingIndex)
 			}
 
 			for subIndex, subU := range unlock.Unlocks {
 				switch subUnlock := subU.(type) {
 				case *SignatureUnlock:
 					if subUnlock.Signature == nil {
-						return ierrors.Wrapf(ErrSignatureUnlockHasNilSignature, "at index %d.%d is nil", index, subIndex)
+						return ierrors.WithMessagef(ErrSignatureUnlockHasNilSignature, "unlock at index %d.%d is nil", index, subIndex)
 					}
 
 					signerUID := subUnlock.Signature.SignerUID()
 
 					// we check for duplicated signer UIDs in SignatureUnlock(s)
 					if existingIndex, exists := seenSignerUIDs[signerUID]; exists {
-						return ierrors.Wrapf(ErrSignatureUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
+						return ierrors.WithMessagef(ErrSignatureUnlockNotUnique, "signature unlock block at index %d.%d is the same as %d", index, subIndex, existingIndex)
 					}
 
 					// we don't set the index here in "seenSignatureUnlocks" because there is no concept of reference unlocks inside of multi unlocks
@@ -231,7 +229,7 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 				case ReferentialUnlock:
 					if prevRef := seenReferentialUnlocks[subUnlock.ReferencedInputIndex()]; prevRef != nil {
 						if !subUnlock.Chainable() {
-							return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references existing referential unlock %d but it does not support chaining", index, subIndex, subUnlock.ReferencedInputIndex())
+							return ierrors.WithMessagef(ErrReferentialUnlockInvalid, "%d.%d references existing referential unlock %d but it does not support chaining", index, subIndex, subUnlock.ReferencedInputIndex())
 						}
 						// we don't set the index here in "seenReferentialUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
@@ -240,29 +238,37 @@ func SignaturesUniqueAndReferenceUnlocksValidator(api API) UnlockValidatorFunc {
 					// must reference a sig unlock here
 					// we don't check for "seenMultiUnlocks" here because we don't want to nest "reference unlocks to multi unlocks" in multi unlocks
 					if _, has := seenSignatureUnlocks[subUnlock.ReferencedInputIndex()]; !has {
-						return ierrors.Wrapf(ErrReferentialUnlockInvalid, "%d.%d references non existent unlock %d", index, subIndex, subUnlock.ReferencedInputIndex())
+						return ierrors.WithMessagef(ErrReferentialUnlockInvalid, "%d.%d references non existent unlock %d", index, subIndex, subUnlock.ReferencedInputIndex())
 					}
 					// we don't set the index here in "seenReferentialUnlocks" because it's not allowed to reference an unlock within a multi unlock
 
 				case *MultiUnlock:
-					return ierrors.Wrapf(ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", index, subIndex)
+					return ierrors.WithMessagef(ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", index, subIndex)
 
 				case *EmptyUnlock:
 					// empty unlocks are allowed inside of multi unlocks
 					continue
 
 				default:
-					return ierrors.Wrapf(ErrUnknownUnlockType, "unlock at index %d.%d is of unknown type %T", index, subIndex, subUnlock)
+					// We're switching on the Go unlock type here, so we can only run into the default case
+					// if we added a new unlock type and have not handled it above or a user constructed a type
+					// implementing the interface (only possible when iota.go is used as a library).
+					// In both cases we want to panic.
+					panic("all supported unlock types should be handled above")
 				}
 			}
 			seenMultiUnlocks[uint16(index)] = struct{}{}
 			seenMultiUnlockBytes[string(multiUnlockBytes)] = index
 
 		case *EmptyUnlock:
-			return ierrors.Wrapf(ErrEmptyUnlockOutsideMultiUnlock, "unlock at index %d is invalid", index)
+			return ierrors.WithMessagef(ErrEmptyUnlockOutsideMultiUnlock, "unlock at index %d is invalid", index)
 
 		default:
-			return ierrors.Wrapf(ErrUnknownUnlockType, "unlock at index %d is of unknown type %T", index, unlock)
+			// We're switching on the Go unlock type here, so we can only run into the default case
+			// if we added a new unlock type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported unlock types should be handled above")
 		}
 
 		return nil

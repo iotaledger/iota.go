@@ -8,8 +8,6 @@ import (
 )
 
 var (
-	// ErrInvalidStakingTransition gets returned when an account tries to do an invalid transition with a Staking Feature.
-	ErrInvalidStakingTransition = ierrors.New("invalid staking transition")
 	// ErrStakingStartEpochInvalid gets returned when a new Staking Feature's start epoch
 	// is not set to the epoch of the transaction.
 	ErrStakingStartEpochInvalid = ierrors.New("staking start epoch must be the epoch of the transaction")

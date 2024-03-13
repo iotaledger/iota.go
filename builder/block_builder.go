@@ -121,7 +121,7 @@ func (b *BasicBlockBuilder) SignWithSigner(accountID iotago.AccountID, signer io
 
 	signature, err := b.protocolBlock.Sign(signer, addr)
 	if err != nil {
-		b.err = ierrors.Errorf("error signing block: %w", err)
+		b.err = ierrors.Wrap(err, "failed to sign basic block")
 
 		return b
 	}
@@ -199,7 +199,7 @@ func (b *BasicBlockBuilder) CalculateAndSetMaxBurnedMana(rmc iotago.Mana) *Basic
 
 	burnedMana, err := b.protocolBlock.ManaCost(rmc)
 	if err != nil {
-		b.err = ierrors.Wrap(err, "error calculating mana cost")
+		b.err = ierrors.Wrap(err, "failed to calculate mana cost")
 		return b
 	}
 
@@ -320,7 +320,7 @@ func (v *ValidationBlockBuilder) SignWithSigner(accountID iotago.AccountID, sign
 
 	signature, err := v.protocolBlock.Sign(signer, addr)
 	if err != nil {
-		v.err = ierrors.Errorf("error signing block: %w", err)
+		v.err = ierrors.Wrap(err, "failed to sign validation block")
 
 		return v
 	}

@@ -86,7 +86,7 @@ func (resultSet *IndexerResultSet) Outputs(ctx context.Context) (iotago.Outputs[
 	for i, outputID := range outputIDs {
 		output, err := resultSet.client.OutputByID(ctx, outputID)
 		if err != nil {
-			return nil, ierrors.Errorf("unable to fetch output %s: %w", outputID.ToHex(), err)
+			return nil, ierrors.Wrapf(err, "unable to fetch output %s", outputID.ToHex())
 		}
 		outputs[i] = output
 	}
@@ -160,7 +160,7 @@ func (client *indexerClient) singleOutputQuery(ctx context.Context, route string
 	}
 
 	if len(res.Items) == 0 {
-		return nil, nil, res.CommittedSlot, ierrors.Errorf("%w for route %s", ErrIndexerNotFound, route)
+		return nil, nil, res.CommittedSlot, ierrors.WithMessagef(ErrIndexerNotFound, "route %s", route)
 	}
 
 	outputID := res.Items.MustOutputIDs()[0]

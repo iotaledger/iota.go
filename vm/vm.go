@@ -8,6 +8,7 @@ import (
 	"github.com/iotaledger/hive.go/core/safemath"
 	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
+	"github.com/iotaledger/iota.go/v4/hexutil"
 )
 
 // VirtualMachine executes and validates transactions.
@@ -41,8 +42,6 @@ type WorkingSet struct {
 	InputIDToInputIndex map[iotago.OutputID]uint16
 	// The transaction for which this semantic validation happens.
 	Tx *iotago.Transaction
-	// The message which signatures are signing.
-	EssenceMsgToSign []byte
 	// The ChainOutput(s) at the input side.
 	InChains ChainInputSet
 	// The sum of NativeTokens at the input side.
@@ -78,11 +77,11 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		// stored Mana
 		manaStored, err := manaDecayProvider.DecayManaBySlots(input.StoredMana(), outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
-			return 0, ierrors.Wrapf(err, "input %s stored mana calculation failed", outputID)
+			return 0, ierrors.Wrapf(err, "stored mana calculation failed for input %s", outputID)
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaStored)
 		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
 		}
 		manaPotential, err := iotago.PotentialMana(manaDecayProvider, storageScoreStructure, input, outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
@@ -90,7 +89,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaPotential)
 		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
 		}
 	}
 
@@ -99,7 +98,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		var err error
 		totalIn, err = safemath.SafeAdd(totalIn, reward)
 		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
 		}
 	}
 
@@ -113,13 +112,13 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 	for _, output := range outputs {
 		totalOut, err = safemath.SafeAdd(totalOut, output.StoredMana())
 		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
 		}
 	}
 	for _, allotment := range allotments {
 		totalOut, err = safemath.SafeAdd(totalOut, allotment.Mana)
 		if err != nil {
-			return 0, ierrors.Wrapf(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
 		}
 	}
 
@@ -271,7 +270,7 @@ func (s *unlockedAddressesSet) ReferentialUnlockDirectlyUnlockable(owner iotago.
 // adds the index of the input to the set of unlocked inputs by this address.
 func (s *unlockedAddressesSet) MultiUnlock(addr *iotago.MultiAddress, multiUnlock *iotago.MultiUnlock, essenceMsg []byte, inputIndex uint16) error {
 	if len(addr.Addresses) != len(multiUnlock.Unlocks) {
-		return ierrors.Wrapf(iotago.ErrMultiAddressLengthUnlockLengthMismatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, addr, len(addr.Addresses), len(multiUnlock.Unlocks))
+		return ierrors.WithMessagef(iotago.ErrMultiAddressLengthUnlockLengthMismatch, "input %d has a multi address (%T) but the amount of addresses does not match the unlocks %d != %d", inputIndex, addr, len(addr.Addresses), len(multiUnlock.Unlocks))
 	}
 
 	var cumulativeUnlockedWeight uint16
@@ -283,7 +282,7 @@ func (s *unlockedAddressesSet) MultiUnlock(addr *iotago.MultiAddress, multiUnloc
 			continue
 
 		case *iotago.MultiUnlock:
-			return ierrors.Wrapf(iotago.ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", inputIndex, subIndex)
+			return ierrors.WithMessagef(iotago.ErrNestedMultiUnlock, "unlock at index %d.%d is invalid", inputIndex, subIndex)
 
 		default:
 			// ATTENTION: we perform the checks only, but we do not unlock the input yet.
@@ -297,7 +296,7 @@ func (s *unlockedAddressesSet) MultiUnlock(addr *iotago.MultiAddress, multiUnloc
 
 	// check if the threshold for a successful unlock was reached
 	if cumulativeUnlockedWeight < addr.Threshold {
-		return ierrors.Wrapf(iotago.ErrMultiAddressUnlockThresholdNotReached, "input %d has a multi address (%T) but the threshold of valid unlocks was not reached %d < %d", inputIndex, addr, cumulativeUnlockedWeight, addr.Threshold)
+		return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockThresholdNotReached, "input %d has a multi address but the threshold of valid unlocks was not reached %d < %d", inputIndex, cumulativeUnlockedWeight, addr.Threshold)
 	}
 
 	// for multi addresses we don't "unlock" the signatures, only the multi address itself so it can be used for a referential unlock.
@@ -425,10 +424,7 @@ type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 // ValidateUnlocks produces the UnlockedAddresses which will be set into the given Params and verifies that inputs are
 // correctly unlocked and that the inputs commitment matches.
 func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs ResolvedInputs) (unlockedAddrs UnlockedAddresses, err error) {
-	utxoInputs, err := signedTransaction.Transaction.Inputs()
-	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to get inputs from transaction")
-	}
+	utxoInputs := signedTransaction.Transaction.Inputs()
 
 	var inputs iotago.Outputs[iotago.Output]
 	for _, input := range utxoInputs {
@@ -437,12 +433,12 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 
 	txID, err := signedTransaction.Transaction.ID()
 	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to compute transaction ID")
+		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err.Error()))
 	}
 
 	essenceMsgToSign, err := signedTransaction.Transaction.SigningMessage()
 	if err != nil {
-		return nil, ierrors.Wrapf(err, "failed to compute signing message")
+		panic(fmt.Sprintf("signing message computation should have succeeded: %s", err.Error()))
 	}
 
 	unlockedAddrsSet := &unlockedAddressesSet{
@@ -626,11 +622,11 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 			}
 
 			if err := unlockedAddrsSet.MultiUnlock(owner, uBlock, essenceMsgToSign, inputIndex); err != nil {
-				return ierrors.Join(iotago.ErrMultiAddressUnlockInvalid, err)
+				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "%w", err)
 			}
 
 		default:
-			return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d has a multi address (%T) but its corresponding unlock is of type %T", inputIndex, owner, unlock)
+			return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "input %d has a multi address but its corresponding unlock is of type %s", inputIndex, unlock.Type())
 		}
 
 	default:
@@ -654,7 +650,7 @@ func resolveUnderlyingAddress(addr iotago.Address) iotago.Address {
 func unlockOutput(transaction *iotago.Transaction, commitmentInput VMCommitmentInput, input iotago.Output, unlock iotago.Unlock, inputIndex uint16, unlockedAddrsSet *unlockedAddressesSet, outChains iotago.ChainOutputSet, essenceMsgToSign []byte) error {
 	ownerAddr, err := addressToUnlock(transaction, input, inputIndex, outChains)
 	if err != nil {
-		return ierrors.Errorf("unable to retrieve address to unlock of input %d: %w", inputIndex, err)
+		return ierrors.Wrapf(err, "unable to retrieve address to unlock of input %d", inputIndex)
 	}
 
 	if actualAddrToUnlock, err := checkExpiration(input, commitmentInput, transaction.API.ProtocolParameters()); err != nil {
@@ -693,7 +689,7 @@ func ExecFuncBalancedMana() ExecFunc {
 		txCreationSlot := vmParams.WorkingSet.Tx.CreationSlot
 		for outputID := range vmParams.WorkingSet.UTXOInputsSet {
 			if outputID.CreationSlot() > txCreationSlot {
-				return ierrors.Wrapf(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlot(), txCreationSlot)
+				return ierrors.WithMessagef(iotago.ErrInputCreationAfterTxCreation, "input %s has creation slot %d, tx creation slot %d", outputID, outputID.CreationSlot(), txCreationSlot)
 			}
 		}
 		manaIn := vmParams.WorkingSet.TotalManaIn
@@ -701,11 +697,11 @@ func ExecFuncBalancedMana() ExecFunc {
 
 		if manaIn < manaOut {
 			// less mana on input side than on output side => not allowed
-			return ierrors.Wrapf(iotago.ErrInputOutputManaMismatch, "Mana in %d, Mana out %d", manaIn, manaOut)
+			return ierrors.WithMessagef(iotago.ErrInputOutputManaMismatch, "Mana in %d, Mana out %d", manaIn, manaOut)
 		} else if manaIn > manaOut {
 			// less mana on output side than on input side => check if mana burning is allowed
 			if vmParams.WorkingSet.Tx.Capabilities.CannotBurnMana() {
-				return ierrors.Join(iotago.ErrInputOutputManaMismatch, iotago.ErrTxCapabilitiesManaBurningNotAllowed)
+				return ierrors.WithMessagef(iotago.ErrInputOutputManaMismatch, "%w", iotago.ErrTxCapabilitiesManaBurningNotAllowed)
 			}
 		}
 
@@ -753,16 +749,16 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 		}
 
 		if in != out {
-			return ierrors.Wrapf(iotago.ErrInputOutputBaseTokenMismatch, "in %d, out %d", in, out)
+			return ierrors.WithMessagef(iotago.ErrInputOutputBaseTokenMismatch, "in %d, out %d", in, out)
 		}
 
 		for addr, returnSum := range inputSumReturnAmountPerAddress {
 			outSum, has := outputSimpleTransfersPerAddr[addr]
 			if !has {
-				return ierrors.Wrapf(iotago.ErrReturnAmountNotFulFilled, "return amount of %d not fulfilled as there is no output for %s", returnSum, addr)
+				return ierrors.WithMessagef(iotago.ErrReturnAmountNotFulFilled, "return amount of %d not fulfilled as there is no output for address (serialized) %s", returnSum, hexutil.EncodeHex([]byte(addr)))
 			}
 			if outSum < returnSum {
-				return ierrors.Wrapf(iotago.ErrReturnAmountNotFulFilled, "return amount of %d not fulfilled as output is only %d for %s", returnSum, outSum, addr)
+				return ierrors.WithMessagef(iotago.ErrReturnAmountNotFulFilled, "return amount of %d not fulfilled as output is only %d for address (serialized) %s", returnSum, outSum, hexutil.EncodeHex([]byte(addr)))
 			}
 		}
 
@@ -773,7 +769,7 @@ func ExecFuncBalancedBaseTokens() ExecFunc {
 // ExecFuncTimelocks validates that the inputs' timelocks are expired.
 func ExecFuncTimelocks() ExecFunc {
 	return func(_ VirtualMachine, vmParams *Params) error {
-		for inputIndex, input := range vmParams.WorkingSet.UTXOInputsSet {
+		for inputID, input := range vmParams.WorkingSet.UTXOInputsSet {
 			if input.UnlockConditionSet().HasTimelockCondition() {
 				commitment := vmParams.WorkingSet.Commitment
 
@@ -782,7 +778,7 @@ func ExecFuncTimelocks() ExecFunc {
 				}
 				futureBoundedIndex := vmParams.FutureBoundedSlotIndex(commitment.Slot)
 				if err := input.UnlockConditionSet().TimelocksExpired(futureBoundedIndex); err != nil {
-					return ierrors.Wrapf(err, "input at index %d's timelocks are not expired", inputIndex)
+					return ierrors.Wrapf(err, "timelock of input %s is not expired", inputID.ToHex())
 				}
 			}
 		}
@@ -798,13 +794,13 @@ func ExecFuncChainTransitions() ExecFunc {
 			next := vmParams.WorkingSet.OutChains[chainID]
 			if next == nil {
 				if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeDestroy, inputChain, nil); err != nil {
-					return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "input chain %s (%T) destruction transition failed", chainID, inputChain))
+					return ierrors.Wrapf(err, "invalid destruction for %s %s", inputChain.Output.Type(), chainID)
 				}
 
 				continue
 			}
 			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeStateChange, inputChain, next); err != nil {
-				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "chain %s (%T) state transition failed", chainID, inputChain))
+				return ierrors.Wrapf(err, "invalid transition for %s %s", inputChain.Output.Type(), chainID)
 			}
 		}
 
@@ -814,7 +810,7 @@ func ExecFuncChainTransitions() ExecFunc {
 			}
 
 			if err := vm.ChainSTVF(vmParams, iotago.ChainTransitionTypeGenesis, nil, outputChain); err != nil {
-				return ierrors.Join(iotago.ErrChainTransitionInvalid, ierrors.Wrapf(err, "new chain %s (%T) state transition failed", chainID, outputChain))
+				return ierrors.Wrapf(err, "invalid creation of %s %s", outputChain.Type(), chainID)
 			}
 		}
 
@@ -831,12 +827,12 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 		var err error
 		vmParams.WorkingSet.InNativeTokens, err = vmParams.WorkingSet.UTXOInputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, ierrors.Errorf("invalid input native token set: %w", err))
+			return ierrors.WithMessagef(iotago.ErrNativeTokenSetInvalid, "invalid input native token set: %w", err)
 		}
 
 		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Outputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.Join(iotago.ErrNativeTokenSetInvalid, err)
+			return ierrors.WithMessagef(iotago.ErrNativeTokenSetInvalid, "%w", err)
 		}
 
 		// check invariants for when token foundry is absent
@@ -850,10 +846,10 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 			if vmParams.WorkingSet.Tx.Capabilities.CannotBurnNativeTokens() && (outSum == nil || inSum.Cmp(outSum) != 0) {
 				// if burning is not allowed, the input sum must be equal to the output sum
-				return ierrors.Wrapf(iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed, "%w: native token %s is less on output (%d) than input (%d) side but burning is not allowed in the transaction and the foundry is absent for melting", iotago.ErrNativeTokenSumUnbalanced, nativeTokenID, outSum, inSum)
+				return ierrors.WithMessagef(iotago.ErrTxCapabilitiesNativeTokenBurningNotAllowed, "%w: native token %s is less on output (%d) than input (%d) side but burning is not allowed in the transaction and the foundry is absent for melting", iotago.ErrNativeTokenSumUnbalanced, nativeTokenID, outSum, inSum)
 			} else if (outSum != nil) && (inSum.Cmp(outSum) == -1) {
 				// input sum must be greater equal the output sum (burning allows it to be greater)
-				return ierrors.Wrapf(iotago.ErrNativeTokenSumUnbalanced, "native token %s is less on input (%d) than output (%d) side but the foundry is absent for minting", nativeTokenID, inSum, outSum)
+				return ierrors.WithMessagef(iotago.ErrNativeTokenSumUnbalanced, "native token %s is less on input (%d) than output (%d) side but the foundry is absent for minting", nativeTokenID, inSum, outSum)
 			}
 		}
 
@@ -865,7 +861,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 			// foundry must be present when native tokens only reside on the output side
 			// as they need to get minted by it within the tx
 			if vmParams.WorkingSet.InNativeTokens[nativeTokenID] == nil {
-				return ierrors.Wrapf(iotago.ErrNativeTokenSumUnbalanced, "native token %s is new on the output side but the foundry is not transitioning", nativeTokenID)
+				return ierrors.WithMessagef(iotago.ErrNativeTokenSumUnbalanced, "native token %s is new on the output side but the foundry is not transitioning", nativeTokenID)
 			}
 		}
 

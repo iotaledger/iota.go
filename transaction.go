@@ -26,7 +26,7 @@ var (
 	// ErrTxEssenceNetworkIDInvalid gets returned when a network ID within a Transaction is invalid.
 	ErrTxEssenceNetworkIDInvalid = ierrors.New("invalid network ID")
 	// ErrTxEssenceCapabilitiesInvalid gets returned when the capabilities within a Transaction are invalid.
-	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid capabilities")
+	ErrTxEssenceCapabilitiesInvalid = ierrors.New("invalid transaction capabilities")
 	// ErrInputUTXORefsNotUnique gets returned if multiple inputs reference the same UTXO.
 	ErrInputUTXORefsNotUnique = ierrors.New("inputs must each reference a unique UTXO")
 	// ErrInputRewardIndexExceedsMaxInputsCount gets returned if a reward input references an index greater than max inputs count.
@@ -72,12 +72,12 @@ type Transaction struct {
 func (t *Transaction) ID() (TransactionID, error) {
 	transactionCommitment, err := t.TransactionCommitment()
 	if err != nil {
-		return EmptyTransactionID, ierrors.Errorf("can't compute transaction commitment: %w", err)
+		return EmptyTransactionID, ierrors.Wrap(err, "failed to compute transaction commitment")
 	}
 
 	outputCommitment, err := t.OutputCommitment()
 	if err != nil {
-		return TransactionID{}, ierrors.Errorf("can't compute output commitment: %w", err)
+		return TransactionID{}, ierrors.Wrap(err, "failed to compute output commitment")
 	}
 
 	return TransactionIDFromTransactionCommitmentAndOutputCommitment(t.CreationSlot, transactionCommitment, outputCommitment), nil
@@ -101,7 +101,7 @@ func TransactionIDFromTransactionCommitmentAndOutputCommitment(slot SlotIndex, t
 func (t *Transaction) TransactionCommitment() (Identifier, error) {
 	essenceBytes, err := t.API.Encode(t.TransactionEssence)
 	if err != nil {
-		return EmptyIdentifier, ierrors.Errorf("can't compute essence bytes: %w", err)
+		return EmptyIdentifier, ierrors.Wrap(err, "failed to serialize transaction essence")
 	}
 
 	return IdentifierFromData(essenceBytes), nil
@@ -133,18 +133,22 @@ func (t *Transaction) Clone() *Transaction {
 	}
 }
 
-func (t *Transaction) Inputs() ([]*UTXOInput, error) {
+func (t *Transaction) Inputs() []*UTXOInput {
 	references := make([]*UTXOInput, 0, len(t.TransactionEssence.Inputs))
 	for _, input := range t.TransactionEssence.Inputs {
 		switch castInput := input.(type) {
 		case *UTXOInput:
 			references = append(references, castInput)
 		default:
-			return nil, ErrUnknownInputType
+			// We're switching on the Go input type here, so we can only run into the default case
+			// if we added a new input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported input types should be handled above")
 		}
 	}
 
-	return references, nil
+	return references
 }
 
 // OutputsSet returns an OutputSet from the Transaction's outputs, mapped by their OutputID.
@@ -161,21 +165,25 @@ func (t *Transaction) OutputsSet() (OutputSet, error) {
 	return set, nil
 }
 
-func (t *Transaction) ContextInputs() (TransactionContextInputs, error) {
+func (t *Transaction) ContextInputs() TransactionContextInputs {
 	references := make(TransactionContextInputs, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
 		case *CommitmentInput, *BlockIssuanceCreditInput, *RewardInput:
 			references = append(references, castInput)
 		default:
-			return nil, ErrUnknownContextInputType
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported context input types should be handled above")
 		}
 	}
 
-	return references, nil
+	return references
 }
 
-func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
+func (t *Transaction) BICInputs() []*BlockIssuanceCreditInput {
 	references := make([]*BlockIssuanceCreditInput, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
@@ -184,14 +192,18 @@ func (t *Transaction) BICInputs() ([]*BlockIssuanceCreditInput, error) {
 		case *CommitmentInput, *RewardInput:
 			// ignore this type
 		default:
-			return nil, ErrUnknownContextInputType
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported context input types should be handled above")
 		}
 	}
 
-	return references, nil
+	return references
 }
 
-func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
+func (t *Transaction) RewardInputs() []*RewardInput {
 	references := make([]*RewardInput, 0, len(t.TransactionEssence.ContextInputs))
 	for _, input := range t.TransactionEssence.ContextInputs {
 		switch castInput := input.(type) {
@@ -200,11 +212,15 @@ func (t *Transaction) RewardInputs() ([]*RewardInput, error) {
 		case *CommitmentInput, *BlockIssuanceCreditInput:
 			// ignore this type
 		default:
-			return nil, ErrUnknownContextInputType
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported context input types should be handled above")
 		}
 	}
 
-	return references, nil
+	return references
 }
 
 // Returns the first commitment input in the transaction if it exists or nil.
@@ -216,7 +232,11 @@ func (t *Transaction) CommitmentInput() *CommitmentInput {
 		case *CommitmentInput:
 			return castInput
 		default:
-			return nil
+			// We're switching on the Go context input type here, so we can only run into the default case
+			// if we added a new context input type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported context input types should be handled above")
 		}
 	}
 

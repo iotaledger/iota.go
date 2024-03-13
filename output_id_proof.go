@@ -19,7 +19,7 @@ type OutputIDProof struct {
 
 func OutputIDProofFromTransaction(tx *Transaction, outputIndex uint16) (*OutputIDProof, error) {
 	if tx.API == nil {
-		return nil, ierrors.New("API not set")
+		panic("API on transaction not set")
 	}
 
 	transactionCommitment, err := tx.TransactionCommitment()
@@ -32,7 +32,7 @@ func OutputIDProofFromTransaction(tx *Transaction, outputIndex uint16) (*OutputI
 
 func NewOutputIDProof(api API, txCommitment Identifier, txCreationSlot SlotIndex, outputs TxEssenceOutputs, outputIndex uint16) (*OutputIDProof, error) {
 	if int(outputIndex) >= len(outputs) {
-		return nil, ierrors.Errorf("index %d out of bounds len=%d", outputIndex, len(outputs))
+		return nil, ierrors.Errorf("index %d out of bounds for outputs slice of len %d", outputIndex, len(outputs))
 	}
 
 	//nolint:nosnakecase // false positive
@@ -72,7 +72,7 @@ func (p *OutputIDProof) SetDeserializationContext(ctx context.Context) {
 
 func (p *OutputIDProof) OutputID(output Output) (OutputID, error) {
 	if p.API == nil {
-		return EmptyOutputID, ierrors.New("API not set")
+		panic("API on OutputIDProof not set")
 	}
 
 	//nolint:nosnakecase // false positive
@@ -85,7 +85,7 @@ func (p *OutputIDProof) OutputID(output Output) (OutputID, error) {
 
 	// The proof does not contain a hash of the output
 	if !contains {
-		return EmptyOutputID, ierrors.Errorf("proof does not contain the given output")
+		return EmptyOutputID, ierrors.New("proof does not contain the given output")
 	}
 
 	// Hash the proof to get the root

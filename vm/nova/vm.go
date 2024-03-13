@@ -42,19 +42,14 @@ func NewVMParamsWorkingSet(api iotago.API, t *iotago.Transaction, resolvedInputs
 		workingSet.InputIDToInputIndex[txInputID] = uint16(inputIndex)
 		input, ok := workingSet.UTXOInputsSet[txInputID]
 		if !ok {
-			return nil, ierrors.Wrapf(iotago.ErrMissingUTXO, "utxo for input %d not supplied", inputIndex)
+			panic(fmt.Sprintf("UTXO for input %d should be supplied %s", inputIndex, txInputID))
 		}
 		workingSet.UTXOInputs = append(workingSet.UTXOInputs, input)
 	}
 
-	workingSet.EssenceMsgToSign, err = t.SigningMessage()
-	if err != nil {
-		return nil, err
-	}
-
 	txID, err := workingSet.Tx.ID()
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("transaction ID computation should have succeeded: %s", err.Error()))
 	}
 
 	workingSet.InChains = utxoInputsSet.ChainInputSet()
@@ -161,7 +156,12 @@ func (novaVM *virtualMachine) ChainSTVF(vmParams *vm.Params, transType iotago.Ch
 			}
 		}
 
-		return implicitAccountSTVF(vmParams, castedInput, input.OutputID, nextAccount, transType)
+		err := implicitAccountSTVF(vmParams, castedInput, input.OutputID, nextAccount, transType)
+		if err != nil {
+			return ierrors.Wrapf(err, "transition failed for implicit account with output ID %s", input.OutputID.ToHex())
+		}
+
+		return nil
 
 	case *iotago.AnchorOutput:
 		var nextAnchor *iotago.AnchorOutput
@@ -255,32 +255,26 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := accountGenesisValid(vmParams, next, true); err != nil {
-			return ierrors.Wrapf(err, " account %s", next.AccountID)
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		if err := accountStateChangeValid(vmParams, input, next, isRemovingStakingFeature); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-			a := input.Output.(*iotago.AccountOutput)
-
-			return ierrors.Wrapf(err, "account %s", a.AccountID)
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		if err := accountDestructionValid(vmParams, input, isRemovingStakingFeature); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
-			a := input.Output.(*iotago.AccountOutput)
-
-			return ierrors.Wrapf(err, "account %s", a.AccountID)
+			return err
 		}
 	default:
 		panic("unknown chain transition type in AccountOutput")
 	}
 
 	if isClaimingRewards && !*isRemovingStakingFeature {
-		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingRewardClaimingInvalid)
+		return iotago.ErrStakingRewardClaimingInvalid
 	}
 
 	if !isClaimingRewards && *isRemovingStakingFeature {
-		return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingRewardInputMissing)
+		return iotago.ErrStakingRewardInputMissing
 	}
 
 	return nil
@@ -288,7 +282,7 @@ func accountSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 
 func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accountIDMustBeZeroed bool) error {
 	if accountIDMustBeZeroed && !next.AccountID.Empty() {
-		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
+		return iotago.ErrNewChainOutputHasNonZeroedID
 	}
 
 	if nextBlockIssuerFeat := next.FeatureSet().BlockIssuer(); nextBlockIssuerFeat != nil {
@@ -298,15 +292,13 @@ func accountGenesisValid(vmParams *vm.Params, next *iotago.AccountOutput, accoun
 
 		pastBoundedSlot := vmParams.PastBoundedSlotIndex(vmParams.WorkingSet.Commitment.Slot)
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	}
 
 	if stakingFeat := next.FeatureSet().Staking(); stakingFeat != nil {
 		if err := accountStakingGenesisValidation(vmParams, stakingFeat); err != nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, err)
+			return err
 		}
 	}
 
@@ -317,10 +309,9 @@ func accountStateChangeValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
 	current := input.Output.(*iotago.AccountOutput)
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return ierrors.Join(iotago.ErrInvalidAccountStateTransition,
-			ierrors.WithMessagef(
-				iotago.ErrChainOutputImmutableFeaturesChanged, "old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
-			))
+		return ierrors.WithMessagef(
+			iotago.ErrChainOutputImmutableFeaturesChanged, "old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
+		)
 	}
 
 	// If a Block Issuer Feature is present on the input side of the transaction,
@@ -356,7 +347,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if vmParams.WorkingSet.Commitment == nil {
-		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
+		return iotago.ErrBlockIssuerCommitmentInputMissing
 	}
 
 	commitmentInputSlot := vmParams.WorkingSet.Commitment.Slot
@@ -365,23 +356,17 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	if currentBlockIssuerFeat != nil && currentBlockIssuerFeat.ExpirySlot >= commitmentInputSlot {
 		// if the block issuer feature has not expired, it can not be removed.
 		if nextBlockIssuerFeat == nil {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "(current slot: %d, expiry slot: %d)", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "commitment slot: %d, expiry slot: %d", commitmentInputSlot, currentBlockIssuerFeat.ExpirySlot)
 		}
 		if nextBlockIssuerFeat.ExpirySlot != currentBlockIssuerFeat.ExpirySlot && nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	} else if nextBlockIssuerFeat != nil {
 		// The block issuer feature was newly added,
 		// or the current feature has expired but it was not removed.
 		// In both cases the expiry slot must be set sufficiently far in the future.
 		if nextBlockIssuerFeat.ExpirySlot < pastBoundedSlot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "(is %d, must be >= %d)", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerExpiryTooEarly, "is %d, must be >= %d", nextBlockIssuerFeat.ExpirySlot, pastBoundedSlot)
 		}
 	}
 
@@ -439,9 +424,7 @@ func accountBlockIssuerSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, c
 	}
 
 	if manaIn < manaOut {
-		return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-			ierrors.WithMessagef(iotago.ErrManaMovedOffBlockIssuerAccount, "mana in %d, mana out %d", manaIn, manaOut),
-		)
+		return ierrors.WithMessagef(iotago.ErrManaMovedOffBlockIssuerAccount, "mana in %d, mana out %d", manaIn, manaOut)
 	}
 
 	return nil
@@ -455,7 +438,7 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingCommitmentInputMissing)
+			return iotago.ErrStakingCommitmentInputMissing
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -499,7 +482,7 @@ func accountStakingGenesisValidation(vmParams *vm.Params, stakingFeat *iotago.St
 
 	unbondingEpoch := pastBoundedEpoch + vmParams.API.ProtocolParameters().StakingUnbondingPeriod()
 	if stakingFeat.EndEpoch < unbondingEpoch {
-		return ierrors.Wrapf(iotago.ErrStakingEndEpochTooEarly, "(i.e. end epoch %d should be >= %d)", stakingFeat.EndEpoch, unbondingEpoch)
+		return ierrors.WithMessagef(iotago.ErrStakingEndEpochTooEarly, "end epoch %d should be >= %d", stakingFeat.EndEpoch, unbondingEpoch)
 	}
 
 	return nil
@@ -513,18 +496,18 @@ func accountStakingNonExpiredValidation(
 	earliestUnbondingEpoch iotago.EpochIndex,
 ) error {
 	if nextStakingFeat == nil {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingFeatureRemovedBeforeUnbonding)
+		return iotago.ErrStakingFeatureRemovedBeforeUnbonding
 	}
 
 	if currentStakingFeat.StakedAmount != nextStakingFeat.StakedAmount ||
 		currentStakingFeat.FixedCost != nextStakingFeat.FixedCost ||
 		currentStakingFeat.StartEpoch != nextStakingFeat.StartEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w", iotago.ErrStakingFeatureModifiedBeforeUnbonding)
+		return iotago.ErrStakingFeatureModifiedBeforeUnbonding
 	}
 
 	if currentStakingFeat.EndEpoch != nextStakingFeat.EndEpoch &&
 		nextStakingFeat.EndEpoch < earliestUnbondingEpoch {
-		return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w (i.e. end epoch %d should be >= %d) or the end epoch must match on input and output side", iotago.ErrStakingEndEpochTooEarly, nextStakingFeat.EndEpoch, earliestUnbondingEpoch)
+		return ierrors.WithMessagef(iotago.ErrStakingEndEpochTooEarly, "end epoch %d should be >= %d or the end epoch must match on input and output side", nextStakingFeat.EndEpoch, earliestUnbondingEpoch)
 	}
 
 	return nil
@@ -543,7 +526,7 @@ func accountStakingExpiredValidation(
 	} else if !currentStakingFeat.Equal(nextStakingFeat) {
 		// If an expired feature is changed it must be transitioned as if newly added.
 		if err := accountStakingGenesisValidation(vmParams, nextStakingFeat); err != nil {
-			return ierrors.Wrapf(iotago.ErrInvalidStakingTransition, "%w: rewards claiming without removing the feature requires updating the feature", err)
+			return ierrors.Wrap(err, "rewards claiming without removing the feature requires updating the feature")
 		}
 		// If staking feature genesis validation succeeds, the start epoch has been reset which means the new epoch range
 		// is disjoint from the current staking feature's, which can therefore be considered as removing and re-adding
@@ -556,10 +539,9 @@ func accountStakingExpiredValidation(
 
 func accountFoundryCounterSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next *iotago.AccountOutput) error {
 	if current.FoundryCounter > next.FoundryCounter {
-		return ierrors.Join(iotago.ErrInvalidAccountStateTransition,
-			ierrors.WithMessagef(iotago.ErrAccountInvalidFoundryCounter,
-				"foundry counter of next state is less than previous, in %d / out %d", current.FoundryCounter, next.FoundryCounter,
-			))
+		return ierrors.WithMessagef(iotago.ErrAccountInvalidFoundryCounter,
+			"foundry counter of next state is less than previous, in %d / out %d", current.FoundryCounter, next.FoundryCounter,
+		)
 	}
 
 	// check that for a foundry counter change, X amount of foundries were actually created
@@ -588,12 +570,11 @@ func accountFoundryCounterSTVF(vmParams *vm.Params, current *iotago.AccountOutpu
 
 	expectedNewFoundriesCount := next.FoundryCounter - current.FoundryCounter
 	if expectedNewFoundriesCount != seenNewFoundriesOfAccount {
-		return ierrors.Join(iotago.ErrInvalidAccountStateTransition,
-			ierrors.WithMessagef(iotago.ErrAccountInvalidFoundryCounter,
-				"%d new foundries were created but the account output's foundry counter changed by %d",
-				seenNewFoundriesOfAccount,
-				expectedNewFoundriesCount,
-			))
+		return ierrors.WithMessagef(iotago.ErrAccountInvalidFoundryCounter,
+			"%d new foundries were created but the account output's foundry counter changed by %d",
+			seenNewFoundriesOfAccount,
+			expectedNewFoundriesCount,
+		)
 	}
 
 	return nil
@@ -601,7 +582,7 @@ func accountFoundryCounterSTVF(vmParams *vm.Params, current *iotago.AccountOutpu
 
 func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, isRemovingStakingFeature *bool) error {
 	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyAccountOutputs() {
-		return ierrors.Join(iotago.ErrInvalidAccountStateTransition, iotago.ErrTxCapabilitiesAccountDestructionNotAllowed)
+		return iotago.ErrTxCapabilitiesAccountDestructionNotAllowed
 	}
 
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
@@ -610,14 +591,12 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 	blockIssuerFeat := outputToDestroy.FeatureSet().BlockIssuer()
 	if blockIssuerFeat != nil {
 		if vmParams.WorkingSet.Commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition, iotago.ErrBlockIssuerCommitmentInputMissing)
+			return iotago.ErrBlockIssuerCommitmentInputMissing
 		}
 
 		if blockIssuerFeat.ExpirySlot >= vmParams.WorkingSet.Commitment.Slot {
-			return ierrors.Join(iotago.ErrInvalidBlockIssuerTransition,
-				ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "(current slot: %d, expiry slot: %d)",
-					vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot),
-			)
+			return ierrors.WithMessagef(iotago.ErrBlockIssuerNotExpired, "commitment slot: %d, expiry slot: %d",
+				vmParams.WorkingSet.Commitment.Slot, blockIssuerFeat.ExpirySlot)
 		}
 
 		if err := accountBlockIssuanceCreditLocked(input, vmParams.WorkingSet.BIC); err != nil {
@@ -631,7 +610,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 		// which also requires a commitment input.
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
-			return ierrors.Join(iotago.ErrInvalidStakingTransition, iotago.ErrStakingCommitmentInputMissing)
+			return iotago.ErrStakingCommitmentInputMissing
 		}
 
 		timeProvider := vmParams.API.TimeProvider()
@@ -640,7 +619,7 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 
 		if futureBoundedEpoch <= stakingFeat.EndEpoch {
 			return ierrors.WithMessagef(
-				iotago.ErrStakingFeatureRemovedBeforeUnbonding, "(current epoch is %d, must be > %d)", futureBoundedEpoch, stakingFeat.EndEpoch,
+				iotago.ErrStakingFeatureRemovedBeforeUnbonding, "future bounded epoch is %d, must be > %d", futureBoundedEpoch, stakingFeat.EndEpoch,
 			)
 		}
 
@@ -653,14 +632,14 @@ func accountDestructionValid(vmParams *vm.Params, input *vm.ChainOutputWithIDs, 
 func accountBlockIssuanceCreditLocked(input *vm.ChainOutputWithIDs, bicSet vm.BlockIssuanceCreditInputSet) error {
 	accountID, is := input.ChainID.(iotago.AccountID)
 	if !is {
-		return ierrors.Wrapf(iotago.ErrBlockIssuanceCreditInputMissing, "cannot convert chain ID %s to account ID",
+		return ierrors.WithMessagef(iotago.ErrBlockIssuanceCreditInputMissing, "cannot convert chain ID %s to account ID",
 			input.ChainID.ToHex())
 	}
 
 	if bic, exists := bicSet[accountID]; !exists {
 		return iotago.ErrBlockIssuanceCreditInputMissing
 	} else if bic < 0 {
-		return ierrors.Wrapf(iotago.ErrAccountLocked, "cannot destroy locked account with ID %s", accountID.ToHex())
+		return iotago.ErrAccountLocked
 	}
 
 	return nil
@@ -676,21 +655,15 @@ func anchorSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iot
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := anchorGenesisValid(vmParams, next, true); err != nil {
-			return ierrors.Wrapf(err, " anchor %s", next.AnchorID)
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
-		if err := anchorStateChangeValid(input, next); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
-			a := input.Output.(*iotago.AnchorOutput)
-
-			return ierrors.Wrapf(err, "anchor %s", a.AnchorID)
+		if err := anchorStateChangeValid(input, next, vmParams); err != nil {
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		if err := anchorDestructionValid(vmParams); err != nil {
-			//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
-			a := input.Output.(*iotago.AnchorOutput)
-
-			return ierrors.Wrapf(err, "anchor %s", a.AnchorID)
+			return err
 		}
 	default:
 		panic("unknown chain transition type in AnchorOutput")
@@ -707,7 +680,7 @@ func anchorGenesisValid(vmParams *vm.Params, current *iotago.AnchorOutput, ancho
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedAddrs)
 }
 
-func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
+func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	current := input.Output.(*iotago.AnchorOutput)
 
@@ -729,7 +702,7 @@ func anchorStateChangeValid(input *vm.ChainOutputWithIDs, next *iotago.AnchorOut
 		return anchorGovernanceSTVF(input, next)
 	}
 
-	return anchorStateSTVF(input, next)
+	return anchorStateSTVF(input, next, vmParams)
 }
 
 func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
@@ -738,32 +711,40 @@ func anchorGovernanceSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutpu
 
 	switch {
 	case current.Amount != next.Amount:
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidGovernanceTransition, "amount changed, in %d / out %d ", current.Amount, next.Amount)
 	case current.StateIndex != next.StateIndex:
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidGovernanceTransition, "state index changed, in %d / out %d", current.StateIndex, next.StateIndex)
 	}
 
 	if err := iotago.FeatureUnchanged(iotago.FeatureStateMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidGovernanceTransition, "%w", err)
+		return ierrors.Join(iotago.ErrAnchorInvalidGovernanceTransition, err)
 	}
 
 	return nil
 }
 
-func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput) error {
+func anchorStateSTVF(input *vm.ChainOutputWithIDs, next *iotago.AnchorOutput, vmParams *vm.Params) error {
 	//nolint:forcetypeassert // we can safely assume that this is an AnchorOutput
 	current := input.Output.(*iotago.AnchorOutput)
 	switch {
 	case !current.StateController().Equal(next.StateController()):
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "state controller changed, in %v / out %v", current.StateController(), next.StateController())
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition,
+			"state controller changed, in %s / out %s",
+			current.StateController().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+			next.StateController().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+		)
 	case !current.GovernorAddress().Equal(next.GovernorAddress()):
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "governance controller changed, in %v / out %v", current.GovernorAddress(), next.GovernorAddress())
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition,
+			"governance controller changed, in %s / out %s",
+			current.GovernorAddress().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+			next.GovernorAddress().Bech32(vmParams.API.ProtocolParameters().Bech32HRP()),
+		)
 	case current.StateIndex+1 != next.StateIndex:
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
+		return ierrors.WithMessagef(iotago.ErrAnchorInvalidStateTransition, "state index %d on the input side but %d on the output side", current.StateIndex, next.StateIndex)
 	}
 
 	if err := iotago.FeatureUnchanged(iotago.FeatureMetadata, current.Features.MustSet(), next.Features.MustSet()); err != nil {
-		return ierrors.Wrapf(iotago.ErrAnchorInvalidStateTransition, "%w", err)
+		return ierrors.Join(iotago.ErrAnchorInvalidStateTransition, err)
 	}
 
 	return nil
@@ -784,19 +765,19 @@ func foundrySTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType io
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := foundryGenesisValid(vmParams, next, next.MustFoundryID(), outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", next.MustFoundryID(), next.MustNativeTokenID())
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryStateChangeValid(current, next, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		//nolint:forcetypeassert // we can safely assume that this is a FoundryOutput
 		current := input.Output.(*iotago.FoundryOutput)
 		if err := foundryDestructionValid(vmParams, current, inSums, outSums); err != nil {
-			return ierrors.Wrapf(err, "foundry %s, token %s", current.MustFoundryID(), current.MustNativeTokenID())
+			return err
 		}
 	default:
 		panic("unknown chain transition type in FoundryOutput")
@@ -816,18 +797,16 @@ func foundryGenesisValid(vmParams *vm.Params, current *iotago.FoundryOutput, thi
 	accountID := current.Owner().(*iotago.AccountAddress).AccountID()
 	inAccount, ok := vmParams.WorkingSet.InChains[accountID]
 	if !ok {
-		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
-			ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-				"missing input transitioning account output %s for new foundry output %s", accountID, thisFoundryID,
-			))
+		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
+			"missing input transitioning account output %s for new foundry output %s", accountID, thisFoundryID.ToHex(),
+		)
 	}
 
 	outAccount, ok := vmParams.WorkingSet.OutChains[accountID]
 	if !ok {
-		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
-			ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
-				"missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID,
-			))
+		return ierrors.WithMessagef(iotago.ErrFoundryTransitionWithoutAccount,
+			"missing output transitioning account output %s for new foundry output %s", accountID, thisFoundryID.ToHex(),
+		)
 	}
 
 	//nolint:forcetypeassert // we can safely assume that this is an AccountOutput
@@ -839,11 +818,10 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 	startSerial := inAccount.FoundryCounter
 	endIncSerial := outAccount.FoundryCounter
 	if startSerial >= current.SerialNumber || current.SerialNumber > endIncSerial {
-		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
-			ierrors.WithMessagef(
-				iotago.ErrFoundrySerialInvalid,
-				"new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID, current.SerialNumber, startSerial, endIncSerial,
-			))
+		return ierrors.WithMessagef(
+			iotago.ErrFoundrySerialInvalid,
+			"new foundry output %s's serial number %d is not between the foundry counter interval of [%d,%d)", thisFoundryID.ToHex(), current.SerialNumber, startSerial, endIncSerial,
+		)
 	}
 
 	// OPTIMIZE: this loop happens on every STVF of every new foundry output
@@ -873,11 +851,10 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 		}
 
 		if otherFoundryOutput.SerialNumber >= current.SerialNumber {
-			return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
-				ierrors.WithMessagef(
-					iotago.ErrFoundrySerialInvalid,
-					"new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID, outputIndex, thisFoundryID,
-				))
+			return ierrors.WithMessagef(
+				iotago.ErrFoundrySerialInvalid,
+				"new foundry output %s at index %d has bigger equal serial number than this foundry %s", otherFoundryID.ToHex(), outputIndex, thisFoundryID.ToHex(),
+			)
 		}
 	}
 
@@ -886,11 +863,10 @@ func foundrySerialNumberValid(vmParams *vm.Params, current *iotago.FoundryOutput
 
 func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum) error {
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition,
-			ierrors.WithMessagef(
-				iotago.ErrChainOutputImmutableFeaturesChanged,
-				"old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
-			))
+		return ierrors.WithMessagef(
+			iotago.ErrChainOutputImmutableFeaturesChanged,
+			"old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
+		)
 	}
 
 	// the check for the serial number and token scheme not being mutated is implicit
@@ -898,7 +874,7 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 	// no matching foundry to be found to validate the state transition against
 	if current.MustFoundryID() != next.MustFoundryID() {
 		// impossible invariant as the STVF should be called via the matching next foundry output
-		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %v got %v", current.MustFoundryID(), next.MustFoundryID()))
+		panic(fmt.Sprintf("foundry IDs mismatch in state transition validation function: have %s got %s", current.MustFoundryID().ToHex(), next.MustFoundryID().ToHex()))
 	}
 
 	nativeTokenID := current.MustNativeTokenID()
@@ -908,7 +884,7 @@ func foundryStateChangeValid(current *iotago.FoundryOutput, next *iotago.Foundry
 
 func foundryDestructionValid(vmParams *vm.Params, current *iotago.FoundryOutput, inSums iotago.NativeTokenSum, outSums iotago.NativeTokenSum) error {
 	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyFoundryOutputs() {
-		return ierrors.Join(iotago.ErrInvalidFoundryStateTransition, iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed)
+		return iotago.ErrTxCapabilitiesFoundryDestructionNotAllowed
 	}
 
 	nativeTokenID := current.MustNativeTokenID()
@@ -920,19 +896,17 @@ func nftSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := nftGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", next.NFTID)}
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
 		current := input.Output.(*iotago.NFTOutput)
 		if err := nftStateChangeValid(current, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
-		//nolint:forcetypeassert // we can safely assume that this is an NFTOutput
-		current := input.Output.(*iotago.NFTOutput)
 		if err := nftDestructionValid(vmParams); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("NFT %s", current.NFTID)}
+			return err
 		}
 	default:
 		panic("unknown chain transition type in NFTOutput")
@@ -943,7 +917,7 @@ func nftSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType iotago
 
 func nftGenesisValid(vmParams *vm.Params, current *iotago.NFTOutput) error {
 	if !current.NFTID.Empty() {
-		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrNewChainOutputHasNonZeroedID)
+		return iotago.ErrNewChainOutputHasNonZeroedID
 	}
 
 	return vm.IsIssuerOnOutputUnlocked(current, vmParams.WorkingSet.UnlockedAddrs)
@@ -951,10 +925,9 @@ func nftGenesisValid(vmParams *vm.Params, current *iotago.NFTOutput) error {
 
 func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) error {
 	if !current.ImmutableFeatures.Equal(next.ImmutableFeatures) {
-		return ierrors.Join(iotago.ErrInvalidNFTStateTransition,
-			ierrors.WithMessagef(iotago.ErrChainOutputImmutableFeaturesChanged,
-				"old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
-			))
+		return ierrors.WithMessagef(iotago.ErrChainOutputImmutableFeaturesChanged,
+			"old state %s, next state %s", current.ImmutableFeatures, next.ImmutableFeatures,
+		)
 	}
 
 	return nil
@@ -962,7 +935,7 @@ func nftStateChangeValid(current *iotago.NFTOutput, next *iotago.NFTOutput) erro
 
 func nftDestructionValid(vmParams *vm.Params) error {
 	if vmParams.WorkingSet.Tx.Capabilities.CannotDestroyNFTOutputs() {
-		return ierrors.Join(iotago.ErrInvalidNFTStateTransition, iotago.ErrTxCapabilitiesNFTDestructionNotAllowed)
+		return iotago.ErrTxCapabilitiesNFTDestructionNotAllowed
 	}
 
 	return nil
@@ -972,22 +945,22 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 	switch transType {
 	case iotago.ChainTransitionTypeGenesis:
 		if err := delegationGenesisValid(vmParams, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", next.DelegationID)}
+			return err
 		}
 	case iotago.ChainTransitionTypeStateChange:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if isClaiming {
-			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot claim rewards during delegation output transition", iotago.ErrDelegationRewardsClaimingInvalid)
+			return ierrors.WithMessage(iotago.ErrDelegationRewardsClaimingInvalid, "cannot claim rewards during delegation output transition")
 		}
 		//nolint:forcetypeassert // we can safely assume that this is an DelegationOutput
 		current := input.Output.(*iotago.DelegationOutput)
 		if err := delegationStateChangeValid(vmParams, current, next); err != nil {
-			return &iotago.ChainTransitionError{Inner: err, Msg: fmt.Sprintf("Delegation %s", current.DelegationID)}
+			return err
 		}
 	case iotago.ChainTransitionTypeDestroy:
 		_, isClaiming := vmParams.WorkingSet.Rewards[input.ChainID]
 		if !isClaiming {
-			return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w: cannot destroy delegation output without a rewards input", iotago.ErrDelegationRewardInputMissing)
+			return ierrors.WithMessage(iotago.ErrDelegationRewardInputMissing, "cannot destroy delegation output without a rewards input")
 		}
 
 		return nil
@@ -1000,7 +973,7 @@ func delegationSTVF(vmParams *vm.Params, input *vm.ChainOutputWithIDs, transType
 
 func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutput) error {
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid, iotago.ErrNewChainOutputHasNonZeroedID)
+		return iotago.ErrNewChainOutputHasNonZeroedID
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
@@ -1020,15 +993,15 @@ func delegationGenesisValid(vmParams *vm.Params, current *iotago.DelegationOutpu
 	}
 
 	if current.StartEpoch != expectedStartEpoch {
-		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w (is %d, expected %d)", iotago.ErrDelegationStartEpochInvalid, current.StartEpoch, expectedStartEpoch)
+		return ierrors.WithMessagef(iotago.ErrDelegationStartEpochInvalid, "is %d, expected %d", current.StartEpoch, expectedStartEpoch)
 	}
 
 	if current.DelegatedAmount != current.Amount {
-		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationAmountMismatch)
+		return iotago.ErrDelegationAmountMismatch
 	}
 
 	if current.EndEpoch != 0 {
-		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationEndEpochNotZero)
+		return iotago.ErrDelegationEndEpochNotZero
 	}
 
 	return nil
@@ -1038,16 +1011,15 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	// State transitioning a Delegation Output is always a transition to the delayed claiming state.
 	// Since they can only be transitioned once, the input will always need to have a zeroed ID.
 	if !current.DelegationID.Empty() {
-		return ierrors.Join(iotago.ErrDelegationTransitionInvalid,
-			ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
-				"delegation output can only be transitioned if it has a zeroed ID",
-			))
+		return ierrors.WithMessagef(iotago.ErrDelegationOutputTransitionedTwice,
+			"delegation output can only be transitioned if it has a zeroed ID",
+		)
 	}
 
 	if current.DelegatedAmount != next.DelegatedAmount ||
 		!current.ValidatorAddress.Equal(next.ValidatorAddress) ||
 		current.StartEpoch != next.StartEpoch {
-		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w", iotago.ErrDelegationModified)
+		return iotago.ErrDelegationModified
 	}
 
 	timeProvider := vmParams.API.TimeProvider()
@@ -1067,7 +1039,7 @@ func delegationStateChangeValid(vmParams *vm.Params, current *iotago.DelegationO
 	}
 
 	if next.EndEpoch != expectedEndEpoch {
-		return ierrors.Wrapf(iotago.ErrDelegationTransitionInvalid, "%w (is %d, expected %d)", iotago.ErrDelegationEndEpochInvalid, next.EndEpoch, expectedEndEpoch)
+		return ierrors.WithMessagef(iotago.ErrDelegationEndEpochInvalid, "is %d, expected %d", next.EndEpoch, expectedEndEpoch)
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package iotago
 import (
 	"crypto"
 	"crypto/ed25519"
+	"fmt"
 
 	"github.com/iotaledger/hive.go/ierrors"
 )
@@ -56,8 +57,10 @@ func NewAddressKeysForRestrictedEd25519Address(addr *RestrictedAddress, prvKey e
 	switch addr.Address.(type) {
 	case *Ed25519Address:
 		return AddressKeys{Address: addr, Keys: prvKey}, nil
+	case *ImplicitAccountCreationAddress:
+		panic("ImplicitAccountCreationAddress is not allowed in restricted addresses")
 	default:
-		return AddressKeys{}, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }
 
@@ -108,7 +111,7 @@ func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.Priva
 
 		prvKey, ok := maybePrvKey.(ed25519.PrivateKey)
 		if !ok {
-			return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
+			return nil, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, maybePrvKey)
 		}
 
 		return prvKey, nil
@@ -123,14 +126,14 @@ func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.Priva
 		case *Ed25519Address:
 			return privateKeyForEd25519Address(underlyingAddr)
 		default:
-			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the the address signer since it only handles addresses backed by keypairs", addr))
 		}
 
 	case *ImplicitAccountCreationAddress:
 		return privateKeyForEd25519Address(address)
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }
 
@@ -144,7 +147,7 @@ func (s *InMemoryAddressSigner) SignerUIDForAddress(addr Address) (Identifier, e
 
 	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
 	if !ok {
-		return EmptyIdentifier, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+		return EmptyIdentifier, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
 	}
 
 	// the UID is the blake2b 256 hash of the public key
@@ -155,12 +158,12 @@ func (s *InMemoryAddressSigner) SignerUIDForAddress(addr Address) (Identifier, e
 func (s *InMemoryAddressSigner) Sign(addr Address, msg []byte) (signature Signature, err error) {
 	prvKey, err := s.privateKeyForAddress(addr)
 	if err != nil {
-		return nil, ierrors.Errorf("can't sign message for address: %w", err)
+		return nil, ierrors.Wrap(err, "can't sign message for address")
 	}
 
 	ed25519PrvKey, ok := prvKey.(ed25519.PrivateKey)
 	if !ok {
-		return nil, ierrors.Wrapf(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
+		return nil, ierrors.WithMessagef(ErrAddressKeysWrongType, "Ed25519 address needs to have a %T private key mapped but got %T", ed25519.PrivateKey{}, prvKey)
 	}
 
 	ed25519Sig := &Ed25519Signature{}
@@ -183,12 +186,12 @@ func (s *InMemoryAddressSigner) EmptySignatureForAddress(addr Address) (signatur
 		case *Ed25519Address:
 			return &Ed25519Signature{}, nil
 		default:
-			return nil, ierrors.Wrapf(ErrUnknownAddrType, "unknown underlying address type %T in restricted address", addr)
+			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 		}
 	case *ImplicitAccountCreationAddress:
 		return &Ed25519Signature{}, nil
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %T", addr)
+		panic(fmt.Sprintf("address type %T is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 	}
 }

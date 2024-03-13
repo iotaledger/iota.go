@@ -21,8 +21,6 @@ const (
 )
 
 var (
-	ErrInvalidCommitmentIDLength = ierrors.New("invalid commitmentID length")
-
 	EmptyCommitmentID = CommitmentID{}
 )
 
@@ -54,10 +52,19 @@ func CommitmentIDFromHexString(hex string) (CommitmentID, error) {
 	return s, err
 }
 
+// IsValidCommitmentID returns an error if the passed bytes are not a valid CommitmentID, otherwise nil.
+func IsValidCommitmentID(b []byte) error {
+	if len(b) != CommitmentIDLength {
+		return ierrors.Errorf("invalid commitmentID length: expected %d bytes, got %d bytes", CommitmentIDLength, len(b))
+	}
+
+	return nil
+}
+
 // CommitmentIDFromBytes returns a new CommitmentID represented by the passed bytes.
 func CommitmentIDFromBytes(b []byte) (CommitmentID, int, error) {
 	if len(b) < CommitmentIDLength {
-		return EmptyCommitmentID, 0, ErrInvalidCommitmentIDLength
+		return EmptyCommitmentID, 0, ierrors.Errorf("invalid length for commitmentID, expected at least %d bytes, got %d bytes", CommitmentIDLength, len(b))
 	}
 
 	return CommitmentID(b), CommitmentIDLength, nil

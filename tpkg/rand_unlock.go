@@ -1,7 +1,6 @@
 package tpkg
 
 import (
-	"github.com/iotaledger/hive.go/ierrors"
 	iotago "github.com/iotaledger/iota.go/v4"
 )
 
@@ -30,7 +29,7 @@ func RandUnlock(allowEmptyUnlock bool) iotago.Unlock {
 	case iotago.UnlockEmpty:
 		return &iotago.EmptyUnlock{}
 	default:
-		panic(ierrors.Wrapf(iotago.ErrUnknownUnlockType, "type %d", unlockType))
+		panic("all supported unlock types should be handled above")
 	}
 }
 

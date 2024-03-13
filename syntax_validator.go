@@ -21,9 +21,9 @@ func LexicalOrderAndUniquenessValidator[T constraints.Comparable[T]]() ElementVa
 		} else {
 			switch (*prev).Compare(next) {
 			case 1:
-				return ierrors.Wrapf(ErrArrayValidationOrderViolatesLexicalOrder, "element %d should have been before element %d", index, prevIndex)
+				return ierrors.WithMessagef(ErrArrayValidationOrderViolatesLexicalOrder, "element %d should have been before element %d", index, prevIndex)
 			case 0:
-				return ierrors.Wrapf(ErrArrayValidationViolatesUniqueness, "element %d and element %d are duplicates", index, prevIndex)
+				return ierrors.WithMessagef(ErrArrayValidationViolatesUniqueness, "element %d and element %d are duplicates", index, prevIndex)
 			}
 
 			prev = &next

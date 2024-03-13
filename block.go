@@ -39,6 +39,7 @@ var (
 	ErrBlockMaxSizeExceeded               = ierrors.New("block exceeds the max size")
 	ErrCommitmentInputNewerThanCommitment = ierrors.New("a block cannot contain a commitment input with index newer than the commitment index")
 	ErrBlockNetworkIDInvalid              = ierrors.New("invalid network ID in block header")
+	ErrHighestSupportedVersionTooSmall    = ierrors.New("highest supported version must be greater equal the block's protocol version")
 )
 
 // BlockBodyType denotes a type of Block Body.
@@ -70,7 +71,7 @@ type BlockHeader struct {
 func (b *BlockHeader) Hash(api API) (Identifier, error) {
 	headerBytes, err := api.Encode(b)
 	if err != nil {
-		return Identifier{}, ierrors.Errorf("failed to serialize block header: %w", err)
+		return Identifier{}, ierrors.Wrap(err, "failed to serialize block header")
 	}
 
 	return blake2b.Sum256(headerBytes), nil
@@ -170,7 +171,7 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 	}
 
 	if edSig.PublicKey == [ed25519.PublicKeySize]byte{} {
-		return false, ierrors.New("empty publicKeys are invalid")
+		return false, ierrors.New("ed25519 public key must not be empty")
 	}
 
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
@@ -180,12 +181,12 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 func (b *Block) ID() (BlockID, error) {
 	data, err := b.API.Encode(b)
 	if err != nil {
-		return BlockID{}, ierrors.Errorf("can't compute block ID: %w", err)
+		return BlockID{}, ierrors.Wrap(err, "failed to compute blockID")
 	}
 
 	id, err := BlockIdentifierFromBlockBytes(data)
 	if err != nil {
-		return BlockID{}, err
+		return BlockID{}, ierrors.Wrap(err, "failed to compute blockID")
 	}
 
 	slot := b.API.TimeProvider().SlotFromTime(b.Header.IssuingTime)
@@ -256,12 +257,12 @@ func (b *Block) Size() int {
 func (b *Block) ManaCost(rmc Mana) (Mana, error) {
 	workScore, err := b.WorkScore()
 	if err != nil {
-		return 0, ierrors.Errorf("failed to calculate block workscore: %w", err)
+		return 0, ierrors.Wrap(err, "failed to calculate block workscore")
 	}
 
 	manaCost, err := ManaCost(rmc, workScore)
 	if err != nil {
-		return 0, ierrors.Errorf("failed to calculate mana cost: %w", err)
+		return 0, ierrors.Wrap(err, "failed to calculate block mana cost")
 	}
 
 	return manaCost, nil
@@ -270,16 +271,16 @@ func (b *Block) ManaCost(rmc Mana) (Mana, error) {
 // syntacticallyValidate syntactically validates the Block.
 func (b *Block) syntacticallyValidate() error {
 	if b.Size() > MaxBlockSize {
-		return ierrors.Wrapf(ErrBlockMaxSizeExceeded, "max size of a block is %d but got %d bytes", MaxBlockSize, b.Size())
+		return ierrors.WithMessagef(ErrBlockMaxSizeExceeded, "max size of a block is %d but got %d bytes", MaxBlockSize, b.Size())
 	}
 
 	if b.API.ProtocolParameters().Version() != b.Header.ProtocolVersion {
-		return ierrors.Wrapf(ErrInvalidBlockVersion, "mismatched protocol version: wanted %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
+		return ierrors.WithMessagef(ErrInvalidBlockVersion, "mismatched protocol version: expected %d, got %d in block", b.API.ProtocolParameters().Version(), b.Header.ProtocolVersion)
 	}
 
 	expectedNetworkID := b.API.ProtocolParameters().NetworkID()
 	if b.Header.NetworkID != expectedNetworkID {
-		return ierrors.Wrapf(ErrBlockNetworkIDInvalid, "got %v, want %v (%s)", b.Header.NetworkID, expectedNetworkID, b.API.ProtocolParameters().NetworkName())
+		return ierrors.WithMessagef(ErrBlockNetworkIDInvalid, "expected %d (%s), got %d", expectedNetworkID, b.API.ProtocolParameters().NetworkName(), b.Header.NetworkID)
 	}
 
 	block := b.Body
@@ -296,26 +297,27 @@ func (b *Block) syntacticallyValidate() error {
 		}
 	}
 
+	blockID, err := b.ID()
+	if err != nil {
+		return ierrors.Wrap(err, "failed to syntactically validate block")
+	}
+
 	protocolParams := b.API.ProtocolParameters()
 	genesisSlot := protocolParams.GenesisSlot()
 	minCommittableAge := protocolParams.MinCommittableAge()
 	maxCommittableAge := protocolParams.MaxCommittableAge()
 	commitmentSlot := b.Header.SlotCommitmentID.Slot()
-	blockID, err := b.ID()
-	if err != nil {
-		return ierrors.Wrapf(err, "failed to syntactically validate block")
-	}
 	blockSlot := blockID.Slot()
 
 	// check that commitment is not too recent.
 	if commitmentSlot > genesisSlot && // Don't filter commitments to genesis based on being too recent.
 		blockSlot < commitmentSlot+minCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooRecent, "block at slot %d committing to slot %d", blockSlot, b.Header.SlotCommitmentID.Slot())
+		return ierrors.WithMessagef(ErrCommitmentTooRecent, "block at slot %d committing to slot %d, min committable age %d", blockSlot, b.Header.SlotCommitmentID.Slot(), minCommittableAge)
 	}
 
 	// Check that commitment is not too old.
 	if blockSlot > commitmentSlot+maxCommittableAge {
-		return ierrors.Wrapf(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.Header.SlotCommitmentID.Slot(), maxCommittableAge)
+		return ierrors.WithMessagef(ErrCommitmentTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, b.Header.SlotCommitmentID.Slot(), maxCommittableAge)
 	}
 
 	return b.Body.syntacticallyValidate(b)
@@ -374,7 +376,7 @@ func (b *BasicBlockBody) ShallowLikeParentIDs() BlockIDs {
 func (b *BasicBlockBody) Hash() (Identifier, error) {
 	blockBytes, err := b.API.Encode(b)
 	if err != nil {
-		return Identifier{}, ierrors.Errorf("failed to serialize basic block: %w", err)
+		return Identifier{}, ierrors.Wrap(err, "failed to serialize basic block")
 	}
 
 	return blake2b.Sum256(blockBytes), nil
@@ -408,18 +410,19 @@ func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
 		blockID, err := block.ID()
 		if err != nil {
-			return ierrors.Wrap(err, "error while calculating block ID during syntactical validation")
+			return ierrors.Wrap(err, "failed to calculate basic block ID during syntactical validation")
 		}
 		blockSlot := blockID.Slot()
 
 		minCommittableAge := block.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := block.API.ProtocolParameters().MaxCommittableAge()
 
-		signedTransaction, _ := b.Payload.(*SignedTransaction)
+		//nolint:forcetypeassert // we can safely assume that this is a SignedTransaction
+		signedTransaction := b.Payload.(*SignedTransaction)
 
 		// check that transaction CreationSlot is smaller or equal than the block that contains it
 		if blockSlot < signedTransaction.Transaction.CreationSlot {
-			return ierrors.Wrapf(ErrTransactionCreationSlotTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, signedTransaction.Transaction.CreationSlot)
+			return ierrors.WithMessagef(ErrTransactionCreationSlotTooRecent, "transaction creation slot %d exceeds block slot %d", signedTransaction.Transaction.CreationSlot, blockSlot)
 		}
 
 		if cInput := signedTransaction.Transaction.CommitmentInput(); cInput != nil {
@@ -427,15 +430,15 @@ func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 			// check that commitment input is not too recent.
 			if cInputSlot > 0 && // Don't filter commitments to genesis based on being too recent.
 				blockSlot < cInputSlot+minCommittableAge { // filter commitments to future slots.
-				return ierrors.Wrapf(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d", blockSlot, cInput.CommitmentID.Slot())
+				return ierrors.WithMessagef(ErrCommitmentInputTooRecent, "block at slot %d with commitment input to slot %d, min committable age %d", blockSlot, cInput.CommitmentID.Slot(), minCommittableAge)
 			}
 			// Check that commitment input is not too old.
 			if blockSlot > cInputSlot+maxCommittableAge {
-				return ierrors.Wrapf(ErrCommitmentInputTooOld, "block at slot %d committing to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Slot(), maxCommittableAge)
+				return ierrors.WithMessagef(ErrCommitmentInputTooOld, "block at slot %d with commitment input to slot %d, max committable age %d", blockSlot, cInput.CommitmentID.Slot(), maxCommittableAge)
 			}
 
 			if cInputSlot > block.Header.SlotCommitmentID.Slot() {
-				return ierrors.Wrapf(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), block.Header.SlotCommitmentID.Slot())
+				return ierrors.WithMessagef(ErrCommitmentInputNewerThanCommitment, "transaction in a block contains CommitmentInput to slot %d while max allowed is %d", cInput.CommitmentID.Slot(), block.Header.SlotCommitmentID.Slot())
 			}
 		}
 	}
@@ -479,7 +482,7 @@ func (b *ValidationBlockBody) ShallowLikeParentIDs() BlockIDs {
 func (b *ValidationBlockBody) Hash() (Identifier, error) {
 	blockBytes, err := b.API.Encode(b)
 	if err != nil {
-		return Identifier{}, ierrors.Errorf("failed to serialize validation block: %w", err)
+		return Identifier{}, ierrors.Wrap(err, "failed to serialize validation block")
 	}
 
 	return IdentifierFromData(blockBytes), nil
@@ -502,7 +505,7 @@ func (b *ValidationBlockBody) Size() int {
 // syntacticallyValidate syntactically validates the ValidationBlock.
 func (b *ValidationBlockBody) syntacticallyValidate(block *Block) error {
 	if b.HighestSupportedVersion < block.Header.ProtocolVersion {
-		return ierrors.Errorf("highest supported version %d must be greater equal protocol version %d", b.HighestSupportedVersion, block.Header.ProtocolVersion)
+		return ierrors.WithMessagef(ErrHighestSupportedVersionTooSmall, "highest supported version %d, block header protocol version %d", b.HighestSupportedVersion, block.Header.ProtocolVersion)
 	}
 
 	return nil

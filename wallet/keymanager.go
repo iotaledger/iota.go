@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"crypto/ed25519"
+	"fmt"
 
 	"github.com/iotaledger/iota-crypto-demo/pkg/bip32path"
 	"github.com/iotaledger/iota-crypto-demo/pkg/bip39"
@@ -40,7 +41,7 @@ func NewKeyManagerFromRandom(path string) (*KeyManager, error) {
 func NewKeyManagerFromMnemonic(mnemonic string, path string) (*KeyManager, error) {
 	mnemonicSentence := bip39.ParseMnemonic(mnemonic)
 	if len(mnemonicSentence) != 24 {
-		return nil, ierrors.Errorf("mnemomic contains an invalid sentence length. Mnemonic should be 24 words")
+		return nil, ierrors.New("mnemomic sentence is not 24 words long")
 	}
 
 	seed, err := bip39.MnemonicToSeed(mnemonicSentence, "")
@@ -55,7 +56,7 @@ func NewKeyManagerFromMnemonic(mnemonic string, path string) (*KeyManager, error
 func NewKeyManager(seed []byte, path string) (*KeyManager, error) {
 	bip32Path, err := bip32path.ParsePath(path)
 	if err != nil {
-		return nil, ierrors.Wrap(err, "failed to parse path")
+		return nil, ierrors.Wrap(err, "failed to parse bip32 path")
 	}
 
 	return &KeyManager{
@@ -135,6 +136,6 @@ func (k *KeyManager) Address(addressType iotago.AddressType, index ...uint32) io
 	case iotago.AddressImplicitAccountCreation:
 		return iotago.ImplicitAccountCreationAddressFromPubKey(pubKey)
 	default:
-		panic(ierrors.Wrapf(iotago.ErrUnknownAddrType, "type %d", addressType))
+		panic(fmt.Sprintf("address type %s is not supported", addressType))
 	}
 }

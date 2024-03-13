@@ -80,11 +80,11 @@ func allotmentMaxManaValidator(maxManaValue Mana) ElementValidationFunc[*Allotme
 		var err error
 		sum, err = safemath.SafeAdd(sum, next.Mana)
 		if err != nil {
-			return ierrors.Errorf("%w: %w: allotment mana sum calculation failed at allotment %d", ErrMaxManaExceeded, err, index)
+			return ierrors.Join(ErrMaxManaExceeded, ierrors.Wrapf(err, "allotment mana sum calculation failed at allotment %d", index))
 		}
 
 		if sum > maxManaValue {
-			return ierrors.Wrapf(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
+			return ierrors.WithMessagef(ErrMaxManaExceeded, "sum of allotted mana exceeds max value with allotment %d", index)
 		}
 
 		return nil

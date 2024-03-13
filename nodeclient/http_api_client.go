@@ -392,7 +392,7 @@ func (client *Client) OutputByID(ctx context.Context, outputID iotago.OutputID) 
 	}
 
 	if derivedOutputID != outputID {
-		return nil, ierrors.Errorf("output ID mismatch. Expected %s, got %s", outputID.ToHex(), derivedOutputID.ToHex())
+		return nil, ierrors.Errorf("requested output ID %s does not match computed output ID %s", outputID.ToHex(), derivedOutputID.ToHex())
 	}
 
 	return outputResponse.Output, nil
@@ -432,7 +432,7 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 	}
 
 	if derivedOutputID != outputID {
-		return nil, nil, ierrors.Errorf("output ID mismatch. Expected %s, got %s", outputID.ToHex(), derivedOutputID.ToHex())
+		return nil, nil, ierrors.Errorf("requested output ID %s does not match computed output ID %s", outputID.ToHex(), derivedOutputID.ToHex())
 	}
 
 	return outputResponse.Output, outputResponse.Metadata, nil

@@ -252,7 +252,7 @@ func (b *TransactionBuilder) getStoredManaOutputAccountID(storedManaOutputIndex 
 		}
 
 	default:
-		return iotago.EmptyAccountID, ierrors.Wrapf(iotago.ErrUnknownOutputType, "output type %T does not support stored mana", output)
+		return iotago.EmptyAccountID, ierrors.Errorf("output type %s does not support stored mana", output.Type())
 	}
 
 	return storedManaOutputAccountID, nil
@@ -677,7 +677,7 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 	case b.occurredBuildErr != nil:
 		return nil, b.occurredBuildErr
 	case b.signer == nil:
-		return nil, ierrors.Wrap(ErrTransactionBuilder, "must supply signer")
+		return nil, ierrors.WithMessage(ErrTransactionBuilder, "must supply signer")
 	}
 
 	b.transaction.Allotments.Sort()
@@ -762,7 +762,7 @@ func (b *TransactionBuilder) build(signEssence bool) (*iotago.SignedTransaction,
 				signature, err = b.signer.EmptySignatureForAddress(owner)
 			}
 			if err != nil {
-				return nil, ierrors.Wrapf(err, "failed to sign tx transaction: %s", txEssenceData)
+				return nil, ierrors.Wrapf(err, "failed to sign transaction")
 			}
 
 			// add the new signature to the unlocks

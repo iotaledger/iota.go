@@ -19,8 +19,6 @@ const (
 
 var (
 	EmptyAnchorID = AnchorID{}
-
-	ErrInvalidAnchorIDLength = ierrors.New("invalid AnchorID length")
 )
 
 // AnchorID is a 32 byte hash value.
@@ -55,10 +53,19 @@ func MustAnchorIDFromHexString(hex string) AnchorID {
 	return a
 }
 
+// IsValidAnchorID returns an error if the passed bytes are not a valid AnchorID, otherwise nil.
+func IsValidAnchorID(b []byte) error {
+	if len(b) != AnchorIDLength {
+		return ierrors.Errorf("invalid AnchorID length: expected %d bytes, got %d bytes", AnchorIDLength, len(b))
+	}
+
+	return nil
+}
+
 func AnchorIDFromBytes(bytes []byte) (AnchorID, int, error) {
 	var a AnchorID
 	if len(bytes) < AnchorIDLength {
-		return a, 0, ErrInvalidAnchorIDLength
+		return a, 0, ierrors.Errorf("invalid length for anchorID, expected at least %d bytes, got %d bytes", AnchorIDLength, len(bytes))
 	}
 	copy(a[:], bytes)
 

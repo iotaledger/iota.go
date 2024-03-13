@@ -74,12 +74,12 @@ func (a *Attestation) Compare(other *Attestation) int {
 func (a *Attestation) BlockID() (BlockID, error) {
 	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
-		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID, ierrors.Wrap(err, "failed to create blockID")
 	}
 
 	headerHash, err := a.Header.Hash(a.API)
 	if err != nil {
-		return EmptyBlockID, ierrors.Errorf("failed to create blockID: %w", err)
+		return EmptyBlockID, ierrors.Wrap(err, "failed to create blockID")
 	}
 
 	id := blockIdentifier(headerHash, a.BodyHash, signatureBytes)
@@ -91,7 +91,7 @@ func (a *Attestation) BlockID() (BlockID, error) {
 func (a *Attestation) signingMessage() ([]byte, error) {
 	headerHash, err := a.Header.Hash(a.API)
 	if err != nil {
-		return nil, ierrors.Errorf("failed to create signing message: %w", err)
+		return nil, ierrors.Wrap(err, "failed to create signing message")
 	}
 
 	return blockSigningMessage(headerHash, a.BodyHash), nil

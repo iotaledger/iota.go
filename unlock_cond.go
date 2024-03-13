@@ -329,7 +329,7 @@ func (f UnlockConditionSet) TimelocksExpired(futureBoundedSlot SlotIndex) error 
 	}
 
 	if futureBoundedSlot < timelock.Slot {
-		return ierrors.Wrapf(ErrTimelockNotExpired, "slot cond is %d, while tx creation slot could be up to %d", timelock.Slot, futureBoundedSlot)
+		return ierrors.WithMessagef(ErrTimelockNotExpired, "timelock expires in slot %d but the future bounded slot is only %d", timelock.Slot, futureBoundedSlot)
 	}
 
 	return nil

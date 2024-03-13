@@ -15,8 +15,6 @@ const (
 )
 
 var (
-	// ErrInvalidBlockIssuerTransition gets returned when an account tries to transition block issuer expiry too soon.
-	ErrInvalidBlockIssuerTransition = ierrors.New("invalid block issuer transition")
 	// ErrBlockIssuerCommitmentInputMissing gets returned when no commitment input was passed in a TX containing a Block Issuer Feature.
 	ErrBlockIssuerCommitmentInputMissing = ierrors.New("commitment input missing for block issuer feature")
 	// ErrBlockIssuanceCreditInputMissing gets returned when a transaction containing an account with a block issuer feature

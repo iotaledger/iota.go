@@ -113,13 +113,13 @@ func (u *TransactionEssence) WorkScore(workScoreParameters *WorkScoreParameters)
 // and since the essence is embedded in the Transaction a similar name could easily lead to confusion.
 func (u *TransactionEssence) syntacticallyValidateEssence(api API) error {
 	if err := BitMaskNonTrailingZeroBytesValidatorFunc(u.Capabilities); err != nil {
-		return ierrors.Wrapf(ErrTxEssenceCapabilitiesInvalid, "invalid capabilities bitmask: %w", err)
+		return ierrors.Join(ErrTxEssenceCapabilitiesInvalid, err)
 	}
 
 	protoParams := api.ProtocolParameters()
 	expectedNetworkID := protoParams.NetworkID()
 	if u.NetworkID != expectedNetworkID {
-		return ierrors.Wrapf(ErrTxEssenceNetworkIDInvalid, "got %v, want %v (%s)", u.NetworkID, expectedNetworkID, protoParams.NetworkName())
+		return ierrors.WithMessagef(ErrTxEssenceNetworkIDInvalid, "expected %d (%s), got %d", expectedNetworkID, protoParams.NetworkName(), u.NetworkID)
 	}
 
 	err := SliceValidatorMapper(u.Inputs,

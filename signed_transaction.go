@@ -10,14 +10,12 @@ import (
 )
 
 var (
-	// ErrMissingUTXO gets returned if an UTXO is missing to commence a certain operation.
-	ErrMissingUTXO = ierrors.New("missing utxo")
 	// ErrInputOutputBaseTokenMismatch gets returned if a transaction does not spend the entirety of the inputs to the outputs.
 	ErrInputOutputBaseTokenMismatch = ierrors.New("inputs and outputs do not spend/deposit the same amount of base tokens")
 	// ErrManaOverflow gets returned when there is an under- or overflow in Mana calculations.
 	ErrManaOverflow = ierrors.New("under- or overflow in Mana calculations")
-	// ErrUnknownSignatureType gets returned for unknown signature types.
-	ErrUnknownSignatureType = ierrors.New("unknown signature type")
+	// ErrInputUnlockCountMismatch gets returned when the unlock count and input count mismatch.
+	ErrInputUnlockCountMismatch = ierrors.New("unlock count and input count mismatch")
 	// ErrSignatureAndAddrIncompatible gets returned if an address of an input has a companion signature unlock with the wrong signature type.
 	ErrSignatureAndAddrIncompatible = ierrors.New("address and signature type are not compatible")
 	// ErrSenderFeatureNotUnlocked gets returned when an output contains a SenderFeature with an address which is not unlocked.
@@ -47,12 +45,12 @@ type SignedTransaction struct {
 func (t *SignedTransaction) ID() (SignedTransactionID, error) {
 	transactionBytes, err := t.API.Encode(t.Transaction)
 	if err != nil {
-		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Wrap(err, "can't compute unlock bytes")
 	}
 
 	unlocksBytes, err := t.API.Encode(t.Unlocks)
 	if err != nil {
-		return EmptySignedTransactionID, ierrors.Errorf("can't compute unlock bytes: %w", err)
+		return EmptySignedTransactionID, ierrors.Wrap(err, "can't compute unlock bytes")
 	}
 
 	return SignedTransactionIDRepresentingData(t.Transaction.CreationSlot, byteutils.ConcatBytes(transactionBytes, unlocksBytes)), nil
@@ -102,23 +100,20 @@ func (t *SignedTransaction) String() string {
 // syntacticallyValidate syntactically validates the SignedTransaction.
 func (t *SignedTransaction) syntacticallyValidate() error {
 	// limit unlock block count = input count
-	inputs, err := t.Transaction.Inputs()
-	if err != nil {
-		return err
-	}
+	inputs := t.Transaction.Inputs()
 
 	if len(t.Unlocks) != len(inputs) {
-		return ierrors.Errorf("unlock block count must match inputs in transaction, %d vs. %d", len(t.Unlocks), len(inputs))
+		return ierrors.WithMessagef(ErrInputUnlockCountMismatch, "unlock count %d does not match inputs count %d", len(t.Unlocks), len(inputs))
 	}
 
 	if err := t.Transaction.SyntacticallyValidate(t.API); err != nil {
-		return ierrors.Errorf("transaction is invalid: %w", err)
+		return ierrors.Wrap(err, "transaction is invalid")
 	}
 
 	if err := ValidateUnlocks(t.Unlocks,
 		SignaturesUniqueAndReferenceUnlocksValidator(t.API),
 	); err != nil {
-		return ierrors.Errorf("invalid unlocks: %w", err)
+		return ierrors.Wrap(err, "invalid unlocks")
 	}
 
 	return nil

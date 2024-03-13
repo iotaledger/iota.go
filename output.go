@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -132,36 +131,11 @@ var (
 	ErrChainMissing = ierrors.New("chain missing")
 	// ErrNonUniqueChainOutputs gets returned when multiple ChainOutputs(s) with the same ChainID exist within sets.
 	ErrNonUniqueChainOutputs = ierrors.New("non unique chain outputs")
-	// ErrChainTransitionInvalid gets returned when the chain transition was invalid.
-	ErrChainTransitionInvalid = ierrors.New("chain transition is invalid")
 	// ErrNewChainOutputHasNonZeroedID gets returned when a new chain output has a non-zeroed ID.
 	ErrNewChainOutputHasNonZeroedID = ierrors.New("new chain output has non-zeroed ID")
 	// ErrChainOutputImmutableFeaturesChanged gets returned when a chain output's immutable features are modified in a transition.
 	ErrChainOutputImmutableFeaturesChanged = ierrors.New("immutable features in chain output modified during transition")
 )
-
-// ChainTransitionError gets returned when a state transition validation fails for a ChainOutput.
-type ChainTransitionError struct {
-	Inner error
-	Msg   string
-}
-
-func (i *ChainTransitionError) Error() string {
-	var s strings.Builder
-	s.WriteString("invalid chain transition")
-	if i.Inner != nil {
-		s.WriteString(fmt.Sprintf("; inner err: %s", i.Inner))
-	}
-	if len(i.Msg) > 0 {
-		s.WriteString(fmt.Sprintf("; %s", i.Msg))
-	}
-
-	return s.String()
-}
-
-func (i *ChainTransitionError) Unwrap() error {
-	return i.Inner
-}
 
 // Outputs is a slice of Output.
 type Outputs[T Output] []T
@@ -365,7 +339,7 @@ func OutputsSyntacticalDepositAmount(protoParams ProtocolParameters, storageScor
 		var err error
 		sum, err = safemath.SafeAdd(sum, amount)
 		if err != nil {
-			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "%w: output %d", err, index)
+			return ierrors.Join(ErrOutputsSumExceedsTotalSupply, ierrors.WithMessagef(err, "output %d", index))
 		}
 		if sum > protoParams.TokenSupply() {
 			return ierrors.WithMessagef(ErrOutputsSumExceedsTotalSupply, "output %d", index)
@@ -422,7 +396,7 @@ func OutputsSyntacticalStoredMana(maxManaValue Mana) ElementValidationFunc[Outpu
 		var err error
 		sum, err = safemath.SafeAdd(sum, storedMana)
 		if err != nil {
-			return ierrors.WithMessagef(ErrMaxManaExceeded, "%w: stored mana sum calculation failed at output %d", err, index)
+			return ierrors.Join(ierrors.Wrapf(ErrMaxManaExceeded, "stored mana sum calculation failed at output %d", index), err)
 		}
 
 		if sum > maxManaValue {
@@ -694,7 +668,11 @@ func OutputsSyntacticalImplicitAccountCreationAddress() ElementValidationFunc[Ou
 				return ierrors.WithMessagef(ErrImplicitAccountCreationAddressInInvalidOutput, "output %d", index)
 			}
 		default:
-			panic("unrecognized output type")
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported output types should be handled above")
 		}
 
 		return nil
@@ -743,7 +721,11 @@ func OutputsSyntacticalUnlockConditionLexicalOrderAndUniqueness() ElementValidat
 				}
 			}
 		default:
-			panic("unrecognized output type")
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported output types should be handled above")
 		}
 
 		return nil
@@ -812,7 +794,11 @@ func OutputsSyntacticalFeaturesLexicalOrderAndUniqueness() ElementValidationFunc
 			// This output does not have features.
 			return nil
 		default:
-			panic("unrecognized output type")
+			// We're switching on the Go output type here, so we can only run into the default case
+			// if we added a new output type and have not handled it above or a user constructed a type
+			// implementing the interface (only possible when iota.go is used as a library).
+			// In both cases we want to panic.
+			panic("all supported output types should be handled above")
 		}
 
 		return nil
@@ -900,16 +886,16 @@ func OutputsSyntacticalCommitmentInput(hasCommitmentInput bool) ElementValidatio
 	return func(index int, output Output) error {
 		hasStakingFeature := output.FeatureSet().Staking() != nil
 		if hasStakingFeature && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrStakingCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrStakingCommitmentInputMissing, "output %d", index)
 		}
 
 		hasBlockIssuerFeature := output.FeatureSet().BlockIssuer() != nil
 		if hasBlockIssuerFeature && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrBlockIssuerCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrBlockIssuerCommitmentInputMissing, "output %d", index)
 		}
 
 		if output.Type() == OutputDelegation && !hasCommitmentInput {
-			return ierrors.Wrapf(ErrDelegationCommitmentInputMissing, "output %d", index)
+			return ierrors.WithMessagef(ErrDelegationCommitmentInputMissing, "output %d", index)
 		}
 
 		return nil

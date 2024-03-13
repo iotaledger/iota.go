@@ -14,8 +14,6 @@ import (
 )
 
 var (
-	// ErrUnknownAddrType gets returned for unknown address types.
-	ErrUnknownAddrType = ierrors.New("unknown address type")
 	// ErrInvalidAddressType gets returned when an address type is invalid.
 	ErrInvalidAddressType = ierrors.New("invalid address type")
 	// ErrInvalidRestrictedAddress gets returned when a RestrictedAddress is invalid.
@@ -175,7 +173,7 @@ type UTXOIDChainID interface {
 	FromOutputID(id OutputID) ChainID
 }
 
-func newAddress(addressType AddressType) (address Address, err error) {
+func newAddress(addressType AddressType) (Address, error) {
 	switch addressType {
 	case AddressEd25519:
 		return &Ed25519Address{}, nil
@@ -192,7 +190,7 @@ func newAddress(addressType AddressType) (address Address, err error) {
 	case AddressRestricted:
 		return &RestrictedAddress{}, nil
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
+		return nil, ierrors.Errorf("unknown address type %d", addressType)
 	}
 }
 
@@ -209,7 +207,7 @@ func bech32StringBytes(hrp NetworkPrefix, bytes []byte) string {
 func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	hrp, addrData, err := bech32.Decode(s)
 	if err != nil {
-		return "", nil, ierrors.Errorf("invalid bech32 encoding: %w", err)
+		return "", nil, ierrors.Wrap(err, "invalid bech32 encoding")
 	}
 
 	if len(addrData) == 0 {
@@ -225,7 +223,7 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 	case AddressMulti:
 		multiAddrRef, _, err := MultiAddressReferenceFromBytes(addrData)
 		if err != nil {
-			return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+			return "", nil, ierrors.Wrap(err, "invalid multi address")
 		}
 
 		return NetworkPrefix(hrp), multiAddrRef, nil
@@ -238,13 +236,13 @@ func ParseBech32(s string) (NetworkPrefix, Address, error) {
 		if underlyingAddrType == AddressMulti {
 			multiAddrRef, consumed, err := MultiAddressReferenceFromBytes(addrData[1:])
 			if err != nil {
-				return "", nil, ierrors.Errorf("invalid multi address: %w", err)
+				return "", nil, ierrors.Wrap(err, "invalid multi address")
 			}
 
 			// get the address capabilities from the remaining bytes
 			capabilities, _, err := AddressCapabilitiesBitMaskFromBytes(addrData[1+consumed:])
 			if err != nil {
-				return "", nil, ierrors.Errorf("invalid address capabilities: %w", err)
+				return "", nil, ierrors.Wrap(err, "invalid restricted address capabilities")
 			}
 
 			return NetworkPrefix(hrp), &RestrictedAddress{
@@ -312,6 +310,6 @@ func AddressFromReader(reader io.ReadSeeker) (Address, error) {
 		return RestrictedAddressFromReader(reader)
 
 	default:
-		return nil, ierrors.Wrapf(ErrUnknownAddrType, "type %d", addressType)
+		return nil, ierrors.Errorf("unknown address type %d", addressType)
 	}
 }

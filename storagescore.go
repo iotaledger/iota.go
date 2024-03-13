@@ -146,7 +146,7 @@ func (r *StorageScoreStructure) CoversMinDeposit(object NonEphemeralObject, amou
 		return 0, ierrors.Wrap(err, "failed to compute min deposit")
 	}
 	if amount < minDeposit {
-		return 0, ierrors.Wrapf(ErrStorageDepositNotCovered, "needed %d but only got %d", minDeposit, amount)
+		return 0, ierrors.WithMessagef(ErrStorageDepositNotCovered, "expected at least %d, got %d", minDeposit, amount)
 	}
 
 	return minDeposit, nil
