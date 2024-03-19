@@ -163,6 +163,27 @@ func TestClient_Health(t *testing.T) {
 	require.False(t, healthy)
 }
 
+func TestClient_NetworkHealth(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(nodeAPIUrl).
+		Get(api.CoreRouteNetworkHealth).
+		Reply(200)
+
+	nodeAPI := nodeClient(t)
+	healthy, err := nodeAPI.NetworkHealth(context.Background())
+	require.NoError(t, err)
+	require.True(t, healthy)
+
+	gock.New(nodeAPIUrl).
+		Get(api.CoreRouteNetworkHealth).
+		Reply(503)
+
+	healthy, err = nodeAPI.NetworkHealth(context.Background())
+	require.NoError(t, err)
+	require.False(t, healthy)
+}
+
 func TestClient_NetworkMetrics(t *testing.T) {
 	defer gock.Off()
 

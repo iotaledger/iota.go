@@ -124,6 +124,10 @@ const (
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointInfo = "/info"
 
+	// CoreEndpointNetworkHealth is the endpoint for getting the network health.
+	// GET returns http status code 200 if the network is healthy (finalization is not delayed).
+	CoreEndpointNetworkHealth = "/network/health"
+
 	// CoreEndpointNetworkMetrics is the endpoint for getting the network metrics.
 	// GET returns the network metrics.
 	// "Accept" header:
@@ -289,6 +293,7 @@ const (
 
 var (
 	CoreRouteInfo                              = route(CorePluginName, CoreEndpointInfo)
+	CoreRouteNetworkHealth                     = route(CorePluginName, CoreEndpointNetworkHealth)
 	CoreRouteNetworkMetrics                    = route(CorePluginName, CoreEndpointNetworkMetrics)
 	CoreRouteBlocks                            = route(CorePluginName, CoreEndpointBlocks)
 	CoreRouteBlock                             = route(CorePluginName, CoreEndpointBlock)
