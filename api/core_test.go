@@ -23,6 +23,7 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 				Version: "2.0.0",
 				Status: &api.InfoResNodeStatus{
 					IsHealthy:                   false,
+					IsNetworkHealthy:            false,
 					AcceptedTangleTime:          time.Unix(1690879505, 0).UTC(),
 					RelativeAcceptedTangleTime:  time.Unix(1690879505, 0).UTC(),
 					ConfirmedTangleTime:         time.Unix(1690879505, 0).UTC(),
@@ -301,6 +302,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 				Version: "2.0.0",
 				Status: &api.InfoResNodeStatus{
 					IsHealthy:                   false,
+					IsNetworkHealthy:            false,
 					AcceptedTangleTime:          time.Unix(1690879505, 0).UTC(),
 					RelativeAcceptedTangleTime:  time.Unix(1690879505, 0).UTC(),
 					ConfirmedTangleTime:         time.Unix(1690879505, 0).UTC(),
@@ -330,6 +332,7 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 	"version": "2.0.0",
 	"status": {
 		"isHealthy": false,
+		"isNetworkHealthy": false,
 		"acceptedTangleTime": "1690879505000000000",
 		"relativeAcceptedTangleTime": "1690879505000000000",
 		"confirmedTangleTime": "1690879505000000000",

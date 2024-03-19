@@ -105,10 +105,11 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 
 	ts := time.Now()
 	originInfo := &api.InfoResponse{
-		Name:    "HORNET",
+		Name:    "iota-core",
 		Version: "1.0.0",
 		Status: &api.InfoResNodeStatus{
 			IsHealthy:                   true,
+			IsNetworkHealthy:            true,
 			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
 			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
 			LatestFinalizedSlot:         iotago.SlotIndex(142857),

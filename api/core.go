@@ -483,6 +483,8 @@ type (
 	InfoResNodeStatus struct {
 		// Whether the node is healthy.
 		IsHealthy bool `serix:""`
+		// Whether the network is healthy (finalization is not delayed).
+		IsNetworkHealthy bool `serix:""`
 		// The accepted tangle time.
 		AcceptedTangleTime time.Time `serix:""`
 		// The relative accepted tangle time.
