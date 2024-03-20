@@ -77,6 +77,28 @@ func TestTransactionBuilder(t *testing.T) {
 			}
 		}(),
 
+		// ok - Implicit account creation address with basic input
+		func() *test {
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
+			input1 := tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation)
+
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 1}
+			input2 := &iotago.BasicOutput{
+				Amount:           1000,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddrEd25519}},
+			}
+
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrImplicitAccountCreation, InputID: inputUTXO1.OutputID(), Input: input1}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrEd25519, InputID: inputUTXO2.OutputID(), Input: input2}).
+				AddOutput(output)
+
+			return &test{
+				name:    "ok - Implicit account creation address with basic input",
+				builder: bdl,
+			}
+		}(),
+
 		// ok - mix basic+chain outputs
 		func() *test {
 			var (
@@ -138,6 +160,71 @@ func TestTransactionBuilder(t *testing.T) {
 
 			return &test{
 				name:    "ok - with tagged data payload",
+				builder: bdl,
+			}
+		}(),
+
+		// ok - with context inputs
+		func() *test {
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
+
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrEd25519, InputID: inputUTXO1.OutputID(), Input: tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrEd25519)}).
+				AddOutput(output).
+				AddCommitmentInput(&iotago.CommitmentInput{CommitmentID: tpkg.Rand36ByteArray()}).
+				AddBlockIssuanceCreditInput(&iotago.BlockIssuanceCreditInput{AccountID: tpkg.RandAccountID()}).
+				AddRewardInput(&iotago.RewardInput{Index: 0}, 100)
+
+			return &test{
+				name:    "ok - with context inputs",
+				builder: bdl,
+			}
+		}(),
+
+		// ok - allot all mana
+		func() *test {
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
+
+			basicOutput := &iotago.BasicOutput{
+				Amount:           1000_000_000,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddrEd25519}},
+			}
+
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrEd25519, InputID: inputUTXO1.OutputID(), Input: basicOutput}).
+				AddOutput(output).
+				AllotAllMana(inputUTXO1.CreationSlot()+6, tpkg.RandAccountID(), 20)
+
+			return &test{
+				name:    "ok - allot all mana",
+				builder: bdl,
+			}
+		}(),
+
+		// ok - with mana lock condition
+		func() *test {
+			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
+
+			accountAddr := iotago.AccountAddressFromOutputID(inputUTXO1.OutputID())
+			basicOutput := &iotago.BasicOutput{
+				Amount: 1000,
+				UnlockConditions: iotago.BasicOutputUnlockConditions{
+					&iotago.AddressUnlockCondition{Address: accountAddr},
+					&iotago.TimelockUnlockCondition{Slot: inputUTXO1.CreationSlot()},
+				}}
+
+			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
+				AddInput(&builder.TxInput{
+					UnlockTarget: inputAddrImplicitAccountCreation,
+					InputID:      inputUTXO1.OutputID(),
+					Input:        tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation),
+				}).
+				SetCreationSlot(10).
+				AddOutput(basicOutput).
+				StoreRemainingManaInOutputAndAllotRemainingAccountBoundMana(inputUTXO1.CreationSlot(), 0)
+
+			return &test{
+				name:    "ok - with mana lock condition",
 				builder: bdl,
 			}
 		}(),
