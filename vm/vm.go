@@ -81,7 +81,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaStored)
 		if err != nil {
-			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.Chain(iotago.ErrManaOverflow, err)
 		}
 		manaPotential, err := iotago.PotentialMana(manaDecayProvider, storageScoreStructure, input, outputID.CreationSlot(), txCreationSlot)
 		if err != nil {
@@ -89,7 +89,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		}
 		totalIn, err = safemath.SafeAdd(totalIn, manaPotential)
 		if err != nil {
-			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.Chain(iotago.ErrManaOverflow, err)
 		}
 	}
 
@@ -98,7 +98,7 @@ func TotalManaIn(manaDecayProvider *iotago.ManaDecayProvider, storageScoreStruct
 		var err error
 		totalIn, err = safemath.SafeAdd(totalIn, reward)
 		if err != nil {
-			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.Chain(iotago.ErrManaOverflow, err)
 		}
 	}
 
@@ -112,13 +112,13 @@ func TotalManaOut(outputs iotago.Outputs[iotago.TxEssenceOutput], allotments iot
 	for _, output := range outputs {
 		totalOut, err = safemath.SafeAdd(totalOut, output.StoredMana())
 		if err != nil {
-			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.Chain(iotago.ErrManaOverflow, err)
 		}
 	}
 	for _, allotment := range allotments {
 		totalOut, err = safemath.SafeAdd(totalOut, allotment.Mana)
 		if err != nil {
-			return 0, ierrors.WithMessagef(iotago.ErrManaOverflow, "%w", err)
+			return 0, ierrors.Chain(iotago.ErrManaOverflow, err)
 		}
 	}
 
@@ -622,7 +622,7 @@ func unlockAddress(ownerAddr iotago.Address, unlock iotago.Unlock, inputIndex ui
 			}
 
 			if err := unlockedAddrsSet.MultiUnlock(owner, uBlock, essenceMsgToSign, inputIndex); err != nil {
-				return ierrors.WithMessagef(iotago.ErrMultiAddressUnlockInvalid, "%w", err)
+				return ierrors.Chain(iotago.ErrMultiAddressUnlockInvalid, err)
 			}
 
 		default:
@@ -701,7 +701,7 @@ func ExecFuncBalancedMana() ExecFunc {
 		} else if manaIn > manaOut {
 			// less mana on output side than on input side => check if mana burning is allowed
 			if vmParams.WorkingSet.Tx.Capabilities.CannotBurnMana() {
-				return ierrors.WithMessagef(iotago.ErrInputOutputManaMismatch, "%w", iotago.ErrTxCapabilitiesManaBurningNotAllowed)
+				return ierrors.Chain(iotago.ErrInputOutputManaMismatch, iotago.ErrTxCapabilitiesManaBurningNotAllowed)
 			}
 		}
 
@@ -832,7 +832,7 @@ func ExecFuncBalancedNativeTokens() ExecFunc {
 
 		vmParams.WorkingSet.OutNativeTokens, err = vmParams.WorkingSet.Tx.Outputs.NativeTokenSum()
 		if err != nil {
-			return ierrors.WithMessagef(iotago.ErrNativeTokenSetInvalid, "%w", err)
+			return ierrors.Chain(iotago.ErrNativeTokenSetInvalid, err)
 		}
 
 		// check invariants for when token foundry is absent
