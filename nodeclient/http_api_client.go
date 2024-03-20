@@ -255,6 +255,20 @@ func (client *Client) Info(ctx context.Context) (*api.InfoResponse, error) {
 	return res, nil
 }
 
+// NetworkHealth returns whether the network is healthy (finalization is not delayed).
+func (client *Client) NetworkHealth(ctx context.Context) (bool, error) {
+	//nolint:bodyclose
+	if _, err := client.Do(ctx, http.MethodGet, api.CoreRouteNetworkHealth, nil, nil); err != nil {
+		if ierrors.Is(err, ErrHTTPServiceUnavailable) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
 // NetworkMetrics gets the current network metrics.
 func (client *Client) NetworkMetrics(ctx context.Context) (*api.NetworkMetricsResponse, error) {
 	res := new(api.NetworkMetricsResponse)

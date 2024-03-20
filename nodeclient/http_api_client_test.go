@@ -105,10 +105,11 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 
 	ts := time.Now()
 	originInfo := &api.InfoResponse{
-		Name:    "HORNET",
+		Name:    "iota-core",
 		Version: "1.0.0",
 		Status: &api.InfoResNodeStatus{
 			IsHealthy:                   true,
+			IsNetworkHealthy:            true,
 			LatestAcceptedBlockSlot:     tpkg.RandSlot(),
 			LatestConfirmedBlockSlot:    tpkg.RandSlot(),
 			LatestFinalizedSlot:         iotago.SlotIndex(142857),
@@ -159,6 +160,27 @@ func TestClient_Health(t *testing.T) {
 		Reply(503)
 
 	healthy, err = nodeAPI.Health(context.Background())
+	require.NoError(t, err)
+	require.False(t, healthy)
+}
+
+func TestClient_NetworkHealth(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(nodeAPIUrl).
+		Get(api.CoreRouteNetworkHealth).
+		Reply(200)
+
+	nodeAPI := nodeClient(t)
+	healthy, err := nodeAPI.NetworkHealth(context.Background())
+	require.NoError(t, err)
+	require.True(t, healthy)
+
+	gock.New(nodeAPIUrl).
+		Get(api.CoreRouteNetworkHealth).
+		Reply(503)
+
+	healthy, err = nodeAPI.NetworkHealth(context.Background())
 	require.NoError(t, err)
 	require.False(t, healthy)
 }
