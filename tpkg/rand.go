@@ -24,8 +24,8 @@ func RandByte() byte {
 
 // RandBytes returns length amount random bytes.
 func RandBytes(length int) []byte {
-	var b []byte
-	for i := 0; i < length; i++ {
+	b := make([]byte, 0, length)
+	for range length {
 		b = append(b, RandByte())
 	}
 
@@ -33,8 +33,8 @@ func RandBytes(length int) []byte {
 }
 
 func RandString(length int) string {
-	var b []byte
-	for i := 0; i < length; i++ {
+	b := make([]byte, 0, length)
+	for range length {
 		// Generate random printable ASCII values between 32 and 126 (inclusive)
 		b = append(b, byte(RandInt(95)+32)) // 95 printable ASCII characters (126 - 32 + 1)
 	}
@@ -189,7 +189,7 @@ func Rand64ByteArray() [64]byte {
 // SortedRand32ByteArray returns a count length slice of sorted 32 byte arrays.
 func SortedRand32ByteArray(count int) [][32]byte {
 	hashes := make(serializer.LexicalOrdered32ByteArrays, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		hashes[i] = Rand32ByteArray()
 	}
 	sort.Sort(hashes)
@@ -200,7 +200,7 @@ func SortedRand32ByteArray(count int) [][32]byte {
 // SortedRand36ByteArray returns a count length slice of sorted 36 byte arrays.
 func SortedRand36ByteArray(count int) [][36]byte {
 	hashes := make(serializer.LexicalOrdered36ByteArrays, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		hashes[i] = Rand36ByteArray()
 	}
 	sort.Sort(hashes)
@@ -211,7 +211,7 @@ func SortedRand36ByteArray(count int) [][36]byte {
 // SortedRand40ByteArray returns a count length slice of sorted 32 byte arrays.
 func SortedRand40ByteArray(count int) [][40]byte {
 	hashes := make(serializer.LexicalOrdered40ByteArrays, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		hashes[i] = Rand40ByteArray()
 	}
 	sort.Sort(hashes)
@@ -306,7 +306,7 @@ func RandAllotment() *iotago.Allotment {
 // RandSortAllotment returns count sorted Allotments.
 func RandSortAllotment(count int) iotago.Allotments {
 	var allotments iotago.Allotments
-	for i := 0; i < count; i++ {
+	for range count {
 		allotments = append(allotments, RandAllotment())
 	}
 	allotments.Sort()

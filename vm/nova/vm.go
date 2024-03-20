@@ -435,7 +435,6 @@ func accountStakingSTVF(vmParams *vm.Params, current *iotago.AccountOutput, next
 	nextStakingFeat := next.FeatureSet().Staking()
 
 	if currentStakingFeat != nil {
-
 		commitment := vmParams.WorkingSet.Commitment
 		if commitment == nil {
 			return iotago.ErrStakingCommitmentInputMissing

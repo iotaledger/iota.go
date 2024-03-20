@@ -19,10 +19,10 @@ func newEncoding(charset string) *encoding {
 	e := new(encoding)
 	copy(e.enc[:], charset)
 
-	for i := 0; i < len(e.decMap); i++ {
+	for i := range len(e.decMap) {
 		e.decMap[i] = 0xFF
 	}
-	for i := 0; i < len(charset); i++ {
+	for i := range len(charset) {
 		e.decMap[charset[i]] = uint8(i)
 	}
 

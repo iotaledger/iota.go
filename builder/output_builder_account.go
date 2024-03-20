@@ -203,8 +203,7 @@ type BlockIssuerTransition struct {
 
 // AddKeys adds the keys of the BlockIssuerFeature.
 func (trans *BlockIssuerTransition) AddKeys(keys ...iotago.BlockIssuerKey) *BlockIssuerTransition {
-	for _, key := range keys {
-		blockIssuerKey := key
+	for _, blockIssuerKey := range keys {
 		trans.feature.BlockIssuerKeys.Add(blockIssuerKey)
 	}
 

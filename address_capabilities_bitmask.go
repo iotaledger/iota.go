@@ -106,6 +106,7 @@ type AddressCapabilitiesBitMask []byte
 func AddressCapabilitiesBitMaskFromBytes(bytes []byte) (AddressCapabilitiesBitMask, int, error) {
 	var result AddressCapabilitiesBitMask
 	consumed, err := CommonSerixAPI().Decode(context.TODO(), bytes, &result)
+
 	return result, consumed, err
 }
 

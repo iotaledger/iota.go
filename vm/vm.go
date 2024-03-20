@@ -417,8 +417,6 @@ func IsIssuerOnOutputUnlocked(output iotago.ChainOutputImmutable, unlockedAddrs 
 // ExecFunc is a function which given the context, input, outputs and
 // unlocks runs a specific execution/validation. The function might also modify the Params
 // in order to supply information to subsequent ExecFunc(s).
-//
-//nolint:revive
 type ExecFunc func(vm VirtualMachine, svCtx *Params) error
 
 // ValidateUnlocks produces the UnlockedAddresses which will be set into the given Params and verifies that inputs are
@@ -484,7 +482,6 @@ func ValidateUnlocks(signedTransaction *iotago.SignedTransaction, resolvedInputs
 
 func addressToUnlock(transaction *iotago.Transaction, input iotago.Output, inputIndex uint16, outChains iotago.ChainOutputSet) (iotago.Address, error) {
 	switch in := input.(type) {
-
 	case iotago.OwnerTransitionIndependentOutput:
 		return in.Owner(), nil
 

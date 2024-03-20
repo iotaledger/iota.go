@@ -108,7 +108,6 @@ func do(
 	requestHeaderHook RequestHeaderHook,
 	reqObj interface{},
 	resObj interface{}) (*http.Response, error) {
-
 	// marshal request object
 	var data []byte
 	var raw bool

@@ -62,7 +62,7 @@ func RandEd25519Identity() (ed25519.PrivateKey, *iotago.Ed25519Address, iotago.A
 func RandEd25519IdentitiesSortedByAddress(count int) ([]iotago.Address, []iotago.AddressKeys) {
 	addresses := make([]iotago.Address, count)
 	addressKeys := make([]iotago.AddressKeys, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		_, addresses[i], addressKeys[i] = RandEd25519Identity()
 	}
 
@@ -102,7 +102,7 @@ func RandBlockIssuerKeys(count ...int) iotago.BlockIssuerKeys {
 	}
 
 	blockIssuerKeys := iotago.NewBlockIssuerKeys()
-	for i := 0; i < length; i++ {
+	for range length {
 		blockIssuerKeys.Add(RandBlockIssuerKey())
 	}
 	blockIssuerKeys.Sort()

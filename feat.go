@@ -344,7 +344,7 @@ func FeatureUnchanged(featType FeatureType, inFeatSet FeatureSet, outFeatSet Fea
 
 // checkPrintableASCIIString returns an error if the given string contains non-printable ASCII characters (including space).
 func checkPrintableASCIIString(s string) error {
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		if s[i] < 33 || s[i] > 126 {
 			return ierrors.Errorf(
 				"string contains non-printable ASCII character %d at index %d (allowed range 33 <= character <= 126)", s[i], i,

@@ -13,7 +13,7 @@ import (
 
 const (
 	// Hash defines the hash function that is used to compute the PoW digest.
-	Hash = crypto.BLAKE2b_256 //nolint:nosnakecase
+	Hash = crypto.BLAKE2b_256
 
 	// HashLength defines the length of the hash function in bytes.
 	HashLength = blake2b.Size256

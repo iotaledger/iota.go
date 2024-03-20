@@ -194,7 +194,6 @@ func TestFeaturesMetadataLexicalOrdering(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		// Required to avoid triggering the scopelint.
 		source := test.source
 		target := test.target
 		featType := test.source.Type()

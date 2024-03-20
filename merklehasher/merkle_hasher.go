@@ -19,7 +19,6 @@ type Value interface {
 
 // Hasher implements the hashing algorithm described in the IOTA protocol RFC-12.
 type Hasher[V Value] struct {
-	//nolint:structcheck // false positive
 	hash crypto.Hash
 }
 

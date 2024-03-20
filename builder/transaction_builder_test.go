@@ -1,4 +1,4 @@
-//nolint:scopelint,forcetypeassert
+//nolint:forcetypeassert
 package builder_test
 
 import (

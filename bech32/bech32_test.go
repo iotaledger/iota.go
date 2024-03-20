@@ -1,4 +1,3 @@
-//nolint:scopelint
 package bech32_test
 
 import (

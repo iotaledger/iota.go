@@ -10,6 +10,7 @@ import (
 func EmptyOutputIDWithCreationSlot(slot SlotIndex) OutputID {
 	var outputID OutputID
 	binary.LittleEndian.PutUint32(outputID[IdentifierLength:OutputIDLength], uint32(slot))
+
 	return outputID
 }
 

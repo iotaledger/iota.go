@@ -95,6 +95,7 @@ type TransactionCapabilitiesBitMask []byte
 func TransactionCapabilitiesBitMaskFromBytes(bytes []byte) (TransactionCapabilitiesBitMask, int, error) {
 	var result TransactionCapabilitiesBitMask
 	consumed, err := CommonSerixAPI().Decode(context.TODO(), bytes, &result)
+
 	return result, consumed, err
 }
 

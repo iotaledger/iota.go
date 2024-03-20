@@ -34,7 +34,7 @@ func (test *DeSerializeTest) assertBinaryEncodeDecode(t *testing.T) {
 	}
 
 	if src, ok := test.Source.(iotago.Sizer); ok {
-		require.Equal(t, src.Size(), len(serixData), "binary encoding")
+		require.Len(t, serixData, src.Size(), "binary encoding")
 	}
 
 	serixTarget := reflect.New(reflect.TypeOf(test.Target).Elem()).Interface()
