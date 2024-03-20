@@ -80,16 +80,17 @@ func TestTransactionBuilder(t *testing.T) {
 		// ok - Implicit account creation address with basic input
 		func() *test {
 			inputUTXO1 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 0}
-			basicInputID := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 1}
-			basicOutput := &iotago.BasicOutput{
+			input1 := tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation)
+
+			inputUTXO2 := &iotago.UTXOInput{TransactionID: tpkg.Rand36ByteArray(), TransactionOutputIndex: 1}
+			input2 := &iotago.BasicOutput{
 				Amount:           1000,
 				UnlockConditions: iotago.BasicOutputUnlockConditions{&iotago.AddressUnlockCondition{Address: inputAddrEd25519}},
 			}
 
-			input := tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation)
 			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddrImplicitAccountCreation, InputID: inputUTXO1.OutputID(), Input: input}).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddrEd25519, InputID: basicInputID.OutputID(), Input: basicOutput}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrImplicitAccountCreation, InputID: inputUTXO1.OutputID(), Input: input1}).
+				AddInput(&builder.TxInput{UnlockTarget: inputAddrEd25519, InputID: inputUTXO2.OutputID(), Input: input2}).
 				AddOutput(output)
 
 			return &test{
@@ -213,7 +214,11 @@ func TestTransactionBuilder(t *testing.T) {
 				}}
 
 			bdl := builder.NewTransactionBuilder(tpkg.ZeroCostTestAPI, signer).
-				AddInput(&builder.TxInput{UnlockTarget: inputAddrImplicitAccountCreation, InputID: inputUTXO1.OutputID(), Input: tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation)}).
+				AddInput(&builder.TxInput{
+					UnlockTarget: inputAddrImplicitAccountCreation,
+					InputID:      inputUTXO1.OutputID(),
+					Input:        tpkg.RandOutputOnAddress(iotago.OutputBasic, inputAddrImplicitAccountCreation),
+				}).
 				SetCreationSlot(10).
 				AddOutput(basicOutput).
 				StoreRemainingManaInOutputAndAllotRemainingAccountBoundMana(inputUTXO1.CreationSlot(), 0)
