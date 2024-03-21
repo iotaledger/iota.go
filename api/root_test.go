@@ -8,8 +8,15 @@ import (
 	"github.com/iotaledger/iota.go/v4/tpkg/frameworks"
 )
 
-func Test_RoutesAPIDeSerialize(t *testing.T) {
+func Test_RootAPIDeSerialize(t *testing.T) {
 	tests := []*frameworks.DeSerializeTest{
+		{
+			Name: "ok - HealthResponse",
+			Source: &api.HealthResponse{
+				IsHealthy: true,
+			},
+			Target: &api.HealthResponse{},
+		},
 		{
 			Name: "ok - RoutesResponse",
 			Source: &api.RoutesResponse{
@@ -24,8 +31,17 @@ func Test_RoutesAPIDeSerialize(t *testing.T) {
 	}
 }
 
-func Test_RoutesAPIJSONSerialization(t *testing.T) {
+func Test_RootAPIJSONSerialization(t *testing.T) {
 	tests := []*frameworks.JSONEncodeTest{
+		{
+			Name: "ok - HealthResponse",
+			Source: &api.HealthResponse{
+				IsHealthy: true,
+			},
+			Target: `{
+	"isHealthy": true
+}`,
+		},
 		{
 			Name: "ok - RoutesResponse",
 			Source: &api.RoutesResponse{

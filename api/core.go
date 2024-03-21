@@ -519,6 +519,12 @@ type (
 		Decimals uint32 `serix:""`
 	}
 
+	// NetworkHealthResponse defines the network health response.
+	NetworkHealthResponse struct {
+		// Whether the network is healthy (finalization is not delayed).
+		IsNetworkHealthy bool `serix:""`
+	}
+
 	// NetworkMetricsResponse defines the network metrics response.
 	NetworkMetricsResponse struct {
 		// The current rate of new blocks per second, it's updated when a commitment is committed.

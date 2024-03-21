@@ -53,6 +53,15 @@ func Test_CoreAPIDeSerialize(t *testing.T) {
 			DeSeriErr: nil,
 		},
 		{
+			Name: "ok - NetworkHealthResponse",
+			Source: &api.NetworkHealthResponse{
+				IsNetworkHealthy: true,
+			},
+			Target:    &api.NetworkHealthResponse{},
+			SeriErr:   nil,
+			DeSeriErr: nil,
+		},
+		{
 			Name: "ok - NetworkMetricsResponse",
 			Source: &api.NetworkMetricsResponse{
 				BlocksPerSecond:          1.1,
@@ -434,6 +443,15 @@ func Test_CoreAPIJSONSerialization(t *testing.T) {
 		"subunit": "glow",
 		"decimals": 6
 	}
+}`,
+		},
+		{
+			Name: "ok - NetworkHealthResponse",
+			Source: &api.NetworkHealthResponse{
+				IsNetworkHealthy: true,
+			},
+			Target: `{
+	"isNetworkHealthy": true
 }`,
 		},
 		{
