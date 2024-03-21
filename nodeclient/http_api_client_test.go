@@ -146,18 +146,18 @@ func nodeClient(t *testing.T) *nodeclient.Client {
 func TestClient_Health(t *testing.T) {
 	defer gock.Off()
 
-	gock.New(nodeAPIUrl).
-		Get(api.RouteHealth).
-		Reply(200)
+	mockGetJSON(api.RouteHealth, 200, &api.HealthResponse{
+		IsHealthy: true,
+	})
 
 	nodeAPI := nodeClient(t)
 	healthy, err := nodeAPI.Health(context.Background())
 	require.NoError(t, err)
 	require.True(t, healthy)
 
-	gock.New(nodeAPIUrl).
-		Get(api.RouteHealth).
-		Reply(503)
+	mockGetJSON(api.RouteHealth, 503, &api.HealthResponse{
+		IsHealthy: false,
+	})
 
 	healthy, err = nodeAPI.Health(context.Background())
 	require.NoError(t, err)
@@ -167,18 +167,18 @@ func TestClient_Health(t *testing.T) {
 func TestClient_NetworkHealth(t *testing.T) {
 	defer gock.Off()
 
-	gock.New(nodeAPIUrl).
-		Get(api.CoreRouteNetworkHealth).
-		Reply(200)
+	mockGetJSON(api.CoreRouteNetworkHealth, 200, &api.NetworkHealthResponse{
+		IsNetworkHealthy: true,
+	})
 
 	nodeAPI := nodeClient(t)
 	healthy, err := nodeAPI.NetworkHealth(context.Background())
 	require.NoError(t, err)
 	require.True(t, healthy)
 
-	gock.New(nodeAPIUrl).
-		Get(api.CoreRouteNetworkHealth).
-		Reply(503)
+	mockGetJSON(api.CoreRouteNetworkHealth, 503, &api.NetworkHealthResponse{
+		IsNetworkHealthy: false,
+	})
 
 	healthy, err = nodeAPI.NetworkHealth(context.Background())
 	require.NoError(t, err)
