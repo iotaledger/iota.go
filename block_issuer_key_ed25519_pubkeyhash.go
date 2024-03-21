@@ -27,6 +27,7 @@ type Ed25519PublicKeyHashBlockIssuerKey struct {
 func Ed25519PublicKeyHashBlockIssuerKeyFromImplicitAccountCreationAddress(address *ImplicitAccountCreationAddress) *Ed25519PublicKeyHashBlockIssuerKey {
 	cpy := [Ed25519PublicKeyHashBytesLength]byte{}
 	copy(cpy[:], address[:])
+
 	return &Ed25519PublicKeyHashBlockIssuerKey{PublicKeyHash: cpy}
 }
 
@@ -41,6 +42,7 @@ func Ed25519PublicKeyHashBlockIssuerKeyFromPublicKey(pubKey hiveEd25519.PublicKe
 func (key *Ed25519PublicKeyHashBlockIssuerKey) Clone() BlockIssuerKey {
 	cpy := [Ed25519PublicKeyHashBytesLength]byte{}
 	copy(cpy[:], key.PublicKeyHash[:])
+
 	return &Ed25519PublicKeyHashBlockIssuerKey{
 		PublicKeyHash: cpy,
 	}

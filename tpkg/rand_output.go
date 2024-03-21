@@ -31,7 +31,7 @@ func RandOutputID(index ...uint16) iotago.OutputID {
 
 func RandOutputIDsWithCreationSlot(slot iotago.SlotIndex, count uint16) iotago.OutputIDs {
 	outputIDs := make(iotago.OutputIDs, int(count))
-	for i := 0; i < int(count); i++ {
+	for i := range int(count) {
 		outputIDs[i] = RandOutputIDWithCreationSlot(slot, count)
 	}
 
@@ -40,7 +40,7 @@ func RandOutputIDsWithCreationSlot(slot iotago.SlotIndex, count uint16) iotago.O
 
 func RandOutputIDs(count uint16) iotago.OutputIDs {
 	outputIDs := make(iotago.OutputIDs, int(count))
-	for i := 0; i < int(count); i++ {
+	for i := range count {
 		outputIDs[i] = RandOutputID(count)
 	}
 
@@ -102,7 +102,6 @@ func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.
 
 	switch outputType {
 	case iotago.OutputBasic:
-		//nolint:forcetypeassert // we already checked the type
 		iotaOutput = &iotago.BasicOutput{
 			Amount: amount,
 			UnlockConditions: iotago.BasicOutputUnlockConditions{
@@ -114,7 +113,6 @@ func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.
 		}
 
 	case iotago.OutputAccount:
-		//nolint:forcetypeassert // we already checked the type
 		iotaOutput = &iotago.AccountOutput{
 			Amount:    amount,
 			AccountID: RandAccountID(),
@@ -128,7 +126,6 @@ func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.
 		}
 
 	case iotago.OutputAnchor:
-		//nolint:forcetypeassert // we already checked the type
 		iotaOutput = &iotago.AnchorOutput{
 			Amount:   amount,
 			AnchorID: RandAnchorID(),
@@ -169,7 +166,6 @@ func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.
 		}
 
 	case iotago.OutputNFT:
-		//nolint:forcetypeassert // we already checked the type
 		iotaOutput = &iotago.NFTOutput{
 			Amount: amount,
 			NFTID:  RandNFTID(),
@@ -183,7 +179,6 @@ func RandOutputOnAddressWithAmount(outputType iotago.OutputType, address iotago.
 		}
 
 	case iotago.OutputDelegation:
-		//nolint:forcetypeassert // we already checked the type
 		iotaOutput = &iotago.DelegationOutput{
 			Amount:           amount,
 			DelegatedAmount:  amount,

@@ -83,7 +83,6 @@ func (builder *DelegationOutputBuilder) Address(addr iotago.Address) *Delegation
 
 // Build builds the iotago.DelegationOutput.
 func (builder *DelegationOutputBuilder) Build() (*iotago.DelegationOutput, error) {
-
 	builder.output.UnlockConditions.Sort()
 
 	return builder.output, nil

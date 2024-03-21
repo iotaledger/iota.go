@@ -59,7 +59,7 @@ func RandMultiAddress() *iotago.MultiAddress {
 
 	cumulativeWeight := 0
 	addresses := make([]*iotago.AddressWithWeight, 0, addrCnt)
-	for i := 0; i < addrCnt; i++ {
+	for range addrCnt {
 		weight := RandInt(8) + 1
 		cumulativeWeight += weight
 		addresses = append(addresses, &iotago.AddressWithWeight{

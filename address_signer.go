@@ -126,7 +126,7 @@ func (s *InMemoryAddressSigner) privateKeyForAddress(addr Address) (crypto.Priva
 		case *Ed25519Address:
 			return privateKeyForEd25519Address(underlyingAddr)
 		default:
-			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the the address signer since it only handles addresses backed by keypairs", addr))
+			panic(fmt.Sprintf("underlying address type %T in restricted address is not supported in the address signer since it only handles addresses backed by keypairs", addr))
 		}
 
 	case *ImplicitAccountCreationAddress:

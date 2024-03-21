@@ -146,8 +146,6 @@ type AnchorStateTransition struct {
 }
 
 // StateTransition narrows the builder functions to the ones available for an anchor state transition.
-//
-//nolint:revive
 func (builder *AnchorOutputBuilder) StateTransition() *AnchorStateTransition {
 	return &AnchorStateTransition{builder: builder}
 }
@@ -177,8 +175,6 @@ type AnchorGovernanceTransition struct {
 }
 
 // GovernanceTransition narrows the builder functions to the ones available for an anchor governance transition.
-//
-//nolint:revive
 func (builder *AnchorOutputBuilder) GovernanceTransition() *AnchorGovernanceTransition {
 	return &AnchorGovernanceTransition{builder: builder}
 }

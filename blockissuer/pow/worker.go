@@ -65,7 +65,7 @@ func (w *Worker) Mine(ctx context.Context, data []byte, targetTrailingZeros int)
 	}()
 
 	workerWidth := math.MaxUint64 / uint64(w.numWorkers)
-	for i := 0; i < w.numWorkers; i++ {
+	for i := range w.numWorkers {
 		startNonce := uint64(i) * workerWidth
 		wg.Add(1)
 		go func() {

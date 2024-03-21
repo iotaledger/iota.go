@@ -11,7 +11,7 @@ type basicProtocolParameters struct {
 
 	// StorageScoreParameters defines the Storage Score Parameters used by the given network.
 	StorageScoreParameters StorageScoreParameters `serix:""`
-	// WorkScoreParameters defines the work score parameters used by by the given network.
+	// WorkScoreParameters defines the work score parameters used by the given network.
 	WorkScoreParameters WorkScoreParameters `serix:""`
 	// ManaParameters defines the mana parameters used by the given network.
 	ManaParameters ManaParameters `serix:""`

@@ -93,7 +93,6 @@ const initInfoEndpointCallTimeout = 5 * time.Second
 // This constructor will automatically call Client.Info() in order to initialize the Client
 // with the appropriate protocol parameters and latest iotago.API version (use WithIOTAGoAPI() to override this behavior).
 func New(baseURL string, opts ...ClientOption) (*Client, error) {
-
 	options := &ClientOptions{}
 	options.apply(defaultNodeAPIOptions...)
 	options.apply(opts...)
@@ -231,7 +230,6 @@ func (client *Client) Health(ctx context.Context) (bool, error) {
 
 // Routes gets the routes the node supports.
 func (client *Client) Routes(ctx context.Context) (*api.RoutesResponse, error) {
-	//nolint:bodyclose
 	res := new(api.RoutesResponse)
 	//nolint:bodyclose
 	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, api.RouteRoutes, RequestHeaderHookAcceptJSON, nil, res); err != nil {

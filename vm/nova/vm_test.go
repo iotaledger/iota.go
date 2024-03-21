@@ -1,4 +1,4 @@
-//nolint:forcetypeassert,dupl,nlreturn,scopelint,revive
+//nolint:forcetypeassert,dupl,nlreturn,revive
 package nova_test
 
 import (

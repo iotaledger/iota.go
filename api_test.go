@@ -1,4 +1,3 @@
-//nolint:scopelint
 package iotago_test
 
 import (

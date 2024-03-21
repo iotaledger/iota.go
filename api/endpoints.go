@@ -30,7 +30,7 @@ const (
 	// ParameterPageSize is used to specify the page size.
 	ParameterPageSize = "pageSize"
 
-	// ParameterCursor is used to specify the the point from which the response should continue for paginated results.
+	// ParameterCursor is used to specify the point from which the response should continue for paginated results.
 	ParameterCursor = "cursor"
 
 	// ParameterSlot is used to identify a slot.
@@ -60,7 +60,7 @@ const (
 	// ParameterPeerID is used to identify a peer.
 	ParameterPeerID = "peerId"
 
-	// ParameterBech32Address is used to to represent bech32 address.
+	// ParameterBech32Address is used to represent bech32 address.
 	ParameterBech32Address = "bech32Address"
 
 	// ParameterAddress is used to identify an address.

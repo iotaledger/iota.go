@@ -1,4 +1,4 @@
-//nolint:scopelint,golint,revive,nosnakecase,stylecheck
+//nolint:golint,revive,stylecheck
 package iotago_test
 
 import (

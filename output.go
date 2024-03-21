@@ -287,7 +287,7 @@ func PotentialMana(manaDecayProvider *ManaDecayProvider, storageScoreStructure *
 
 	excessBaseTokens, err := safemath.SafeSub(output.BaseTokenAmount(), minDeposit)
 	if err != nil {
-		// nolint:nilerr // An underflow means no potential mana is generated and hence no error is returned.
+		//nolint:nilerr // An underflow means no potential mana is generated and hence no error is returned.
 		return 0, nil
 	}
 

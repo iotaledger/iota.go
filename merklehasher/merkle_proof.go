@@ -43,7 +43,7 @@ type Node[V Value] struct {
 	Right MerkleHashable[V] `serix:"r"`
 }
 
-// nolint: tagliatelle // Does not understand generics
+//nolint:tagliatelle // Does not understand generics
 type Proof[V Value] struct {
 	MerkleHashable[V] `serix:",inlined"`
 }
@@ -123,7 +123,6 @@ func (t *Hasher[V]) computeProof(data [][]byte, index int) (MerkleHashable[V], e
 			Left:  &LeafHash[V]{t.hashLeaf(left)},
 			Right: &ValueHash[V]{t.hashLeaf(right)},
 		}, nil
-
 	}
 
 	k := largestPowerOfTwo(len(data))
@@ -222,6 +221,7 @@ func RegisterSerixRules[V Value](api *serix.API) {
 func serixAPI[V Value]() *serix.API {
 	api := serix.NewAPI()
 	RegisterSerixRules[V](api)
+
 	return api
 }
 
