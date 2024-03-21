@@ -26,27 +26,9 @@ func Test_ManagementAPIDeSerialize(t *testing.T) {
 				Alias:          "alias",
 				Relation:       "relation",
 				Connected:      true,
-				Gossip: &api.GossipInfo{
-					Heartbeat: &api.GossipHeartbeat{
-						SolidSlot:      1,
-						PrunedSlot:     2,
-						LatestSlot:     3,
-						ConnectedPeers: 4,
-						SyncedPeers:    5,
-					},
-					Metrics: &api.PeerGossipMetrics{
-						NewBlocks:             1,
-						KnownBlocks:           2,
-						ReceivedBlocks:        3,
-						ReceivedBlockRequests: 4,
-						ReceivedSlotRequests:  5,
-						ReceivedHeartbeats:    6,
-						SentBlocks:            7,
-						SentBlockRequests:     8,
-						SentSlotRequests:      9,
-						SentHeartbeats:        10,
-						DroppedPackets:        11,
-					},
+				GossipMetrics: &api.PeerGossipMetrics{
+					PacketsReceived: 1,
+					PacketsSent:     2,
 				},
 			},
 			Target: &api.PeerInfo{},
@@ -61,27 +43,9 @@ func Test_ManagementAPIDeSerialize(t *testing.T) {
 						Alias:          "alias",
 						Relation:       "relation",
 						Connected:      true,
-						Gossip: &api.GossipInfo{
-							Heartbeat: &api.GossipHeartbeat{
-								SolidSlot:      1,
-								PrunedSlot:     2,
-								LatestSlot:     3,
-								ConnectedPeers: 4,
-								SyncedPeers:    5,
-							},
-							Metrics: &api.PeerGossipMetrics{
-								NewBlocks:             1,
-								KnownBlocks:           2,
-								ReceivedBlocks:        3,
-								ReceivedBlockRequests: 4,
-								ReceivedSlotRequests:  5,
-								ReceivedHeartbeats:    6,
-								SentBlocks:            7,
-								SentBlockRequests:     8,
-								SentSlotRequests:      9,
-								SentHeartbeats:        10,
-								DroppedPackets:        11,
-							},
+						GossipMetrics: &api.PeerGossipMetrics{
+							PacketsReceived: 1,
+							PacketsSent:     2,
 						},
 					},
 				},
@@ -103,21 +67,6 @@ func Test_ManagementAPIDeSerialize(t *testing.T) {
 				Epoch: 1,
 			},
 			Target: &api.PruneDatabaseResponse{},
-		},
-		{
-			Name: "ok - CreateSnapshotsRequest",
-			Source: &api.CreateSnapshotsRequest{
-				Slot: 1,
-			},
-			Target: &api.CreateSnapshotsRequest{},
-		},
-		{
-			Name: "ok - CreateSnapshotResponse",
-			Source: &api.CreateSnapshotResponse{
-				Slot:     1,
-				FilePath: "filePath",
-			},
-			Target: &api.CreateSnapshotResponse{},
 		},
 	}
 
@@ -147,27 +96,9 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 				Alias:          "alias",
 				Relation:       "relation",
 				Connected:      true,
-				Gossip: &api.GossipInfo{
-					Heartbeat: &api.GossipHeartbeat{
-						SolidSlot:      1,
-						PrunedSlot:     2,
-						LatestSlot:     3,
-						ConnectedPeers: 4,
-						SyncedPeers:    5,
-					},
-					Metrics: &api.PeerGossipMetrics{
-						NewBlocks:             1,
-						KnownBlocks:           2,
-						ReceivedBlocks:        3,
-						ReceivedBlockRequests: 4,
-						ReceivedSlotRequests:  5,
-						ReceivedHeartbeats:    6,
-						SentBlocks:            7,
-						SentBlockRequests:     8,
-						SentSlotRequests:      9,
-						SentHeartbeats:        10,
-						DroppedPackets:        11,
-					},
+				GossipMetrics: &api.PeerGossipMetrics{
+					PacketsReceived: 1,
+					PacketsSent:     2,
 				},
 			},
 			Target: `{
@@ -178,27 +109,9 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 	"alias": "alias",
 	"relation": "relation",
 	"connected": true,
-	"gossip": {
-		"heartbeat": {
-			"solidSlot": 1,
-			"prunedSlot": 2,
-			"latestSlot": 3,
-			"connectedPeers": 4,
-			"syncedPeers": 5
-		},
-		"metrics": {
-			"newBlocks": 1,
-			"knownBlocks": 2,
-			"receivedBlocks": 3,
-			"receivedBlockRequests": 4,
-			"receivedSlotRequests": 5,
-			"receivedHeartbeats": 6,
-			"sentBlocks": 7,
-			"sentBlockRequests": 8,
-			"sentSlotRequests": 9,
-			"sentHeartbeats": 10,
-			"droppedPackets": 11
-		}
+	"gossipMetrics": {
+		"packetsReceived": 1,
+		"packetsSent": 2
 	}
 }`,
 		},
@@ -212,27 +125,9 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 						Alias:          "alias",
 						Relation:       "relation",
 						Connected:      true,
-						Gossip: &api.GossipInfo{
-							Heartbeat: &api.GossipHeartbeat{
-								SolidSlot:      1,
-								PrunedSlot:     2,
-								LatestSlot:     3,
-								ConnectedPeers: 4,
-								SyncedPeers:    5,
-							},
-							Metrics: &api.PeerGossipMetrics{
-								NewBlocks:             1,
-								KnownBlocks:           2,
-								ReceivedBlocks:        3,
-								ReceivedBlockRequests: 4,
-								ReceivedSlotRequests:  5,
-								ReceivedHeartbeats:    6,
-								SentBlocks:            7,
-								SentBlockRequests:     8,
-								SentSlotRequests:      9,
-								SentHeartbeats:        10,
-								DroppedPackets:        11,
-							},
+						GossipMetrics: &api.PeerGossipMetrics{
+							PacketsReceived: 1,
+							PacketsSent:     2,
 						},
 					},
 				},
@@ -247,27 +142,9 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 			"alias": "alias",
 			"relation": "relation",
 			"connected": true,
-			"gossip": {
-				"heartbeat": {
-					"solidSlot": 1,
-					"prunedSlot": 2,
-					"latestSlot": 3,
-					"connectedPeers": 4,
-					"syncedPeers": 5
-				},
-				"metrics": {
-					"newBlocks": 1,
-					"knownBlocks": 2,
-					"receivedBlocks": 3,
-					"receivedBlockRequests": 4,
-					"receivedSlotRequests": 5,
-					"receivedHeartbeats": 6,
-					"sentBlocks": 7,
-					"sentBlockRequests": 8,
-					"sentSlotRequests": 9,
-					"sentHeartbeats": 10,
-					"droppedPackets": 11
-				}
+			"gossipMetrics": {
+				"packetsReceived": 1,
+				"packetsSent": 2
 			}
 		}
 	]
@@ -293,26 +170,6 @@ func Test_ManagementAPIJSONSerialization(t *testing.T) {
 			},
 			Target: `{
 	"epoch": 1
-}`,
-		},
-		{
-			Name: "ok - CreateSnapshotsRequest",
-			Source: &api.CreateSnapshotsRequest{
-				Slot: 1,
-			},
-			Target: `{
-	"slot": 1
-}`,
-		},
-		{
-			Name: "ok - CreateSnapshotResponse",
-			Source: &api.CreateSnapshotResponse{
-				Slot:     1,
-				FilePath: "filePath",
-			},
-			Target: `{
-	"slot": 1,
-	"filePath": "filePath"
 }`,
 		},
 	}

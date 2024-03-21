@@ -13,29 +13,6 @@ import (
 	"github.com/iotaledger/iota.go/v4/nodeclient"
 )
 
-var sampleGossipInfo = &api.GossipInfo{
-	Heartbeat: &api.GossipHeartbeat{
-		SolidSlot:      234,
-		PrunedSlot:     5872,
-		LatestSlot:     1294,
-		ConnectedPeers: 2392,
-		SyncedPeers:    1234,
-	},
-	Metrics: &api.PeerGossipMetrics{
-		NewBlocks:             40,
-		KnownBlocks:           60,
-		ReceivedBlocks:        100,
-		ReceivedBlockRequests: 345,
-		ReceivedSlotRequests:  194,
-		ReceivedHeartbeats:    5,
-		SentBlocks:            492,
-		SentBlockRequests:     2396,
-		SentSlotRequests:      9837,
-		SentHeartbeats:        3,
-		DroppedPackets:        10,
-	},
-}
-
 func TestManagementClient_Enabled(t *testing.T) {
 	defer gock.Off()
 
@@ -74,7 +51,10 @@ func TestManagementClient_PeerByID(t *testing.T) {
 		ID:             peerID,
 		Connected:      true,
 		Relation:       "autopeered",
-		Gossip:         sampleGossipInfo,
+		GossipMetrics: &api.PeerGossipMetrics{
+			PacketsReceived: 1,
+			PacketsSent:     2,
+		},
 	}
 
 	originRoutes := &api.RoutesResponse{
@@ -128,16 +108,22 @@ func TestManagementClient_Peers(t *testing.T) {
 				ID:             peerID,
 				MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID))},
 				Relation:       "autopeered",
-				Gossip:         sampleGossipInfo,
-				Connected:      true,
+				GossipMetrics: &api.PeerGossipMetrics{
+					PacketsReceived: 1,
+					PacketsSent:     2,
+				},
+				Connected: true,
 			},
 			{
 				ID:             peerID2,
 				MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(fmt.Sprintf("/ip4/127.0.0.1/tcp/15600/p2p/%s", peerID2))},
 				Alias:          "Peer2",
 				Relation:       "static",
-				Gossip:         sampleGossipInfo,
-				Connected:      true,
+				GossipMetrics: &api.PeerGossipMetrics{
+					PacketsReceived: 1,
+					PacketsSent:     2,
+				},
+				Connected: true,
 			},
 		},
 	}
@@ -169,7 +155,10 @@ func TestManagementClient_AddPeer(t *testing.T) {
 		MultiAddresses: []iotago.PrefixedStringUint8{iotago.PrefixedStringUint8(multiAddr)},
 		Relation:       "autopeered",
 		Connected:      true,
-		Gossip:         sampleGossipInfo,
+		GossipMetrics: &api.PeerGossipMetrics{
+			PacketsReceived: 1,
+			PacketsSent:     2,
+		},
 	}
 
 	req := &api.AddPeerRequest{MultiAddress: multiAddr}
