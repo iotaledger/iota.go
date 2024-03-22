@@ -71,6 +71,10 @@ func (a *Attestation) Compare(other *Attestation) int {
 	}
 }
 
+func (a *Attestation) Slot() SlotIndex {
+	return a.API.TimeProvider().SlotFromTime(a.Header.IssuingTime)
+}
+
 func (a *Attestation) BlockID() (BlockID, error) {
 	signatureBytes, err := a.API.Encode(a.Signature)
 	if err != nil {
@@ -83,9 +87,8 @@ func (a *Attestation) BlockID() (BlockID, error) {
 	}
 
 	id := blockIdentifier(headerHash, a.BodyHash, signatureBytes)
-	slot := a.API.TimeProvider().SlotFromTime(a.Header.IssuingTime)
 
-	return NewBlockID(slot, id), nil
+	return NewBlockID(a.Slot(), id), nil
 }
 
 func (a *Attestation) signingMessage() ([]byte, error) {

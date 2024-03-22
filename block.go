@@ -177,6 +177,11 @@ func (b *Block) VerifySignature() (valid bool, err error) {
 	return hiveEd25519.Verify(edSig.PublicKey[:], signingMessage, edSig.Signature[:]), nil
 }
 
+// Slot returns the SlotIndex of the Block.
+func (b *Block) Slot() SlotIndex {
+	return b.API.TimeProvider().SlotFromTime(b.Header.IssuingTime)
+}
+
 // ID computes the ID of the Block.
 func (b *Block) ID() (BlockID, error) {
 	data, err := b.API.Encode(b)
@@ -189,9 +194,11 @@ func (b *Block) ID() (BlockID, error) {
 		return BlockID{}, ierrors.Wrap(err, "failed to compute blockID")
 	}
 
-	slot := b.API.TimeProvider().SlotFromTime(b.Header.IssuingTime)
+	return b.IDWithBlockIdentifier(id), nil
+}
 
-	return NewBlockID(slot, id), nil
+func (b *Block) IDWithBlockIdentifier(blockIdentifier Identifier) BlockID {
+	return NewBlockID(b.Slot(), blockIdentifier)
 }
 
 // MustID works like ID but panics if the BlockID can't be computed.
@@ -297,17 +304,12 @@ func (b *Block) syntacticallyValidate() error {
 		}
 	}
 
-	blockID, err := b.ID()
-	if err != nil {
-		return ierrors.Wrap(err, "failed to syntactically validate block")
-	}
-
 	protocolParams := b.API.ProtocolParameters()
 	genesisSlot := protocolParams.GenesisSlot()
 	minCommittableAge := protocolParams.MinCommittableAge()
 	maxCommittableAge := protocolParams.MaxCommittableAge()
 	commitmentSlot := b.Header.SlotCommitmentID.Slot()
-	blockSlot := blockID.Slot()
+	blockSlot := b.Slot()
 
 	// check that commitment is not too recent.
 	if commitmentSlot > genesisSlot && // Don't filter commitments to genesis based on being too recent.
@@ -408,11 +410,7 @@ func (b *BasicBlockBody) Size() int {
 // syntacticallyValidate syntactically validates the BasicBlock.
 func (b *BasicBlockBody) syntacticallyValidate(block *Block) error {
 	if b.Payload != nil && b.Payload.PayloadType() == PayloadSignedTransaction {
-		blockID, err := block.ID()
-		if err != nil {
-			return ierrors.Wrap(err, "failed to calculate basic block ID during syntactical validation")
-		}
-		blockSlot := blockID.Slot()
+		blockSlot := block.Slot()
 
 		minCommittableAge := block.API.ProtocolParameters().MinCommittableAge()
 		maxCommittableAge := block.API.ProtocolParameters().MaxCommittableAge()
