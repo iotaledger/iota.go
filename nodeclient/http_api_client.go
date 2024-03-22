@@ -450,6 +450,24 @@ func (client *Client) OutputWithMetadataByID(ctx context.Context, outputID iotag
 	return outputResponse.Output, outputResponse.Metadata, nil
 }
 
+// TransactionByID gets a transaction by its ID from the node.
+func (client *Client) TransactionByID(ctx context.Context, txID iotago.TransactionID) (*iotago.Transaction, error) {
+	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransaction, txID)
+
+	res := new(RawDataEnvelope)
+	//nolint:bodyclose
+	if _, err := client.DoWithRequestHeaderHook(ctx, http.MethodGet, query, RequestHeaderHookAcceptIOTASerializerV2, nil, res); err != nil {
+		return nil, err
+	}
+
+	tx := new(iotago.Transaction)
+	if _, err := client.CommittedAPI().Decode(res.Data, tx, serix.WithValidation()); err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
 // TransactionIncludedBlock get a block that included the given transaction ID in the ledger.
 func (client *Client) TransactionIncludedBlock(ctx context.Context, txID iotago.TransactionID) (*iotago.Block, error) {
 	query := client.endpointReplaceTransactionIDParameter(api.CoreRouteTransactionsIncludedBlock, txID)
