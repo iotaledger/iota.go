@@ -56,6 +56,10 @@ func readBody(res *http.Response) ([]byte, error) {
 func interpretBody(ctx context.Context, serixAPI *serix.API, res *http.Response, decodeTo interface{}) error {
 	defer res.Body.Close()
 
+	if res.StatusCode == http.StatusNoContent {
+		return nil
+	}
+
 	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
 		if decodeTo == nil {
 			return nil
