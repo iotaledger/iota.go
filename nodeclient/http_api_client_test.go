@@ -463,6 +463,28 @@ func TestClient_OutputWithMetadataByID(t *testing.T) {
 	require.EqualValues(t, originMetadata, responseMetadata)
 }
 
+func TestClient_TestTransactionByID(t *testing.T) {
+	defer gock.Off()
+
+	txID := tpkg.RandTransactionID()
+
+	originTransaction := tpkg.RandTransaction(mockAPI)
+
+	mockGetBinary(api.EndpointWithNamedParameterValue(api.CoreRouteTransaction, api.ParameterTransactionID, txID.ToHex()), 200, originTransaction)
+
+	nodeAPI := nodeClient(t)
+	responseTransaction, err := nodeAPI.TransactionByID(context.Background(), txID)
+	require.NoError(t, err)
+
+	originTransactionBytes, err := mockAPI.Encode(originTransaction, serix.WithValidation())
+	require.NoError(t, err)
+
+	responseTransactionBytes, err := mockAPI.Encode(responseTransaction, serix.WithValidation())
+	require.NoError(t, err)
+
+	require.Equal(t, originTransactionBytes, responseTransactionBytes)
+}
+
 func TestClient_TransactionIncludedBlock(t *testing.T) {
 	defer gock.Off()
 

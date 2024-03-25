@@ -191,6 +191,13 @@ const (
 	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
 	CoreEndpointOutputWithMetadata = "/outputs/{outputId}/full"
 
+	// CoreEndpointTransaction is the endpoint for getting a transaction by its transaction ID.
+	// GET returns the transaction.
+	// "Accept" header:
+	// 		MIMEApplicationJSON => json.
+	// 		MIMEApplicationVendorIOTASerializerV2 => bytes.
+	CoreEndpointTransaction = "/transactions/{transactionId}"
+
 	// CoreEndpointTransactionsIncludedBlock is the endpoint for getting the block that was first confirmed for a given transaction ID.
 	// GET returns the block.
 	// "Accept" header:
@@ -303,6 +310,7 @@ var (
 	CoreRouteOutput                            = route(CorePluginName, CoreEndpointOutput)
 	CoreRouteOutputMetadata                    = route(CorePluginName, CoreEndpointOutputMetadata)
 	CoreRouteOutputWithMetadata                = route(CorePluginName, CoreEndpointOutputWithMetadata)
+	CoreRouteTransaction                       = route(CorePluginName, CoreEndpointTransaction)
 	CoreRouteTransactionsIncludedBlock         = route(CorePluginName, CoreEndpointTransactionsIncludedBlock)
 	CoreRouteTransactionsIncludedBlockMetadata = route(CorePluginName, CoreEndpointTransactionsIncludedBlockMetadata)
 	CoreRouteTransactionsMetadata              = route(CorePluginName, CoreEndpointTransactionsMetadata)
