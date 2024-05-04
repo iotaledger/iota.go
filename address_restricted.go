@@ -118,7 +118,7 @@ func RestrictedAddressWithCapabilities(address Address, opts ...options.Option[A
 	}
 }
 
-// RestrictedAddressFromBytes parses the RestrictedAddress from the given reader.
+// RestrictedAddressFromReader parses the RestrictedAddress from the given reader.
 func RestrictedAddressFromReader(reader io.ReadSeeker) (Address, error) {
 	// skip the address type byte
 	if _, err := stream.Skip(reader, serializer.SmallTypeDenotationByteSize); err != nil {
